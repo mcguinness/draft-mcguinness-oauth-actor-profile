@@ -1,5 +1,5 @@
---- 
-title: "OAuth Actor Profile for Delegation" 
+---
+title: "OAuth Actor Profile for Delegation"
 abbrev: "OAuth Actor Profile"
 category: std
 docname: draft-mcguinness-oauth-actor-profile-latest
@@ -7,8 +7,8 @@ submissiontype: IETF
 number:
 date: 2026-03-31
 ipr: "trust200902"
-area: Security
-workgroup: Web Authorization Protocol
+area: "Security"
+workgroup: "Web Authorization Protocol"
 keyword:
  - oauth
  - delegation
@@ -19,12 +19,12 @@ keyword:
  - jwt
  - cross-domain
 venue:
-  group: Web Authorization Protocol
-  type: Working Group
-  mail: oauth@ietf.org
-  arch: https://mailarchive.ietf.org/arch/browse/oauth/
-  github: mcguinness/draft-mcguinness-oauth-actor-profile
-  latest: https://mcguinness.github.io/draft-mcguinness-oauth-actor-profile/draft-mcguinness-oauth-actor-profile.html
+  group: "Web Authorization Protocol"
+  type: "Working Group"
+  mail: "oauth@ietf.org"
+  arch: "https://mailarchive.ietf.org/arch/browse/oauth/"
+  github: "mcguinness/draft-mcguinness-oauth-actor-profile"
+  latest: "https://mcguinness.github.io/draft-mcguinness-oauth-actor-profile/draft-mcguinness-oauth-actor-profile.html"
 
 author:
  -
