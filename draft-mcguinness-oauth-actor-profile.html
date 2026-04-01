@@ -3527,22 +3527,8 @@ Enterprise IdP AS ─► ID-JAG
         <h3 id="name-step-2-enterprise-token-exc">
 <a href="#appendix-A.4" class="section-number selfRef">A.4. </a><a href="#name-step-2-enterprise-token-exc" class="section-name selfRef">Step 2: Enterprise Token Exchange — ID Token to ID-JAG</a>
         </h3>
-<p id="appendix-A.4-1">The agent presents Alice's ID Token and a self-signed actor JWT to the Enterprise IdP AS.  The actor JWT carries the agent's <code>sub_profile</code> and DPoP key binding per <a href="#jwt-assertion-grants-structure" class="auto internal xref">Section 5.1</a>:<a href="#appendix-A.4-1" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="appendix-A.4-2">
-<pre>
-{
-  "iss": "https://agents.enterprise.example/travel-assistant",
-  "sub": "https://agents.enterprise.example/travel-assistant",
-  "sub_profile": "ai_agent",
-  "aud": "https://as.enterprise.example/token",
-  "jti": "actor-jwt-20260401-001",
-  "exp": 1743375660,
-  "iat": 1743375600,
-  "cnf": { "jkt": "AgentJKT-NzbLsXh8uDCcd7MN" }
-}
-</pre><a href="#appendix-A.4-2" class="pilcrow">¶</a>
-</div>
-<div class="alignLeft art-text artwork" id="appendix-A.4-3">
+<p id="appendix-A.4-1">The agent presents Alice's ID Token to the Enterprise IdP AS using Token Exchange.  The Enterprise IdP AS authenticates the client as <code>travel-assistant-client-id</code>, verifies that the ID Token audience matches that client, and uses local delegation policy plus the authenticated client context to construct the actor-profile claims in the issued ID-JAG:<a href="#appendix-A.4-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="appendix-A.4-2">
 <pre>
 POST /token HTTP/1.1
 Host: as.enterprise.example
@@ -3552,16 +3538,17 @@ DPoP: &lt;AgentJKT-proof&gt;
 grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &amp;subject_token=&lt;alice-id-token&gt;
 &amp;subject_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aid_token
-&amp;actor_token=&lt;agent-actor-jwt&gt;
-&amp;actor_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt
 &amp;requested_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aid-jag
 &amp;audience=https%3A%2F%2Fas.travel-provider.example%2F
 &amp;resource=https%3A%2F%2Fas.travel-provider.example
 &amp;scope=booking%3Acreate
-</pre><a href="#appendix-A.4-3" class="pilcrow">¶</a>
+&amp;client_id=travel-assistant-client-id
+&amp;client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+&amp;client_assertion=&lt;travel-assistant-client-assertion&gt;
+</pre><a href="#appendix-A.4-2" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.4-4">The Enterprise IdP AS applies scope reduction and validates the actor information according to the output-token rules for the JWT it is issuing.  In this example, it verifies DPoP possession against <code>cnf.jkt</code> in the actor JWT (<a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 5.2</a>) and issues the ID-JAG as a JWT output of token exchange with the actor chain established per <a href="#actor-profile" class="auto internal xref">Section 4</a>:<a href="#appendix-A.4-4" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="appendix-A.4-5">
+<p id="appendix-A.4-3">The Enterprise IdP AS applies scope reduction and validates the client-bound proof-of-possession according to RFC 9449.  In this example, it binds the issued ID-JAG to the key demonstrated in the DPoP proof, determines from local policy that the authenticated client is the delegated actor for Alice in this flow, and issues the ID-JAG as a JWT output of token exchange with the actor chain established per <a href="#actor-profile" class="auto internal xref">Section 4</a>:<a href="#appendix-A.4-3" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-A.4-4">
 <pre>
 {
   "iss": "https://as.enterprise.example",
@@ -3582,9 +3569,9 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
     "cnf": { "jkt": "AgentJKT-NzbLsXh8uDCcd7MN" }
   }
 }
-</pre><a href="#appendix-A.4-5" class="pilcrow">¶</a>
+</pre><a href="#appendix-A.4-4" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.4-6">The <code>act</code> object records the agent as the authorized actor.  The <code>client_id</code> and <code>azp</code> values identify the OAuth client used in the exchange, while <code>act.sub</code> identifies the delegated actor.  In this example they all refer to the same logical party under local policy.  Both <code>cnf.jkt</code> (top-level, for DPoP binding) and <code>act.cnf.jkt</code> (actor key reference) are set to <code>AgentJKT</code> because the agent is both the bearer and the acting principal at this stage.<a href="#appendix-A.4-6" class="pilcrow">¶</a></p>
+<p id="appendix-A.4-5">The <code>act</code> object records the agent as the authorized actor.  The <code>client_id</code> and <code>azp</code> values identify the OAuth client used in the exchange, while <code>act.sub</code> identifies the delegated actor.  In this example they all refer to the same logical party under local policy.  Both <code>cnf.jkt</code> (top-level, for DPoP binding) and <code>act.cnf.jkt</code> (actor key reference) are set to <code>AgentJKT</code> because the agent is both the bearer and the acting principal at this stage.<a href="#appendix-A.4-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="step-3-agent-exchanges-id-jag-for-access-token-at-travel-provider-as">
@@ -3663,7 +3650,6 @@ Content-Type: application/json
 POST /token HTTP/1.1
 Host: tts.travel-provider.example
 Content-Type: application/x-www-form-urlencoded
-Authorization: PrivateKeyJWT &lt;booking-tool-assertion&gt;
 Workload-Identity-Token: &lt;booking-tool-wit&gt;
 Workload-Proof-Token: &lt;tool-wpt-with-wth-and-ath&gt;
 
@@ -3671,7 +3657,8 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &amp;subject_token=&lt;tp-access-token&gt;
 &amp;subject_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aaccess_token
 &amp;requested_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Atxn_token
-&amp;audience=https%3A%2F%2Finternal.travel-provider.example%2Finventory
+&amp;audience=https%3A%2F%2Ftravel-provider.example
+&amp;scope=inventory%3Acheck
 &amp;rctx={"req_ip":"198.51.100.42","req_time":1743375650}
 </pre><a href="#appendix-A.7-2" class="pilcrow">¶</a>
 </div>
@@ -3684,7 +3671,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
   "sub_profile": "user",
   "scope": "inventory:check",
   "req_wl": "https://tools.travel-provider.example/booking-tool",
-  "aud": "https://internal.travel-provider.example/inventory",
+  "aud": "https://travel-provider.example",
   "jti": "txn-tok-20260401-001",
   "txn": "550e8400-e29b-41d4-a716-446655440001",
   "exp": 1743375750,
