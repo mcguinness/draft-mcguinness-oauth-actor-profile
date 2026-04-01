@@ -120,11 +120,11 @@ As a result, deployments often define proprietary conventions.  Resource servers
 This document addresses the gap by specifying:
 
 *  A common actor profile structure that reuses `act` from {{RFC8693}} and adds `sub_profile` for entity-type classification and `cnf` for actor key binding.
-*  How the actor profile is expressed and validated in each token type: JWT assertion grants ({{Section 5}}), JWT access tokens ({{Section 6}}), and Transaction Tokens ({{Section 7}}).
+*  How the actor profile is expressed and validated in each token type: JWT assertion grants ({{jwt-assertion-grants}}), JWT access tokens ({{jwt-access-tokens}}), and Transaction Tokens ({{transaction-tokens}}).
 *  How actor-profile information is preserved when one supported token type is exchanged for another across JWT assertion grants, JWT access tokens, and Transaction Tokens.
-*  Dual-principal authorization guidance ({{Section 8}}), allowing resource servers to enforce policies over the (subject, actor) pair while accommodating deployments where delegation is informational only.
-*  Extensions to OAuth Entity Profiles usage locations and metadata ({{Section 9}}) so existing entity classifications can be used consistently in actor position.
-*  Discovery metadata and capability-negotiation procedures ({{Section 10}}) for authorization servers that offer Token Exchange or Transaction Token issuance, and for resource servers that consume delegated tokens.
+*  Dual-principal authorization guidance ({{dual-principal-authorization}}), allowing resource servers to enforce policies over the (subject, actor) pair while accommodating deployments where delegation is informational only.
+*  Extensions to OAuth Entity Profiles usage locations and metadata ({{entity-profile-extension}}) so existing entity classifications can be used consistently in actor position.
+*  Discovery metadata and capability-negotiation procedures ({{discovery-capability-negotiation}}) for authorization servers that offer Token Exchange or Transaction Token issuance, and for resource servers that consume delegated tokens.
 
 The primary motivating use case is cross-domain delegation involving AI agents and automated workloads, but the mechanisms are general-purpose and apply to other delegated-authorization scenarios.  This document is a profile and extension of existing OAuth building blocks; unless stated otherwise, the requirements of {{RFC8693}}, {{RFC9068}}, {{RFC9449}}, and {{I-D.ietf-oauth-transaction-tokens}} continue to apply.
 
@@ -145,7 +145,7 @@ At each step, Alice's identity is preserved as `sub`, the agent's identity is pr
 This profile closes this gap.
 
 
-# Conventions and Definitions
+# Conventions and Definitions {#conventions}
 
 {::boilerplate bcp14-tagged}
 
@@ -208,7 +208,7 @@ JWT assertion grants, JWT access tokens, and Transaction Tokens are specified in
 Neither AS metadata {{RFC8414}} nor Protected Resource Metadata {{RFC9728}} define parameters for advertising actor-profile support.  Deployments therefore require bilateral out-of-band configuration, which is impractical for AI agents that dynamically discover and invoke tools across organizational boundaries.
 
 
-# Actor Profile for Delegation
+# Actor Profile for Delegation {#actor-profile}
 
 ## Overview
 
@@ -216,9 +216,9 @@ This profile specifies an extended form of the `act` claim defined in {{RFC8693}
 
 The actor profile is applicable to:
 
-*  JWT assertion grants ({{Section 5}})
-*  JWT-formatted access tokens ({{Section 6}})
-*  Transaction Tokens ({{Section 7}})
+*  JWT assertion grants ({{jwt-assertion-grants}})
+*  JWT-formatted access tokens ({{jwt-access-tokens}})
+*  Transaction Tokens ({{transaction-tokens}})
 
 Subject to endpoint policy and the underlying token-exchange or grant mechanism, implementations MAY transform any supported input token type into any other supported output token type.  When they do so, actor profile information MUST be preserved and validated as specified in this document for the resulting token type.
 
@@ -259,10 +259,10 @@ act-object = {
 : REQUIRED.  The subject identifier of the actor, as defined in {{RFC8693, Section 4.1}}.  This value identifies the acting party.  It is a StringOrURI as defined in {{RFC7519}}.
 
 `iss`:
-: REQUIRED.  The issuer that is authoritative for the actor identifier in `act.sub`.  This value scopes `act.sub` to an issuer namespace so that relying parties can distinguish otherwise-colliding subject identifiers across domains.  See "Cross-Domain Delegation" in {{Section 2}}.  The value is a StringOrURI as defined in {{RFC7519}}.
+: REQUIRED.  The issuer that is authoritative for the actor identifier in `act.sub`.  This value scopes `act.sub` to an issuer namespace so that relying parties can distinguish otherwise-colliding subject identifiers across domains.  See "Cross-Domain Delegation" in {{conventions}}.  The value is a StringOrURI as defined in {{RFC7519}}.
 
 `sub_profile`:
-: RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in {{I-D.mora-oauth-entity-profiles, Section 4.2}}.  Values MUST be drawn from the OAuth Entity Profiles registry ({{I-D.mora-oauth-entity-profiles, Section 14.1}}) or be privately defined collision-resistant values.  Only values registered with the "Actor Profile" usage location (defined in {{Section 9}}) SHOULD be used within `act` objects.  If the acting entity fits more than one profile, multiple values MAY be included as a space-delimited string (e.g., `"service ai_agent"`).
+: RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in {{I-D.mora-oauth-entity-profiles, Section 4.2}}.  Values MUST be drawn from the OAuth Entity Profiles registry ({{I-D.mora-oauth-entity-profiles, Section 14.1}}) or be privately defined collision-resistant values.  Only values registered with the "Actor Profile" usage location (defined in {{entity-profile-extension}}) SHOULD be used within `act` objects.  If the acting entity fits more than one profile, multiple values MAY be included as a space-delimited string (e.g., `"service ai_agent"`).
 
 `cnf`:
 : OPTIONAL.  A confirmation claim as defined in {{!RFC7800}}.  When present, this value identifies the keying material the actor MUST use to demonstrate proof of possession when presenting tokens that contain this actor object.  This keying material is distinct from any top-level `cnf` claim, which constrains the current bearer of the overall token.  When a public key is conveyed in `act.cnf`, the `jkt` member is RECOMMENDED.
@@ -279,7 +279,7 @@ The `sub_profile` claim MAY also appear as a top-level claim in a JWT (outside a
 Issuers SHOULD include a top-level `sub_profile` when they can authoritatively classify the subject entity type.
 
 
-## Delegation Chains
+## Delegation Chains {#delegation-chains}
 
 Delegation chains MUST be represented by nesting `act` objects as specified in {{RFC8693, Section 4.1}}.  In a nested structure, the outermost `act` object identifies the immediate actor; inner `act` objects represent prior actors in the chain, with the innermost representing the original delegating party.
 
@@ -306,7 +306,7 @@ In this example the booking tool (outermost `act`) is the immediate actor acting
 Implementations MUST NOT represent delegation depth greater than eight levels.  Implementations that receive a token with more than eight levels of nested `act` MUST reject it.
 
 
-## Sender Constraint and Key Binding
+## Sender Constraint and Key Binding {#sender-constraint}
 
 When sender-constrained tokens are used with a delegated token, the top-level `cnf` claim identifies the key or certificate of the immediate presenter of that token.  When delegation is present, that immediate presenter is the outermost actor.
 
@@ -326,11 +326,11 @@ This profile extends the base `act` claim semantics from {{RFC8693}} by requirin
 When a token or assertion is required by local policy or advertised metadata to conform to this profile, such non-conforming `act` objects MUST be rejected.  When profile conformance is not required, implementations MAY continue to process a base {{RFC8693}} `act` object according to local policy, but they MUST NOT infer profile-defined semantics for claims that are absent.
 
 
-# JWT Assertion Grants
+# JWT Assertion Grants {#jwt-assertion-grants}
 
-## Structure
+## Structure {#jwt-assertion-grants-structure}
 
-A JWT used as an authorization grant {{RFC7521}}{{RFC7523}} MAY include an `act` claim conforming to the actor profile defined in {{Section 4}}.  Use of this claim in JWT client authentication assertions is out of scope for this document because such assertions have different issuer and subject semantics.  When included:
+A JWT used as an authorization grant {{RFC7521}}{{RFC7523}} MAY include an `act` claim conforming to the actor profile defined in {{actor-profile}}.  Use of this claim in JWT client authentication assertions is out of scope for this document because such assertions have different issuer and subject semantics.  When included:
 
 *  The `sub` of the JWT identifies the principal on whose behalf the grant is being made.
 *  The `act` object identifies the entity presenting the assertion or on whose behalf the assertion issuer is speaking.
@@ -359,7 +359,7 @@ An Identity Assertion JWT Authorization Grant (ID-JAG) is a JWT that can be prod
 The top-level `sub_profile` describes the entity type of the JWT's `sub`.  The `sub_profile` within `act` describes the entity type of the actor.
 
 
-## Authorization Server Processing
+## Authorization Server Processing {#jwt-assertion-grants-processing}
 
 When an AS receives a JWT assertion grant containing an `act` claim:
 
@@ -369,11 +369,11 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 3.  The AS MUST verify that the `act.sub` is authorized to act on behalf of the assertion's `sub`, using the AS's own policy (for example, a pre-registered delegation grant, a consent record, or a policy rule).
 
-4.  If the inbound assertion's `act` object itself contains a nested `act` claim (indicating that the asserted actor is itself a delegatee), the AS MUST determine whether to propagate that inner chain into the issued token.  The AS SHOULD propagate the inner chain by preserving the nested structure in the issued token, provided that the total resulting chain depth does not exceed the limit in {{Section 4.4}}.  If the AS does not accept pre-chained assertions, it MUST reject the request.  An AS that propagates inner actor chains MUST independently validate that each inner `act.sub` was asserted by a trusted issuer before including it in the issued token.
+4.  If the inbound assertion's `act` object itself contains a nested `act` claim (indicating that the asserted actor is itself a delegatee), the AS MUST determine whether to propagate that inner chain into the issued token.  The AS SHOULD propagate the inner chain by preserving the nested structure in the issued token, provided that the total resulting chain depth does not exceed the limit in {{delegation-chains}}.  If the AS does not accept pre-chained assertions, it MUST reject the request.  An AS that propagates inner actor chains MUST independently validate that each inner `act.sub` was asserted by a trusted issuer before including it in the issued token.
 
 5.  If the `act` object contains a `cnf` claim indicating a sender-constraining key, the AS MUST verify that the token request demonstrates possession of the corresponding key, using DPoP ({{RFC9449}}) or mutual TLS ({{RFC8705}}) consistent with token endpoint policy.  If possession cannot be verified, the AS MUST reject the request.
 
-6.  If the AS accepts the assertion, it MUST propagate the actor information into the issued token according to the rules for the output token type being issued.  For JWT access tokens, see {{Section 6.2}}.  For Transaction Tokens, see {{Section 7.3}}.  When the output is another JWT assertion grant profile, the resulting assertion MUST preserve the validated actor information subject to local policy and the chain-depth limit in {{Section 4.4}}.
+6.  If the AS accepts the assertion, it MUST propagate the actor information into the issued token according to the rules for the output token type being issued.  For JWT access tokens, see {{jwt-access-token-propagation}}.  For Transaction Tokens, see {{transaction-token-service-processing}}.  When the output is another JWT assertion grant profile, the resulting assertion MUST preserve the validated actor information subject to local policy and the chain-depth limit in {{delegation-chains}}.
 
 7.  The AS MAY add additional `sub_profile` or `act` metadata to the issued token based on its own knowledge of the principals.
 
@@ -383,7 +383,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 When an AS rejects a JWT assertion grant or Token Exchange request for reasons related to actor-profile validation, it MUST return an OAuth error response per {{RFC6749, Section 5.2}} and {{RFC8693, Section 2.2}}. The following error codes apply:
 
 `invalid_request`:
-: Use when the `act` claim structure is syntactically invalid, the delegation chain depth exceeds the limit in {{Section 4.4}}, or a required claim such as `act.sub` is absent.
+: Use when the `act` claim structure is syntactically invalid, the delegation chain depth exceeds the limit in {{delegation-chains}}, or a required claim such as `act.sub` is absent.
 
 `invalid_grant`:
 : Use when the assertion or subject token cannot be validated, the issuer is not trusted to assert the delegation relationship, or the actor's possession of the key indicated by `act.cnf.jkt` cannot be confirmed.
@@ -396,13 +396,13 @@ The `error_description` field SHOULD be included and SHOULD describe which aspec
 Examples in this document are illustrative and focus on actor-profile-related claims and processing.  They can omit unrelated claims, parameters, or validation steps required by the underlying specifications for a complete deployment.
 
 
-# JWT Access Tokens
+# JWT Access Tokens {#jwt-access-tokens}
 
 ## Structure
 
-A JWT access token {{RFC9068}} MUST include an `act` claim conforming to the actor profile defined in {{Section 4}} when any of the following conditions hold:
+A JWT access token {{RFC9068}} MUST include an `act` claim conforming to the actor profile defined in {{actor-profile}} when any of the following conditions hold:
 
-*  The token was issued following acceptance of a JWT assertion grant that itself contained an `act` claim per {{Section 5}};
+*  The token was issued following acceptance of a JWT assertion grant that itself contained an `act` claim per {{jwt-assertion-grants}};
 *  The token was issued via Token Exchange ({{RFC8693}}) and an `actor_token` was presented; or
 *  The AS has independent knowledge that the subject's rights are being exercised by a distinct acting party.
 
@@ -438,18 +438,18 @@ The following example shows a JWT access token with actor profile claims.  Here 
 The top-level `cnf.jkt` identifies the key the immediate bearer (the travel assistant) MUST use to prove possession.  The `act.cnf.jkt` carries the same value in this single-actor scenario because the actor is the sole bearer; in a multi-hop chain these values will differ for each hop.
 
 
-## Propagation from Assertion Grants and Token Exchange
+## Propagation from Assertion Grants and Token Exchange {#jwt-access-token-propagation}
 
 When an AS issues a JWT access token following:
 
-*  Acceptance of a JWT assertion grant that contains an `act` claim ({{Section 5}}), or
+*  Acceptance of a JWT assertion grant that contains an `act` claim ({{jwt-assertion-grants}}), or
 *  A Token Exchange request ({{RFC8693}}) that carries an `actor_token`,
 
 the AS MUST include an `act` claim in the issued access token that faithfully represents the delegation relationship conveyed in the inbound request.  The AS MUST NOT silently drop actor information.
 
 If the Token Exchange request itself contains a `subject_token` that already carries an `act` claim (i.e., the delegation chain already has depth > 1), the AS MUST nest the existing `act` structure within a new outermost `act` that represents the newly-identified actor, unless the AS has policy that limits chain depth.
 
-If the inbound actor information cannot be validated or would exceed the maximum chain depth defined in {{Section 4.4}}, the AS MUST reject the request and MUST NOT issue a token that partially preserves the delegation chain.
+If the inbound actor information cannot be validated or would exceed the maximum chain depth defined in {{delegation-chains}}, the AS MUST reject the request and MUST NOT issue a token that partially preserves the delegation chain.
 
 The AS SHOULD add `sub_profile` to the issued token's top-level claims if it can authoritatively classify the token's `sub` entity type.
 
@@ -465,7 +465,7 @@ The granted scope MUST be reflected in the issued token's `scope` claim so that 
 The same preservation requirements apply regardless of whether the inbound credential presented to the AS is a JWT assertion grant, a JWT access token, or a Transaction Token, provided that local policy and the underlying grant or token-exchange mechanism permit issuance of a JWT access token from that input.
 
 
-## Resource Server Processing
+## Resource Server Processing {#jwt-access-token-rs-processing}
 
 Upon receiving a JWT access token that contains an `act` claim, a resource server MUST:
 
@@ -475,7 +475,7 @@ Upon receiving a JWT access token that contains an `act` claim, a resource serve
 
 3.  Extract the `sub` and the outermost `act.sub` as the two principals relevant for authorization policy.
 
-4.  Apply dual-principal authorization per {{Section 8}}.
+4.  Apply dual-principal authorization per {{dual-principal-authorization}}.
 
 5.  Optionally traverse inner `act` objects to audit the full delegation chain; inner actors are informational and SHOULD NOT be required to present proof of possession at the resource server.
 
@@ -489,16 +489,16 @@ Upon receiving a JWT access token that contains an `act` claim, a resource serve
     *  The RS MUST NOT include actor-specific rejection details in error responses exposed to clients outside the trust domain.
 
 
-## Token Introspection
+## Token Introspection {#token-introspection}
 
 When token introspection ({{RFC7662}}) is used, an AS that issues delegated tokens MUST include the `act` claim and top-level `sub_profile` claim in introspection responses for active tokens that carry those claims.  The AS MUST NOT omit actor profile claims from introspection responses, as their omission would misrepresent the delegation status of the token to the introspecting RS.
 
-Resource servers using introspection for delegated tokens MUST apply the same dual-principal authorization logic described in {{Section 8}} to the introspection response claims.  An RS that relies on introspection rather than local JWT validation MUST treat a missing `act` claim in the introspection response as indicating a non-delegated token and MUST NOT assume delegation when the claim is absent.
+Resource servers using introspection for delegated tokens MUST apply the same dual-principal authorization logic described in {{dual-principal-authorization}} to the introspection response claims.  An RS that relies on introspection rather than local JWT validation MUST treat a missing `act` claim in the introspection response as indicating a non-delegated token and MUST NOT assume delegation when the claim is absent.
 
 Introspection endpoints for delegated tokens SHOULD be advertised via the `introspection_endpoint` parameter in AS metadata ({{RFC8414}}). When revocation is integrated, the introspection response for a revoked delegated token MUST return `"active": false` and MUST NOT include `act` or `sub_profile` claims.
 
 
-# Transaction Tokens
+# Transaction Tokens {#transaction-tokens}
 
 ## Overview
 
@@ -584,7 +584,7 @@ The following example shows a Transaction Token after two hops:
 In this example the booking tool is the current presenter.  It is identified by `req_wl` as the workload that requested the token and by the outermost `act.sub` in the actor profile's subject namespace, and it has its own top-level `cnf.jkt`.  The travel assistant appears as a nested `act` object, showing that it was the prior delegated actor between Alice and the booking tool.
 
 
-## Transaction Token Service Processing
+## Transaction Token Service Processing {#transaction-token-service-processing}
 
 When a TTS receives a token-exchange request to issue or refresh a Transaction Token, and the inbound `subject_token` or `actor_token` contains actor-profile claims:
 
@@ -603,7 +603,7 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
 These same preservation rules apply regardless of whether the inbound credential is a JWT assertion grant, a JWT access token, or a Transaction Token, provided that the TTS supports issuing a Transaction Token from that input.
 
 
-# Dual-Principal Authorization
+# Dual-Principal Authorization {#dual-principal-authorization}
 
 ## Authorization Model
 
@@ -617,9 +617,9 @@ Dual-principal authorization evaluates both principals and the relationship betw
 
 For Transaction Tokens, the primary policy pair remains (`sub`, `act.sub`).  The `req_wl` claim provides workload context from the TTS, while nested `act` objects provide prior-actor context for audit, policy refinement, or chain validation.
 
-## Resource Server Processing
+## Resource Server Processing {#dual-principal-rs-processing}
 
-Resource servers MUST implement dual-principal authorization when the Protected Resource Metadata for the resource includes `dual_principal_authorization_supported: true` ({{Section 10.3}}). Resource servers that do not advertise this capability SHOULD implement dual-principal authorization; omitting it is permitted only when the resource is consumed exclusively by internal, same-domain services whose delegation relationship is validated by separate means outside this profile.  The following steps describe the RECOMMENDED evaluation:
+Resource servers MUST implement dual-principal authorization when the Protected Resource Metadata for the resource includes `dual_principal_authorization_supported: true` ({{protected-resource-metadata}}). Resource servers that do not advertise this capability SHOULD implement dual-principal authorization; omitting it is permitted only when the resource is consumed exclusively by internal, same-domain services whose delegation relationship is validated by separate means outside this profile.  The following steps describe the RECOMMENDED evaluation:
 
 1.  **Evaluate subject authorization**: Determine whether the subject (`sub`) has been granted the requested scope or permission, using the same mechanisms applied to non-delegated tokens.
 
@@ -703,29 +703,29 @@ Example:
 }
 ~~~
 
-# Discovery and Capability Negotiation
+# Discovery and Capability Negotiation {#discovery-capability-negotiation}
 
 ## Overview
 
-This section defines a minimal set of new metadata parameters that, together with the `entity_profiles_supported` extension in {{Section 9}}, allow authorization servers and resource servers to advertise actor-profile support without out-of-band configuration.
+This section defines a minimal set of new metadata parameters that, together with the `entity_profiles_supported` extension in {{entity-profile-extension}}, allow authorization servers and resource servers to advertise actor-profile support without out-of-band configuration.
 
-The design principle is that **capability flags go in this spec's metadata; entity type enumeration goes in {{I-D.mora-oauth-entity-profiles}} metadata**.  Clients MUST use `entity_profiles_supported.actor` ({{Section 9.3}}) to determine which actor entity profiles an AS or RS accepts, and MUST use `actor_profile_token_types_supported` ({{Section 10.2}}) to determine for which token types actor-profile processing applies.
+The design principle is that **capability flags go in this spec's metadata; entity type enumeration goes in {{I-D.mora-oauth-entity-profiles}} metadata**.  Clients MUST use `entity_profiles_supported.actor` ({{entity-profiles-actor-array}}) to determine which actor entity profiles an AS or RS accepts, and MUST use `actor_profile_token_types_supported` ({{authorization-server-metadata}}) to determine for which token types actor-profile processing applies.
 
 
-## Authorization Server Metadata
+## Authorization Server Metadata {#authorization-server-metadata}
 
 One new parameter is defined for use in the AS metadata document ({{RFC8414}}):
 
 `actor_profile_token_types_supported`:
 : OPTIONAL.  A JSON array of token-type URI strings indicating the token types for which the AS applies actor-profile processing as defined in this document, whether as inbound token types, outbound token types, or both.  When a token type appears in this array, the AS supports actor-profile processing for that token type in at least one role.  This parameter alone does not distinguish inbound support from outbound support; clients therefore MUST combine it with profile-specific conventions, endpoint documentation, or prior knowledge of the AS before assuming that a particular transformation is supported.  Defined values are:
 
-  - `urn:ietf:params:oauth:token-type:access_token` — JWT access tokens ({{Section 6}})
-  - `urn:ietf:params:oauth:token-type:jwt` — JWT assertion grants ({{Section 5}})
-  - `urn:ietf:params:oauth:token-type:txn_token` — Transaction Tokens ({{Section 7}})
+  - `urn:ietf:params:oauth:token-type:access_token` — JWT access tokens ({{jwt-access-tokens}})
+  - `urn:ietf:params:oauth:token-type:jwt` — JWT assertion grants ({{jwt-assertion-grants}})
+  - `urn:ietf:params:oauth:token-type:txn_token` — Transaction Tokens ({{transaction-tokens}})
 
   When absent, the AS makes no claim about actor-profile support.
 
-The entity profile types the AS accepts for actors are advertised via the `entity_profiles_supported.actor` array defined in {{Section 9.3}}, not via a separate metadata parameter.  DPoP support is advertised via `dpop_signing_alg_values_supported` per {{RFC9449}}.
+The entity profile types the AS accepts for actors are advertised via the `entity_profiles_supported.actor` array defined in {{entity-profiles-actor-array}}, not via a separate metadata parameter.  DPoP support is advertised via `dpop_signing_alg_values_supported` per {{RFC9449}}.
 
 Example AS metadata fragment:
 
@@ -751,7 +751,7 @@ Example AS metadata fragment:
 }
 ~~~
 
-## Protected Resource Metadata
+## Protected Resource Metadata {#protected-resource-metadata}
 
 Two new parameters are defined for use in Protected Resource Metadata ({{RFC9728}}):
 
@@ -759,7 +759,7 @@ Two new parameters are defined for use in Protected Resource Metadata ({{RFC9728
 : OPTIONAL.  A boolean.  When `true`, the RS requires that inbound tokens carrying an `act` claim conform to the actor profile defined in this document.  The RS MUST reject tokens that carry `act` claims not conforming to this profile.  When `false` or absent, actor-profile conformance is not required.
 
 `dual_principal_authorization_supported`:
-: OPTIONAL.  A boolean.  When `true`, the RS advertises that it evaluates both subject and actor principals for authorization policy as described in {{Section 8}}.  When `false` or absent, the RS makes no declaration about whether it performs such evaluation, and clients MUST NOT rely on dual-principal authorization behavior unless the value is `true`.
+: OPTIONAL.  A boolean.  When `true`, the RS advertises that it evaluates both subject and actor principals for authorization policy as described in {{dual-principal-authorization}}.  When `false` or absent, the RS makes no declaration about whether it performs such evaluation, and clients MUST NOT rely on dual-principal authorization behavior unless the value is `true`.
 
 Clients discover which actor entity profile values the RS's AS will accept by consulting `entity_profiles_supported.actor` in the AS metadata for the AS listed in the resource's `authorization_servers`.
 
@@ -789,16 +789,16 @@ The following steps describe a RECOMMENDED capability-negotiation pattern a clie
 
 3.  **Proceed or abort**: If `actor_profile_required` is `true` at the RS and the client's entity profile is not listed in `entity_profiles_supported.actor` at the AS, the client MUST NOT proceed with a delegation-based request and SHOULD surface the capability mismatch to the invoking system.  If the listed metadata is insufficient to determine whether the AS supports the needed inbound and outbound token roles for the intended transformation, the client SHOULD treat support as indeterminate and rely on deployment-specific knowledge or a trial request.
 
-4.  **Construct and submit token exchange or assertion grant**: The client proceeds per {{Section 5}} for JWT assertion grants or per {{RFC8693}} for token-exchange requests.  The `actor_token` or assertion MUST include the client's `sub_profile` value from the accepted list.
+4.  **Construct and submit token exchange or assertion grant**: The client proceeds per {{jwt-assertion-grants}} for JWT assertion grants or per {{RFC8693}} for token-exchange requests.  The `actor_token` or assertion MUST include the client's `sub_profile` value from the accepted list.
 
-5.  **RS validation**: The RS validates the resulting token according to the rules for that token type and applies dual-principal authorization per {{Section 8}}.  For JWT access tokens, see {{Section 6.3}}.  For Transaction Tokens, see {{I-D.ietf-oauth-transaction-tokens}} together with {{Section 7}} of this document.
+5.  **RS validation**: The RS validates the resulting token according to the rules for that token type and applies dual-principal authorization per {{dual-principal-authorization}}.  For JWT access tokens, see {{jwt-access-token-rs-processing}}.  For Transaction Tokens, see {{I-D.ietf-oauth-transaction-tokens}} together with {{transaction-tokens}} of this document.
 
 
 ## Transaction Token Flows
 
 Transaction Token support is advertised using the `transaction_token_supported` AS metadata parameter and the `transaction_token_required` Protected Resource Metadata parameter, both defined in {{I-D.ietf-oauth-transaction-tokens, Section 8}}. This document does not redefine those parameters.
 
-When Transaction Tokens are used, the actor-profile claims MUST be propagated per {{Section 7.3}}, and the AS MUST list `urn:ietf:params:oauth:token-type:txn_token` in `actor_profile_token_types_supported`.
+When Transaction Tokens are used, the actor-profile claims MUST be propagated per {{transaction-token-service-processing}}, and the AS MUST list `urn:ietf:params:oauth:token-type:txn_token` in `actor_profile_token_types_supported`.
 
 
 # Security Considerations
@@ -820,7 +820,7 @@ Deployments of AI agent systems SHOULD require actor key binding to prevent dele
 
 ## Delegation Depth Limits
 
-Unbounded delegation chains increase attack surface and complicate policy evaluation.  This document specifies a maximum depth of eight nested `act` objects ({{Section 4.4}}).  Implementations that encounter chains exceeding this limit MUST reject the token to prevent denial-of-service through chain parsing.
+Unbounded delegation chains increase attack surface and complicate policy evaluation.  This document specifies a maximum depth of eight nested `act` objects ({{delegation-chains}}).  Implementations that encounter chains exceeding this limit MUST reject the token to prevent denial-of-service through chain parsing.
 
 ## Sub_profile Trust
 
@@ -836,14 +836,14 @@ Token revocation ({{RFC7009}}) applies to individual tokens but does not revoke 
 
 Authorization servers SHOULD maintain a delegation grant registry mapping (subject, actor) pairs to active delegation relationships. When a delegation grant is revoked, the AS MUST refuse to issue new tokens for that (subject, actor) pair and SHOULD proactively revoke any outstanding refresh tokens associated with that delegation.
 
-Resource servers in security-sensitive deployments SHOULD use token introspection ({{RFC7662}}, {{Section 6.4}}) rather than local JWT validation so that revocation state is checked on each request. Implementations MUST NOT use delegation chain depth as a rationale for skipping revocation checks.
+Resource servers in security-sensitive deployments SHOULD use token introspection ({{RFC7662}}, {{token-introspection}}) rather than local JWT validation so that revocation state is checked on each request. Implementations MUST NOT use delegation chain depth as a rationale for skipping revocation checks.
 
 Operators deploying AI agent systems MUST provide end-users with a mechanism to enumerate and revoke active delegation grants.
 
 
 ## Confused Deputy and Dual-Principal Bypass
 
-A resource server that evaluates only the subject principal when an `act` claim is present is susceptible to a confused deputy attack where a malicious actor exploits a subject's pre-existing permissions without the subject's ongoing consent.  Resource servers that advertise `dual_principal_authorization_supported: true` MUST implement dual-principal authorization per {{Section 8}}.  Other resource servers SHOULD implement it as well.  New deployments MUST NOT intentionally omit dual-principal authorization except under the conditions stated in {{Section 8.2}}.
+A resource server that evaluates only the subject principal when an `act` claim is present is susceptible to a confused deputy attack where a malicious actor exploits a subject's pre-existing permissions without the subject's ongoing consent.  Resource servers that advertise `dual_principal_authorization_supported: true` MUST implement dual-principal authorization per {{dual-principal-authorization}}.  Other resource servers SHOULD implement it as well.  New deployments MUST NOT intentionally omit dual-principal authorization except under the conditions stated in {{dual-principal-rs-processing}}.
 
 ## Token Substitution
 
@@ -874,7 +874,7 @@ This document requests IANA to register the following value in the "OAuth Author
 *  Metadata Name: `actor_profile_token_types_supported`
 *  Metadata Description: JSON array of token-type URIs for which the AS applies actor-profile processing per this document
 *  Change Controller: IETF
-*  Reference: {{Section 10.2}} of this document
+*  Reference: {{authorization-server-metadata}} of this document
 
 
 ## OAuth Protected Resource Metadata Registry
@@ -884,12 +884,12 @@ This document requests IANA to register the following values in the "OAuth Prote
 *  Metadata Name: `actor_profile_required`
 *  Metadata Description: Boolean indicating whether the RS requires actor-profile conformance for tokens carrying `act` claims
 *  Change Controller: IETF
-*  Reference: {{Section 10.3}} of this document
+*  Reference: {{protected-resource-metadata}} of this document
 
 *  Metadata Name: `dual_principal_authorization_supported`
 *  Metadata Description: Boolean indicating whether the RS performs dual-principal authorization per this document
 *  Change Controller: IETF
-*  Reference: {{Section 10.3}} of this document
+*  Reference: {{protected-resource-metadata}} of this document
 
 
 ## OAuth Entity Profiles Registry
@@ -908,19 +908,19 @@ The following existing registry entries are updated to add the "Actor Profile" u
 
 *  Entity Profile Name: `user`
 *  Added Usage Location: "Actor Profile"
-*  Reference: {{Section 9.2}} of this document
+*  Reference: {{actor-usage-location}} of this document
 
 *  Entity Profile Name: `service`
 *  Added Usage Location: "Actor Profile"
-*  Reference: {{Section 9.2}} of this document
+*  Reference: {{actor-usage-location}} of this document
 
 *  Entity Profile Name: `ai_agent`
 *  Added Usage Location: "Actor Profile"
-*  Reference: {{Section 9.2}} of this document
+*  Reference: {{actor-usage-location}} of this document
 
 ## Extension to entity_profiles_supported Metadata
 
-Upon publication of {{I-D.mora-oauth-entity-profiles}} as an RFC, this document requests that the definition of the `entity_profiles_supported` AS metadata parameter ({{I-D.mora-oauth-entity-profiles, Section 5}}) be updated to allow an optional `actor` member alongside the existing `client` and `subject` members, as defined in {{Section 9.3}} of this document.  Until that publication, implementations SHOULD treat the `actor` array extension as defined in {{Section 9.3}} as a vendor-agreed extension to the base parameter.
+Upon publication of {{I-D.mora-oauth-entity-profiles}} as an RFC, this document requests that the definition of the `entity_profiles_supported` AS metadata parameter ({{I-D.mora-oauth-entity-profiles, Section 5}}) be updated to allow an optional `actor` member alongside the existing `client` and `subject` members, as defined in {{entity-profiles-actor-array}} of this document.  Until that publication, implementations SHOULD treat the `actor` array extension as defined in {{entity-profiles-actor-array}} as a vendor-agreed extension to the base parameter.
 
 
 
@@ -934,7 +934,7 @@ All claim values, JKT thumbprints, and domain names are synthetic.
 
 ## Scenario and Parties
 
-Alice's travel-assistant agent authenticates to the Enterprise IdP AS to obtain an ID Token.  The agent then performs a Token Exchange at the same AS to obtain the ID-JAG.  The ID-JAG is then presented to the Travel Provider AS using the JWT bearer grant, as described in {{Section 5}}.  The agent exchanges the ID-JAG for an access token at the Travel Provider AS and calls the Booking Tool API.  The Booking Tool exchanges the access token for a Transaction Token to call an internal inventory service.
+Alice's travel-assistant agent authenticates to the Enterprise IdP AS to obtain an ID Token.  The agent then performs a Token Exchange at the same AS to obtain the ID-JAG.  The ID-JAG is then presented to the Travel Provider AS using the JWT bearer grant, as described in {{jwt-assertion-grants}}.  The agent exchanges the ID-JAG for an access token at the Travel Provider AS and calls the Booking Tool API.  The Booking Tool exchanges the access token for a Transaction Token to call an internal inventory service.
 
 ~~~
 Enterprise domain                 Travel Provider domain
@@ -981,7 +981,7 @@ DPoP key bindings:
 
 ## Discovery and Capability Negotiation
 
-The agent checks the Travel Provider AS metadata ({{Section 10}}) to confirm actor-profile support before initiating the flow:
+The agent checks the Travel Provider AS metadata ({{discovery-capability-negotiation}}) to confirm actor-profile support before initiating the flow:
 
 ~~~json
 {
@@ -1017,7 +1017,7 @@ Alice authenticates to the Enterprise IdP AS.  The profile-relevant claim is `su
 
 ## Step 2: Enterprise Token Exchange — ID Token to ID-JAG
 
-The agent presents Alice's ID Token and a self-signed actor JWT to the Enterprise IdP AS.  The actor JWT carries the agent's `sub_profile` and DPoP key binding per {{Section 5.1}}:
+The agent presents Alice's ID Token and a self-signed actor JWT to the Enterprise IdP AS.  The actor JWT carries the agent's `sub_profile` and DPoP key binding per {{jwt-assertion-grants-structure}}:
 
 ~~~json
 {
@@ -1049,7 +1049,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &scope=booking%3Acreate
 ~~~
 
-The Enterprise IdP AS applies scope reduction and validates the actor information according to the output-token rules for the JWT it is issuing.  In this example, it verifies DPoP possession against `cnf.jkt` in the actor JWT ({{Section 5.2}}) and issues the ID-JAG as a JWT output of token exchange with the actor chain established per {{Section 4}}:
+The Enterprise IdP AS applies scope reduction and validates the actor information according to the output-token rules for the JWT it is issuing.  In this example, it verifies DPoP possession against `cnf.jkt` in the actor JWT ({{jwt-assertion-grants-processing}}) and issues the ID-JAG as a JWT output of token exchange with the actor chain established per {{actor-profile}}:
 
 ~~~json
 {
@@ -1077,7 +1077,7 @@ The `act` object records the agent as the authorized actor.  Both `cnf.jkt` (top
 
 ## Step 3: Agent Exchanges ID-JAG for Access Token at Travel Provider AS
 
-The agent presents the ID-JAG as a JWT Bearer authorization grant ({{RFC7523}}) to the Travel Provider AS.  In this usage, the ID-JAG functions as a profiled JWT assertion grant, so the processing rules in {{Section 5}} apply to it:
+The agent presents the ID-JAG as a JWT Bearer authorization grant ({{RFC7523}}) to the Travel Provider AS.  In this usage, the ID-JAG functions as a profiled JWT assertion grant, so the processing rules in {{jwt-assertion-grants}} apply to it:
 
 ~~~
 POST /token HTTP/1.1
@@ -1090,7 +1090,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer
 &scope=booking%3Acreate
 ~~~
 
-The Travel Provider AS performs actor-profile processing per {{Section 5.2}}: it verifies the `act.cnf.jkt` DPoP binding and checks that `act.sub_profile` (`ai_agent`) is permitted as an actor for the requested scope.  It issues an access token preserving the actor chain:
+The Travel Provider AS performs actor-profile processing per {{jwt-assertion-grants-processing}}: it verifies the `act.cnf.jkt` DPoP binding and checks that `act.sub_profile` (`ai_agent`) is permitted as an actor for the requested scope.  It issues an access token preserving the actor chain:
 
 ~~~json
 {
@@ -1113,7 +1113,7 @@ The Travel Provider AS performs actor-profile processing per {{Section 5.2}}: it
 }
 ~~~
 
-Alice's `sub` and `sub_profile` are preserved verbatim from the ID-JAG ({{Section 6.2}}).  The Travel Provider AS does not translate or substitute the enterprise subject identifier.
+Alice's `sub` and `sub_profile` are preserved verbatim from the ID-JAG ({{jwt-access-token-propagation}}).  The Travel Provider AS does not translate or substitute the enterprise subject identifier.
 
 
 ## Step 4: Agent Calls Booking Tool API
@@ -1130,7 +1130,7 @@ Content-Type: application/json
 {"origin": "SFO", "destination": "NYC", "depart": "2026-04-15"}
 ~~~
 
-The Booking Tool RS applies dual-principal authorization ({{Section 8}}): it evaluates both Alice (`sub`, `sub_profile: user`) and the Travel Assistant (`act.sub`, `sub_profile: ai_agent`). Because the RS advertises `dual_principal_authorization_supported: true`, both principals MUST be independently authorized.  The `act.sub_profile` value is checked against `entity_profiles_supported.actor` per {{Section 9}}.
+The Booking Tool RS applies dual-principal authorization ({{dual-principal-authorization}}): it evaluates both Alice (`sub`, `sub_profile: user`) and the Travel Assistant (`act.sub`, `sub_profile: ai_agent`). Because the RS advertises `dual_principal_authorization_supported: true`, both principals MUST be independently authorized.  The `act.sub_profile` value is checked against `entity_profiles_supported.actor` per {{entity-profile-extension}}.
 
 
 ## Step 5: Booking Tool Exchanges Access Token for Transaction Token
@@ -1152,7 +1152,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &rctx={"req_ip":"198.51.100.42","req_time":1743375650}
 ~~~
 
-The TTS applies actor-profile processing per {{Section 7.3}}: it preserves `sub` and `sub_profile` from the subject token, sets `req_wl` to the authenticated Booking Tool, creates a new outermost `act` object for the Booking Tool, nests the subject token's existing `act` claim beneath it, and re-binds `cnf.jkt` to the Booking Tool's DPoP key (`ToolJKT`):
+The TTS applies actor-profile processing per {{transaction-token-service-processing}}: it preserves `sub` and `sub_profile` from the subject token, sets `req_wl` to the authenticated Booking Tool, creates a new outermost `act` object for the Booking Tool, nests the subject token's existing `act` claim beneath it, and re-binds `cnf.jkt` to the Booking Tool's DPoP key (`ToolJKT`):
 
 ~~~json
 {
@@ -1189,7 +1189,7 @@ The TTS applies actor-profile processing per {{Section 7.3}}: it preserves `sub`
 }
 ~~~
 
-The DPoP key rotates at this step: `cnf.jkt` is now `ToolJKT`, and the outermost `act.cnf.jkt` matches it because the Booking Tool is now the current actor.  The nested `act.act.cnf.jkt` retains the agent's original key, illustrating the multi-hop key-rotation property described in {{Section 4.5}}.
+The DPoP key rotates at this step: `cnf.jkt` is now `ToolJKT`, and the outermost `act.cnf.jkt` matches it because the Booking Tool is now the current actor.  The nested `act.act.cnf.jkt` retains the agent's original key, illustrating the multi-hop key-rotation property described in {{sender-constraint}}.
 
 
 ## Step 6: Booking Tool Calls Inventory Service
@@ -1201,7 +1201,7 @@ Txn-Token: <txn-token>
 DPoP: <ToolJKT-proof>
 ~~~
 
-The Inventory Service applies dual-principal authorization ({{Section 8}}): Alice (`sub`) governs data access policy (e.g., travel tier); the Booking Tool (`act.sub`) is the authorized internal workload.  The `req_wl` claim provides consistent TTS workload context for the same service in this example.  The nested `act.act.sub` (Travel Assistant) is carried as prior delegation context and is not evaluated for access control at this internal tier, consistent with the guidance on inner actors in {{Section 8.2}}.
+The Inventory Service applies dual-principal authorization ({{dual-principal-authorization}}): Alice (`sub`) governs data access policy (e.g., travel tier); the Booking Tool (`act.sub`) is the authorized internal workload.  The `req_wl` claim provides consistent TTS workload context for the same service in this example.  The nested `act.act.sub` (Travel Assistant) is carried as prior delegation context and is not evaluated for access control at this internal tier, consistent with the guidance on inner actors in {{dual-principal-rs-processing}}.
 
 
 ## Summary of Token Transformations
