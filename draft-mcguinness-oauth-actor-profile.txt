@@ -1481,6 +1481,15 @@ Table of Contents
    prior-actor context for audit, policy refinement, or chain
    validation.
 
+   This specification defines dual-principal authorization as the
+   interoperable baseline.  Deployments MAY apply multi-principal
+   authorization under local policy by considering one or more nested
+   act objects as additional authorization, trust, or risk inputs in
+   addition to sub and the outermost act.sub.  This specification does
+   not require or standardize such evaluation, and clients MUST NOT
+   assume that nested actors will be used for authorization unless
+   deployment-specific agreements say otherwise.
+
 8.2.  Resource Server Processing
 
    Dual-principal authorization is OPTIONAL but RECOMMENDED for
@@ -1526,6 +1535,12 @@ Table of Contents
    Resource servers that do not require dual-principal authorization
    SHOULD still log or otherwise account for delegated actor information
    when it is relevant to audit or trust decisions.
+
+   When a deployment applies multi-principal authorization under local
+   policy, the outermost act.sub remains the baseline interoperable
+   actor identifier, while nested act objects are additional local-
+   policy inputs only.  Failure semantics, ordering, and weighting for
+   those nested actors are deployment-specific.
 
 8.3.  Policy Claims Summary
 
