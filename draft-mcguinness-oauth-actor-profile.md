@@ -435,7 +435,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 1.  The AS MUST validate the assertion per {{RFC7523}}.
 
-2.  The AS MUST determine that the assertion issuer is trusted to assert the relationship between the JWT `sub` and `act.sub`.  If the issuer is not the same as `act.sub`, the AS MUST apply local policy to determine whether the issuer is authorized to speak for that actor.
+2.  The AS MUST determine that the assertion issuer is trusted to assert the relationship between the JWT `sub` and `act.sub`.  If the issuer does not identify the same logical entity as `act.sub` under local policy, the AS MUST apply local policy to determine whether the issuer is authorized to speak for that actor.
 
 3.  The AS MUST verify that the `act.iss` value is authoritative for the identifier namespace of `act.sub`.  An AS MUST establish this using one or more of the following mechanisms:
 
@@ -448,7 +448,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 4.  The AS MUST verify that the `act.sub` is authorized to act on behalf of the assertion's `sub`, using the AS's own policy (for example, a pre-registered delegation grant, a consent record, or a policy rule).
 
-5.  If the inbound assertion's `act` object itself contains a nested `act` claim (indicating that the asserted actor is itself a delegatee), the AS MUST determine whether to propagate that inner chain into the issued token.  The AS SHOULD propagate the inner chain by preserving the nested structure in the issued token, provided that the total resulting chain depth does not exceed the limit in {{delegation-chains}}.  If the AS does not accept pre-chained assertions, it MUST reject the request.  An AS that propagates inner actor chains MUST independently validate that each inner `act.sub` was asserted by a trusted issuer before including it in the issued token.
+5.  If the inbound assertion's `act` object itself contains a nested `act` claim (indicating that the asserted actor is itself a delegatee), the AS MUST determine whether to propagate that inner chain into the issued token.  The AS SHOULD propagate the inner chain by preserving the nested structure in the issued token, provided that the total resulting chain depth does not exceed the limit in {{delegation-chains}}.  If the AS does not accept pre-chained assertions, it MUST reject the request.  An AS that propagates inner actor chains MUST independently validate each inner `act.sub` and `act.iss` before including that chain in the issued token.
 
 6.  If the `act` object contains a `cnf` claim indicating a sender-constraining key, the AS MUST verify that the token request demonstrates possession of the corresponding key, using DPoP ({{RFC9449}}) or mutual TLS ({{RFC8705}}) consistent with token endpoint policy.  If possession cannot be verified, the AS MUST reject the request.
 
@@ -621,7 +621,7 @@ Transaction Tokens {{I-D.ietf-oauth-transaction-tokens}} are short-lived JWTs th
 A Transaction Token contains the following claims.  Claims marked REQUIRED are defined as such by {{I-D.ietf-oauth-transaction-tokens}}; claims marked OPTIONAL may be omitted at the issuer's discretion.
 
 `iss` (OPTIONAL):
-: Issuer of the Transaction Token.  May be omitted when all tokens are scoped to a single Trust Domain.
+: Issuer of the Transaction Token.  May be omitted when all tokens are scoped to a single Trust Domain.  When `iss` is omitted, recipients MUST rely on the trust-domain and issuer-identification rules of {{I-D.ietf-oauth-transaction-tokens}} and local deployment configuration rather than the generic outer-token `iss` processing rules in this document.
 
 `aud` (REQUIRED):
 : Identifies the Trust Domain in which the Transaction Token is valid.
@@ -639,7 +639,7 @@ A Transaction Token contains the following claims.  Claims marked REQUIRED are d
 : The transaction authorization scope, as defined by the TTS for the specific transaction.
 
 `txn` (REQUIRED):
-: A transaction identifier that links all tokens in the same business transaction, as defined in {{RFC8417}}.
+: A transaction identifier that links all tokens in the same business transaction, as defined in {{I-D.ietf-oauth-transaction-tokens}}.
 
 `req_wl` (REQUIRED):
 : The workload identifier of the workload that requested the Transaction Token from the TTS.  When a Transaction Token is exchanged for a replacement, `req_wl` is updated to reflect the new requesting workload per {{I-D.ietf-oauth-transaction-tokens}}.  This claim provides TTS-level workload context and is not a substitute for `act.sub`; see {{actor-claim-in-transaction-tokens}}.
@@ -923,8 +923,7 @@ The following steps describe a RECOMMENDED capability-negotiation pattern a clie
 
 5.  **RS validation**: The RS validates the resulting token according to the rules for that token type and applies local delegated-token policy.  If the RS requires dual-principal authorization, it applies that policy per {{dual-principal-authorization}}.  For JWT access tokens, see {{jwt-access-token-rs-processing}}.  For Transaction Tokens, see {{I-D.ietf-oauth-transaction-tokens}} together with {{transaction-tokens}} of this document.
 
-## Migration from Implicit to Explicit Delegation
-{#migration-implicit-explicit}
+## Migration from Implicit to Explicit Delegation {#migration-implicit-explicit}
 
 Deployments that currently rely on implicit delegation can migrate incrementally to this profile.  During migration, existing client-oriented inputs such as `client_id`, `azp`, and authenticated client context MAY remain in use, but the outermost `act.sub` becomes the authoritative explicit delegation signal whenever `act` is present.
 
@@ -1041,7 +1040,7 @@ Resource servers in security-sensitive deployments SHOULD use token introspectio
 
 Operators deploying AI agent systems MUST provide end-users with a mechanism to enumerate and revoke active delegation grants.
 
-## Client Identity and Delegation
+## Client Identity and Delegation {#client-identity-delegation}
 
 Client identity, such as `client_id`, `azp`, or authenticated client context, is widely used in deployed systems as an authorization input.  Under this specification, those values remain auxiliary client-identity signals, while the outermost `act.sub` is the explicit delegated-actor signal when present.  Client identity alone does not prove delegation, and implementations MUST NOT treat it as a substitute for `act`.  The detailed migration and reconciliation rules are defined in {{migration-implicit-explicit}}.
 
@@ -1089,7 +1088,7 @@ This document requests IANA to register the following value in the "OAuth Author
 This document requests IANA to register the following values in the "OAuth Protected Resource Metadata" registry ({{RFC9728}}):
 
 *  Metadata Name: `actor_profile_required`
-*  Metadata Description: Boolean indicating whether the RS requires actor-profile conformance for tokens carrying `act` claims
+*  Metadata Description: Boolean indicating whether the RS requires delegated tokens to carry an `act` claim conforming to this profile
 *  Change Controller: IETF
 *  Reference: {{protected-resource-metadata}} of this document
 
