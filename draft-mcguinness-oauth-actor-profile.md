@@ -195,6 +195,8 @@ The `sub` claim of a JWT access token {{RFC9068}} is routinely overloaded to rep
 
 {{RFC8693}} defines the `act` claim for tokens obtained via token exchange but does not extend its semantics to JWT assertion grants or JWT access tokens issued by other means.  Deployments that do not use token exchange (for example, those using JWT client assertions for service-to-service calls) have no standard location for actor information.  Even when `act` is present, there is no standard sub-claim that identifies the entity type of the actor.
 
+Many existing deployments therefore rely on implicit delegation: the OAuth client identity, such as `client_id` or `azp`, is treated as evidence of the acting party, and authorization policy infers delegation from the fact that the client obtained or presented the token.  That approach can work within tightly controlled deployments, but it does not explicitly encode the delegated actor relationship in the token itself.  This specification defines explicit delegation by representing the delegated actor directly in `act`, so that delegation semantics are portable across issuers, token transformations, and resource servers.
+
 ## Missing Proof-of-Possession Binding for Actors
 
 Sender-constrained tokens {{RFC9449}}{{RFC8705}} bind the token to a proof-of-possession key identified in the top-level `cnf` claim.  When delegation is present, the presenter is the actor, not the original subject.  There is no standard mechanism to separately bind the actor's key within the `act` claim, leaving implementations to use the top-level `cnf` for both the token holder and the actor simultaneously, which is semantically ambiguous in chained delegation scenarios.
@@ -348,6 +350,8 @@ A JWT used as an authorization grant {{RFC7521}}{{RFC7523}} MAY include an `act`
 *  The `act` object identifies the entity presenting the assertion or on whose behalf the assertion issuer is speaking.
 *  The `iss` of the JWT MUST identify the assertion issuer, and that issuer MUST be authorized by local policy to assert the relationship between `sub` and `act.sub`.
 
+When the assertion or request context also identifies an OAuth client via `client_id`, `azp`, or an authenticated client credential, that client identity MUST NOT be treated as a substitute for `act.sub`; see step 6 in {{jwt-assertion-grants-processing}}.
+
 An Identity Assertion JWT Authorization Grant (ID-JAG) is a JWT that can be produced by token exchange and then presented using the JWT bearer grant.  When an ID-JAG is used as a JWT bearer assertion grant, this section applies to it.  In that usage, the ID-JAG carries delegation information using this profile.  The term and token type originate in {{I-D.ietf-oauth-identity-assertion-authz-grant}}.
 
 ~~~json
@@ -395,9 +399,11 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 5.  If the `act` object contains a `cnf` claim indicating a sender-constraining key, the AS MUST verify that the token request demonstrates possession of the corresponding key, using DPoP ({{RFC9449}}) or mutual TLS ({{RFC8705}}) consistent with token endpoint policy.  If possession cannot be verified, the AS MUST reject the request.
 
-6.  If the AS accepts the assertion, it MUST propagate the actor information into the issued token according to the rules for the output token type being issued.  For JWT access tokens, see {{jwt-access-token-propagation}}.  For Transaction Tokens, see {{transaction-token-service-processing}}.  When the output is another JWT assertion grant profile, the resulting assertion MUST preserve the validated actor information subject to local policy and the chain-depth limit in {{delegation-chains}}.
+6.  If the assertion or authenticated request context identifies an OAuth client separately from `act.sub`, the AS MAY use that client identity as an additional authorization input.  The AS MUST NOT infer that the client is authorized to act on behalf of the subject solely because the client initiated the request.  When the client identity is intended to identify the same acting party as `act.sub`, the AS MUST validate semantic consistency between the two identifiers before issuing a token.
 
-7.  The AS MAY add additional `sub_profile` or `act` metadata to the issued token based on its own knowledge of the principals.
+7.  If the AS accepts the assertion, it MUST propagate the actor information into the issued token according to the rules for the output token type being issued.  For JWT access tokens, see {{jwt-access-token-propagation}}.  For Transaction Tokens, see {{transaction-token-service-processing}}.  When the output is another JWT assertion grant profile, the resulting assertion MUST preserve the validated actor information subject to local policy and the chain-depth limit in {{delegation-chains}}.
+
+8.  The AS MAY add additional `sub_profile` or `act` metadata to the issued token based on its own knowledge of the principals.
 
 
 ## Error Responses {#assertion-error-responses}
@@ -439,12 +445,15 @@ When none of these conditions hold, an `act` claim MUST NOT be added solely on t
 
 The `azp` claim ({{RFC9068, Section 2.2}}) identifies the OAuth 2.0 client that requested the token.  In deployments where the requesting client is also the acting party, `azp` and the outermost `act.sub` can refer to the same logical entity using different identifier formats.  This profile does not require that relationship for all JWT access tokens.  However, when an issuer uses both claims to represent the same acting party, it MUST ensure that they are semantically consistent.
 
+Deployments that use a `client_id` claim in JWT access tokens, or otherwise rely on the authenticated OAuth client identity when processing a token, MAY continue to use that client identity as an authorization input.  However, `client_id` and `azp` identify the OAuth client, not the delegation relationship itself.  A resource server or authorization server MUST NOT treat `client_id` or `azp` alone as proof that the client is authorized to act on behalf of `sub`.  When `client_id` or `azp` is intended to identify the same logical party as the outermost `act.sub`, the issuer MUST ensure semantic consistency between those identifiers, and a recipient that relies on both MUST reject the token if they cannot be reconciled under local policy.
+
 The following example shows a JWT access token with actor profile claims.  Here the top-level bearer key (`NzbLsX...`) and the actor's key (`NzbLsX...`) are identical because in this single-hop case the actor is the bearer; in multi-hop chains each actor carries a distinct key, as shown in the detailed cross-domain example in {{appendix-cross-domain}}:
 
 ~~~json
 {
   "iss": "https://as.resource-domain.example",
   "sub": "https://idp.enterprise.example/users/alice",
+  "client_id": "travel-assistant-client-id",
   "azp": "https://agents.example.com/travel-assistant",
   "aud": "https://api.resource-domain.example",
   "jti": "xyz987",
@@ -464,7 +473,7 @@ The following example shows a JWT access token with actor profile claims.  Here 
 }
 ~~~
 
-The top-level `cnf.jkt` identifies the key the immediate bearer (the travel assistant) MUST use to prove possession.  The `act.cnf.jkt` carries the same value in this single-actor scenario because the actor is the sole bearer; in a multi-hop chain these values will differ for each hop.
+The top-level `cnf.jkt` identifies the key the immediate bearer (the travel assistant) MUST use to prove possession.  The `act.cnf.jkt` carries the same value in this single-actor scenario because the actor is the sole bearer; in a multi-hop chain these values will differ for each hop.  The `client_id` and `azp` claims identify the OAuth client; `act.sub` is the authoritative delegated-actor identifier.  When they refer to the same logical entity, the issuer MUST ensure semantic consistency as described above.
 
 
 ## Propagation from Assertion Grants and Token Exchange {#jwt-access-token-propagation}
@@ -506,13 +515,15 @@ When the resource server accepts delegated tokens, it MUST:
 
 3.  Extract the `sub` and the outermost `act.sub` as the two principals relevant for authorization policy.
 
-4.  Apply dual-principal authorization per {{dual-principal-authorization}} when required by local policy.  Resource servers that do not require dual-principal authorization SHOULD still evaluate the actor as part of authorization, audit, or trust decisions.
+4.  If the token carries `client_id`, `azp`, or both, treat those as client-identity inputs only.  When local policy uses client identity in authorization, the RS MUST ensure that any client identifier it relies on is semantically consistent with the outermost `act.sub` whenever both are intended to identify the same acting party.  The RS MUST NOT use `client_id` or `azp` as a substitute for `act.sub`.
 
-5.  Optionally traverse inner `act` objects to audit the full delegation chain; inner actors are informational and SHOULD NOT be required to present proof of possession at the resource server.
+5.  Apply dual-principal authorization per {{dual-principal-authorization}} when required by local policy.  Resource servers that do not require dual-principal authorization SHOULD still evaluate the actor as part of authorization, audit, or trust decisions.
 
-6.  If the resource server relies on inner `act` objects for audit, policy refinement, or trust decisions, it MUST do so only after validating the outer token issuer and only when local policy trusts that issuer to carry forward the asserted actor chain.  The RS MUST NOT treat nested actor issuers as independently authenticated merely because their identifiers appear in inner `act.iss` values.
+6.  Optionally traverse inner `act` objects to audit the full delegation chain; inner actors are informational and SHOULD NOT be required to present proof of possession at the resource server.
 
-7.  If any of the above steps fail, return an appropriate error response per {{RFC6750, Section 3.1}}:
+7.  If the resource server relies on inner `act` objects for audit, policy refinement, or trust decisions, it MUST do so only after validating the outer token issuer and only when local policy trusts that issuer to carry forward the asserted actor chain.  The RS MUST NOT treat nested actor issuers as independently authenticated merely because their identifiers appear in inner `act.iss` values.
+
+8.  If any of the above steps fail, return an appropriate error response per {{RFC6750, Section 3.1}}:
 
     *  If signature, `iss`, `aud`, or temporal validation fails: HTTP 401 with `WWW-Authenticate: Bearer error="invalid_token"`.
     *  If DPoP proof validation for `cnf.jkt` fails: HTTP 401 per {{RFC9449, Section 7}}.
@@ -873,6 +884,14 @@ Resource servers in security-sensitive deployments SHOULD use token introspectio
 
 Operators deploying AI agent systems MUST provide end-users with a mechanism to enumerate and revoke active delegation grants.
 
+## Client Identity and Delegation
+
+Existing deployments often use OAuth client identity, such as `client_id` or `azp`, as an authorization input when a client acts on behalf of a subject.  This specification supports that deployed model, but client identity alone does not prove delegation.  An authorization decision that relies on client identity without confirming the delegated actor relationship can create a confused deputy condition.
+
+In such deployments, delegation is often implicit: the fact that the client obtained or presented the token is treated as evidence that the client is the actor.  This specification changes that model to explicit delegation by representing the acting party in `act`, while still permitting client identity to be used as an additional policy input.
+
+When a token carries `client_id`, `azp`, or both in addition to `act`, issuers and recipients MAY use client identity as an additional policy input.  They MUST NOT treat client identity as a substitute for the outermost `act.sub`.  When client identity and `act.sub` are intended to identify the same logical acting party, implementations MUST apply trusted mapping rules and reject tokens or requests that cannot be reconciled under policy.
+
 
 ## Confused Deputy and Dual-Principal Bypass
 
@@ -1089,6 +1108,7 @@ The Enterprise IdP AS applies scope reduction and validates the actor informatio
   "iss": "https://as.enterprise.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "sub_profile": "user",
+  "client_id": "travel-assistant-client-id",
   "azp": "https://agents.enterprise.example/travel-assistant",
   "aud": "https://as.travel-provider.example/token",
   "jti": "ent-idj-20260401-001",
@@ -1105,7 +1125,7 @@ The Enterprise IdP AS applies scope reduction and validates the actor informatio
 }
 ~~~
 
-The `act` object records the agent as the authorized actor.  Both `cnf.jkt` (top-level, for DPoP binding) and `act.cnf.jkt` (actor key reference) are set to `AgentJKT` because the agent is both the bearer and the acting principal at this stage.
+The `act` object records the agent as the authorized actor.  The `client_id` and `azp` values identify the OAuth client used in the exchange, while `act.sub` identifies the delegated actor.  In this example they all refer to the same logical party under local policy.  Both `cnf.jkt` (top-level, for DPoP binding) and `act.cnf.jkt` (actor key reference) are set to `AgentJKT` because the agent is both the bearer and the acting principal at this stage.
 
 
 ## Step 3: Agent Exchanges ID-JAG for Access Token at Travel Provider AS
@@ -1130,6 +1150,7 @@ The Travel Provider AS performs actor-profile processing per {{jwt-assertion-gra
   "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "sub_profile": "user",
+  "client_id": "travel-assistant-client-id",
   "azp": "https://agents.enterprise.example/travel-assistant",
   "aud": "https://api.travel-provider.example",
   "jti": "tp-at-20260401-001",
@@ -1146,7 +1167,7 @@ The Travel Provider AS performs actor-profile processing per {{jwt-assertion-gra
 }
 ~~~
 
-Alice's `sub` and `sub_profile` are preserved verbatim from the ID-JAG ({{jwt-access-token-propagation}}).  The Travel Provider AS does not translate or substitute the enterprise subject identifier.
+Alice's `sub` and `sub_profile` are preserved verbatim from the ID-JAG ({{jwt-access-token-propagation}}).  The Travel Provider AS does not translate or substitute the enterprise subject identifier.  The `client_id` and `azp` values continue to identify the OAuth client, but they do not replace `act.sub` as the authoritative delegated-actor identifier.
 
 
 ## Step 4: Agent Calls Booking Tool API
