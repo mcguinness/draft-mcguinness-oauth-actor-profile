@@ -81,6 +81,8 @@ informative:
     date: 2026-03-02
     target: https://www.ietf.org/archive/id/draft-ietf-oauth-identity-assertion-authz-grant-02.txt
   I-D.ietf-oauth-security-topics:
+  I-D.ietf-wimse-workload-creds:
+  I-D.ietf-wimse-wpt:
   OpenID.Core:
     title: "OpenID Connect Core 1.0"
     author:
@@ -726,7 +728,7 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
 
 5.  The TTS SHOULD include `sub_profile` in any new `act` object it creates, based on its knowledge of the new presenter's entity type.
 
-6.  The TTS MUST set the top-level `cnf.jkt` to the key of the new authorized presenter, as demonstrated by the accompanying DPoP proof or mTLS certificate.
+6.  The TTS MUST set the top-level confirmation claim to bind the Transaction Token to the new authorized presenter according to the proof mechanism used by the Transaction Token deployment.  When that mechanism conveys a public-key thumbprint in `cnf.jkt`, the TTS MUST set `cnf.jkt` to the key of the new authorized presenter.  In WIMSE-based deployments, this presenter binding is typically established using a Workload Identity Token (WIT) conveyed in the `Workload-Identity-Token` header field together with a Workload Proof Token (WPT) conveyed in the `Workload-Proof-Token` header field.  The WPT proves possession of the private key associated with the WIT and can bind accompanying tokens, including a Transaction Token, through token-hash claims such as `tth` {{I-D.ietf-wimse-workload-creds}}{{I-D.ietf-wimse-wpt}}.
 
 7.  The TTS MUST set the Transaction Token `scope` according to the authorization semantics defined by {{I-D.ietf-oauth-transaction-tokens}} for the requested transaction, and it MAY include `tctx` or `rctx` as appropriate for downstream services.
 
@@ -1138,7 +1140,7 @@ Upon publication of {{I-D.mora-oauth-entity-profiles}} as an RFC, this document 
 
 # Cross-Domain AI Agent Flow: ID Token to Transaction Token {#appendix-cross-domain}
 
-This appendix traces a single user request across two trust domains, highlighting the actor-profile claim structures and processing requirements specific to this specification.  Standard validation steps (JWT signature verification, DPoP proof binding, Token Exchange mechanics) are delegated to {{RFC7519}}, {{RFC9449}}, and {{RFC8693}} respectively.
+This appendix traces a single user request across two trust domains, highlighting the actor-profile claim structures and processing requirements specific to this specification.  Standard validation steps (JWT signature verification, sender-constrained access token proof, Transaction Token presenter proof, and Token Exchange mechanics) are delegated to the underlying token specifications and deployment profile.
 
 All claim values, JKT thumbprints, and domain names are synthetic.
 
@@ -1166,7 +1168,7 @@ Enterprise IdP AS ─► ID-JAG
                                                  │ (5) Token Exchange (AT → Transaction Token)
                                                  ▼
                                             Travel Provider TTS ─► Transaction Token
-                                                 │ (6) Transaction Token + DPoP
+                                                 │ (6) Transaction Token + WIMSE proof
                                                  ▼
                                             Inventory Service (RS)
 ~~~
@@ -1181,7 +1183,7 @@ Enterprise IdP AS ─► ID-JAG
 | Booking Tool | `https://tools.travel-provider.example/booking-tool` | Travel Provider |
 | Inventory Service | `https://internal.travel-provider.example/inventory` | Travel Provider |
 
-DPoP key bindings:
+Presenter key bindings:
 
 | Principal | JWK Thumbprint (`jkt`) |
 |-----------|------------------------|
@@ -1347,14 +1349,15 @@ The Booking Tool RS applies dual-principal authorization ({{dual-principal-autho
 
 ## Step 5: Booking Tool Exchanges Access Token for Transaction Token
 
-The Booking Tool cannot reuse the received access token for internal calls: it is DPoP-bound to `AgentJKT`, which the Booking Tool does not possess.  It requests a Transaction Token from the TTS:
+The Booking Tool cannot reuse the received access token for internal calls: it is sender-constrained to `AgentJKT`, which the Booking Tool does not possess.  It requests a Transaction Token from the TTS.  In this example, the TTS authenticates the Booking Tool using a WIMSE Workload Identity Token (WIT) and a Workload Proof Token (WPT).  The WIT identifies the Booking Tool and carries its confirmation key, while the WPT proves possession of that key and binds the request to the accompanying access token:
 
 ~~~
 POST /token HTTP/1.1
 Host: tts.travel-provider.example
 Content-Type: application/x-www-form-urlencoded
 Authorization: PrivateKeyJWT <booking-tool-assertion>
-DPoP: <ToolJKT-proof>
+Workload-Identity-Token: <booking-tool-wit>
+Workload-Proof-Token: <tool-wpt-with-wth-and-ath>
 
 grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &subject_token=<tp-access-token>
@@ -1364,7 +1367,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &rctx={"req_ip":"198.51.100.42","req_time":1743375650}
 ~~~
 
-The TTS applies actor-profile processing per {{transaction-token-service-processing}}: it preserves `sub` and `sub_profile` from the subject token, sets `req_wl` to the authenticated Booking Tool, creates a new outermost `act` object for the Booking Tool, nests the subject token's existing `act` claim beneath it, and re-binds `cnf.jkt` to the Booking Tool's DPoP key (`ToolJKT`):
+The TTS applies actor-profile processing per {{transaction-token-service-processing}}: it preserves `sub` and `sub_profile` from the subject token, sets `req_wl` to the authenticated Booking Tool, creates a new outermost `act` object for the Booking Tool, nests the subject token's existing `act` claim beneath it, and binds the issued Transaction Token to the Booking Tool's presenter key (`ToolJKT`) identified in the WIT confirmation claim:
 
 ~~~json
 {
@@ -1401,7 +1404,7 @@ The TTS applies actor-profile processing per {{transaction-token-service-process
 }
 ~~~
 
-The DPoP key rotates at this step: `cnf.jkt` is now `ToolJKT`, and the outermost `act.cnf.jkt` matches it because the Booking Tool is now the current actor.  The nested `act.act.cnf.jkt` retains the agent's original key, illustrating the multi-hop key-rotation property described in {{sender-constraint}}.
+The presenter binding rotates at this step: `cnf.jkt` is now `ToolJKT`, and the outermost `act.cnf.jkt` matches it because the Booking Tool is now the current actor.  The nested `act.act.cnf.jkt` retains the agent's original key, illustrating the multi-hop key-rotation property described in {{sender-constraint}}.
 
 
 ## Step 6: Booking Tool Calls Inventory Service
@@ -1410,10 +1413,11 @@ The DPoP key rotates at this step: `cnf.jkt` is now `ToolJKT`, and the outermost
 GET /inventory?origin=SFO&dest=NYC&depart=2026-04-15 HTTP/1.1
 Host: internal.travel-provider.example
 Txn-Token: <txn-token>
-DPoP: <ToolJKT-proof>
+Workload-Identity-Token: <booking-tool-wit>
+Workload-Proof-Token: <tool-wpt-with-wth-and-tth>
 ~~~
 
-The Inventory Service applies dual-principal authorization ({{dual-principal-authorization}}): Alice (`sub`) governs data access policy (e.g., travel tier); the Booking Tool (`act.sub`) is the authorized internal workload.  The `req_wl` claim provides consistent TTS workload context for the same service in this example.  The nested `act.act.sub` (Travel Assistant) is carried as prior delegation context and is not evaluated for access control at this internal tier, consistent with the guidance on inner actors in {{dual-principal-rs-processing}}.
+The Inventory Service validates the WIT and WPT according to the WIMSE specifications: the WPT proves possession of the key identified by the WIT, `wth` binds the proof to the presented WIT, and `tth` binds it to the presented Transaction Token.  The Inventory Service then applies dual-principal authorization ({{dual-principal-authorization}}): Alice (`sub`) governs data access policy (e.g., travel tier); the Booking Tool (`act.sub`) is the authorized internal workload.  The `req_wl` claim provides consistent TTS workload context for the same service in this example.  The nested `act.act.sub` (Travel Assistant) is carried as prior delegation context and is not evaluated for access control at this internal tier, consistent with the guidance on inner actors in {{dual-principal-rs-processing}}.
 
 
 ## Summary of Token Transformations
@@ -1430,7 +1434,7 @@ The Inventory Service applies dual-principal authorization ({{dual-principal-aut
 Key observations:
 
 *  `sub` (Alice) is unchanged across all trust domains and token transformations.
-*  The DPoP key rotates exactly once — at Step 5, when the TTS re-binds the Transaction Token to the Booking Tool's key.
+*  The presenter-binding key rotates exactly once — at Step 5, when the TTS re-binds the Transaction Token to the Booking Tool's key.
 *  At Step 5 the TTS creates a new outermost `act` for the Booking Tool and nests the prior `act` chain beneath it, so the Travel Assistant's identity and key are preserved in `act.act.sub` / `act.act.cnf.jkt`.
 
 
