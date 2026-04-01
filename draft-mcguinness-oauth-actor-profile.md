@@ -262,7 +262,7 @@ act-object = {
 : REQUIRED.  The issuer that is authoritative for the actor identifier in `act.sub`.  This value scopes `act.sub` to an issuer namespace so that relying parties can distinguish otherwise-colliding subject identifiers across domains.  See "Cross-Domain Delegation" in {{conventions}}.  The value is a StringOrURI as defined in {{RFC7519}}.
 
 `sub_profile`:
-: RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in {{I-D.mora-oauth-entity-profiles, Section 4.2}}.  Values MUST be drawn from the OAuth Entity Profiles registry ({{I-D.mora-oauth-entity-profiles, Section 14.1}}) or be privately defined collision-resistant values.  Only values registered with the "Actor Profile" usage location (defined in {{entity-profile-extension}}) SHOULD be used within `act` objects.  If the acting entity fits more than one profile, multiple values MAY be included as a space-delimited string (e.g., `"service ai_agent"`).
+: RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in {{Section 4.2 of I-D.mora-oauth-entity-profiles}}.  Values MUST be drawn from the OAuth Entity Profiles registry in {{Section 14.1 of I-D.mora-oauth-entity-profiles}} or be privately defined collision-resistant values.  Only values registered with the "Actor Profile" usage location (defined in {{entity-profile-extension}}) SHOULD be used within `act` objects.  If the acting entity fits more than one profile, multiple values MAY be included as a space-delimited string (e.g., `"service ai_agent"`).
 
 `cnf`:
 : OPTIONAL.  A confirmation claim as defined in {{!RFC7800}}.  When present, this value identifies the keying material the actor MUST use to demonstrate proof of possession when presenting tokens that contain this actor object.  This keying material is distinct from any top-level `cnf` claim, which constrains the current bearer of the overall token.  When a public key is conveyed in `act.cnf`, the `jkt` member is RECOMMENDED.
@@ -272,7 +272,7 @@ act-object = {
 
 The `sub_profile` claim MAY also appear as a top-level claim in a JWT (outside any `act` object) to classify the entity type of the token's `sub` claim.  When present at the top level:
 
-*  The value MUST be a space-delimited entity profile string as defined in {{I-D.mora-oauth-entity-profiles, Section 3.3}}, drawn from the OAuth Entity Profiles registry or privately defined.
+*  The value MUST be a space-delimited entity profile string as defined in {{Section 3.3 of I-D.mora-oauth-entity-profiles}}, drawn from the OAuth Entity Profiles registry or privately defined.
 *  The claim applies exclusively to the top-level `sub`; it does not affect or override `sub_profile` values within `act` objects.
 *  Entity-type profiles are not restricted to actor contexts; for example, `user` is valid at the top level of an access token whose `sub` is an end-user.
 
@@ -680,14 +680,14 @@ The following existing values from {{I-D.mora-oauth-entity-profiles}} are extend
 
 These are the initial entity profile values that this document extends for actor use.  This document does not imply that all existing entity-profile values are automatically valid within `act.sub_profile`; only values explicitly registered with the "Actor Profile" usage location are valid in that position.  Additional values MAY be added to the registry in the future through the normal registration process when their semantics are appropriate for acting entities.
 
-When processing `act.sub_profile`, issuers and consumers MUST treat these values according to the entity profile semantics defined in {{I-D.mora-oauth-entity-profiles, Section 3}}.
+When processing `act.sub_profile`, issuers and consumers MUST treat these values according to the entity profile semantics defined in {{Section 3 of I-D.mora-oauth-entity-profiles}}.
 
 ## Extension to entity_profiles_supported {#entity-profiles-actor-array}
 
-{{I-D.mora-oauth-entity-profiles, Section 5}} defines the `entity_profiles_supported` AS metadata parameter as a JSON object containing `client` and `subject` arrays.  This document extends that object with an `actor` array:
+{{Section 5 of I-D.mora-oauth-entity-profiles}} defines the `entity_profiles_supported` AS metadata parameter as a JSON object containing `client` and `subject` arrays.  This document extends that object with an `actor` array:
 
 `actor`:
-: OPTIONAL.  A JSON array of entity profile values (per {{I-D.mora-oauth-entity-profiles, Section 3.3}}) indicating which profiles the AS recognizes and will validate when they appear in `act.sub_profile` claims in inbound tokens and actor assertions.  Actors whose `sub_profile` is not listed in this array MAY be rejected by the AS.
+: OPTIONAL.  A JSON array of entity profile values (per {{Section 3.3 of I-D.mora-oauth-entity-profiles}}) indicating which profiles the AS recognizes and will validate when they appear in `act.sub_profile` claims in inbound tokens and actor assertions.  Actors whose `sub_profile` is not listed in this array MAY be rejected by the AS.
 
 An AS implementing both this profile and {{I-D.mora-oauth-entity-profiles}} SHOULD include an `actor` array in its `entity_profiles_supported` object.
 
@@ -920,7 +920,7 @@ The following existing registry entries are updated to add the "Actor Profile" u
 
 ## Extension to entity_profiles_supported Metadata
 
-Upon publication of {{I-D.mora-oauth-entity-profiles}} as an RFC, this document requests that the definition of the `entity_profiles_supported` AS metadata parameter ({{I-D.mora-oauth-entity-profiles, Section 5}}) be updated to allow an optional `actor` member alongside the existing `client` and `subject` members, as defined in {{entity-profiles-actor-array}} of this document.  Until that publication, implementations SHOULD treat the `actor` array extension as defined in {{entity-profiles-actor-array}} as a vendor-agreed extension to the base parameter.
+Upon publication of {{I-D.mora-oauth-entity-profiles}} as an RFC, this document requests that the definition of the `entity_profiles_supported` AS metadata parameter in {{Section 5 of I-D.mora-oauth-entity-profiles}} be updated to allow an optional `actor` member alongside the existing `client` and `subject` members, as defined in {{entity-profiles-actor-array}} of this document.  Until that publication, implementations SHOULD treat the `actor` array extension as defined in {{entity-profiles-actor-array}} as a vendor-agreed extension to the base parameter.
 
 
 
