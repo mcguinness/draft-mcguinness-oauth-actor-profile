@@ -747,6 +747,8 @@ Dual-principal authorization evaluates both principals and the relationship betw
 
 For Transaction Tokens, the primary policy pair remains (`sub`, `act.sub`).  The `req_wl` claim provides workload context from the TTS and is not a replacement for `act.sub`.  Nested `act` objects provide prior-actor context for audit, policy refinement, or chain validation.
 
+This specification defines dual-principal authorization as the interoperable baseline.  Deployments MAY apply multi-principal authorization under local policy by considering one or more nested `act` objects as additional authorization, trust, or risk inputs in addition to `sub` and the outermost `act.sub`.  This specification does not require or standardize such evaluation, and clients MUST NOT assume that nested actors will be used for authorization unless deployment-specific agreements say otherwise.
+
 ## Resource Server Processing {#dual-principal-rs-processing}
 
 Dual-principal authorization is OPTIONAL but RECOMMENDED for delegated tokens under this profile.  An RS that requires dual-principal authorization for a resource MUST advertise that requirement using `dual_principal_authorization_supported: true` ({{protected-resource-metadata}}).  An RS that does not advertise this value MAY still apply dual-principal authorization, but clients MUST NOT rely on that behavior.  The following steps describe the RECOMMENDED evaluation:
@@ -762,6 +764,8 @@ Dual-principal authorization is OPTIONAL but RECOMMENDED for delegated tokens un
 3.  **Evaluate combined policy**: Apply any resource-specific dual-principal policies.  For example, a resource server may require that both the subject and the actor have independently agreed to terms of service.
 
 If the resource server requires dual-principal authorization but cannot evaluate actor authorization, it MUST reject the request.  Resource servers that do not require dual-principal authorization SHOULD still log or otherwise account for delegated actor information when it is relevant to audit or trust decisions.
+
+When a deployment applies multi-principal authorization under local policy, the outermost `act.sub` remains the baseline interoperable actor identifier, while nested `act` objects are additional local-policy inputs only.  Failure semantics, ordering, and weighting for those nested actors are deployment-specific.
 
 ## Policy Claims Summary
 
