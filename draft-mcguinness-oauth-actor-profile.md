@@ -1229,20 +1229,7 @@ Alice authenticates to the Enterprise IdP AS.  The profile-relevant claim is `su
 
 ## Step 2: Enterprise Token Exchange — ID Token to ID-JAG
 
-The agent presents Alice's ID Token and a self-signed actor JWT to the Enterprise IdP AS.  The actor JWT carries the agent's `sub_profile` and DPoP key binding per {{jwt-assertion-grants-structure}}:
-
-~~~json
-{
-  "iss": "https://agents.enterprise.example/travel-assistant",
-  "sub": "https://agents.enterprise.example/travel-assistant",
-  "sub_profile": "ai_agent",
-  "aud": "https://as.enterprise.example/token",
-  "jti": "actor-jwt-20260401-001",
-  "exp": 1743375660,
-  "iat": 1743375600,
-  "cnf": { "jkt": "AgentJKT-NzbLsXh8uDCcd7MN" }
-}
-~~~
+The agent presents Alice's ID Token to the Enterprise IdP AS using Token Exchange.  The Enterprise IdP AS authenticates the client as `travel-assistant-client-id`, verifies that the ID Token audience matches that client, and uses local delegation policy plus the authenticated client context to construct the actor-profile claims in the issued ID-JAG:
 
 ~~~
 POST /token HTTP/1.1
@@ -1253,15 +1240,16 @@ DPoP: <AgentJKT-proof>
 grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &subject_token=<alice-id-token>
 &subject_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aid_token
-&actor_token=<agent-actor-jwt>
-&actor_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt
 &requested_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aid-jag
 &audience=https%3A%2F%2Fas.travel-provider.example%2F
 &resource=https%3A%2F%2Fas.travel-provider.example
 &scope=booking%3Acreate
+&client_id=travel-assistant-client-id
+&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+&client_assertion=<travel-assistant-client-assertion>
 ~~~
 
-The Enterprise IdP AS applies scope reduction and validates the actor information according to the output-token rules for the JWT it is issuing.  In this example, it verifies DPoP possession against `cnf.jkt` in the actor JWT ({{jwt-assertion-grants-processing}}) and issues the ID-JAG as a JWT output of token exchange with the actor chain established per {{actor-profile}}:
+The Enterprise IdP AS applies scope reduction and validates the client-bound proof-of-possession according to RFC 9449.  In this example, it binds the issued ID-JAG to the key demonstrated in the DPoP proof, determines from local policy that the authenticated client is the delegated actor for Alice in this flow, and issues the ID-JAG as a JWT output of token exchange with the actor chain established per {{actor-profile}}:
 
 ~~~json
 {
@@ -1355,7 +1343,6 @@ The Booking Tool cannot reuse the received access token for internal calls: it i
 POST /token HTTP/1.1
 Host: tts.travel-provider.example
 Content-Type: application/x-www-form-urlencoded
-Authorization: PrivateKeyJWT <booking-tool-assertion>
 Workload-Identity-Token: <booking-tool-wit>
 Workload-Proof-Token: <tool-wpt-with-wth-and-ath>
 
@@ -1363,7 +1350,8 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &subject_token=<tp-access-token>
 &subject_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aaccess_token
 &requested_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Atxn_token
-&audience=https%3A%2F%2Finternal.travel-provider.example%2Finventory
+&audience=https%3A%2F%2Ftravel-provider.example
+&scope=inventory%3Acheck
 &rctx={"req_ip":"198.51.100.42","req_time":1743375650}
 ~~~
 
@@ -1376,7 +1364,7 @@ The TTS applies actor-profile processing per {{transaction-token-service-process
   "sub_profile": "user",
   "scope": "inventory:check",
   "req_wl": "https://tools.travel-provider.example/booking-tool",
-  "aud": "https://internal.travel-provider.example/inventory",
+  "aud": "https://travel-provider.example",
   "jti": "txn-tok-20260401-001",
   "txn": "550e8400-e29b-41d4-a716-446655440001",
   "exp": 1743375750,
