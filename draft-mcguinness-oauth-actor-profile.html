@@ -2453,7 +2453,7 @@ If none of these mechanisms can be satisfied, the AS <span class="bcp14">MUST</s
             <p id="section-7.3-2.5.1">The TTS <span class="bcp14">SHOULD</span> include <code>sub_profile</code> in any new <code>act</code> object it creates, based on its knowledge of the new presenter's entity type.<a href="#section-7.3-2.5.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-7.3-2.6">
-            <p id="section-7.3-2.6.1">The TTS <span class="bcp14">MUST</span> set the top-level <code>cnf.jkt</code> to the key of the new authorized presenter, as demonstrated by the accompanying DPoP proof or mTLS certificate.<a href="#section-7.3-2.6.1" class="pilcrow">¶</a></p>
+            <p id="section-7.3-2.6.1">The TTS <span class="bcp14">MUST</span> set the top-level confirmation claim to bind the Transaction Token to the new authorized presenter according to the proof mechanism used by the Transaction Token deployment.  When that mechanism conveys a public-key thumbprint in <code>cnf.jkt</code>, the TTS <span class="bcp14">MUST</span> set <code>cnf.jkt</code> to the key of the new authorized presenter.  In WIMSE-based deployments, this presenter binding is typically established using a Workload Identity Token (WIT) conveyed in the <code>Workload-Identity-Token</code> header field together with a Workload Proof Token (WPT) conveyed in the <code>Workload-Proof-Token</code> header field.  The WPT proves possession of the private key associated with the WIT and can bind accompanying tokens, including a Transaction Token, through token-hash claims such as <code>tth</code> <span>[<a href="#I-D.ietf-wimse-workload-creds" class="cite xref">I-D.ietf-wimse-workload-creds</a>]</span><span>[<a href="#I-D.ietf-wimse-wpt" class="cite xref">I-D.ietf-wimse-wpt</a>]</span>.<a href="#section-7.3-2.6.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-7.3-2.7">
             <p id="section-7.3-2.7.1">The TTS <span class="bcp14">MUST</span> set the Transaction Token <code>scope</code> according to the authorization semantics defined by <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> for the requested transaction, and it <span class="bcp14">MAY</span> include <code>tctx</code> or <code>rctx</code> as appropriate for downstream services.<a href="#section-7.3-2.7.1" class="pilcrow">¶</a></p>
@@ -3330,6 +3330,14 @@ If none of these mechanisms can be satisfied, the AS <span class="bcp14">MUST</s
         <dd>
 <span class="refAuthor">Lodderstedt, T.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Labunets, A.</span>, and <span class="refAuthor">D. Fett</span>, <span class="refTitle">"OAuth 2.0 Security Best Current Practice"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-security-topics-29</span>, <time datetime="2024-06-03" class="refDate">3 June 2024</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics-29">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics-29</a>&gt;</span>. </dd>
 <dd class="break"></dd>
+<dt id="I-D.ietf-wimse-workload-creds">[I-D.ietf-wimse-workload-creds]</dt>
+        <dd>
+<span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Salowey, J. A.</span>, <span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Sheffer, Y.</span>, and <span class="refAuthor">Y. Rosomakho</span>, <span class="refTitle">"WIMSE Workload Credentials"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-workload-creds-00</span>, <time datetime="2025-11-03" class="refDate">3 November 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-00">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-00</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.ietf-wimse-wpt">[I-D.ietf-wimse-wpt]</dt>
+        <dd>
+<span class="refAuthor">Campbell, B.</span> and <span class="refAuthor">A. Schwenkschuster</span>, <span class="refTitle">"WIMSE Workload Proof Token"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-wpt-01</span>, <time datetime="2026-03-02" class="refDate">2 March 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-wpt-01">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-wpt-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="OpenID.Core">[OpenID.Core]</dt>
         <dd>
 <span class="refAuthor">OpenID Foundation</span>, <span class="refTitle">"OpenID Connect Core 1.0"</span>, <time datetime="2014-11-08" class="refDate">8 November 2014</time>, <span>&lt;<a href="https://openid.net/specs/openid-connect-core-1_0.html">https://openid.net/specs/openid-connect-core-1_0.html</a>&gt;</span>. </dd>
@@ -3348,7 +3356,7 @@ If none of these mechanisms can be satisfied, the AS <span class="bcp14">MUST</s
       <h2 id="name-cross-domain-ai-agent-flow-">
 <a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-cross-domain-ai-agent-flow-" class="section-name selfRef">Cross-Domain AI Agent Flow: ID Token to Transaction Token</a>
       </h2>
-<p id="appendix-A-1">This appendix traces a single user request across two trust domains, highlighting the actor-profile claim structures and processing requirements specific to this specification.  Standard validation steps (JWT signature verification, DPoP proof binding, Token Exchange mechanics) are delegated to <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>, <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>, and <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> respectively.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<p id="appendix-A-1">This appendix traces a single user request across two trust domains, highlighting the actor-profile claim structures and processing requirements specific to this specification.  Standard validation steps (JWT signature verification, sender-constrained access token proof, Transaction Token presenter proof, and Token Exchange mechanics) are delegated to the underlying token specifications and deployment profile.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 <p id="appendix-A-2">All claim values, JKT thumbprints, and domain names are synthetic.<a href="#appendix-A-2" class="pilcrow">¶</a></p>
 <div id="scenario-and-parties">
 <section id="appendix-A.1">
@@ -3377,7 +3385,7 @@ Enterprise IdP AS ─► ID-JAG
                                                  │ (5) Token Exchange (AT → Transaction Token)
                                                  ▼
                                             Travel Provider TTS ─► Transaction Token
-                                                 │ (6) Transaction Token + DPoP
+                                                 │ (6) Transaction Token + WIMSE proof
                                                  ▼
                                             Inventory Service (RS)
 </pre><a href="#appendix-A.1-2" class="pilcrow">¶</a>
@@ -3443,7 +3451,7 @@ Enterprise IdP AS ─► ID-JAG
             </tr>
           </tbody>
         </table>
-<p id="appendix-A.1-4">DPoP key bindings:<a href="#appendix-A.1-4" class="pilcrow">¶</a></p>
+<p id="appendix-A.1-4">Presenter key bindings:<a href="#appendix-A.1-4" class="pilcrow">¶</a></p>
 <table class="center" id="table-6">
           <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
 <thead>
@@ -3649,14 +3657,15 @@ Content-Type: application/json
         <h3 id="name-step-5-booking-tool-exchang">
 <a href="#appendix-A.7" class="section-number selfRef">A.7. </a><a href="#name-step-5-booking-tool-exchang" class="section-name selfRef">Step 5: Booking Tool Exchanges Access Token for Transaction Token</a>
         </h3>
-<p id="appendix-A.7-1">The Booking Tool cannot reuse the received access token for internal calls: it is DPoP-bound to <code>AgentJKT</code>, which the Booking Tool does not possess.  It requests a Transaction Token from the TTS:<a href="#appendix-A.7-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.7-1">The Booking Tool cannot reuse the received access token for internal calls: it is sender-constrained to <code>AgentJKT</code>, which the Booking Tool does not possess.  It requests a Transaction Token from the TTS.  In this example, the TTS authenticates the Booking Tool using a WIMSE Workload Identity Token (WIT) and a Workload Proof Token (WPT).  The WIT identifies the Booking Tool and carries its confirmation key, while the WPT proves possession of that key and binds the request to the accompanying access token:<a href="#appendix-A.7-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="appendix-A.7-2">
 <pre>
 POST /token HTTP/1.1
 Host: tts.travel-provider.example
 Content-Type: application/x-www-form-urlencoded
 Authorization: PrivateKeyJWT &lt;booking-tool-assertion&gt;
-DPoP: &lt;ToolJKT-proof&gt;
+Workload-Identity-Token: &lt;booking-tool-wit&gt;
+Workload-Proof-Token: &lt;tool-wpt-with-wth-and-ath&gt;
 
 grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &amp;subject_token=&lt;tp-access-token&gt;
@@ -3666,7 +3675,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &amp;rctx={"req_ip":"198.51.100.42","req_time":1743375650}
 </pre><a href="#appendix-A.7-2" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.7-3">The TTS applies actor-profile processing per <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.3</a>: it preserves <code>sub</code> and <code>sub_profile</code> from the subject token, sets <code>req_wl</code> to the authenticated Booking Tool, creates a new outermost <code>act</code> object for the Booking Tool, nests the subject token's existing <code>act</code> claim beneath it, and re-binds <code>cnf.jkt</code> to the Booking Tool's DPoP key (<code>ToolJKT</code>):<a href="#appendix-A.7-3" class="pilcrow">¶</a></p>
+<p id="appendix-A.7-3">The TTS applies actor-profile processing per <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.3</a>: it preserves <code>sub</code> and <code>sub_profile</code> from the subject token, sets <code>req_wl</code> to the authenticated Booking Tool, creates a new outermost <code>act</code> object for the Booking Tool, nests the subject token's existing <code>act</code> claim beneath it, and binds the issued Transaction Token to the Booking Tool's presenter key (<code>ToolJKT</code>) identified in the WIT confirmation claim:<a href="#appendix-A.7-3" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="appendix-A.7-4">
 <pre>
 {
@@ -3703,7 +3712,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 }
 </pre><a href="#appendix-A.7-4" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.7-5">The DPoP key rotates at this step: <code>cnf.jkt</code> is now <code>ToolJKT</code>, and the outermost <code>act.cnf.jkt</code> matches it because the Booking Tool is now the current actor.  The nested <code>act.act.cnf.jkt</code> retains the agent's original key, illustrating the multi-hop key-rotation property described in <a href="#sender-constraint" class="auto internal xref">Section 4.7</a>.<a href="#appendix-A.7-5" class="pilcrow">¶</a></p>
+<p id="appendix-A.7-5">The presenter binding rotates at this step: <code>cnf.jkt</code> is now <code>ToolJKT</code>, and the outermost <code>act.cnf.jkt</code> matches it because the Booking Tool is now the current actor.  The nested <code>act.act.cnf.jkt</code> retains the agent's original key, illustrating the multi-hop key-rotation property described in <a href="#sender-constraint" class="auto internal xref">Section 4.7</a>.<a href="#appendix-A.7-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="step-6-booking-tool-calls-inventory-service">
@@ -3716,10 +3725,11 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 GET /inventory?origin=SFO&amp;dest=NYC&amp;depart=2026-04-15 HTTP/1.1
 Host: internal.travel-provider.example
 Txn-Token: &lt;txn-token&gt;
-DPoP: &lt;ToolJKT-proof&gt;
+Workload-Identity-Token: &lt;booking-tool-wit&gt;
+Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
 </pre><a href="#appendix-A.8-1" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.8-2">The Inventory Service applies dual-principal authorization (<a href="#dual-principal-authorization" class="auto internal xref">Section 8</a>): Alice (<code>sub</code>) governs data access policy (e.g., travel tier); the Booking Tool (<code>act.sub</code>) is the authorized internal workload.  The <code>req_wl</code> claim provides consistent TTS workload context for the same service in this example.  The nested <code>act.act.sub</code> (Travel Assistant) is carried as prior delegation context and is not evaluated for access control at this internal tier, consistent with the guidance on inner actors in <a href="#dual-principal-rs-processing" class="auto internal xref">Section 8.2</a>.<a href="#appendix-A.8-2" class="pilcrow">¶</a></p>
+<p id="appendix-A.8-2">The Inventory Service validates the WIT and WPT according to the WIMSE specifications: the WPT proves possession of the key identified by the WIT, <code>wth</code> binds the proof to the presented WIT, and <code>tth</code> binds it to the presented Transaction Token.  The Inventory Service then applies dual-principal authorization (<a href="#dual-principal-authorization" class="auto internal xref">Section 8</a>): Alice (<code>sub</code>) governs data access policy (e.g., travel tier); the Booking Tool (<code>act.sub</code>) is the authorized internal workload.  The <code>req_wl</code> claim provides consistent TTS workload context for the same service in this example.  The nested <code>act.act.sub</code> (Travel Assistant) is carried as prior delegation context and is not evaluated for access control at this internal tier, consistent with the guidance on inner actors in <a href="#dual-principal-rs-processing" class="auto internal xref">Section 8.2</a>.<a href="#appendix-A.8-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="summary-of-token-transformations">
@@ -3803,7 +3813,7 @@ DPoP: &lt;ToolJKT-proof&gt;
             <p id="appendix-A.9-3.1.1"><code>sub</code> (Alice) is unchanged across all trust domains and token transformations.<a href="#appendix-A.9-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.9-3.2">
-            <p id="appendix-A.9-3.2.1">The DPoP key rotates exactly once — at Step 5, when the TTS re-binds the Transaction Token to the Booking Tool's key.<a href="#appendix-A.9-3.2.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.9-3.2.1">The presenter-binding key rotates exactly once — at Step 5, when the TTS re-binds the Transaction Token to the Booking Tool's key.<a href="#appendix-A.9-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.9-3.3">
             <p id="appendix-A.9-3.3.1">At Step 5 the TTS creates a new outermost <code>act</code> for the Booking Tool and nests the prior <code>act</code> chain beneath it, so the Travel Assistant's identity and key are preserved in <code>act.act.sub</code> / <code>act.act.cnf.jkt</code>.<a href="#appendix-A.9-3.3.1" class="pilcrow">¶</a></p>
