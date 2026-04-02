@@ -267,31 +267,6 @@ The following table summarizes the minimum implementation obligations by role:
 | Client or Agent | AS and RS metadata | Check accepted actor entity profiles and supported output token types; do not assume unsupported transformations | Proceed only when local policy and advertised capabilities are sufficient |
 
 
-## Summary of Actor-Profile Claims
-
-The `act` object structure defined in {{actor-object-structure}} applies uniformly to all three token types covered by this specification.  The following tables summarize claim requirements.
-
-The sub-claims of the `act` object have the same requirement level regardless of which token type carries the `act` claim:
-
-| Claim | Requirement | Definition |
-|-------|-------------|------------|
-| `act.sub` | REQUIRED when an `act` claim is present | {{actor-object-structure}} |
-| `act.iss` | REQUIRED when an `act` claim is present | {{actor-object-structure}} |
-| `act.sub_profile` | RECOMMENDED | {{actor-object-structure}} |
-| `act.cnf` | OPTIONAL | {{actor-object-structure}} |
-
-Requirements for top-level claims vary by token type:
-
-| Claim | JWT Assertion Grant | JWT Access Token | Transaction Token |
-|-------|--------------------|--------------------|-------------------|
-| `act` | REQUIRED when delegation is asserted | REQUIRED when delegated | REQUIRED when delegated |
-| `sub_profile` | RECOMMENDED | RECOMMENDED | propagated from inbound subject token |
-| `cnf.jkt` | OPTIONAL; set by issuing AS when DPoP binding is applied | REQUIRED when DPoP is used ({{sender-constraint}}) | REQUIRED; set by TTS to bind the new presenter |
-| `req_wl` | not applicable | not applicable | REQUIRED |
-
-Detailed semantics and processing rules for each token type are defined in {{jwt-assertion-grants}}, {{jwt-access-tokens}}, and {{transaction-tokens}} respectively.
-
-
 ## Actor Object Structure
 
 An actor object is a JSON object that is the value of the `act` claim. In addition to the `sub` claim required by {{RFC8693}}, an actor object MUST contain an `iss` claim, SHOULD contain a `sub_profile` claim, and MAY contain a `cnf` claim.
@@ -398,6 +373,31 @@ The `sub_profile` claim MAY also appear as a top-level claim in a JWT (outside a
 *  Entity-type profiles are not restricted to actor contexts; for example, `user` is valid at the top level of an access token whose `sub` is an end-user.
 
 Issuers SHOULD include a top-level `sub_profile` when they can authoritatively classify the subject entity type.
+
+
+## Summary of Actor-Profile Claims
+
+The `act` object structure defined in {{actor-object-structure}} applies uniformly to all three token types covered by this specification.  The following tables summarize claim requirements.
+
+The sub-claims of the `act` object have the same requirement level regardless of which token type carries the `act` claim:
+
+| Claim | Requirement | Definition |
+|-------|-------------|------------|
+| `act.sub` | REQUIRED when an `act` claim is present | {{actor-object-structure}} |
+| `act.iss` | REQUIRED when an `act` claim is present | {{actor-object-structure}} |
+| `act.sub_profile` | RECOMMENDED | {{actor-object-structure}} |
+| `act.cnf` | OPTIONAL | {{actor-object-structure}} |
+
+Requirements for top-level claims vary by token type:
+
+| Claim | JWT Assertion Grant | JWT Access Token | Transaction Token |
+|-------|--------------------|--------------------|-------------------|
+| `act` | REQUIRED when delegation is asserted | REQUIRED when delegated | REQUIRED when delegated |
+| `sub_profile` | RECOMMENDED | RECOMMENDED | propagated from inbound subject token |
+| `cnf.jkt` | OPTIONAL; set by issuing AS when DPoP binding is applied | REQUIRED when DPoP is used ({{sender-constraint}}) | REQUIRED; set by TTS to bind the new presenter |
+| `req_wl` | not applicable | not applicable | REQUIRED |
+
+Detailed semantics and processing rules for each token type are defined in {{jwt-assertion-grants}}, {{jwt-access-tokens}}, and {{transaction-tokens}} respectively.
 
 
 # JWT Assertion Grants {#jwt-assertion-grants}
