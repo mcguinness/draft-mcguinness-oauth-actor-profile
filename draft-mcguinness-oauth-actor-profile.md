@@ -244,6 +244,8 @@ This document does not standardize:
 
 Those decisions remain deployment- and policy-specific, except where a referenced specification defines them more precisely.
 
+In particular, this specification standardizes the representation and processing of actor information once an issuer has determined the acting party.  It does not standardize every upstream proof mechanism by which that determination is made.  Deployments MAY derive actor information from authenticated client context, local delegation policy, pre-registered grants, or other trusted deployment-specific inputs, but those inputs are not themselves made interoperable by this specification.
+
 ## Implementation Summary
 
 The following table summarizes the minimum implementation obligations by role:
@@ -251,7 +253,7 @@ The following table summarizes the minimum implementation obligations by role:
 | Role | Inputs | Minimum checks | Required outputs or behavior |
 |------|--------|----------------|-------------------------------|
 | Assertion-consuming AS | JWT assertion grant with `act` | Validate JWT, trust assertion issuer, validate `(sub, actor)` delegation, validate actor key possession when `act.cnf` is present, enforce chain-depth limit | Preserve validated actor information in issued token or reject |
-| Token-exchange AS | `subject_token` and optional `actor_token`, or inbound token with explicit `act` chain | Validate inbound token(s), trust inbound issuers, validate actor authorization, enforce scope reduction and chain-depth limit | Issue output token with preserved or extended `act` chain, or reject |
+| Token-exchange AS | `subject_token` plus optional explicit actor input, or inbound token with explicit `act` chain | Validate inbound token(s), trust inbound issuers, validate actor authorization, enforce scope reduction and chain-depth limit | Issue output token with preserved or extended `act` chain, or reject |
 | Resource Server | Access token or Transaction Token with `act` | Validate token, validate top-level holder-of-key binding, evaluate subject authorization, determine whether local policy requires actor evaluation, and if so evaluate outermost actor authorization | Apply local policy for delegated tokens; advertise required dual-principal behavior in metadata |
 | Transaction Token Service | Inbound token carrying subject and optional `act` chain | Validate inbound token, authenticate requesting workload, enforce chain-depth limit, bind new presenter key | Carry forward the same underlying subject in `sub`, set `req_wl`, create a new outermost `act` when delegation continues |
 | Client or Agent | AS and RS metadata | Check accepted actor entity profiles and supported output token types; do not assume unsupported transformations | Proceed only when local policy and advertised capabilities are sufficient |
@@ -276,6 +278,8 @@ act-object = {
 
 `iss`:
 : REQUIRED.  The issuer namespace that is authoritative for the actor identifier carried in `act.sub`.  This value scopes `act.sub` to an issuer namespace so that relying parties can distinguish otherwise-colliding subject identifiers across domains.  It identifies the authority for the actor identifier itself, not merely the token issuer that copied or conveyed the claim.  Put differently, `act.iss` answers "who owns the namespace in which this `act.sub` value is meaningful?" rather than "who issued the enclosing token?"  For URI, client, workload, or other deployment-specific identifiers, the value of `act.iss` MUST identify the authority that the deployment treats as authoritative for resolving or validating that actor identifier.  See "Cross-Domain Delegation" in {{conventions}}.  The value is a StringOrURI as defined in {{RFC7519}}.
+
+  For example, a TTS might issue a Transaction Token with top-level `iss` equal to `https://tts.travel-provider.example` while setting `act.iss` for the booking tool to `https://as.travel-provider.example`, if local policy treats that AS as authoritative for the booking tool identifier namespace.  In that case, the token issuer and the actor-identifier authority differ, and both values are valid in their respective roles.
 
 `sub_profile`:
 : RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in Section 4.2 of {{I-D.mora-oauth-entity-profiles}}.  Values MUST be drawn from the OAuth Entity Profiles registry in Section 14.1 of {{I-D.mora-oauth-entity-profiles}} or be privately defined collision-resistant values.  Only values registered with the "Actor Profile" usage location (defined in {{entity-profile-extension}}) SHOULD be used within `act` objects.  If the acting entity fits more than one profile, multiple values MAY be included as a space-delimited string (e.g., `"service ai_agent"`).  Policy evaluation rules for multi-value strings are defined in {{forward-compat-sub-profile}}.
@@ -581,7 +585,7 @@ The same preservation requirements apply regardless of whether the inbound crede
 
 Upon receiving a JWT access token that contains an `act` claim, a resource server MUST validate and process that token according to its local delegated-token policy.  A resource server that requires dual-principal authorization for delegated tokens MUST advertise that requirement using `dual_principal_authorization_supported: true` ({{protected-resource-metadata}}).  A resource server that does not require dual-principal authorization SHOULD still evaluate both the subject and the actor, but MAY treat the actor chain as informational under local policy.
 
-Actor information should be treated as informational only in narrowly scoped cases, such as audit-only logging, same-domain internal services with pre-established non-token delegation controls, or deployments where the AS has already enforced actor-specific policy and the RS is not making an independent delegated-access decision.  In the absence of such a documented constraint, the safe default is to evaluate both `sub` and the outermost `act.sub`.  New cross-domain deployments SHOULD NOT rely on subject-only evaluation when `act` is present.
+Actor information should be treated as informational only in narrowly scoped and explicitly documented cases, such as audit-only logging, same-domain internal services with pre-established non-token delegation controls, or deployments where the AS has already enforced actor-specific policy and the RS is not making an independent delegated-access decision.  In the absence of such a documented constraint, the safe default is to evaluate both `sub` and the outermost `act.sub`.  New cross-domain deployments SHOULD NOT rely on subject-only evaluation when `act` is present.
 
 When the resource server accepts delegated tokens, it MUST:
 
@@ -757,7 +761,7 @@ This specification defines dual-principal authorization as the interoperable bas
 
 ## Resource Server Processing {#dual-principal-rs-processing}
 
-Dual-principal authorization is OPTIONAL but RECOMMENDED for delegated tokens under this profile.  An RS that requires dual-principal authorization for a resource MUST advertise that requirement using `dual_principal_authorization_supported: true` ({{protected-resource-metadata}}).  An RS that does not advertise this value MAY still apply dual-principal authorization, but clients MUST NOT rely on that behavior.  The following steps describe the RECOMMENDED evaluation:
+Dual-principal authorization is OPTIONAL but RECOMMENDED for delegated tokens under this profile.  An RS that requires dual-principal authorization for a resource MUST advertise that requirement using `dual_principal_authorization_supported: true` ({{protected-resource-metadata}}).  An RS that does not advertise this value MAY still apply dual-principal authorization, but clients MUST NOT rely on that behavior.  Deployments that treat actor information as informational only SHOULD do so only in narrowly scoped and explicitly documented cases.  The following steps describe the RECOMMENDED evaluation:
 
 1.  **Evaluate subject authorization**: Determine whether the subject (`sub`) has been granted the requested scope or permission, using the same mechanisms applied to non-delegated tokens.
 
@@ -1420,7 +1424,7 @@ The Inventory Service validates the WIT and WPT according to the WIMSE specifica
 
 Key observations:
 
-*  `sub` (Alice) is unchanged across all trust domains and token transformations.
+*  In this example, `sub` (Alice) is unchanged across all trust domains and token transformations.
 *  The presenter-binding key rotates exactly once — at Step 5, when the TTS re-binds the Transaction Token to the Booking Tool's key.
 *  At Step 5 the TTS creates a new outermost `act` for the Booking Tool and nests the prior `act` chain beneath it, so the Travel Assistant's identity and key are preserved in `act.act.sub` / `act.act.cnf.jkt`.
 
