@@ -397,7 +397,7 @@ This profile extends the base `act` claim semantics from {{RFC8693}} by requirin
 When a token or assertion is required by local policy or advertised metadata to conform to this profile, such non-conforming `act` objects MUST be rejected.  When profile conformance is not required, implementations MAY continue to process a base {{RFC8693}} `act` object according to local policy, but they MUST NOT infer profile-defined semantics for claims that are absent.
 
 
-# Top-Level Subject Classification {#top-level-subject-classification}
+## Top-Level Subject Classification {#top-level-subject-classification}
 
 The `sub_profile` claim MAY also appear as a top-level claim in a JWT (outside any `act` object) to classify the entity type of the token's `sub` claim.  When present at the top level:
 
@@ -635,9 +635,7 @@ The same preservation requirements apply regardless of whether the inbound crede
 
 ## Resource Server Processing {#jwt-access-token-rs-processing}
 
-Upon receiving a JWT access token that contains an `act` claim, a resource server MUST validate and process that token according to its local delegated-token policy.  A resource server that requires dual-principal authorization for delegated tokens MUST advertise that requirement using `dual_principal_authorization_supported: true` ({{protected-resource-metadata}}).  A resource server that does not require dual-principal authorization SHOULD still evaluate both the subject and the actor, but MAY treat the actor chain as informational under local policy.
-
-Actor information should be treated as informational only in narrowly scoped and explicitly documented cases, such as audit-only logging, same-domain internal services with pre-established non-token delegation controls, or deployments where the AS has already enforced actor-specific policy and the RS is not making an independent delegated-access decision.  In the absence of such a documented constraint, the safe default is to evaluate both `sub` and the outermost `act.sub`.  New cross-domain deployments SHOULD NOT rely on subject-only evaluation when `act` is present.
+Upon receiving a JWT access token that contains an `act` claim, a resource server MUST validate and process that token according to its local delegated-token policy.  The authorization-policy model for delegated tokens is defined in {{dual-principal-authorization}}.  A resource server that requires dual-principal authorization for delegated tokens MUST advertise that requirement using `dual_principal_authorization_supported: true` ({{protected-resource-metadata}}).
 
 When the resource server accepts delegated tokens, it MUST:
 
@@ -1117,7 +1115,7 @@ For example, if a token contains `client_id` for `travel-assistant-client-id` bu
 
 ## Confused Deputy and Dual-Principal Bypass
 
-A resource server that evaluates only the subject principal when an `act` claim is present is susceptible to a confused deputy attack where a malicious actor exploits a subject's pre-existing permissions without the subject's ongoing consent.  Resource servers SHOULD implement dual-principal authorization for delegated tokens under this profile.  Resource servers that require dual-principal authorization MUST advertise that behavior using `dual_principal_authorization_supported: true`.  Deployments that choose not to require dual-principal authorization SHOULD treat actor information as informational only in narrowly scoped and explicitly documented cases, and SHOULD ensure that delegated-token risk is otherwise addressed by local policy.  In the absence of such explicit documentation, implementations should assume that actor information is security-relevant rather than merely informational.
+A resource server that evaluates only the subject principal when an `act` claim is present is susceptible to a confused deputy attack where a malicious actor exploits a subject's pre-existing permissions without the subject's ongoing consent.  Resource servers SHOULD implement dual-principal authorization for delegated tokens under this profile.  Resource servers that require dual-principal authorization MUST advertise that behavior using `dual_principal_authorization_supported: true`.  Deployments that choose not to require dual-principal authorization SHOULD follow the narrowly scoped and explicitly documented informational-only cases described in {{dual-principal-authorization}}.
 
 ## Token Substitution
 
@@ -1166,7 +1164,7 @@ This document requests IANA to register the following values in the "OAuth Prote
 *  Reference: {{protected-resource-metadata}} of this document
 
 
-## OAuth Entity Profiles Registry
+## OAuth Entity Profiles Registry {#iana-entity-profiles}
 
 This document requests the following updates to the "OAuth Entity Profiles" registry established by {{I-D.mora-oauth-entity-profiles}}.
 
@@ -1271,7 +1269,7 @@ The agent checks the Travel Provider AS metadata ({{discovery-capability-negotia
   }
 }
 ~~~
-The agent confirms its `sub_profile` (`ai_agent`) is listed in `entity_profiles_supported.actor` and that both `jwt` and `access_token` are covered by `actor_profile_token_types_supported`.  The Booking Tool RS metadata signals `"actor_profile_required": true` and `"dual_principal_authorization_supported": true`.
+The agent confirms that its `sub_profile` (`ai_agent`) is listed in `entity_profiles_supported.actor`, that both `jwt` and `access_token` are covered by `actor_profile_token_types_supported`, and that the Booking Tool RS requires explicit actor-profile support and dual-principal authorization.
 
 
 ## Step 1: User Authentication — ID Token
@@ -1484,8 +1482,8 @@ The Inventory Service validates the WIT and WPT according to the WIMSE specifica
 Key observations:
 
 *  In this example, `sub` (Alice) is unchanged across all trust domains and token transformations.
-*  The presenter-binding key rotates exactly once — at Step 5, when the TTS re-binds the Transaction Token to the Booking Tool's key.
-*  At Step 5 the TTS creates a new outermost `act` for the Booking Tool and nests the prior `act` chain beneath it, so the Travel Assistant's identity and key are preserved in `act.act.sub` / `act.act.cnf.jkt`.
+*  The presenter-binding key rotates once, at Step 5 when the TTS re-binds the Transaction Token to the Booking Tool's key.
+*  At Step 5 the TTS creates a new outermost `act` for the Booking Tool and nests the prior `act` chain beneath it.
 
 
 # Acknowledgments
