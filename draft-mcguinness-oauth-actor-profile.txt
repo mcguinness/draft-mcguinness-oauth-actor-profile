@@ -22,7 +22,7 @@ Abstract
    Demonstrating Proof of Possession (RFC 9449), and Transaction Tokens.
    However, they do not define a common profile for representing
    delegation relationships across these token types, classifying actor
-   entity types, or signaling support between authorization servers and
+   entity types, and signaling support between authorization servers and
    resource servers.
 
    This document defines the OAuth Actor Profile for Delegation: a
@@ -244,14 +244,14 @@ Table of Contents
 
    Alice authorizes an AI agent to book a business trip on her behalf.
    The agent calls an external booking tool operated in a separate
-   organizational trust domain.  To do this:
+   organizational trust domain.  The flow is:
 
    1.  Alice authenticates at her enterprise identity provider
        authorization server (Enterprise IdP AS), and the agent obtains
        an ID Token establishing Alice's identity.  This authentication
-       step is out of scope for this document; the OAuth-relevant
-       processing begins when the Enterprise IdP AS receives the
-       upstream credential.
+       step is out of scope for this document; the processing described
+       here begins when the Enterprise IdP AS receives the upstream
+       credential.
 
    2.  The agent exchanges the ID Token at the Enterprise IdP AS to
        obtain an Identity Assertion JWT Authorization Grant (ID-JAG): a
@@ -487,11 +487,11 @@ Table of Contents
    +---------------------+-------------+----------------+--------------+
    | Token-exchange AS   |subject_token|Validate        |Issue output  |
    |                     |and optional |inbound         |token with    |
-   |                     |actor_token  |token(s), trust |preserved or  |
+   |                     |actor_token, |token(s), trust |preserved or  |
    |                     |or inbound   |inbound         |extended act  |
-   |                     |act chain    |issuers,        |chain, or     |
-   |                     |             |validate actor  |reject        |
-   |                     |             |authorization,  |              |
+   |                     |token with   |issuers,        |chain, or     |
+   |                     |explicit act |validate actor  |reject        |
+   |                     |chain        |authorization,  |              |
    |                     |             |enforce scope   |              |
    |                     |             |reduction and   |              |
    |                     |             |chain-depth     |              |
@@ -513,15 +513,17 @@ Table of Contents
    |                     |             |outermost actor |              |
    |                     |             |authorization   |              |
    +---------------------+-------------+----------------+--------------+
-   | Transaction Token   |Inbound token|Validate        |Preserve sub, |
-   | Service             |carrying     |inbound token,  |set req_wl,   |
-   |                     |subject and  |authenticate    |create new    |
-   |                     |optional act |requesting      |outermost act |
-   |                     |chain        |workload,       |when          |
-   |                     |             |enforce chain-  |delegation    |
-   |                     |             |depth limit,    |continues     |
-   |                     |             |bind new        |              |
-   |                     |             |presenter key   |              |
+   | Transaction Token   |Inbound token|Validate        |Carry forward |
+   | Service             |carrying     |inbound token,  |the same      |
+   |                     |subject and  |authenticate    |underlying    |
+   |                     |optional act |requesting      |subject in    |
+   |                     |chain        |workload,       |sub, set      |
+   |                     |             |enforce chain-  |req_wl, create|
+   |                     |             |depth limit,    |a new         |
+   |                     |             |bind new        |outermost act |
+   |                     |             |presenter key   |when          |
+   |                     |             |                |delegation    |
+   |                     |             |                |continues     |
    +---------------------+-------------+----------------+--------------+
    | Client or Agent     |AS and RS    |Check accepted  |Proceed only  |
    |                     |metadata     |actor entity    |when local    |
@@ -1169,24 +1171,24 @@ Table of Contents
 6.3.  Resource Server Processing
 
    Upon receiving a JWT access token that contains an act claim, a
-   resource server MUST validate and process that token according to
-   local policy for delegated tokens.  A resource server that requires
-   dual-principal authorization for delegated tokens MUST advertise that
+   resource server MUST validate and process that token according to its
+   local delegated-token policy.  A resource server that requires dual-
+   principal authorization for delegated tokens MUST advertise that
    requirement using dual_principal_authorization_supported: true
    (Section 10.3).  A resource server that does not require dual-
    principal authorization SHOULD still evaluate both the subject and
-   the actor, but MAY treat the actor chain as informational according
-   to local policy.
+   the actor, but MAY treat the actor chain as informational under local
+   policy.
 
    Actor information should be treated as informational only in narrowly
    scoped cases, such as audit-only logging, same-domain internal
-   services with pre-established non-token controls on delegation, or
+   services with pre-established non-token delegation controls, or
    deployments where the AS has already enforced actor-specific policy
    and the RS is not making an independent delegated-access decision.
-   In the absence of such a documented deployment constraint, the safe
-   default is to evaluate both sub and the outermost act.sub.  New
-   cross-domain deployments SHOULD NOT rely on subject-only evaluation
-   when act is present.
+   In the absence of such a documented constraint, the safe default is
+   to evaluate both sub and the outermost act.sub.  New cross-domain
+   deployments SHOULD NOT rely on subject-only evaluation when act is
+   present.
 
    When the resource server accepts delegated tokens, it MUST:
 
