@@ -139,7 +139,7 @@ Alice authorizes an AI agent to book a business trip on her behalf. The agent ca
 2.  The agent exchanges the ID Token at the Enterprise IdP AS to obtain an Identity Assertion JWT Authorization Grant (ID-JAG): a JWT produced by token exchange that carries Alice's identity, the agent's actor profile, and an audience bound to the external tool AS's token endpoint.  When the agent later presents that JWT to another AS using the JWT bearer grant, the JWT functions as a profiled JWT assertion grant.
 3.  The agent submits the ID-JAG as a JWT bearer authorization grant to the external tool's AS token endpoint.  The tool AS validates the enterprise chain and issues an access token for the external tool's API.
 4.  The agent calls the external tool's API using that access token.
-5.  The external tool exchanges the received access token at its Transaction Token Service (TTS) to obtain a Transaction Token for a backend internal service call, with the issued token bound to the tool's own DPoP key rather than the agent's.
+5.  The external tool exchanges the received access token at its Transaction Token Service (TTS) to obtain a Transaction Token for a backend internal service call, with the issued token rebound to the tool as the new presenter under the Transaction Token deployment's proof mechanism rather than the agent's.
 6.  The tool calls the internal service using the Transaction Token.
 
 At each step, Alice's identity is preserved as `sub`, the agent's identity is preserved in `act`, the current presenter holds a key-bound token, and the trust-domain boundary enforcer (the tool AS) re-issues the credential under local control.
@@ -396,7 +396,7 @@ The following claims are defined for a JWT assertion grant that carries actor-pr
 
 When the assertion or request context also identifies an OAuth client via `client_id`, `azp`, or an authenticated client credential, that client identity MUST NOT be treated as a substitute for `act.sub`; see step 7 in {{jwt-assertion-grants-processing}}.
 
-An Identity Assertion JWT Authorization Grant (ID-JAG) is a JWT that can be produced by token exchange and then presented using the JWT bearer grant.  When an ID-JAG is used as a JWT bearer assertion grant, this section applies to it.  In that usage, the ID-JAG carries delegation information using this profile.  The term and token type originate in {{I-D.ietf-oauth-identity-assertion-authz-grant}}.
+An Identity Assertion JWT Authorization Grant (ID-JAG) is a JWT that can be produced by token exchange and then presented using the JWT bearer grant.  When an ID-JAG is used as a JWT bearer assertion grant, this section applies to it.  In that usage, the ID-JAG carries delegation information using this profile.  In ID-JAG issuance flows, the acting party is often determined from the authenticated client and local delegation policy rather than from a separate `actor_token`.  This specification profiles the resulting issued JWT, not the upstream actor-determination mechanism.  The term and token type originate in {{I-D.ietf-oauth-identity-assertion-authz-grant}}.
 
 ~~~json
 {
@@ -508,6 +508,8 @@ A JWT access token {{RFC9068}} MUST include an `act` claim conforming to the act
 *  The token was issued following acceptance of a JWT assertion grant that itself contained an `act` claim per {{jwt-assertion-grants}};
 *  The token was issued via Token Exchange ({{RFC8693}}) and an `actor_token` was presented; or
 *  The AS has independent knowledge — established by a pre-registered delegation grant, an explicit consent record, or a policy rule that names both the subject and the acting party — that the subject's rights are being exercised by a distinct, identifiable acting party whose identifier and entity type the AS can assert authoritatively.
+
+When the AS determines the actor from authenticated client context, local delegation policy, or other deployment-specific inputs rather than from an explicit actor-carrying artifact, that is an operational allowance rather than an interoperable actor-proof mechanism defined by this specification.  The interoperability defined here applies to the issued token and its processing, not to the upstream method by which the AS determined the actor.
 
 When none of these conditions hold, an `act` claim MUST NOT be added solely on the basis of the `azp` claim being present.
 
@@ -659,7 +661,7 @@ When a Transaction Token is used in a delegated scenario, the `act` claim confor
 
 The semantics are as follows:
 
-*  `sub` identifies the original human or non-personal initiator of the transaction and MUST NOT change as the token propagates through the call chain.
+*  `sub` identifies the original human or non-personal initiator of the transaction.  When a Transaction Token is exchanged for a replacement, the new token MUST continue to refer to the same underlying subject.  If the issuer uses a different subject-identifier namespace, it MAY change the `sub` value only to re-express that same subject in the new namespace.
 
 *  `scope` captures the transaction authorization intent for this specific token instance, using the semantics defined by the TTS.
 
@@ -927,7 +929,7 @@ The following steps describe a RECOMMENDED capability-negotiation pattern a clie
 
 3.  **Proceed or abort**: If `actor_profile_required` is `true` at the RS and the client's entity profile is not listed in `entity_profiles_supported.actor` at the AS, the client MUST NOT proceed with a delegation-based request and SHOULD surface the capability mismatch to the invoking system.  If the desired delegated output token type is not listed in `actor_profile_token_types_supported`, the client MUST treat that output as unsupported.  If `dual_principal_authorization_supported` is `true`, the client SHOULD expect the RS to require subject-and-actor evaluation and SHOULD acquire a token whose actor information can satisfy that policy.  If the listed metadata is insufficient to determine whether the AS supports the needed input grant or exchange path, the client SHOULD treat support as indeterminate and rely on deployment-specific knowledge or a trial request.
 
-4.  **Construct and submit token exchange or assertion grant**: The client proceeds per {{jwt-assertion-grants}} for JWT assertion grants or per {{RFC8693}} for token-exchange requests.  The `actor_token` or assertion MUST carry an `act.sub_profile` value drawn from the `entity_profiles_supported.actor` accepted list.
+4.  **Construct and submit token exchange or assertion grant**: The client proceeds per {{jwt-assertion-grants}} for JWT assertion grants or per {{RFC8693}} for token-exchange requests.  When the delegated request explicitly carries actor-profile claims, the actor information MUST include an `act.sub_profile` value drawn from the `entity_profiles_supported.actor` accepted list.  When actor information is derived by the AS from authenticated client context or other local policy, the client MUST ensure that the acting entity corresponds to an accepted actor profile before relying on the AS to issue a delegated token under this profile.
 
 5.  **RS validation**: The RS validates the resulting token according to the rules for that token type and applies local delegated-token policy.  If the RS requires dual-principal authorization, it applies that policy per {{dual-principal-authorization}}.  For JWT access tokens, see {{jwt-access-token-rs-processing}}.  For Transaction Tokens, see {{I-D.ietf-oauth-transaction-tokens}} together with {{transaction-tokens}} of this document.
 
