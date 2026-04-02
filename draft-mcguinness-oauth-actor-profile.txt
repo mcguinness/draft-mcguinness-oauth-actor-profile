@@ -270,8 +270,9 @@ Table of Contents
 
    5.  The external tool exchanges the received access token at its
        Transaction Token Service (TTS) to obtain a Transaction Token for
-       a backend internal service call, with the issued token bound to
-       the tool's own DPoP key rather than the agent's.
+       a backend internal service call, with the issued token rebound to
+       the tool as the new presenter under the Transaction Token
+       deployment's proof mechanism rather than the agent's.
 
    6.  The tool calls the internal service using the Transaction Token.
 
@@ -793,7 +794,11 @@ Table of Contents
    can be produced by token exchange and then presented using the JWT
    bearer grant.  When an ID-JAG is used as a JWT bearer assertion
    grant, this section applies to it.  In that usage, the ID-JAG carries
-   delegation information using this profile.  The term and token type
+   delegation information using this profile.  In ID-JAG issuance flows,
+   the acting party is often determined from the authenticated client
+   and local delegation policy rather than from a separate actor_token.
+   This specification profiles the resulting issued JWT, not the
+   upstream actor-determination mechanism.  The term and token type
    originate in [I-D.ietf-oauth-identity-assertion-authz-grant].
 
    {
@@ -1007,6 +1012,14 @@ Table of Contents
       subject's rights are being exercised by a distinct, identifiable
       acting party whose identifier and entity type the AS can assert
       authoritatively.
+
+   When the AS determines the actor from authenticated client context,
+   local delegation policy, or other deployment-specific inputs rather
+   than from an explicit actor-carrying artifact, that is an operational
+   allowance rather than an interoperable actor-proof mechanism defined
+   by this specification.  The interoperability defined here applies to
+   the issued token and its processing, not to the upstream method by
+   which the AS determined the actor.
 
    When none of these conditions hold, an act claim MUST NOT be added
    solely on the basis of the azp claim being present.
@@ -1330,8 +1343,11 @@ Table of Contents
    The semantics are as follows:
 
    *  sub identifies the original human or non-personal initiator of the
-      transaction and MUST NOT change as the token propagates through
-      the call chain.
+      transaction.  When a Transaction Token is exchanged for a
+      replacement, the new token MUST continue to refer to the same
+      underlying subject.  If the issuer uses a different subject-
+      identifier namespace, it MAY change the sub value only to re-
+      express that same subject in the new namespace.
 
    *  scope captures the transaction authorization intent for this
       specific token instance, using the semantics defined by the TTS.
@@ -1832,9 +1848,14 @@ Table of Contents
 
    4.  *Construct and submit token exchange or assertion grant*: The
        client proceeds per Section 5 for JWT assertion grants or per
-       [RFC8693] for token-exchange requests.  The actor_token or
-       assertion MUST carry an act.sub_profile value drawn from the
-       entity_profiles_supported.actor accepted list.
+       [RFC8693] for token-exchange requests.  When the delegated
+       request explicitly carries actor-profile claims, the actor
+       information MUST include an act.sub_profile value drawn from the
+       entity_profiles_supported.actor accepted list.  When actor
+       information is derived by the AS from authenticated client
+       context or other local policy, the client MUST ensure that the
+       acting entity corresponds to an accepted actor profile before
+       relying on the AS to issue a delegated token under this profile.
 
    5.  *RS validation*: The RS validates the resulting token according
        to the rules for that token type and applies local delegated-
