@@ -106,13 +106,13 @@ Table of Contents
      4.1.  Overview
      4.2.  Scope of This Profile
      4.3.  Implementation Summary
-     4.4.  Summary of Actor-Profile Claims
-     4.5.  Actor Object Structure
-     4.6.  Forward Compatibility for sub_profile Values
-     4.7.  Delegation Chains
-     4.8.  Sender Constraint and Key Binding
-     4.9.  Backwards Compatibility
-     4.10. Top-Level Subject Classification
+     4.4.  Actor Object Structure
+     4.5.  Forward Compatibility for sub_profile Values
+     4.6.  Delegation Chains
+     4.7.  Sender Constraint and Key Binding
+     4.8.  Backwards Compatibility
+     4.9.  Top-Level Subject Classification
+     4.10. Summary of Actor-Profile Claims
    5.  JWT Assertion Grants
      5.1.  Structure
      5.2.  Authorization Server Processing
@@ -583,62 +583,7 @@ Table of Contents
 
                                   Table 1
 
-4.4.  Summary of Actor-Profile Claims
-
-   The act object structure defined in Section 4.5 applies uniformly to
-   all three token types covered by this specification.  The following
-   tables summarize claim requirements.
-
-   The sub-claims of the act object have the same requirement level
-   regardless of which token type carries the act claim:
-
-          +=================+======================+============+
-          | Claim           | Requirement          | Definition |
-          +=================+======================+============+
-          | act.sub         | REQUIRED when an act | Section    |
-          |                 | claim is present     | 4.5        |
-          +-----------------+----------------------+------------+
-          | act.iss         | REQUIRED when an act | Section    |
-          |                 | claim is present     | 4.5        |
-          +-----------------+----------------------+------------+
-          | act.sub_profile | RECOMMENDED          | Section    |
-          |                 |                      | 4.5        |
-          +-----------------+----------------------+------------+
-          | act.cnf         | OPTIONAL             | Section    |
-          |                 |                      | 4.5        |
-          +-----------------+----------------------+------------+
-
-                                  Table 2
-
-   Requirements for top-level claims vary by token type:
-
-    +=============+==================+===============+===============+
-    | Claim       | JWT Assertion    | JWT Access    | Transaction   |
-    |             | Grant            | Token         | Token         |
-    +=============+==================+===============+===============+
-    | act         | REQUIRED when    | REQUIRED when | REQUIRED when |
-    |             | delegation is    | delegated     | delegated     |
-    |             | asserted         |               |               |
-    +-------------+------------------+---------------+---------------+
-    | sub_profile | RECOMMENDED      | RECOMMENDED   | propagated    |
-    |             |                  |               | from inbound  |
-    |             |                  |               | subject token |
-    +-------------+------------------+---------------+---------------+
-    | cnf.jkt     | OPTIONAL; set by | REQUIRED when | REQUIRED; set |
-    |             | issuing AS when  | DPoP is used  | by TTS to     |
-    |             | DPoP binding is  | (Section 4.8) | bind the new  |
-    |             | applied          |               | presenter     |
-    +-------------+------------------+---------------+---------------+
-    | req_wl      | not applicable   | not           | REQUIRED      |
-    |             |                  | applicable    |               |
-    +-------------+------------------+---------------+---------------+
-
-                                 Table 3
-
-   Detailed semantics and processing rules for each token type are
-   defined in Section 5, Section 6, and Section 7 respectively.
-
-4.5.  Actor Object Structure
+4.4.  Actor Object Structure
 
    An actor object is a JSON object that is the value of the act claim.
    In addition to the sub claim required by [RFC8693], an actor object
@@ -690,7 +635,7 @@ Table of Contents
       used within act objects.  If the acting entity fits more than one
       profile, multiple values MAY be included as a space-delimited
       string (e.g., "service ai_agent").  Policy evaluation rules for
-      multi-value strings are defined in Section 4.6.
+      multi-value strings are defined in Section 4.5.
 
    cnf:  OPTIONAL.  A confirmation claim as defined in [RFC7800].  When
       present, this value identifies the keying material the actor MUST
@@ -700,7 +645,7 @@ Table of Contents
       the overall token.  When a public key is conveyed in act.cnf, the
       jkt member is RECOMMENDED.
 
-4.6.  Forward Compatibility for sub_profile Values
+4.5.  Forward Compatibility for sub_profile Values
 
    Because the OAuth Entity Profiles registry is extensible,
    implementations will encounter sub_profile values that were not
@@ -752,7 +697,7 @@ Table of Contents
       be ignored for the purposes of that acceptance check; they do not
       cause rejection on their own.
 
-4.7.  Delegation Chains
+4.6.  Delegation Chains
 
    Delegation chains MUST be represented by nesting act objects as
    specified in [RFC8693], Section 4.1.  In a nested structure, the
@@ -794,7 +739,7 @@ Table of Contents
    orchestrator → sub-agent → tool → backend service) while bounding the
    computational and policy-evaluation cost of chain validation.
 
-4.8.  Sender Constraint and Key Binding
+4.7.  Sender Constraint and Key Binding
 
    When sender-constrained tokens are used with a delegated token, the
    top-level cnf claim identifies the key or certificate of the
@@ -821,7 +766,7 @@ Table of Contents
    appropriate to the mechanism in use; where a public key is conveyed,
    jkt is RECOMMENDED.
 
-4.9.  Backwards Compatibility
+4.8.  Backwards Compatibility
 
    This profile extends the base act claim semantics from [RFC8693] by
    requiring iss within each actor object and by defining sub_profile
@@ -837,7 +782,7 @@ Table of Contents
    according to local policy, but they MUST NOT infer profile-defined
    semantics for claims that are absent.
 
-4.10.  Top-Level Subject Classification
+4.9.  Top-Level Subject Classification
 
    The sub_profile claim MAY also appear as a top-level claim in a JWT
    (outside any act object) to classify the entity type of the token's
@@ -856,6 +801,61 @@ Table of Contents
 
    Issuers SHOULD include a top-level sub_profile when they can
    authoritatively classify the subject entity type.
+
+4.10.  Summary of Actor-Profile Claims
+
+   The act object structure defined in Section 4.4 applies uniformly to
+   all three token types covered by this specification.  The following
+   tables summarize claim requirements.
+
+   The sub-claims of the act object have the same requirement level
+   regardless of which token type carries the act claim:
+
+          +=================+======================+============+
+          | Claim           | Requirement          | Definition |
+          +=================+======================+============+
+          | act.sub         | REQUIRED when an act | Section    |
+          |                 | claim is present     | 4.4        |
+          +-----------------+----------------------+------------+
+          | act.iss         | REQUIRED when an act | Section    |
+          |                 | claim is present     | 4.4        |
+          +-----------------+----------------------+------------+
+          | act.sub_profile | RECOMMENDED          | Section    |
+          |                 |                      | 4.4        |
+          +-----------------+----------------------+------------+
+          | act.cnf         | OPTIONAL             | Section    |
+          |                 |                      | 4.4        |
+          +-----------------+----------------------+------------+
+
+                                  Table 2
+
+   Requirements for top-level claims vary by token type:
+
+    +=============+==================+===============+===============+
+    | Claim       | JWT Assertion    | JWT Access    | Transaction   |
+    |             | Grant            | Token         | Token         |
+    +=============+==================+===============+===============+
+    | act         | REQUIRED when    | REQUIRED when | REQUIRED when |
+    |             | delegation is    | delegated     | delegated     |
+    |             | asserted         |               |               |
+    +-------------+------------------+---------------+---------------+
+    | sub_profile | RECOMMENDED      | RECOMMENDED   | propagated    |
+    |             |                  |               | from inbound  |
+    |             |                  |               | subject token |
+    +-------------+------------------+---------------+---------------+
+    | cnf.jkt     | OPTIONAL; set by | REQUIRED when | REQUIRED; set |
+    |             | issuing AS when  | DPoP is used  | by TTS to     |
+    |             | DPoP binding is  | (Section 4.7) | bind the new  |
+    |             | applied          |               | presenter     |
+    +-------------+------------------+---------------+---------------+
+    | req_wl      | not applicable   | not           | REQUIRED      |
+    |             |                  | applicable    |               |
+    +-------------+------------------+---------------+---------------+
+
+                                 Table 3
+
+   Detailed semantics and processing rules for each token type are
+   defined in Section 5, Section 6, and Section 7 respectively.
 
 5.  JWT Assertion Grants
 
@@ -1030,7 +1030,7 @@ Table of Contents
           propagate the inner chain into the issued token.  The AS
           SHOULD propagate it by preserving the nested structure,
           provided the total resulting chain depth does not exceed the
-          limit in Section 4.7.  If the AS does not accept pre-chained
+          limit in Section 4.6.  If the AS does not accept pre-chained
           assertions, it MUST reject the request.
 
        *  *Validation of inner chain*: An AS that propagates an inner
@@ -1068,7 +1068,7 @@ Table of Contents
        Section 6.2.  For Transaction Tokens, see Section 7.3.  When the
        output is another JWT assertion grant profile, the resulting
        assertion MUST preserve the validated actor information subject
-       to local policy and the chain-depth limit in Section 4.7.
+       to local policy and the chain-depth limit in Section 4.6.
 
    9.  The AS MAY add additional sub_profile or act metadata to the
        issued token based on its own knowledge of the principals.
@@ -1082,7 +1082,7 @@ Table of Contents
 
    invalid_request:  Use when the act claim structure is syntactically
       invalid, the delegation chain depth exceeds the limit in
-      Section 4.7, or a required claim such as act.sub is absent.
+      Section 4.6, or a required claim such as act.sub is absent.
 
    invalid_grant:  Use when the assertion or subject token cannot be
       validated, the issuer is not trusted to assert the delegation
@@ -1258,7 +1258,7 @@ Table of Contents
    object.
 
    If the inbound actor information cannot be validated or would exceed
-   the maximum chain depth defined in Section 4.7, the AS MUST reject
+   the maximum chain depth defined in Section 4.6, the AS MUST reject
    the request and MUST NOT issue a token that partially preserves the
    delegation chain.
 
@@ -1572,7 +1572,7 @@ Table of Contents
 
    3.  The TTS MUST verify that creating a new outermost act object
        would not cause the resulting chain depth to exceed the limit in
-       Section 4.7.  If it would, the TTS MUST reject the request.
+       Section 4.6.  If it would, the TTS MUST reject the request.
 
    4.  The TTS MUST create a new outermost act object identifying the
        new presenter.  If the inbound token already carries an act
@@ -2186,7 +2186,7 @@ Table of Contents
 
    Unbounded delegation chains increase attack surface and complicate
    policy evaluation.  This document specifies a maximum depth of five
-   nested act objects (Section 4.7), sufficient for foreseeable multi-
+   nested act objects (Section 4.6), sufficient for foreseeable multi-
    hop scenarios.  Implementations that encounter chains exceeding this
    limit MUST reject the token to prevent denial-of-service through
    chain parsing.
@@ -2312,7 +2312,7 @@ Table of Contents
    set where such checks are part of local policy, and the local policy
    applicable to the token they are issuing.  They MUST preserve
    unrecognized but syntactically valid values as required by
-   Section 4.6, and they MUST reject values that are malformed or
+   Section 4.5, and they MUST reject values that are malformed or
    disallowed by local policy.
 
 12.  Privacy Considerations
@@ -2937,7 +2937,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
    and the outermost act.cnf.jkt matches it because the Booking Tool is
    now the current actor.  The nested act.act.cnf.jkt retains the
    agent's original key, illustrating the multi-hop key-rotation
-   property described in Section 4.8.
+   property described in Section 4.7.
 
 A.8.  Step 6: Booking Tool Calls Inventory Service
 
