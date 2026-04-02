@@ -1355,7 +1355,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &requested_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Atxn_token
 &audience=https%3A%2F%2Ftravel-provider.example
 &scope=inventory%3Acheck
-&rctx={"req_ip":"198.51.100.42","req_time":1743375650}
+&rctx={"req_ip":"198.51.100.42"}
 ~~~
 
 The TTS applies actor-profile processing per {{transaction-token-service-processing}}: it preserves `sub` and `sub_profile` from the subject token, sets `req_wl` to the authenticated Booking Tool, creates a new outermost `act` object for the Booking Tool, nests the subject token's existing `act` claim beneath it, and binds the issued Transaction Token to the Booking Tool's presenter key (`ToolJKT`) identified in the WIT confirmation claim:
