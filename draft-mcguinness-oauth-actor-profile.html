@@ -1696,6 +1696,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         </ul>
 <p id="section-4.2-5">Those decisions remain deployment- and policy-specific, except where a referenced specification defines them more precisely.<a href="#section-4.2-5" class="pilcrow">¶</a></p>
+<p id="section-4.2-6">In particular, this specification standardizes the representation and processing of actor information once an issuer has determined the acting party.  It does not standardize every upstream proof mechanism by which that determination is made.  Deployments <span class="bcp14">MAY</span> derive actor information from authenticated client context, local delegation policy, pre-registered grants, or other trusted deployment-specific inputs, but those inputs are not themselves made interoperable by this specification.<a href="#section-4.2-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="implementation-summary">
@@ -1725,7 +1726,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Token-exchange AS</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <code>subject_token</code> and optional <code>actor_token</code>, or inbound token with explicit <code>act</code> chain</td>
+                <code>subject_token</code> plus optional explicit actor input, or inbound token with explicit <code>act</code> chain</td>
               <td class="text-left" rowspan="1" colspan="1">Validate inbound token(s), trust inbound issuers, validate actor authorization, enforce scope reduction and chain-depth limit</td>
               <td class="text-left" rowspan="1" colspan="1">Issue output token with preserved or extended <code>act</code> chain, or reject</td>
             </tr>
@@ -1780,6 +1781,7 @@ act-object = {
 <code>iss</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-4.4-3.4">
             <p id="section-4.4-3.4.1"><span class="bcp14">REQUIRED</span>.  The issuer namespace that is authoritative for the actor identifier carried in <code>act.sub</code>.  This value scopes <code>act.sub</code> to an issuer namespace so that relying parties can distinguish otherwise-colliding subject identifiers across domains.  It identifies the authority for the actor identifier itself, not merely the token issuer that copied or conveyed the claim.  Put differently, <code>act.iss</code> answers "who owns the namespace in which this <code>act.sub</code> value is meaningful?" rather than "who issued the enclosing token?"  For URI, client, workload, or other deployment-specific identifiers, the value of <code>act.iss</code> <span class="bcp14">MUST</span> identify the authority that the deployment treats as authoritative for resolving or validating that actor identifier.  See "Cross-Domain Delegation" in <a href="#conventions" class="auto internal xref">Section 2</a>.  The value is a StringOrURI as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-4.4-3.4.1" class="pilcrow">¶</a></p>
+<p id="section-4.4-3.4.2">For example, a TTS might issue a Transaction Token with top-level <code>iss</code> equal to <code>https://tts.travel-provider.example</code> while setting <code>act.iss</code> for the booking tool to <code>https://as.travel-provider.example</code>, if local policy treats that AS as authoritative for the booking tool identifier namespace.  In that case, the token issuer and the actor-identifier authority differ, and both values are valid in their respective roles.<a href="#section-4.4-3.4.2" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-4.4-3.5">
@@ -2226,7 +2228,7 @@ If none of these mechanisms can be satisfied, the AS <span class="bcp14">MUST</s
 <a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-resource-server-processing" class="section-name selfRef">Resource Server Processing</a>
         </h3>
 <p id="section-6.3-1">Upon receiving a JWT access token that contains an <code>act</code> claim, a resource server <span class="bcp14">MUST</span> validate and process that token according to its local delegated-token policy.  A resource server that requires dual-principal authorization for delegated tokens <span class="bcp14">MUST</span> advertise that requirement using <code>dual_principal_authorization_supported: true</code> (<a href="#protected-resource-metadata" class="auto internal xref">Section 10.3</a>).  A resource server that does not require dual-principal authorization <span class="bcp14">SHOULD</span> still evaluate both the subject and the actor, but <span class="bcp14">MAY</span> treat the actor chain as informational under local policy.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
-<p id="section-6.3-2">Actor information should be treated as informational only in narrowly scoped cases, such as audit-only logging, same-domain internal services with pre-established non-token delegation controls, or deployments where the AS has already enforced actor-specific policy and the RS is not making an independent delegated-access decision.  In the absence of such a documented constraint, the safe default is to evaluate both <code>sub</code> and the outermost <code>act.sub</code>.  New cross-domain deployments <span class="bcp14">SHOULD NOT</span> rely on subject-only evaluation when <code>act</code> is present.<a href="#section-6.3-2" class="pilcrow">¶</a></p>
+<p id="section-6.3-2">Actor information should be treated as informational only in narrowly scoped and explicitly documented cases, such as audit-only logging, same-domain internal services with pre-established non-token delegation controls, or deployments where the AS has already enforced actor-specific policy and the RS is not making an independent delegated-access decision.  In the absence of such a documented constraint, the safe default is to evaluate both <code>sub</code> and the outermost <code>act.sub</code>.  New cross-domain deployments <span class="bcp14">SHOULD NOT</span> rely on subject-only evaluation when <code>act</code> is present.<a href="#section-6.3-2" class="pilcrow">¶</a></p>
 <p id="section-6.3-3">When the resource server accepts delegated tokens, it <span class="bcp14">MUST</span>:<a href="#section-6.3-3" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.3-4">
 <li id="section-6.3-4.1">
@@ -2496,7 +2498,7 @@ If the TTS uses a different subject-identifier namespace, it <span class="bcp14"
         <h3 id="name-resource-server-processing-2">
 <a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-resource-server-processing-2" class="section-name selfRef">Resource Server Processing</a>
         </h3>
-<p id="section-8.2-1">Dual-principal authorization is <span class="bcp14">OPTIONAL</span> but <span class="bcp14">RECOMMENDED</span> for delegated tokens under this profile.  An RS that requires dual-principal authorization for a resource <span class="bcp14">MUST</span> advertise that requirement using <code>dual_principal_authorization_supported: true</code> (<a href="#protected-resource-metadata" class="auto internal xref">Section 10.3</a>).  An RS that does not advertise this value <span class="bcp14">MAY</span> still apply dual-principal authorization, but clients <span class="bcp14">MUST NOT</span> rely on that behavior.  The following steps describe the <span class="bcp14">RECOMMENDED</span> evaluation:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<p id="section-8.2-1">Dual-principal authorization is <span class="bcp14">OPTIONAL</span> but <span class="bcp14">RECOMMENDED</span> for delegated tokens under this profile.  An RS that requires dual-principal authorization for a resource <span class="bcp14">MUST</span> advertise that requirement using <code>dual_principal_authorization_supported: true</code> (<a href="#protected-resource-metadata" class="auto internal xref">Section 10.3</a>).  An RS that does not advertise this value <span class="bcp14">MAY</span> still apply dual-principal authorization, but clients <span class="bcp14">MUST NOT</span> rely on that behavior.  Deployments that treat actor information as informational only <span class="bcp14">SHOULD</span> do so only in narrowly scoped and explicitly documented cases.  The following steps describe the <span class="bcp14">RECOMMENDED</span> evaluation:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-8.2-2">
 <li id="section-8.2-2.1">
             <p id="section-8.2-2.1.1"><strong>Evaluate subject authorization</strong>: Determine whether the subject (<code>sub</code>) has been granted the requested scope or permission, using the same mechanisms applied to non-delegated tokens.<a href="#section-8.2-2.1.1" class="pilcrow">¶</a></p>
@@ -3786,7 +3788,7 @@ Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
 <p id="appendix-A.9-2">Key observations:<a href="#appendix-A.9-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-A.9-3.1">
-            <p id="appendix-A.9-3.1.1"><code>sub</code> (Alice) is unchanged across all trust domains and token transformations.<a href="#appendix-A.9-3.1.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.9-3.1.1">In this example, <code>sub</code> (Alice) is unchanged across all trust domains and token transformations.<a href="#appendix-A.9-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.9-3.2">
             <p id="appendix-A.9-3.2.1">The presenter-binding key rotates exactly once — at Step 5, when the TTS re-binds the Transaction Token to the Booking Tool's key.<a href="#appendix-A.9-3.2.1" class="pilcrow">¶</a></p>

@@ -462,6 +462,15 @@ Table of Contents
    Those decisions remain deployment- and policy-specific, except where
    a referenced specification defines them more precisely.
 
+   In particular, this specification standardizes the representation and
+   processing of actor information once an issuer has determined the
+   acting party.  It does not standardize every upstream proof mechanism
+   by which that determination is made.  Deployments MAY derive actor
+   information from authenticated client context, local delegation
+   policy, pre-registered grants, or other trusted deployment-specific
+   inputs, but those inputs are not themselves made interoperable by
+   this specification.
+
 4.3.  Implementation Summary
 
    The following table summarizes the minimum implementation obligations
@@ -486,13 +495,13 @@ Table of Contents
    |                     |             |depth limit     |              |
    +---------------------+-------------+----------------+--------------+
    | Token-exchange AS   |subject_token|Validate        |Issue output  |
-   |                     |and optional |inbound         |token with    |
-   |                     |actor_token, |token(s), trust |preserved or  |
-   |                     |or inbound   |inbound         |extended act  |
-   |                     |token with   |issuers,        |chain, or     |
-   |                     |explicit act |validate actor  |reject        |
-   |                     |chain        |authorization,  |              |
-   |                     |             |enforce scope   |              |
+   |                     |plus optional|inbound         |token with    |
+   |                     |explicit     |token(s), trust |preserved or  |
+   |                     |actor input, |inbound         |extended act  |
+   |                     |or inbound   |issuers,        |chain, or     |
+   |                     |token with   |validate actor  |reject        |
+   |                     |explicit act |authorization,  |              |
+   |                     |chain        |enforce scope   |              |
    |                     |             |reduction and   |              |
    |                     |             |chain-depth     |              |
    |                     |             |limit           |              |
@@ -571,6 +580,14 @@ Table of Contents
       resolving or validating that actor identifier.  See "Cross-Domain
       Delegation" in Section 2.  The value is a StringOrURI as defined
       in [RFC7519].
+
+      For example, a TTS might issue a Transaction Token with top-level
+      iss equal to https://tts.travel-provider.example while setting
+      act.iss for the booking tool to https://as.travel-
+      provider.example, if local policy treats that AS as authoritative
+      for the booking tool identifier namespace.  In that case, the
+      token issuer and the actor-identifier authority differ, and both
+      values are valid in their respective roles.
 
    sub_profile:  RECOMMENDED.  A space-delimited list of entity profile
       values classifying the actor identified by act.sub, as defined in
@@ -1181,14 +1198,14 @@ Table of Contents
    policy.
 
    Actor information should be treated as informational only in narrowly
-   scoped cases, such as audit-only logging, same-domain internal
-   services with pre-established non-token delegation controls, or
-   deployments where the AS has already enforced actor-specific policy
-   and the RS is not making an independent delegated-access decision.
-   In the absence of such a documented constraint, the safe default is
-   to evaluate both sub and the outermost act.sub.  New cross-domain
-   deployments SHOULD NOT rely on subject-only evaluation when act is
-   present.
+   scoped and explicitly documented cases, such as audit-only logging,
+   same-domain internal services with pre-established non-token
+   delegation controls, or deployments where the AS has already enforced
+   actor-specific policy and the RS is not making an independent
+   delegated-access decision.  In the absence of such a documented
+   constraint, the safe default is to evaluate both sub and the
+   outermost act.sub.  New cross-domain deployments SHOULD NOT rely on
+   subject-only evaluation when act is present.
 
    When the resource server accepts delegated tokens, it MUST:
 
@@ -1529,7 +1546,9 @@ Table of Contents
    requirement using dual_principal_authorization_supported: true
    (Section 10.3).  An RS that does not advertise this value MAY still
    apply dual-principal authorization, but clients MUST NOT rely on that
-   behavior.  The following steps describe the RECOMMENDED evaluation:
+   behavior.  Deployments that treat actor information as informational
+   only SHOULD do so only in narrowly scoped and explicitly documented
+   cases.  The following steps describe the RECOMMENDED evaluation:
 
    1.  *Evaluate subject authorization*: Determine whether the subject
        (sub) has been granted the requested scope or permission, using
@@ -2807,8 +2826,8 @@ A.9.  Summary of Token Transformations
 
    Key observations:
 
-   *  sub (Alice) is unchanged across all trust domains and token
-      transformations.
+   *  In this example, sub (Alice) is unchanged across all trust domains
+      and token transformations.
 
    *  The presenter-binding key rotates exactly once — at Step 5, when
       the TTS re-binds the Transaction Token to the Booking Tool's key.
