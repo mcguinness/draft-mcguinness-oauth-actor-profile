@@ -296,6 +296,10 @@ The `sub_profile` claim MAY also appear as a top-level claim in a JWT (outside a
 
 Issuers SHOULD include a top-level `sub_profile` when they can authoritatively classify the subject entity type.
 
+### Subject Continuity
+
+The top-level `sub` claim identifies the subject on whose behalf the current token is used.  When an issuer creates a new token under this profile, it MUST ensure that the new token refers to the same underlying subject as the input token.  If the issuer uses a different subject-identifier namespace, it MAY change the `sub` value only to re-express that same subject in the new namespace.  It MUST NOT replace `sub` with an identifier for a different subject while treating the result as the same delegation chain.
+
 ### Forward Compatibility for `sub_profile` Values
 
 Because the OAuth Entity Profiles registry is extensible, implementations will encounter `sub_profile` values that were not defined when the implementation was built.  The following rules govern handling of unrecognized values:
@@ -555,6 +559,8 @@ When an AS issues a JWT access token following:
 
 the AS MUST include an `act` claim in the issued access token that faithfully represents the delegation relationship conveyed in the inbound request.  The AS MUST NOT silently drop actor information.
 
+The AS MUST ensure that the issued token refers to the same underlying subject as the inbound token.  If the AS uses a different subject-identifier namespace, it MAY change the `sub` value only to re-express that same subject in the new namespace.  It MUST NOT replace `sub` with an identifier for a different subject while treating the result as the same delegation chain.
+
 If the Token Exchange request itself contains a `subject_token` that already carries an `act` claim (i.e., the delegation chain already has depth > 1), the AS MUST nest the existing `act` structure within a new outermost `act` that represents the newly-identified actor, unless the AS has policy that limits chain depth.  When constructing this new outermost `act` object, the AS MUST set `act.sub` to the new actor's identifier and MUST set `act.iss` to the issuer namespace that local policy treats as authoritative for that actor's identifier — typically the AS's own issuer URI when it is the authority for the actor's namespace, or a pre-registered federation issuer otherwise.  The AS MUST NOT omit `act.iss` from a newly-created outermost `act` object.
 
 If the inbound actor information cannot be validated or would exceed the maximum chain depth defined in {{delegation-chains}}, the AS MUST reject the request and MUST NOT issue a token that partially preserves the delegation chain.
@@ -719,6 +725,8 @@ In this example the booking tool is the current presenter.  It is identified by 
 When a TTS receives a token-exchange request to issue or refresh a Transaction Token, and the inbound `subject_token` or `actor_token` contains actor-profile claims:
 
 1.  The TTS MUST propagate the `sub` from the inbound token unchanged.
+
+    If the TTS uses a different subject-identifier namespace, it MAY change the `sub` value only to re-express the same underlying subject in that namespace.  It MUST NOT replace `sub` with an identifier for a different subject while treating the result as the same delegation chain.
 
 2.  The TTS MUST set `req_wl` to the authenticated requesting workload's identity per {{I-D.ietf-oauth-transaction-tokens}}.
 
