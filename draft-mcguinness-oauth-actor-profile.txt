@@ -2728,7 +2728,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 &requested_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Atxn_token
 &audience=https%3A%2F%2Ftravel-provider.example
 &scope=inventory%3Acheck
-&rctx={"req_ip":"198.51.100.42","req_time":1743375650}
+&rctx={"req_ip":"198.51.100.42"}
 
    The TTS applies actor-profile processing per Section 7.3: it
    preserves sub and sub_profile from the subject token, sets req_wl to
