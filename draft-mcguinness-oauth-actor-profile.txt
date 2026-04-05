@@ -203,7 +203,7 @@ Table of Contents
 
    *  A common actor profile structure that reuses act from [RFC8693]
       and adds sub_profile for entity-type classification and cnf for
-      actor key binding.
+      actor-associated key context.
 
    *  How the actor profile is expressed and validated in each token
       type: JWT assertion grants (Section 5), JWT access tokens
@@ -990,11 +990,13 @@ Table of Contents
    the AS-issued pattern, the issuing AS sets act.iss to the namespace
    it is authoritative for, which is typically its own issuer URI.
 
-   When a self-issuing client intends actor key binding for the
-   resulting issued token, it SHOULD include act.cnf.jkt in the act
-   object, set to the JWK thumbprint of the key it will use for proof of
-   possession.  The AS will then verify key possession per step 6 of
-   Section 5.2 before issuing the token.
+   When a self-issuing client intends to record actor-associated key
+   context for the resulting issued token, it SHOULD include act.cnf.jkt
+   in the act object, set to the JWK thumbprint of the key it will use
+   for proof of possession.  The AS will then verify the request's top-
+   level proof-of-possession mechanism per step 6 of Section 5.2 before
+   issuing the token and MAY copy the verified key reference into
+   act.cnf.
 
    Allowed issuer patterns include:
 
@@ -1115,8 +1117,8 @@ Table of Contents
 
    invalid_grant:  Use when the assertion or subject token cannot be
       validated, the issuer is not trusted to assert the delegation
-      relationship, or the actor's possession of the key indicated by
-      act.cnf.jkt cannot be confirmed.
+      relationship, or the request's required proof-of-possession check
+      cannot be confirmed.
 
    access_denied:  Use when AS policy does not permit the identified
       actor (act.sub) to act on behalf of the subject (sub), or when the
@@ -1162,7 +1164,7 @@ Table of Contents
    *  The delegation relationship is re-validated at each token
       issuance.
 
-   *  The actor's key binding (act.cnf) is current.
+   *  The current presenter binding (cnf) is re-validated.
 
    *  Revocation of the delegation relationship takes effect immediately
       at the next token request.
@@ -1763,8 +1765,9 @@ Table of Contents
      | act.sub_profile | Actor     | Entity type of the actor        |
      |                 |           | identified by act.sub           |
      +-----------------+-----------+---------------------------------+
-     | act.cnf.jkt     | Actor     | Proof-of-possession key of the  |
-     |                 |           | actor identified by act.sub     |
+     | act.cnf.jkt     | Actor     | Actor-associated key reference  |
+     |                 |           | for the actor identified by     |
+     |                 |           | act.sub                         |
      +-----------------+-----------+---------------------------------+
      | scope           | Both      | Authorized scope                |
      +-----------------+-----------+---------------------------------+
@@ -2220,8 +2223,9 @@ Table of Contents
       MUST NOT treat nested act.cnf values as independently verifiable
       presenter bindings for prior hops.
 
-   Deployments of AI agent systems SHOULD require actor key binding to
-   prevent delegation token theft.
+   Deployments of AI agent systems SHOULD require sender-constrained
+   tokens for the current presenter to prevent delegation token theft,
+   and MAY carry act.cnf for actor-chain visibility.
 
    Nested act.cnf values do not by themselves provide independently
    verifiable provenance for prior actor hops across trust boundaries.
@@ -2848,8 +2852,8 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
    exchange, while act.sub identifies the delegated actor.  In this
    example they all refer to the same party under trusted local mapping
    rules.  Both cnf.jkt (top-level, for DPoP binding) and act.cnf.jkt
-   (actor key reference) are set to AgentJKT because the agent is both
-   the bearer and the acting principal at this stage.
+   (actor-associated key reference) are set to AgentJKT because the
+   agent is both the bearer and the acting principal at this stage.
 
 A.5.  Step 3: Agent Exchanges ID-JAG for Access Token at Travel Provider
       AS
@@ -2869,9 +2873,10 @@ A.5.  Step 3: Agent Exchanges ID-JAG for Access Token at Travel Provider
    &scope=booking%3Acreate
 
    The Travel Provider AS performs actor-profile processing per
-   Section 5.2: it verifies the act.cnf.jkt DPoP binding and checks that
-   act.sub_profile (ai_agent) is permitted as an actor for the requested
-   scope.  It issues an access token preserving the actor chain:
+   Section 5.2: it verifies the request's DPoP proof against the current
+   presenter binding and checks that act.sub_profile (ai_agent) is
+   permitted as an actor for the requested scope.  It issues an access
+   token preserving the actor chain:
 
    {
      "iss": "https://as.travel-provider.example",

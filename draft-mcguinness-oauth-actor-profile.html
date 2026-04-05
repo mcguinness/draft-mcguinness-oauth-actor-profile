@@ -1448,7 +1448,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <p id="section-1-2">This document addresses that gap by specifying:<a href="#section-1-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1-3.1">
-          <p id="section-1-3.1.1">A common actor profile structure that reuses <code>act</code> from <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> and adds <code>sub_profile</code> for entity-type classification and <code>cnf</code> for actor key binding.<a href="#section-1-3.1.1" class="pilcrow">¶</a></p>
+          <p id="section-1-3.1.1">A common actor profile structure that reuses <code>act</code> from <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> and adds <code>sub_profile</code> for entity-type classification and <code>cnf</code> for actor-associated key context.<a href="#section-1-3.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-3.2">
           <p id="section-1-3.2.1">How the actor profile is expressed and validated in each token type: JWT assertion grants (<a href="#jwt-assertion-grants" class="auto internal xref">Section 5</a>), JWT access tokens (<a href="#jwt-access-tokens" class="auto internal xref">Section 6</a>), and Transaction Tokens (<a href="#transaction-tokens" class="auto internal xref">Section 7</a>).<a href="#section-1-3.2.1" class="pilcrow">¶</a></p>
@@ -2129,7 +2129,7 @@ act-object = {
 <p id="section-5.1-7">The top-level <code>sub_profile</code> describes the entity type of the JWT's <code>sub</code>.  The <code>sub_profile</code> within <code>act</code> describes the entity type of the actor.<a href="#section-5.1-7" class="pilcrow">¶</a></p>
 <p id="section-5.1-8">This example shows a self-issued assertion grant: the agent (<code>iss</code>) directly asserts Alice's delegation to itself (<code>act.sub</code>), relying on a pre-established trust relationship between the agent and the receiving AS.  An alternative pattern is an AS-issued assertion grant, in which an AS performs Token Exchange on the agent's behalf and issues the assertion grant as the <code>iss</code>.  The ID-JAG pattern illustrated in <a href="#appendix-cross-domain" class="auto internal xref">Appendix A</a> uses the AS-issued form.  The processing rules in <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 5.2</a> apply to both forms; the difference lies in which party the receiving AS must have established trust with as the assertion issuer.<a href="#section-5.1-8" class="pilcrow">¶</a></p>
 <p id="section-5.1-9">In the self-issued pattern, the client <span class="bcp14">MUST</span> set <code>act.iss</code> to the issuer namespace that is authoritative for its own identifier — typically the AS that issued the client's credentials or that governs the identifier namespace in which <code>act.sub</code> is registered.  The client <span class="bcp14">MUST NOT</span> set <code>act.iss</code> to its own identifier or to the target AS's issuer unless that party is in fact the authoritative namespace owner.  In the AS-issued pattern, the issuing AS sets <code>act.iss</code> to the namespace it is authoritative for, which is typically its own issuer URI.<a href="#section-5.1-9" class="pilcrow">¶</a></p>
-<p id="section-5.1-10">When a self-issuing client intends actor key binding for the resulting issued token, it <span class="bcp14">SHOULD</span> include <code>act.cnf.jkt</code> in the <code>act</code> object, set to the JWK thumbprint of the key it will use for proof of possession.  The AS will then verify key possession per step 6 of <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 5.2</a> before issuing the token.<a href="#section-5.1-10" class="pilcrow">¶</a></p>
+<p id="section-5.1-10">When a self-issuing client intends to record actor-associated key context for the resulting issued token, it <span class="bcp14">SHOULD</span> include <code>act.cnf.jkt</code> in the <code>act</code> object, set to the JWK thumbprint of the key it will use for proof of possession.  The AS will then verify the request's top-level proof-of-possession mechanism per step 6 of <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 5.2</a> before issuing the token and <span class="bcp14">MAY</span> copy the verified key reference into <code>act.cnf</code>.<a href="#section-5.1-10" class="pilcrow">¶</a></p>
 <p id="section-5.1-11">Allowed issuer patterns include:<a href="#section-5.1-11" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.1-12.1">
@@ -2225,7 +2225,7 @@ If none of these mechanisms can be satisfied, the AS <span class="bcp14">MUST</s
 <dt id="section-5.3-2.3">
 <code>invalid_grant</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-5.3-2.4">
-            <p id="section-5.3-2.4.1">Use when the assertion or subject token cannot be validated, the issuer is not trusted to assert the delegation relationship, or the actor's possession of the key indicated by <code>act.cnf.jkt</code> cannot be confirmed.<a href="#section-5.3-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-5.3-2.4.1">Use when the assertion or subject token cannot be validated, the issuer is not trusted to assert the delegation relationship, or the request's required proof-of-possession check cannot be confirmed.<a href="#section-5.3-2.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-5.3-2.5">
@@ -2260,7 +2260,7 @@ If none of these mechanisms can be satisfied, the AS <span class="bcp14">MUST</s
             <p id="section-5.4-4.1.1">The delegation relationship is re-validated at each token issuance.<a href="#section-5.4-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.4-4.2">
-            <p id="section-5.4-4.2.1">The actor's key binding (<code>act.cnf</code>) is current.<a href="#section-5.4-4.2.1" class="pilcrow">¶</a></p>
+            <p id="section-5.4-4.2.1">The current presenter binding (<code>cnf</code>) is re-validated.<a href="#section-5.4-4.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.4-4.3">
             <p id="section-5.4-4.3.1">Revocation of the delegation relationship takes effect immediately at the next token request.<a href="#section-5.4-4.3.1" class="pilcrow">¶</a></p>
@@ -2716,7 +2716,7 @@ If none of these mechanisms can be satisfied, the AS <span class="bcp14">MUST</s
                 <code>act.cnf.jkt</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Actor</td>
-              <td class="text-left" rowspan="1" colspan="1">Proof-of-possession key of the actor identified by <code>act.sub</code>
+              <td class="text-left" rowspan="1" colspan="1">Actor-associated key reference for the actor identified by <code>act.sub</code>
 </td>
             </tr>
             <tr>
@@ -3128,7 +3128,7 @@ As a safe default, a client that intends to make a request on behalf of another 
             <p id="section-11.2-2.3.1">The RS <span class="bcp14">MAY</span> use <code>act.cnf</code> as audit, diagnostic, or policy input, but <span class="bcp14">MUST NOT</span> treat nested <code>act.cnf</code> values as independently verifiable presenter bindings for prior hops.<a href="#section-11.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-11.2-3">Deployments of AI agent systems <span class="bcp14">SHOULD</span> require actor key binding to prevent delegation token theft.<a href="#section-11.2-3" class="pilcrow">¶</a></p>
+<p id="section-11.2-3">Deployments of AI agent systems <span class="bcp14">SHOULD</span> require sender-constrained tokens for the current presenter to prevent delegation token theft, and <span class="bcp14">MAY</span> carry <code>act.cnf</code> for actor-chain visibility.<a href="#section-11.2-3" class="pilcrow">¶</a></p>
 <p id="section-11.2-4">Nested <code>act.cnf</code> values do not by themselves provide independently verifiable provenance for prior actor hops across trust boundaries.  An intermediate issuer that is trusted to issue a new token can also rewrite nested actor-chain content, including nested <code>act.cnf</code> values.  Accordingly, <code>act.cnf</code> is useful for carrying actor-associated key history, but it does not solve cross-domain integrity or non-repudiation for prior hops.  Stronger assurance for prior-hop provenance would require an additional mechanism outside the scope of this specification, such as signed hop receipts, transparency-log-based recording, or another future extension.<a href="#section-11.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -3714,7 +3714,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
 }
 </pre><a href="#appendix-A.4-4" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.4-5">The <code>act</code> object records the agent as the authorized actor.  The <code>client_id</code> and <code>azp</code> values identify the OAuth client used in the exchange, while <code>act.sub</code> identifies the delegated actor.  In this example they all refer to the same party under trusted local mapping rules.  Both <code>cnf.jkt</code> (top-level, for DPoP binding) and <code>act.cnf.jkt</code> (actor key reference) are set to <code>AgentJKT</code> because the agent is both the bearer and the acting principal at this stage.<a href="#appendix-A.4-5" class="pilcrow">¶</a></p>
+<p id="appendix-A.4-5">The <code>act</code> object records the agent as the authorized actor.  The <code>client_id</code> and <code>azp</code> values identify the OAuth client used in the exchange, while <code>act.sub</code> identifies the delegated actor.  In this example they all refer to the same party under trusted local mapping rules.  Both <code>cnf.jkt</code> (top-level, for DPoP binding) and <code>act.cnf.jkt</code> (actor-associated key reference) are set to <code>AgentJKT</code> because the agent is both the bearer and the acting principal at this stage.<a href="#appendix-A.4-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="step-3-agent-exchanges-id-jag-for-access-token-at-travel-provider-as">
@@ -3735,7 +3735,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer
 &amp;scope=booking%3Acreate
 </pre><a href="#appendix-A.5-2" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.5-3">The Travel Provider AS performs actor-profile processing per <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 5.2</a>: it verifies the <code>act.cnf.jkt</code> DPoP binding and checks that <code>act.sub_profile</code> (<code>ai_agent</code>) is permitted as an actor for the requested scope.  It issues an access token preserving the actor chain:<a href="#appendix-A.5-3" class="pilcrow">¶</a></p>
+<p id="appendix-A.5-3">The Travel Provider AS performs actor-profile processing per <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 5.2</a>: it verifies the request's DPoP proof against the current presenter binding and checks that <code>act.sub_profile</code> (<code>ai_agent</code>) is permitted as an actor for the requested scope.  It issues an access token preserving the actor chain:<a href="#appendix-A.5-3" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="appendix-A.5-4">
 <pre>
 {
