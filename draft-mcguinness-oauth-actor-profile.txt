@@ -151,7 +151,7 @@ Table of Contents
      11.6.  Cross-Domain Trust
      11.7.  Delegation Revocation
      11.8.  Client Identity and Delegation
-     11.9.  Confused Deputy and Dual-Principal Bypass
+     11.9.  Confused Deputy and Actor-Authorization Bypass
      11.10. Token Substitution
    12. Privacy Considerations
    13. IANA Considerations
@@ -667,6 +667,19 @@ Table of Contents
       the current token.  When a public key is conveyed in act.cnf, the
       jkt member is RECOMMENDED.
 
+      The intended use of act.cnf under "optional local policy" is: when
+      an AS receives an inbound assertion whose outermost act object
+      carries cnf.jkt, the AS MAY use that value as the expected key for
+      the actor-as-current-presenter, to check that the inbound DPoP
+      proof was signed by the same key the actor declared in the
+      assertion.  This is a local policy choice, not a general protocol
+      requirement.  An AS that supports this check SHOULD document it in
+      its deployment guide and SHOULD return invalid_grant when the
+      check is required and fails.  This use applies only to the
+      outermost act; act.cnf values in nested inner objects are key
+      history only and MUST NOT be used to drive proof-of-possession
+      checks at any layer.
+
 4.5.  Forward Compatibility for sub_profile Values
 
    Because the OAuth Entity Profiles registry is extensible,
@@ -810,6 +823,16 @@ Table of Contents
    implementations MAY continue to process a base [RFC8693] act object
    according to local policy, but they MUST NOT infer profile-defined
    semantics for claims that are absent.
+
+   Implementations that previously treated act.cnf as an active sender-
+   constraining mechanism (requiring proof of possession from each prior
+   actor in a chain) should note that this specification defines act.cnf
+   as actor-associated key history for audit, diagnostics, and optional
+   local policy only.  Active proof-of-possession requirements apply
+   only to the top-level cnf claim and the immediate presenter.
+   Deployments that relied on per-hop act.cnf key verification for
+   multi-hop security properties MUST review their key-verification
+   logic against the semantics defined in Section 4.4 and Section 4.7.
 
 4.9.  Top-Level Subject Classification
 
@@ -1077,12 +1100,18 @@ Table of Contents
           delegation relationship at each hop in the nested chain
           according to local policy.
 
-   6.  If the act object contains a cnf claim indicating a sender-
-       constraining key, the AS MUST verify that the token request
-       demonstrates possession of the corresponding key, using DPoP
-       ([RFC9449]) or mutual TLS ([RFC8705]) consistent with token
-       endpoint policy.  If possession cannot be verified, the AS MUST
-       reject the request.
+   6.  The AS MUST verify proof of possession for the token request
+       according to the token-endpoint proof mechanism in use (DPoP per
+       [RFC9449] or mutual TLS per [RFC8705]).  When the outermost act
+       object in the inbound assertion carries a cnf.jkt claim and local
+       AS policy uses that value to verify the expected key for the
+       actor-as-current-presenter, the AS SHOULD check that the inbound
+       DPoP proof (or mTLS certificate) is consistent with the key
+       identified in act.cnf.jkt.  If local policy requires that check
+       and it cannot be satisfied, the AS MUST reject the request with
+       invalid_grant.  Nested act.cnf values below the outermost level
+       are actor-associated key history and MUST NOT drive proof-of-
+       possession requirements for the current request; see Section 4.4.
 
    7.  If the assertion or authenticated request context identifies an
        OAuth client separately from act.sub, the AS MAY use that client
@@ -1140,7 +1169,11 @@ Table of Contents
 
    Authorization servers SHOULD NOT issue refresh tokens in response to
    cross-domain JWT assertion grant requests that carry actor-profile
-   delegation.  This is consistent with the guidance in
+   delegation.  For this purpose, an assertion grant is considered
+   cross-domain when the actor's identity namespace (governed by
+   act.iss) differs from the assertion issuer (iss); that is, when the
+   actor's identifier is not governed by the same authority that issued
+   the assertion.  This is consistent with the guidance in
    [I-D.ietf-oauth-identity-chaining].  In same-domain deployments,
    including authorization code flows or same-issuer token exchange
    where the issuer can continuously enforce local delegated-access
@@ -2345,7 +2378,7 @@ Table of Contents
    the request unless those rules explicitly bind the identifiers to the
    same actor.
 
-11.9.  Confused Deputy and Dual-Principal Bypass
+11.9.  Confused Deputy and Actor-Authorization Bypass
 
    A resource server that evaluates only the subject principal when an
    act claim is present is susceptible to a confused deputy attack where
