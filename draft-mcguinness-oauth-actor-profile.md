@@ -299,6 +299,8 @@ act-object = {
 `cnf`:
 : OPTIONAL.  A confirmation claim as defined in {{!RFC7800}}.  When present, this value records keying material associated with the actor identified by this `act` object.  It is primarily useful for audit, visibility, diagnostics, and optional local policy when delegation chains are propagated across token transformations.  It is distinct from the top-level `cnf` claim, which identifies the keying material the current presenter of the overall token MUST use to demonstrate proof of possession.  Recipients MUST NOT treat nested `act.cnf` values as active presenter-binding requirements for the current token.  When a public key is conveyed in `act.cnf`, the `jkt` member is RECOMMENDED.
 
+  The intended use of `act.cnf` under "optional local policy" is: when an AS receives an inbound assertion whose outermost `act` object carries `cnf.jkt`, the AS MAY use that value as the expected key for the actor-as-current-presenter, to check that the inbound DPoP proof was signed by the same key the actor declared in the assertion.  This is a local policy choice, not a general protocol requirement.  An AS that supports this check SHOULD document it in its deployment guide and SHOULD return `invalid_grant` when the check is required and fails.  This use applies only to the outermost `act`; `act.cnf` values in nested inner objects are key history only and MUST NOT be used to drive proof-of-possession checks at any layer.
+
 
 ## Forward Compatibility for `sub_profile` Values {#forward-compat-sub-profile}
 
@@ -367,6 +369,8 @@ This profile extends the base `act` claim semantics from {{RFC8693}} by requirin
 
 When a token or assertion is required by local policy or advertised metadata to conform to this profile, such non-conforming `act` objects MUST be rejected.  When profile conformance is not required, implementations MAY continue to process a base {{RFC8693}} `act` object according to local policy, but they MUST NOT infer profile-defined semantics for claims that are absent.
 
+Implementations that previously treated `act.cnf` as an active sender-constraining mechanism (requiring proof of possession from each prior actor in a chain) should note that this specification defines `act.cnf` as actor-associated key history for audit, diagnostics, and optional local policy only.  Active proof-of-possession requirements apply only to the top-level `cnf` claim and the immediate presenter.  Deployments that relied on per-hop `act.cnf` key verification for multi-hop security properties MUST review their key-verification logic against the semantics defined in {{actor-object-structure}} and {{sender-constraint}}.
+
 
 ## Top-Level Subject Classification {#top-level-subject-classification}
 
@@ -379,7 +383,7 @@ The `sub_profile` claim MAY also appear as a top-level claim in a JWT (outside a
 Issuers SHOULD include a top-level `sub_profile` when they can authoritatively classify the subject entity type.
 
 
-## Summary of Actor-Profile Claims
+## Summary of Actor-Profile Claims {#actor-profile-claims-summary}
 
 The `act` object structure defined in {{actor-object-structure}} applies uniformly to all three token types covered by this specification.  The following tables summarize claim requirements.
 
@@ -502,7 +506,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
     *  **Delegation relationships**: When the AS relies on the inner chain as a security-relevant delegation path (rather than informational audit context), it MUST also validate the delegation relationship at each hop in the nested chain according to local policy.
 
-6.  If the `act` object contains a `cnf` claim indicating a sender-constraining key, the AS MUST verify that the token request demonstrates possession of the corresponding key, using DPoP ({{RFC9449}}) or mutual TLS ({{RFC8705}}) consistent with token endpoint policy.  If possession cannot be verified, the AS MUST reject the request.
+6.  The AS MUST verify proof of possession for the token request according to the token-endpoint proof mechanism in use (DPoP per {{RFC9449}} or mutual TLS per {{RFC8705}}).  When the outermost `act` object in the inbound assertion carries a `cnf.jkt` claim and local AS policy uses that value to verify the expected key for the actor-as-current-presenter, the AS SHOULD check that the inbound DPoP proof (or mTLS certificate) is consistent with the key identified in `act.cnf.jkt`.  If local policy requires that check and it cannot be satisfied, the AS MUST reject the request with `invalid_grant`.  Nested `act.cnf` values below the outermost level are actor-associated key history and MUST NOT drive proof-of-possession requirements for the current request; see {{actor-object-structure}}.
 
 7.  If the assertion or authenticated request context identifies an OAuth client separately from `act.sub`, the AS MAY use that client identity as an additional authorization input.  The AS MUST NOT infer that the client is authorized to act on behalf of the subject solely because the client initiated the request.  When the client identity is intended to identify the same acting party as `act.sub`, the AS MUST validate semantic consistency between the two identifiers before issuing a token.
 
@@ -538,7 +542,7 @@ Example rejection:
 
 ## Refresh Tokens {#assertion-grant-refresh-tokens}
 
-Authorization servers SHOULD NOT issue refresh tokens in response to cross-domain JWT assertion grant requests that carry actor-profile delegation.  This is consistent with the guidance in {{I-D.ietf-oauth-identity-chaining}}.  In same-domain deployments, including authorization code flows or same-issuer token exchange where the issuer can continuously enforce local delegated-access policy, an AS MAY issue refresh tokens according to local policy.
+Authorization servers SHOULD NOT issue refresh tokens in response to cross-domain JWT assertion grant requests that carry actor-profile delegation.  For this purpose, an assertion grant is considered cross-domain when the actor's identity namespace (governed by `act.iss`) differs from the assertion issuer (`iss`); that is, when the actor's identifier is not governed by the same authority that issued the assertion.  This is consistent with the guidance in {{I-D.ietf-oauth-identity-chaining}}.  In same-domain deployments, including authorization code flows or same-issuer token exchange where the issuer can continuously enforce local delegated-access policy, an AS MAY issue refresh tokens according to local policy.
 
 The rationale is that a cross-domain delegated assertion grant is itself a short-lived, re-issuable artifact: the actor can obtain a new assertion grant and exchange it for a new access token at any time, provided the delegation relationship remains valid.  Issuing a long-lived refresh token in that context would allow an actor to continue obtaining access tokens without re-presenting a current assertion, bypassing re-validation of the delegation relationship at the trust boundary.  This creates a window where a revoked or expired delegation could still yield new access tokens until the refresh token itself expires or is revoked.
 
@@ -1112,7 +1116,7 @@ Client identity, such as `client_id`, `azp`, or authenticated client context, is
 For example, if a token contains `client_id` for `travel-assistant-client-id` but `act.sub` identifies `https://agents.example.com/concierge-bot`, an AS or RS that expected the client and actor to identify the same party under trusted local mapping rules MUST reject the request unless those rules explicitly bind the identifiers to the same actor.
 
 
-## Confused Deputy and Dual-Principal Bypass
+## Confused Deputy and Actor-Authorization Bypass
 
 A resource server that evaluates only the subject principal when an `act` claim is present is susceptible to a confused deputy attack where a malicious actor exploits a subject's pre-existing permissions without the subject's ongoing consent.  Resource servers SHOULD implement actor authorization for delegated tokens under this profile.  Resource servers that require actor authorization MUST advertise that behavior using `actor_authorization_required: true`.  Deployments that choose not to require actor authorization SHOULD follow the narrowly scoped and explicitly documented informational-only cases described in {{dual-principal-authorization}}.
 
