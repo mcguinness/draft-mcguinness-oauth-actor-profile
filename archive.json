@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-04-12T01:17:18.751268+00:00",
+  "timestamp": "2026-04-14T01:18:03.340321+00:00",
   "repo": "mcguinness/draft-mcguinness-oauth-actor-profile",
   "labels": [
     {
@@ -49,7 +49,32 @@
       "color": "ffffff"
     }
   ],
-  "issues": [],
+  "issues": [
+    {
+      "number": 2,
+      "id": "I_kwDOR1X6Tc79Ym18",
+      "title": "Clarify Semantics and Naming of `act.iss`",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile/issues/2",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "## Clarify Semantics and Naming of `act.iss`\n\n### Summary\n\nThe current definition of `act.iss` appears easy to misinterpret as the literal issuer of the token or assertion that introduced that actor hop, rather than the authority for the namespace in which `act.sub` is meaningful.\n\nThat ambiguity may create confusion for both implementers and relying parties, especially in deployments with multiple token issuers operating under a broader shared authority.\n\n### Concern\n\nThe draft currently uses `iss` inside the actor object to identify the authority for the actor identifier namespace. In practice, many readers will naturally interpret `iss` using its normal JWT/OAuth meaning:\n\n> the issuer of the token or statement\n\nThat creates a risk that implementers will read `act.iss` as:\n- the AS that minted the enclosing token\n- the AS that consumed a `subject_token` and issued the next token in the chain\n- or some other literal token-provenance concept\n\nrather than:\n- the authority that is authoritative for interpreting `act.sub`\n\n### Why This Is Potentially Confusing\n\nIn multi-issuer deployments, these concepts can differ.\n\nExample shape:\n- one stable authority governs the actor identifier namespace\n- multiple token issuers operate beneath that authority\n- tokens may pass through several issuers over time\n\nIn that scenario, an implementer may reasonably ask whether `act.iss` should be:\n- the stable identifier authority, or\n- the specific token issuer that minted the hop being represented\n\nThe current draft intends the former, but the field name strongly suggests the latter.\n\n### Why This Matters\n\nThis ambiguity affects:\n- implementation correctness\n- interoperability across vendors\n- relying-party interpretation of actor chains\n- clarity of the trust model for nested actors\n\nA reader may also conclude that the actor object is carrying token provenance when the draft actually treats that as a separate concern.\n\n### Possible Improvements\n\n1. Clarify the current semantics more explicitly\nAdd stronger text and examples showing that:\n- `act.iss` is the authority for the actor identifier namespace\n- it is not necessarily the enclosing token issuer\n- it is not necessarily the issuer that introduced that actor hop\n\n2. Add a concrete multi-issuer example\nShow a case where:\n- the authority for `act.sub` is stable\n- the token issuer differs from that authority\n- both values are useful, but have different meanings\n\n3. Reconsider claim naming\nIf the working group believes the current name will continue to confuse implementers, consider:\n- renaming the current field to something like `authority`, or\n- introducing a clearer separation between identifier authority and token provenance\n\n4. If token provenance is important, model it separately\nIf prior-hop token issuer provenance is useful, it may be better represented explicitly as a distinct concept rather than overloaded into `act.iss`.\n\n### Question\n\nShould `act.iss` remain the authority for the actor identifier namespace, with stronger explanatory text and examples, or should the draft adopt clearer naming to distinguish identifier authority from token issuer provenance?",
+      "createdAt": "2026-04-13T03:38:34Z",
+      "updatedAt": "2026-04-13T03:41:25Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "mcguinness",
+          "authorAssociation": "OWNER",
+          "body": "For token provenance,  see #1 ",
+          "createdAt": "2026-04-13T03:41:25Z",
+          "updatedAt": "2026-04-13T03:41:25Z"
+        }
+      ]
+    }
+  ],
   "pulls": [
     {
       "number": 1,
