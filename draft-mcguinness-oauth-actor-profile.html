@@ -1287,24 +1287,13 @@ svg :is([fill="white"], [fill^="#fff"]) {
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
-            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-extension-to-oauth-entity-p" class="internal xref">Extension to OAuth Entity Profiles</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
-                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-overview-3" class="internal xref">Overview</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
-                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-actor-profile-usage-locatio" class="internal xref">Actor Profile Usage Location</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3">
-                <p id="section-toc.1-1.9.2.3.1"><a href="#section-9.3" class="auto internal xref">9.3</a>.  <a href="#name-extension-to-entity_profile" class="internal xref">Extension to entity_profiles_supported</a></p>
-</li>
-            </ul>
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-oauth-entity-profile-usage" class="internal xref">OAuth Entity Profile Usage</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
             <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-discovery-and-capability-ne" class="internal xref">Discovery and Capability Negotiation</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
-                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-overview-4" class="internal xref">Overview</a></p>
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-overview-3" class="internal xref">Overview</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
                 <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-authorization-server-metada" class="internal xref">Authorization Server Metadata</a></p>
@@ -1372,17 +1361,6 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.3">
                 <p id="section-toc.1-1.13.2.3.1"><a href="#section-13.3" class="auto internal xref">13.3</a>.  <a href="#name-oauth-entity-profiles-regis" class="internal xref">OAuth Entity Profiles Registry</a></p>
-<ul class="compact toc ulBare ulEmpty">
-<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.3.2.1">
-                    <p id="section-toc.1-1.13.2.3.2.1.1"><a href="#section-13.3.1" class="auto internal xref">13.3.1</a>.  <a href="#name-new-usage-location-actor-pr" class="internal xref">New Usage Location: Actor Profile</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.3.2.2">
-                    <p id="section-toc.1-1.13.2.3.2.2.1"><a href="#section-13.3.2" class="auto internal xref">13.3.2</a>.  <a href="#name-updated-registry-entries" class="internal xref">Updated Registry Entries</a></p>
-</li>
-                </ul>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.4">
-                <p id="section-toc.1-1.13.2.4.1"><a href="#section-13.4" class="auto internal xref">13.4</a>.  <a href="#name-extension-to-entity_profiles" class="internal xref">Extension to entity_profiles_supported Metadata</a></p>
 </li>
             </ul>
 </li>
@@ -1460,7 +1438,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
           <p id="section-1-3.4.1">Resource-server actor-authorization guidance (<a href="#dual-principal-authorization" class="auto internal xref">Section 8</a>), recommending that resource servers enforce policy over the (subject, actor) pair and define when they require actor evaluation.<a href="#section-1-3.4.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-3.5">
-          <p id="section-1-3.5.1">Extensions to OAuth Entity Profiles usage locations and metadata (<a href="#entity-profile-extension" class="auto internal xref">Section 9</a>) so existing entity classifications can be used consistently in actor position.<a href="#section-1-3.5.1" class="pilcrow">¶</a></p>
+          <p id="section-1-3.5.1">Use of the OAuth Entity Profiles actor support (<a href="#entity-profile-extension" class="auto internal xref">Section 9</a>) defined in <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>, so existing entity classifications can be used consistently in actor position.<a href="#section-1-3.5.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-3.6">
           <p id="section-1-3.6.1">Discovery metadata and capability-negotiation procedures (<a href="#discovery-capability-negotiation" class="auto internal xref">Section 10</a>) for authorization servers that offer Token Exchange or Transaction Token issuance, and for resource servers that consume delegated tokens.<a href="#section-1-3.6.1" class="pilcrow">¶</a></p>
@@ -2743,101 +2721,13 @@ If none of these mechanisms can be satisfied, the AS <span class="bcp14">MUST</s
 </div>
 <div id="entity-profile-extension">
 <section id="section-9">
-      <h2 id="name-extension-to-oauth-entity-p">
-<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-extension-to-oauth-entity-p" class="section-name selfRef">Extension to OAuth Entity Profiles</a>
+      <h2 id="name-oauth-entity-profile-usage">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-oauth-entity-profile-usage" class="section-name selfRef">OAuth Entity Profile Usage</a>
       </h2>
-<div id="overview-2">
-<section id="section-9.1">
-        <h3 id="name-overview-3">
-<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-overview-3" class="section-name selfRef">Overview</a>
-        </h3>
-<p id="section-9.1-1"><span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> defines the OAuth Entity Profiles mechanism, including the <code>sub_profile</code> and <code>client_profile</code> JWT claims, the <code>entity_profiles_supported</code> AS metadata parameter, and an IANA registry of entity profile values with associated usage locations ("Subject Profile", "Client Profile").<a href="#section-9.1-1" class="pilcrow">¶</a></p>
-<p id="section-9.1-2">This document extends that specification in one way:<a href="#section-9.1-2" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-9.1-3">
-<li id="section-9.1-3.1">
-            <p id="section-9.1-3.1.1">It defines a new "Actor Profile" usage location, indicating that an entity profile value is valid within an <code>act</code> object's <code>sub_profile</code> claim.<a href="#section-9.1-3.1.1" class="pilcrow">¶</a></p>
-</li>
-        </ol>
-<p id="section-9.1-4">It does not define a separate registry.  All entity profile values used by this specification are registered in the "OAuth Entity Profiles" registry established by <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>.<a href="#section-9.1-4" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="actor-usage-location">
-<section id="section-9.2">
-        <h3 id="name-actor-profile-usage-locatio">
-<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-actor-profile-usage-locatio" class="section-name selfRef">Actor Profile Usage Location</a>
-        </h3>
-<p id="section-9.2-1">The "OAuth Entity Profiles" registry includes a "Usage Location" field that indicates where a profile value may appear.  This document adds a new usage location:<a href="#section-9.2-1" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-9.2-2">
-          <dt id="section-9.2-2.1">
-<strong>Actor Profile</strong>:</dt>
-          <dd style="margin-left: 1.5em" id="section-9.2-2.2">
-            <p id="section-9.2-2.2.1">The entity profile value appears in the <code>sub_profile</code> claim within an <code>act</code> object, classifying the entity identified by <code>act.sub</code>.  This usage location is defined by this document.<a href="#section-9.2-2.2.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-</dl>
-<p id="section-9.2-3">The following existing values from <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> are extended with the "Actor Profile" usage location:<a href="#section-9.2-3" class="pilcrow">¶</a></p>
-<table class="center" id="table-5">
-          <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
-<thead>
-            <tr>
-              <th class="text-left" rowspan="1" colspan="1">Entity Profile</th>
-              <th class="text-left" rowspan="1" colspan="1">Actor Context Description</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>user</code>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">A human principal acting as a delegated actor (e.g., impersonation within a system)</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>service</code>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">An automated backend service, tool, or microservice acting as an actor</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>ai_agent</code>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">An AI agent acting autonomously or on behalf of another principal</td>
-            </tr>
-          </tbody>
-        </table>
-<p id="section-9.2-5">These are the initial entity profile values that this document extends for actor use.  This document does not imply that all existing entity-profile values are automatically valid within <code>act.sub_profile</code>; only values explicitly registered with the "Actor Profile" usage location are valid in that position.  Additional values <span class="bcp14">MAY</span> be added to the registry in the future through the normal registration process when their semantics are appropriate for acting entities.<a href="#section-9.2-5" class="pilcrow">¶</a></p>
-<p id="section-9.2-6">When processing <code>act.sub_profile</code>, issuers and consumers <span class="bcp14">MUST</span> treat these values according to the entity profile semantics defined in Section 3 of <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>.<a href="#section-9.2-6" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="entity-profiles-actor-array">
-<section id="section-9.3">
-        <h3 id="name-extension-to-entity_profile">
-<a href="#section-9.3" class="section-number selfRef">9.3. </a><a href="#name-extension-to-entity_profile" class="section-name selfRef">Extension to entity_profiles_supported</a>
-        </h3>
-<p id="section-9.3-1">Section 5 of <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> defines the <code>entity_profiles_supported</code> AS metadata parameter as a JSON object containing <code>client</code> and <code>subject</code> arrays.  This document extends that object with an <code>actor</code> array, defined normatively here.  The <code>actor</code> member does not depend on <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> being updated to include it; it is an extension defined by this document and registered per <a href="#iana-entity-profiles" class="auto internal xref">Section 13.3</a>.<a href="#section-9.3-1" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-9.3-2">
-          <dt id="section-9.3-2.1">
-<code>actor</code>:</dt>
-          <dd style="margin-left: 1.5em" id="section-9.3-2.2">
-            <p id="section-9.3-2.2.1"><span class="bcp14">OPTIONAL</span>.  A JSON array of entity profile values (per Section 3.3 of <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>) indicating which profiles the AS recognizes and will validate when they appear in <code>act.sub_profile</code> claims in inbound tokens and actor assertions.  Actors whose <code>sub_profile</code> is not listed in this array <span class="bcp14">MAY</span> be rejected by the AS.<a href="#section-9.3-2.2.1" class="pilcrow">¶</a></p>
-</dd>
-        <dd class="break"></dd>
-</dl>
-<p id="section-9.3-3">An AS implementing both this profile and <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> <span class="bcp14">SHOULD</span> include an <code>actor</code> array in its <code>entity_profiles_supported</code> object.<a href="#section-9.3-3" class="pilcrow">¶</a></p>
-<p id="section-9.3-4">Example:<a href="#section-9.3-4" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-9.3-5">
-<pre>
-{
-  "entity_profiles_supported": {
-    "client": ["service", "ai_agent"],
-    "subject": ["user", "service", "ai_agent"],
-    "actor":   ["user", "service", "ai_agent"]
-  }
-}
-</pre><a href="#section-9.3-5" class="pilcrow">¶</a>
-</div>
-</section>
-</div>
+<p id="section-9-1"><span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> defines the OAuth Entity Profiles mechanism, including the <code>sub_profile</code> and <code>client_profile</code> JWT claims, the <code>entity_profiles_supported</code> AS metadata parameter with its <code>client</code>, <code>subject</code>, and <code>actor</code> arrays, and an IANA registry of entity profile values with associated usage locations, including the "Actor Profile" usage location.  It also explicitly defines <code>sub_profile</code> within <code>act</code> (Actor) nodes per <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> for classification of delegated actors in delegation chains.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<p id="section-9-2">This document uses the actor profile support defined in <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>.  The <code>sub_profile</code> claim within an <code>act</code> object classifies the entity identified by <code>act.sub</code>, using values registered with the "Actor Profile" usage location in the "OAuth Entity Profiles" registry.  The <code>entity_profiles_supported.actor</code> array in AS metadata advertises which actor entity profile values are accepted, as defined in <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>.<a href="#section-9-2" class="pilcrow">¶</a></p>
+<p id="section-9-3">The initial values registered for actor use are <code>user</code>, <code>service</code>, and <code>ai_agent</code>.  Only values registered with the "Actor Profile" usage location are valid within <code>act.sub_profile</code>.  When processing <code>act.sub_profile</code>, issuers and consumers <span class="bcp14">MUST</span> treat values according to the entity profile semantics defined in <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>.<a href="#section-9-3" class="pilcrow">¶</a></p>
+<p id="section-9-4">This document makes no independent requests to the "OAuth Entity Profiles" registry; all actor-profile-related registry definitions are provided by <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>.<a href="#section-9-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="discovery-capability-negotiation">
@@ -2845,13 +2735,13 @@ If none of these mechanisms can be satisfied, the AS <span class="bcp14">MUST</s
       <h2 id="name-discovery-and-capability-ne">
 <a href="#section-10" class="section-number selfRef">10. </a><a href="#name-discovery-and-capability-ne" class="section-name selfRef">Discovery and Capability Negotiation</a>
       </h2>
-<div id="overview-3">
+<div id="overview-2">
 <section id="section-10.1">
-        <h3 id="name-overview-4">
-<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-overview-4" class="section-name selfRef">Overview</a>
+        <h3 id="name-overview-3">
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-overview-3" class="section-name selfRef">Overview</a>
         </h3>
-<p id="section-10.1-1">This section defines a minimal set of metadata parameters that, together with the <code>entity_profiles_supported</code> extension in <a href="#entity-profile-extension" class="auto internal xref">Section 9</a>, allow authorization servers and resource servers to advertise actor-profile support without out-of-band configuration.  These parameters provide partial capability negotiation only; they do not provide a complete machine-readable description of every supported grant path or method by which the AS determines the acting party.<a href="#section-10.1-1" class="pilcrow">¶</a></p>
-<p id="section-10.1-2">The design principle is that <strong>capability flags go in this spec's metadata; entity type enumeration goes in <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> metadata</strong>.  Clients <span class="bcp14">MUST</span> use <code>entity_profiles_supported.actor</code> (<a href="#entity-profiles-actor-array" class="auto internal xref">Section 9.3</a>) to determine which actor entity profiles an AS or RS accepts, and <span class="bcp14">MUST</span> use <code>actor_profile_token_types_supported</code> (<a href="#authorization-server-metadata" class="auto internal xref">Section 10.2</a>) to determine which delegated output token types the AS can issue under this profile.<a href="#section-10.1-2" class="pilcrow">¶</a></p>
+<p id="section-10.1-1">This section defines a minimal set of metadata parameters that, together with the <code>entity_profiles_supported.actor</code> array defined in <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>, allow authorization servers and resource servers to advertise actor-profile support without out-of-band configuration.  These parameters provide partial capability negotiation only; they do not provide a complete machine-readable description of every supported grant path or method by which the AS determines the acting party.<a href="#section-10.1-1" class="pilcrow">¶</a></p>
+<p id="section-10.1-2">The design principle is that <strong>capability flags go in this spec's metadata; entity type enumeration goes in <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> metadata</strong>.  Clients <span class="bcp14">MUST</span> use <code>entity_profiles_supported.actor</code> per <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> to determine which actor entity profiles an AS or RS accepts, and <span class="bcp14">MUST</span> use <code>actor_profile_token_types_supported</code> (<a href="#authorization-server-metadata" class="auto internal xref">Section 10.2</a>) to determine which delegated output token types the AS can issue under this profile.<a href="#section-10.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="authorization-server-metadata">
@@ -2880,7 +2770,7 @@ If none of these mechanisms can be satisfied, the AS <span class="bcp14">MUST</s
 </dd>
         <dd class="break"></dd>
 </dl>
-<p id="section-10.2-3">The entity profile types the AS accepts for actors are advertised via the <code>entity_profiles_supported.actor</code> array defined in <a href="#entity-profiles-actor-array" class="auto internal xref">Section 9.3</a>, not via a separate metadata parameter.  DPoP support is advertised via <code>dpop_signing_alg_values_supported</code> per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>.<a href="#section-10.2-3" class="pilcrow">¶</a></p>
+<p id="section-10.2-3">The entity profile types the AS accepts for actors are advertised via the <code>entity_profiles_supported.actor</code> array defined in <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>, not via a separate metadata parameter.  DPoP support is advertised via <code>dpop_signing_alg_values_supported</code> per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>.<a href="#section-10.2-3" class="pilcrow">¶</a></p>
 <p id="section-10.2-4">Example AS metadata fragment:<a href="#section-10.2-4" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-10.2-5">
 <pre>
@@ -3005,8 +2895,8 @@ As a safe default, a client that intends to make a request on behalf of another 
 </li>
         </ul>
 <p id="section-10.5-4">The following table summarizes the transition:<a href="#section-10.5-4" class="pilcrow">¶</a></p>
-<table class="center" id="table-6">
-          <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
+<table class="center" id="table-5">
+          <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Legacy signal</th>
@@ -3296,61 +3186,7 @@ As a safe default, a client that intends to make a request on behalf of another 
         <h3 id="name-oauth-entity-profiles-regis">
 <a href="#section-13.3" class="section-number selfRef">13.3. </a><a href="#name-oauth-entity-profiles-regis" class="section-name selfRef">OAuth Entity Profiles Registry</a>
         </h3>
-<p id="section-13.3-1">This document requests the following updates to the "OAuth Entity Profiles" registry established by <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>.<a href="#section-13.3-1" class="pilcrow">¶</a></p>
-<div id="new-usage-location-actor-profile">
-<section id="section-13.3.1">
-          <h4 id="name-new-usage-location-actor-pr">
-<a href="#section-13.3.1" class="section-number selfRef">13.3.1. </a><a href="#name-new-usage-location-actor-pr" class="section-name selfRef">New Usage Location: Actor Profile</a>
-          </h4>
-<p id="section-13.3.1-1">This document defines the "Actor Profile" usage location for the "OAuth Entity Profiles" registry.  A value registered with this usage location is valid as a <code>sub_profile</code> value within an <code>act</code> object in a JWT, classifying the entity identified by <code>act.sub</code>.<a href="#section-13.3.1-1" class="pilcrow">¶</a></p>
-<p id="section-13.3.1-2">The Designated Experts for this registry <span class="bcp14">SHOULD</span> verify that any value submitted for "Actor Profile" usage describes a type of acting entity relevant to OAuth delegation scenarios.<a href="#section-13.3.1-2" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="updated-registry-entries">
-<section id="section-13.3.2">
-          <h4 id="name-updated-registry-entries">
-<a href="#section-13.3.2" class="section-number selfRef">13.3.2. </a><a href="#name-updated-registry-entries" class="section-name selfRef">Updated Registry Entries</a>
-          </h4>
-<p id="section-13.3.2-1">The following existing registry entries are updated to add the "Actor Profile" usage location:<a href="#section-13.3.2-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-13.3.2-2.1">
-              <p id="section-13.3.2-2.1.1">Entity Profile Name: <code>user</code><a href="#section-13.3.2-2.1.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-13.3.2-2.2">
-              <p id="section-13.3.2-2.2.1">Added Usage Location: "Actor Profile"<a href="#section-13.3.2-2.2.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-13.3.2-2.3">
-              <p id="section-13.3.2-2.3.1">Reference: <a href="#actor-usage-location" class="auto internal xref">Section 9.2</a> of this document<a href="#section-13.3.2-2.3.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-13.3.2-2.4">
-              <p id="section-13.3.2-2.4.1">Entity Profile Name: <code>service</code><a href="#section-13.3.2-2.4.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-13.3.2-2.5">
-              <p id="section-13.3.2-2.5.1">Added Usage Location: "Actor Profile"<a href="#section-13.3.2-2.5.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-13.3.2-2.6">
-              <p id="section-13.3.2-2.6.1">Reference: <a href="#actor-usage-location" class="auto internal xref">Section 9.2</a> of this document<a href="#section-13.3.2-2.6.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-13.3.2-2.7">
-              <p id="section-13.3.2-2.7.1">Entity Profile Name: <code>ai_agent</code><a href="#section-13.3.2-2.7.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-13.3.2-2.8">
-              <p id="section-13.3.2-2.8.1">Added Usage Location: "Actor Profile"<a href="#section-13.3.2-2.8.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-13.3.2-2.9">
-              <p id="section-13.3.2-2.9.1">Reference: <a href="#actor-usage-location" class="auto internal xref">Section 9.2</a> of this document<a href="#section-13.3.2-2.9.1" class="pilcrow">¶</a></p>
-</li>
-          </ul>
-</section>
-</div>
-</section>
-</div>
-<div id="extension-to-entityprofilessupported-metadata">
-<section id="section-13.4">
-        <h3 id="name-extension-to-entity_profiles">
-<a href="#section-13.4" class="section-number selfRef">13.4. </a><a href="#name-extension-to-entity_profiles" class="section-name selfRef">Extension to entity_profiles_supported Metadata</a>
-        </h3>
-<p id="section-13.4-1">This document defines an optional <code>actor</code> member for the <code>entity_profiles_supported</code> AS metadata parameter, alongside the existing <code>client</code> and <code>subject</code> members, as defined in <a href="#entity-profiles-actor-array" class="auto internal xref">Section 9.3</a> of this document.  If <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> is published as an RFC without this member, this document requests that its definition be updated accordingly.  Until then, implementations <span class="bcp14">SHOULD</span> treat the <code>actor</code> member defined in <a href="#entity-profiles-actor-array" class="auto internal xref">Section 9.3</a> as a vendor-agreed extension to the base parameter.<a href="#section-13.4-1" class="pilcrow">¶</a></p>
+<p id="section-13.3-1">This document makes no requests to the "OAuth Entity Profiles" registry.  The "Actor Profile" usage location, the <code>actor</code> array in <code>entity_profiles_supported</code>, and the registration of <code>user</code>, <code>service</code>, and <code>ai_agent</code> with that usage location are all defined and requested by <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>.<a href="#section-13.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3535,8 +3371,8 @@ Enterprise IdP AS ─► ID-JAG
                                             Inventory Service (RS)
 </pre><a href="#appendix-A.1-2" class="pilcrow">¶</a>
 </div>
-<table class="center" id="table-7">
-          <caption><a href="#table-7" class="selfRef">Table 7</a></caption>
+<table class="center" id="table-6">
+          <caption><a href="#table-6" class="selfRef">Table 6</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Party</th>
@@ -3597,8 +3433,8 @@ Enterprise IdP AS ─► ID-JAG
           </tbody>
         </table>
 <p id="appendix-A.1-4">Presenter key bindings:<a href="#appendix-A.1-4" class="pilcrow">¶</a></p>
-<table class="center" id="table-8">
-          <caption><a href="#table-8" class="selfRef">Table 8</a></caption>
+<table class="center" id="table-7">
+          <caption><a href="#table-7" class="selfRef">Table 7</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Principal</th>
@@ -3869,8 +3705,8 @@ Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
         <h3 id="name-summary-of-token-transforma">
 <a href="#appendix-A.9" class="section-number selfRef">A.9. </a><a href="#name-summary-of-token-transforma" class="section-name selfRef">Summary of Token Transformations</a>
         </h3>
-<table class="center" id="table-9">
-          <caption><a href="#table-9" class="selfRef">Table 9</a></caption>
+<table class="center" id="table-8">
+          <caption><a href="#table-8" class="selfRef">Table 8</a></caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">Step</th>
