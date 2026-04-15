@@ -117,7 +117,7 @@ This document addresses that gap by specifying:
 *  How the actor profile is expressed and validated in each token type: JWT assertion grants ({{jwt-assertion-grants}}), JWT access tokens ({{jwt-access-tokens}}), and Transaction Tokens ({{transaction-tokens}}).
 *  How actor-profile information is preserved when one supported token type is exchanged for another across JWT assertion grants, JWT access tokens, and Transaction Tokens.
 *  Resource-server actor-authorization guidance ({{dual-principal-authorization}}), recommending that resource servers enforce policy over the (subject, actor) pair and define when they require actor evaluation.
-*  Extensions to OAuth Entity Profiles usage locations and metadata ({{entity-profile-extension}}) so existing entity classifications can be used consistently in actor position.
+*  Use of the OAuth Entity Profiles actor support ({{entity-profile-extension}}) defined in {{I-D.mora-oauth-entity-profiles}}, so existing entity classifications can be used consistently in actor position.
 *  Discovery metadata and capability-negotiation procedures ({{discovery-capability-negotiation}}) for authorization servers that offer Token Exchange or Transaction Token issuance, and for resource servers that consume delegated tokens.
 
 The primary motivating use case is cross-domain delegation involving AI agents and automated workloads, but the mechanisms are general-purpose and apply to other delegated-authorization scenarios.  This document is a profile and extension of existing OAuth building blocks; unless stated otherwise, the requirements of {{RFC8693}}, {{RFC9068}}, {{RFC9449}}, and {{I-D.ietf-oauth-transaction-tokens}} continue to apply.
@@ -842,66 +842,23 @@ The following claims are available as subject-plus-actor policy inputs:
 | `req_wl` (Txn-Token) | Actor | Workload that requested the Transaction Token from the TTS; supporting context alongside, but not a substitute for, the outermost `act.sub` |
 
 
-# Extension to OAuth Entity Profiles {#entity-profile-extension}
+# OAuth Entity Profile Usage {#entity-profile-extension}
 
-## Overview
+{{I-D.mora-oauth-entity-profiles}} defines the OAuth Entity Profiles mechanism, including the `sub_profile` and `client_profile` JWT claims, the `entity_profiles_supported` AS metadata parameter with its `client`, `subject`, and `actor` arrays, and an IANA registry of entity profile values with associated usage locations, including the "Actor Profile" usage location.  It also explicitly defines `sub_profile` within `act` (Actor) nodes per {{RFC8693}} for classification of delegated actors in delegation chains.
 
-{{I-D.mora-oauth-entity-profiles}} defines the OAuth Entity Profiles mechanism, including the `sub_profile` and `client_profile` JWT claims, the `entity_profiles_supported` AS metadata parameter, and an IANA registry of entity profile values with associated usage locations ("Subject Profile", "Client Profile").
+This document uses the actor profile support defined in {{I-D.mora-oauth-entity-profiles}}.  The `sub_profile` claim within an `act` object classifies the entity identified by `act.sub`, using values registered with the "Actor Profile" usage location in the "OAuth Entity Profiles" registry.  The `entity_profiles_supported.actor` array in AS metadata advertises which actor entity profile values are accepted, as defined in {{I-D.mora-oauth-entity-profiles}}.
 
-This document extends that specification in one way:
+The initial values registered for actor use are `user`, `service`, and `ai_agent`.  Only values registered with the "Actor Profile" usage location are valid within `act.sub_profile`.  When processing `act.sub_profile`, issuers and consumers MUST treat values according to the entity profile semantics defined in {{I-D.mora-oauth-entity-profiles}}.
 
-1.  It defines a new "Actor Profile" usage location, indicating that an entity profile value is valid within an `act` object's `sub_profile` claim.
-
-It does not define a separate registry.  All entity profile values used by this specification are registered in the "OAuth Entity Profiles" registry established by {{I-D.mora-oauth-entity-profiles}}.
-
-
-## Actor Profile Usage Location {#actor-usage-location}
-
-The "OAuth Entity Profiles" registry includes a "Usage Location" field that indicates where a profile value may appear.  This document adds a new usage location:
-
-**Actor Profile**:
-: The entity profile value appears in the `sub_profile` claim within an `act` object, classifying the entity identified by `act.sub`.  This usage location is defined by this document.
-
-The following existing values from {{I-D.mora-oauth-entity-profiles}} are extended with the "Actor Profile" usage location:
-
-| Entity Profile | Actor Context Description |
-|----------------|--------------------------|
-| `user` | A human principal acting as a delegated actor (e.g., impersonation within a system) |
-| `service` | An automated backend service, tool, or microservice acting as an actor |
-| `ai_agent` | An AI agent acting autonomously or on behalf of another principal |
-
-These are the initial entity profile values that this document extends for actor use.  This document does not imply that all existing entity-profile values are automatically valid within `act.sub_profile`; only values explicitly registered with the "Actor Profile" usage location are valid in that position.  Additional values MAY be added to the registry in the future through the normal registration process when their semantics are appropriate for acting entities.
-
-When processing `act.sub_profile`, issuers and consumers MUST treat these values according to the entity profile semantics defined in Section 3 of {{I-D.mora-oauth-entity-profiles}}.
-
-## Extension to entity_profiles_supported {#entity-profiles-actor-array}
-
-Section 5 of {{I-D.mora-oauth-entity-profiles}} defines the `entity_profiles_supported` AS metadata parameter as a JSON object containing `client` and `subject` arrays.  This document extends that object with an `actor` array, defined normatively here.  The `actor` member does not depend on {{I-D.mora-oauth-entity-profiles}} being updated to include it; it is an extension defined by this document and registered per {{iana-entity-profiles}}.
-
-`actor`:
-: OPTIONAL.  A JSON array of entity profile values (per Section 3.3 of {{I-D.mora-oauth-entity-profiles}}) indicating which profiles the AS recognizes and will validate when they appear in `act.sub_profile` claims in inbound tokens and actor assertions.  Actors whose `sub_profile` is not listed in this array MAY be rejected by the AS.
-
-An AS implementing both this profile and {{I-D.mora-oauth-entity-profiles}} SHOULD include an `actor` array in its `entity_profiles_supported` object.
-
-Example:
-
-~~~json
-{
-  "entity_profiles_supported": {
-    "client": ["service", "ai_agent"],
-    "subject": ["user", "service", "ai_agent"],
-    "actor":   ["user", "service", "ai_agent"]
-  }
-}
-~~~
+This document makes no independent requests to the "OAuth Entity Profiles" registry; all actor-profile-related registry definitions are provided by {{I-D.mora-oauth-entity-profiles}}.
 
 # Discovery and Capability Negotiation {#discovery-capability-negotiation}
 
 ## Overview
 
-This section defines a minimal set of metadata parameters that, together with the `entity_profiles_supported` extension in {{entity-profile-extension}}, allow authorization servers and resource servers to advertise actor-profile support without out-of-band configuration.  These parameters provide partial capability negotiation only; they do not provide a complete machine-readable description of every supported grant path or method by which the AS determines the acting party.
+This section defines a minimal set of metadata parameters that, together with the `entity_profiles_supported.actor` array defined in {{I-D.mora-oauth-entity-profiles}}, allow authorization servers and resource servers to advertise actor-profile support without out-of-band configuration.  These parameters provide partial capability negotiation only; they do not provide a complete machine-readable description of every supported grant path or method by which the AS determines the acting party.
 
-The design principle is that **capability flags go in this spec's metadata; entity type enumeration goes in {{I-D.mora-oauth-entity-profiles}} metadata**.  Clients MUST use `entity_profiles_supported.actor` ({{entity-profiles-actor-array}}) to determine which actor entity profiles an AS or RS accepts, and MUST use `actor_profile_token_types_supported` ({{authorization-server-metadata}}) to determine which delegated output token types the AS can issue under this profile.
+The design principle is that **capability flags go in this spec's metadata; entity type enumeration goes in {{I-D.mora-oauth-entity-profiles}} metadata**.  Clients MUST use `entity_profiles_supported.actor` per {{I-D.mora-oauth-entity-profiles}} to determine which actor entity profiles an AS or RS accepts, and MUST use `actor_profile_token_types_supported` ({{authorization-server-metadata}}) to determine which delegated output token types the AS can issue under this profile.
 
 
 ## Authorization Server Metadata {#authorization-server-metadata}
@@ -917,7 +874,7 @@ One new parameter is defined for use in the AS metadata document ({{RFC8414}}):
 
   When absent, the AS makes no claim about delegated output token types under this profile.
 
-The entity profile types the AS accepts for actors are advertised via the `entity_profiles_supported.actor` array defined in {{entity-profiles-actor-array}}, not via a separate metadata parameter.  DPoP support is advertised via `dpop_signing_alg_values_supported` per {{RFC9449}}.
+The entity profile types the AS accepts for actors are advertised via the `entity_profiles_supported.actor` array defined in {{I-D.mora-oauth-entity-profiles}}, not via a separate metadata parameter.  DPoP support is advertised via `dpop_signing_alg_values_supported` per {{RFC9449}}.
 
 Example AS metadata fragment:
 
@@ -1169,33 +1126,7 @@ This document requests IANA to register the following values in the "OAuth Prote
 
 ## OAuth Entity Profiles Registry {#iana-entity-profiles}
 
-This document requests the following updates to the "OAuth Entity Profiles" registry established by {{I-D.mora-oauth-entity-profiles}}.
-
-### New Usage Location: Actor Profile
-
-This document defines the "Actor Profile" usage location for the "OAuth Entity Profiles" registry.  A value registered with this usage location is valid as a `sub_profile` value within an `act` object in a JWT, classifying the entity identified by `act.sub`.
-
-The Designated Experts for this registry SHOULD verify that any value submitted for "Actor Profile" usage describes a type of acting entity relevant to OAuth delegation scenarios.
-
-### Updated Registry Entries
-
-The following existing registry entries are updated to add the "Actor Profile" usage location:
-
-*  Entity Profile Name: `user`
-*  Added Usage Location: "Actor Profile"
-*  Reference: {{actor-usage-location}} of this document
-
-*  Entity Profile Name: `service`
-*  Added Usage Location: "Actor Profile"
-*  Reference: {{actor-usage-location}} of this document
-
-*  Entity Profile Name: `ai_agent`
-*  Added Usage Location: "Actor Profile"
-*  Reference: {{actor-usage-location}} of this document
-
-## Extension to entity_profiles_supported Metadata
-
-This document defines an optional `actor` member for the `entity_profiles_supported` AS metadata parameter, alongside the existing `client` and `subject` members, as defined in {{entity-profiles-actor-array}} of this document.  If {{I-D.mora-oauth-entity-profiles}} is published as an RFC without this member, this document requests that its definition be updated accordingly.  Until then, implementations SHOULD treat the `actor` member defined in {{entity-profiles-actor-array}} as a vendor-agreed extension to the base parameter.
+This document makes no requests to the "OAuth Entity Profiles" registry.  The "Actor Profile" usage location, the `actor` array in `entity_profiles_supported`, and the registration of `user`, `service`, and `ai_agent` with that usage location are all defined and requested by {{I-D.mora-oauth-entity-profiles}}.
 
 
 
