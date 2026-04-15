@@ -137,27 +137,28 @@ Table of Contents
      10.2.  Authorization Server Metadata
      10.3.  Protected Resource Metadata
      10.4.  Capability Negotiation Flow
-     10.5.  Migration from Implicit to Explicit Delegation
-     10.6.  Transaction Token Flows
-   11. Security Considerations
-     11.1.  Delegation Chain Integrity
-     11.2.  Actor Identity Binding
-     11.3.  Delegation Depth Limits
-     11.4.  Sub_profile Trust
-     11.5.  Inner Actor Issuer Trust
-     11.6.  Cross-Domain Trust
-     11.7.  Delegation Revocation
-     11.8.  Client Identity and Delegation
-     11.9.  Confused Deputy and Actor-Authorization Bypass
-     11.10. Token Substitution
-   12. Privacy Considerations
-   13. IANA Considerations
-     13.1.  OAuth Authorization Server Metadata Registry
-     13.2.  OAuth Protected Resource Metadata Registry
-     13.3.  OAuth Entity Profiles Registry
-   14. References
-     14.1.  Normative References
-     14.2.  Informative References
+   11. Deployment Considerations
+     11.1.  Migration from Implicit to Explicit Delegation
+     11.2.  Transaction Token Flows
+   12. Security Considerations
+     12.1.  Delegation Chain Integrity
+     12.2.  Actor Identity Binding
+     12.3.  Delegation Depth Limits
+     12.4.  Sub_profile Trust
+     12.5.  Inner Actor Issuer Trust
+     12.6.  Cross-Domain Trust
+     12.7.  Delegation Revocation
+     12.8.  Client Identity and Delegation
+     12.9.  Confused Deputy and Actor-Authorization Bypass
+     12.10. Token Substitution
+   13. Privacy Considerations
+   14. IANA Considerations
+     14.1.  OAuth Authorization Server Metadata Registry
+     14.2.  OAuth Protected Resource Metadata Registry
+     14.3.  OAuth Entity Profiles Registry
+   15. References
+     15.1.  Normative References
+     15.2.  Informative References
    Appendix A.  Cross-Domain AI Agent Flow: ID Token to Transaction
            Token
      A.1.  Scenario and Parties
@@ -176,22 +177,26 @@ Table of Contents
 
 1.  Introduction
 
-   The deployment of AI agents and automated workloads as first-class
-   participants in OAuth-protected systems has exposed a long-standing
-   gap: there is no single, interoperable way to express "this request
-   was authorized to principal A, and that authorization is now being
-   exercised by actor B on A's behalf."  The Token Exchange
-   specification [RFC8693] introduced the act claim to represent the
-   current actor, but its definition is tied to token exchange.  JWT
-   assertion grants [RFC7521][RFC7523] do not define a corresponding
-   actor structure.  JWT-formatted access tokens [RFC9068] do not define
-   how act is carried or validated.  Transaction Tokens
-   [I-D.ietf-oauth-transaction-tokens] provide a workload-identity
-   envelope but likewise do not define a common actor profile.  As a
-   result, deployments often define proprietary conventions, and
-   resource servers cannot reliably determine which principal authorized
-   a request, which actor is presenting it, or whether an actor chain
-   should be trusted across domain boundaries.
+   OAuth deployments increasingly involve multi-principal scenarios
+   where an agent or workload acts on behalf of a human user across
+   organizational boundaries.  There is no single, interoperable way to
+   express "this request was authorized to principal A, and that
+   authorization is now being exercised by actor B on A's behalf."
+   [RFC8693] introduced the act claim for token exchange, but its
+   definition does not extend to JWT assertion grants, JWT access
+   tokens, or Transaction Tokens.  Deployments therefore rely on
+   proprietary conventions, and resource servers cannot reliably
+   determine which principal authorized a request, which actor is
+   presenting it, or whether an actor chain should be trusted across
+   trust-domain boundaries.
+
+   The design center of this specification is delegation clarity.
+   client_id identifies the OAuth client registration, sub identifies
+   the authorizing principal, and act.sub identifies the actor
+   exercising that authorization.  These are distinct concepts.  This
+   profile makes the actor explicit in the token rather than leaving it
+   to be inferred from client registration context, and it does so
+   without redefining client identity or top-level subject semantics.
 
    This document addresses that gap by specifying:
 
@@ -203,9 +208,8 @@ Table of Contents
       type: JWT assertion grants (Section 5), JWT access tokens
       (Section 6), and Transaction Tokens (Section 7).
 
-   *  How actor-profile information is preserved when one supported
-      token type is exchanged for another across JWT assertion grants,
-      JWT access tokens, and Transaction Tokens.
+   *  How actor-profile information is preserved across supported token
+      transformations.
 
    *  Resource-server actor-authorization guidance (Section 8),
       recommending that resource servers enforce policy over the
@@ -221,18 +225,16 @@ Table of Contents
       or Transaction Token issuance, and for resource servers that
       consume delegated tokens.
 
-   The primary motivating use case is cross-domain delegation involving
-   AI agents and automated workloads, but the mechanisms are general-
-   purpose and apply to other delegated-authorization scenarios.  This
-   document is a profile and extension of existing OAuth building
-   blocks; unless stated otherwise, the requirements of [RFC8693],
-   [RFC9068], [RFC9449], and [I-D.ietf-oauth-transaction-tokens]
-   continue to apply.
+   The mechanisms are general-purpose and apply beyond AI agent
+   scenarios.  This document is a profile and extension of existing
+   OAuth building blocks; unless stated otherwise, the requirements of
+   [RFC8693], [RFC9068], [RFC9449], and
+   [I-D.ietf-oauth-transaction-tokens] continue to apply.
 
 1.1.  Illustrative Use Case
 
-   Alice authorizes an AI agent to book a business trip on her behalf.
-   The agent calls an external booking tool operated in a separate
+   Alice authorizes an AI agent to book a business trip on her behalf;
+   the agent calls an external booking tool operated in a separate
    organizational trust domain.  The flow is:
 
    1.  Alice authenticates at her enterprise identity provider
@@ -297,7 +299,7 @@ Table of Contents
 
    *  *Deployers and architects* (evaluating the profile or planning a
       deployment): start with Section 4, then Section 10 for metadata
-      and capability negotiation, Section 10.5 for migration from
+      and capability negotiation, Section 11.1 for migration from
       implicit delegation, and Appendix A for a full end-to-end flow.
 
    Readers unfamiliar with the underlying specifications should consult
@@ -380,39 +382,73 @@ Table of Contents
    account, a workload identifier, or an AI agent.  Resource servers
    must rely on out-of-band conventions or proprietary claim extensions
    to determine which type of entity sub refers to.  This ambiguity
-   prevents deterministic cross-domain policy evaluation.
+   prevents deterministic cross-domain policy evaluation.  This gap is
+   addressed by the sub_profile claim defined in Section 4.10 and the
+   entity profile values defined in Section 9.
 
 3.2.  Inconsistent Actor Representation
 
    [RFC8693] defines the act claim for tokens obtained via token
    exchange but does not extend its semantics to JWT assertion grants or
    JWT access tokens issued by other means.  Deployments that do not use
-   token exchange (for example, those using JWT client assertions for
-   service-to-service calls) have no standard location for actor
-   information.  Even when act is present, there is no standard sub-
-   claim that identifies the entity type of the actor.
+   token exchange have no standard location for actor information.  Even
+   when act is present, there is no standard sub-claim that identifies
+   the entity type of the actor.
 
    Many existing deployments rely on implicit delegation: the OAuth
    client identity (client_id, azp, or authenticated client context at
    the token endpoint) is treated as evidence of the acting party, and
    authorization policy infers delegation from the fact that the client
-   obtained or presented the token.  That approach can work within
-   tightly controlled deployments, but it does not explicitly encode the
-   delegated actor relationship in the token itself and is not portable
-   across issuers, token transformations, or resource servers.  This
-   specification defines explicit delegation by representing the
-   delegated actor directly in act, while allowing authenticated client
-   identity to remain an authorization input where needed.
+   obtained or presented the token.  That approach works within tightly
+   controlled deployments but has three structural limitations that
+   prevent it from scaling to multi-domain, multi-actor environments.
 
-   In simple deployments, the OAuth client is often treated in practice
-   as the effective initial actor because it obtained, redeemed, or
-   presented the token.  However, that is a deployment assumption rather
-   than a universal protocol rule.  The client_id identifies the OAuth
-   client registration, not necessarily the concrete acting instance or
-   operational principal.  Shared-client deployments, backend-for-
-   frontend patterns, multi-tier applications, device-bound instances,
-   and agent or plugin execution are all cases where the OAuth client
-   and the delegated actor can diverge even in non-token-exchange flows.
+   client_id conflates distinct identity concepts.  The client_id
+      identifies an OAuth client registration — the software component
+      authorized to interact with the AS.  In practice it is repurposed
+      as a stand-in for the acting party, conflating OAuth client
+      identity (the registered software component), runtime actor
+      identity (the concrete instance or operational principal executing
+      the request), and delegated execution identity (the principal
+      holding a delegation grant from the authorizing subject).  These
+      identities collapse in simple deployments but diverge in shared-
+      client deployments, backend-for-frontend patterns, multi-tier
+      architectures, and agent-invocation scenarios.  When they diverge,
+      the protocol has no explicit mechanism to express the difference,
+      and authorization correctness, audit fidelity, and security
+      analysis all depend on deployment-specific conventions that cannot
+      be verified from the token alone.
+
+   A single client_id may front multiple distinct actors.  An agent
+      orchestration platform, a plugin host, or a multi-tenant
+      automation service may operate as one registered client while
+      executing requests on behalf of many different agents, tools, or
+      workloads.  A resource server receiving two requests that share
+      the same client_id cannot determine whether they originate from
+      the same logical actor or from entirely different principals.
+      Authorization policy, rate limiting, audit logging, and anomaly
+      detection all operate on the wrong granularity when the acting
+      entity is not explicitly represented in the token.
+
+   Actor context does not survive token transformation.  When a token is
+      exchanged or minted by an intermediary AS, client context from the
+      original request is not carried forward.  Each downstream consumer
+      sees only what the issuing AS encoded — in the absence of a common
+      actor profile, typically just the subject and the issuer.
+      Downstream services cannot apply actor-aware authorization policy,
+      produce accurate audit records, or perform meaningful security
+      analysis across a delegation chain.
+
+   This specification addresses these limitations through explicit actor
+   modeling: client_id identifies the OAuth client registration
+   (unchanged), sub identifies the authorizing principal, and act.sub
+   identifies the actor exercising that authorization.  These three
+   identities can refer to different parties and MUST NOT be conflated.
+   Authenticated client identity remains a valid authorization input,
+   but it is auxiliary to, not a substitute for, explicit actor
+   identity.  The normative rules are in Section 12.8; reconciliation
+   and migration rules are in Section 11.1; the requirement that actor
+   context survive token transformation is in Section 6.2.
 
 3.3.  Missing Proof-of-Possession Binding for Actors
 
@@ -423,6 +459,8 @@ Table of Contents
    actor's key within the act claim, leaving implementations to use the
    top-level cnf for both the token holder and the actor simultaneously,
    which is semantically ambiguous in chained delegation scenarios.
+   This gap is addressed by the cnf claim in the actor object and the
+   sender-constraint rules defined in Section 4.7.
 
 3.4.  No Cross-Token Profile Consistency
 
@@ -431,7 +469,9 @@ Table of Contents
    There is no common profile that spans all three and specifies how
    actor information flows from an assertion presented to an AS through
    to the access token issued by that AS and into any downstream
-   Transaction Token.
+   Transaction Token.  This gap is addressed by the common actor profile
+   defined in Section 4, with token-type-specific rules in Section 5,
+   Section 6, and Section 7.
 
 3.5.  Absent Discovery and Capability Negotiation
 
@@ -439,7 +479,8 @@ Table of Contents
    [RFC9728] define parameters for advertising actor-profile support.
    Deployments therefore require bilateral out-of-band configuration,
    which is impractical for AI agents that dynamically discover and
-   invoke tools across organizational boundaries.
+   invoke tools across organizational boundaries.  This gap is addressed
+   by the metadata parameters defined in Section 10.
 
 4.  Actor Profile for Delegation
 
@@ -1248,7 +1289,7 @@ Table of Contents
    semantically consistent.  Client identity claims (client_id, azp)
    identify the OAuth client, not the delegation relationship; they MUST
    NOT be treated as a substitute for act.  For migration and
-   reconciliation rules, see Section 10.5 and Section 11.8.
+   reconciliation rules, see Section 11.1 and Section 12.8.
 
    The following example shows a JWT access token with actor profile
    claims:
@@ -1345,7 +1386,9 @@ Table of Contents
    identity across token transformations, the AS SHOULD preserve the
    inbound client identifier values unchanged or apply a documented
    local translation rule; otherwise it SHOULD omit them rather than
-   emit values that imply a different logical client.
+   emit values that imply a different logical client.  See Section 12.8
+   for the normative framework governing the relationship between client
+   identity and actor identity.
 
    The AS MUST apply least-privilege scope reduction when issuing
    delegated access tokens:
@@ -1404,7 +1447,7 @@ Table of Contents
        azp as a substitute for act.sub.  When local policy expects both
        to identify the same acting party, the RS MUST verify semantic
        consistency; in the absence of such a policy determination, the
-       RS MUST treat them as distinct identifiers.  See Section 11.8.
+       RS MUST treat them as distinct identifiers.  See Section 12.8.
 
    5.  Apply actor authorization per Section 8 when required by local
        policy.  Resource servers that do not require actor authorization
@@ -2027,7 +2070,21 @@ Table of Contents
    not advertise support for the actor type the client would need to
    represent.
 
-10.5.  Migration from Implicit to Explicit Delegation
+11.  Deployment Considerations
+
+   This section provides guidance for deploying the OAuth Actor Profile
+   in systems that currently rely on implicit delegation or client-
+   identity-based actor inference.
+
+11.1.  Migration from Implicit to Explicit Delegation
+
+   The invariant of this specification is that client_id identifies the
+   OAuth client registration, sub identifies the authorizing principal,
+   and act.sub is the authoritative actor identity signal when
+   delegation is present.  Migration from implicit delegation is the
+   process of making this distinction explicit in tokens where these
+   roles were previously conflated through client_id or inferred from
+   token-request context.
 
    Deployments that currently rely on implicit delegation can migrate
    incrementally to this profile.  During migration, existing client-
@@ -2142,7 +2199,28 @@ Table of Contents
    If no such mapping rule exists, the deployment MUST treat the
    identifiers as distinct and MUST NOT infer equivalence.
 
-10.6.  Transaction Token Flows
+   Mismatch example, where the client and actor identify different
+   parties:
+
+   {
+     "iss": "https://as.example.com",
+     "sub": "https://idp.example.com/users/alice",
+     "client_id": "travel-assistant-client-id",
+     "act": {
+       "sub": "https://agents.example.com/concierge-bot",
+       "iss": "https://agents.example.com",
+       "sub_profile": "ai_agent"
+     },
+     "scope": "booking:create"
+   }
+
+   An AS or RS that expected the client and actor to identify the same
+   party under trusted local mapping rules MUST reject this token unless
+   those rules explicitly bind travel-assistant-client-id to
+   https://agents.example.com/concierge-bot.  If no such mapping rule
+   exists, the identifiers MUST be treated as distinct.
+
+11.2.  Transaction Token Flows
 
    Transaction Token support is advertised using the
    transaction_token_supported AS metadata parameter and the
@@ -2156,9 +2234,9 @@ Table of Contents
    actor_profile_token_types_supported when it can issue Transaction
    Tokens as delegated outputs under this profile.
 
-11.  Security Considerations
+12.  Security Considerations
 
-11.1.  Delegation Chain Integrity
+12.1.  Delegation Chain Integrity
 
    The act claim MUST be set by a trusted AS that has validated the
    delegation relationship.  Resource servers MUST NOT accept tokens in
@@ -2173,7 +2251,7 @@ Table of Contents
    token lifetimes and MUST reject tokens whose exp has passed,
    regardless of chain depth.
 
-11.2.  Actor Identity Binding
+12.2.  Actor Identity Binding
 
    Without top-level presenter proof of possession, a leaked token can
    be replayed by any party.  When an act.cnf.jkt is present:
@@ -2206,7 +2284,7 @@ Table of Contents
    this specification, such as signed hop receipts, transparency-log-
    based recording, or another future extension.
 
-11.3.  Delegation Depth Limits
+12.3.  Delegation Depth Limits
 
    Unbounded delegation chains increase attack surface and complicate
    policy evaluation.  This document specifies a maximum depth of five
@@ -2215,7 +2293,7 @@ Table of Contents
    limit MUST reject the token to prevent denial-of-service through
    chain parsing.
 
-11.4.  Sub_profile Trust
+12.4.  Sub_profile Trust
 
    The sub_profile claim is asserted by the token issuer and is only as
    trustworthy as that issuer.  Resource servers MUST NOT trust
@@ -2223,7 +2301,7 @@ Table of Contents
    server operators SHOULD configure a list of accepted entity-type
    profiles per trust domain.
 
-11.5.  Inner Actor Issuer Trust
+12.5.  Inner Actor Issuer Trust
 
    The act.iss values in nested (inner) act objects are assertion-based:
    they were set by whoever constructed those inner objects at an
@@ -2257,7 +2335,7 @@ Table of Contents
       on the outermost act.sub, which is validated by the immediate
       token issuer.
 
-11.6.  Cross-Domain Trust
+12.6.  Cross-Domain Trust
 
    When a token crosses organizational boundaries, the receiving AS or
    RS MUST apply appropriate trust evaluation.  The iss claim of the
@@ -2267,7 +2345,7 @@ Table of Contents
    grants explicitly and MUST NOT implicitly grant cross-domain actors
    the same rights as same-domain actors.
 
-11.7.  Delegation Revocation
+12.7.  Delegation Revocation
 
    Token revocation ([RFC7009]) applies to individual tokens but does
    not revoke an underlying delegation relationship or invalidate
@@ -2295,25 +2373,38 @@ Table of Contents
    Operators deploying AI agent systems MUST provide end-users with a
    mechanism to enumerate and revoke active delegation grants.
 
-11.8.  Client Identity and Delegation
+12.8.  Client Identity and Delegation
 
    Client identity, such as client_id, azp, or authenticated client
    context, is widely used in deployed systems as an authorization
    input.  Under this specification, those values remain auxiliary
    client-identity signals, while the outermost act.sub is the explicit
-   delegated-actor signal when present.  Client identity alone does not
-   prove delegation, and implementations MUST NOT treat it as a
-   substitute for act.  The detailed migration and reconciliation rules
-   are defined in Section 10.5.
+   delegated-actor signal when present.  The following normative rules
+   apply:
 
-   For example, if a token contains client_id for travel-assistant-
-   client-id but act.sub identifies https://agents.example.com/
-   concierge-bot, an AS or RS that expected the client and actor to
-   identify the same party under trusted local mapping rules MUST reject
-   the request unless those rules explicitly bind the identifiers to the
-   same actor.
+   *  Implementations MUST NOT treat client_id, azp, or other client-
+      identity signals as a substitute for act when act is present.
 
-11.9.  Confused Deputy and Actor-Authorization Bypass
+   *  When a single client_id registration fronts multiple distinct
+      acting entities (for example, an agent orchestration platform
+      executing requests on behalf of different agent instances), each
+      request MUST carry act.sub identifying the specific acting
+      principal.  Using client_id alone to distinguish actors is
+      insufficient and MUST NOT be relied upon.
+
+   *  During token issuance, client_id and azp MUST NOT be rewritten to
+      represent delegation state that belongs in act; see Section 6.2
+      for propagation rules.
+
+   *  When both explicit (act.sub) and implicit (client_id, azp) signals
+      are present and local policy expects them to identify the same
+      party, they MUST reconcile under trusted local mapping rules or
+      the request MUST be rejected.
+
+   The detailed migration rules and transition patterns are defined in
+   Section 11.1.
+
+12.9.  Confused Deputy and Actor-Authorization Bypass
 
    A resource server that evaluates only the subject principal when an
    act claim is present is susceptible to a confused deputy attack where
@@ -2326,7 +2417,7 @@ Table of Contents
    follow the narrowly scoped and explicitly documented informational-
    only cases described in Section 8.
 
-11.10.  Token Substitution
+12.10.  Token Substitution
 
    An attacker who can present a token with a crafted sub_profile or
    actor chain could attempt to escalate privileges.  ASes MUST validate
@@ -2338,7 +2429,7 @@ Table of Contents
    Section 4.5, and they MUST reject values that are malformed or
    disallowed by local policy.
 
-12.  Privacy Considerations
+13.  Privacy Considerations
 
    Delegation chains can reveal sensitive information about user
    behavior, enterprise topology, software suppliers, and internal tool
@@ -2386,9 +2477,9 @@ Table of Contents
    workload identifiers across trust-domain boundaries unless such
    disclosure is explicitly required by the deployment.
 
-13.  IANA Considerations
+14.  IANA Considerations
 
-13.1.  OAuth Authorization Server Metadata Registry
+14.1.  OAuth Authorization Server Metadata Registry
 
    This document requests IANA to register the following value in the
    "OAuth Authorization Server Metadata" registry ([RFC8414]):
@@ -2403,7 +2494,7 @@ Table of Contents
 
    *  Reference: Section 10.2 of this document
 
-13.2.  OAuth Protected Resource Metadata Registry
+14.2.  OAuth Protected Resource Metadata Registry
 
    This document requests IANA to register the following values in the
    "OAuth Protected Resource Metadata" registry ([RFC9728]):
@@ -2428,7 +2519,7 @@ Table of Contents
 
    *  Reference: Section 10.3 of this document
 
-13.3.  OAuth Entity Profiles Registry
+14.3.  OAuth Entity Profiles Registry
 
    This document makes no requests to the "OAuth Entity Profiles"
    registry.  The "Actor Profile" usage location, the actor array in
@@ -2436,9 +2527,9 @@ Table of Contents
    ai_agent with that usage location are all defined and requested by
    [I-D.mora-oauth-entity-profiles].
 
-14.  References
+15.  References
 
-14.1.  Normative References
+15.1.  Normative References
 
    [RFC3986]  Berners-Lee, T., Fielding, R., and L. Masinter, "Uniform
               Resource Identifier (URI): Generic Syntax", STD 66,
@@ -2531,7 +2622,7 @@ Table of Contents
               2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
               May 2017, <https://www.rfc-editor.org/info/rfc8174>.
 
-14.2.  Informative References
+15.2.  Informative References
 
    [RFC6749]  Hardt, D., Ed., "The OAuth 2.0 Authorization Framework",
               RFC 6749, DOI 10.17487/RFC6749, October 2012,
