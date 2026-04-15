@@ -551,7 +551,7 @@ Example rejection:
 
 ## Refresh Tokens {#assertion-grant-refresh-tokens}
 
-Authorization servers SHOULD NOT issue refresh tokens in response to cross-domain JWT assertion grant requests that carry actor-profile delegation.  For this purpose, an assertion grant is considered cross-domain when the actor's identity namespace (governed by `act.iss`) differs from the assertion issuer (`iss`); that is, when the actor's identifier is not governed by the same authority that issued the assertion.  This is consistent with the guidance in {{I-D.ietf-oauth-identity-chaining}}.  In same-domain deployments, including authorization code flows or same-issuer token exchange where the issuer can continuously enforce local delegated-access policy, an AS MAY issue refresh tokens according to local policy.
+Authorization servers SHOULD NOT issue refresh tokens in response to delegated JWT assertion grant requests that cross a trust boundary.  For this purpose, a request crosses a trust boundary when the AS relies on delegation or identity assertions originating outside its own trust domain for the subject, the actor, or their relationship.  This is consistent with the guidance in {{I-D.ietf-oauth-identity-chaining}}.  In same-domain deployments, including authorization code flows or same-issuer token exchange where the issuer can continuously enforce local delegated-access policy, an AS MAY issue refresh tokens according to local policy.
 
 The rationale is that a cross-domain delegated assertion grant is itself a short-lived, re-issuable artifact: the actor can obtain a new assertion grant and exchange it for a new access token at any time, provided the delegation relationship remains valid.  Issuing a long-lived refresh token in that context would allow an actor to continue obtaining access tokens without re-presenting a current assertion, bypassing re-validation of the delegation relationship at the trust boundary.  This creates a window where a revoked or expired delegation could still yield new access tokens until the refresh token itself expires or is revoked.
 
@@ -666,7 +666,7 @@ When the resource server accepts delegated tokens, it MUST:
 
     *  If signature, `iss`, `aud`, or temporal validation fails: HTTP 401 with `WWW-Authenticate: Bearer error="invalid_token"`.
     *  If DPoP proof validation for `cnf.jkt` fails: HTTP 401 per {{RFC9449, Section 7}}.
-    *  If the token is structurally valid but the actor fails an authorization evaluation required by local policy, including actor authorization when required: HTTP 403.  When the subject's scope was sufficient but the actor lacked authorization, the RS SHOULD include `error="insufficient_scope"` in the `WWW-Authenticate` challenge.  When the actor's `sub_profile` is not in the RS's accepted list, the RS MAY use `error="access_denied"`.
+    *  If the token is structurally valid but the actor fails an authorization evaluation required by local policy, including actor authorization when required: HTTP 403.  When the subject's scope was sufficient but the actor lacked authorization, the RS SHOULD include `error="insufficient_scope"` in the `WWW-Authenticate` challenge.  When the actor's `sub_profile` is not accepted under the actor-profile policy applicable to the resource, the RS MAY use `error="access_denied"`.
     *  The RS MUST NOT include actor-specific rejection details in error responses exposed to clients outside the trust domain.
 
 
@@ -869,7 +869,7 @@ This document makes no independent requests to the "OAuth Entity Profiles" regis
 
 This section defines a minimal set of metadata parameters that, together with the `entity_profiles_supported.actor` array defined in {{I-D.mora-oauth-entity-profiles}}, allow authorization servers and resource servers to advertise actor-profile support without out-of-band configuration.  These parameters provide partial capability negotiation only; they do not provide a complete machine-readable description of every supported grant path or method by which the AS determines the acting party.
 
-The design principle is that **capability flags go in this spec's metadata; entity type enumeration goes in {{I-D.mora-oauth-entity-profiles}} metadata**.  Clients MUST use `entity_profiles_supported.actor` per {{I-D.mora-oauth-entity-profiles}} to determine which actor entity profiles an AS or RS accepts, and MUST use `actor_profile_token_types_supported` ({{authorization-server-metadata}}) to determine which delegated output token types the AS can issue under this profile.
+The design principle is that **capability flags go in this spec's metadata; entity type enumeration goes in {{I-D.mora-oauth-entity-profiles}} metadata**.  Clients MUST use `entity_profiles_supported.actor` per {{I-D.mora-oauth-entity-profiles}} to determine which actor entity profiles the associated AS accepts for interoperability under this profile, and MUST use `actor_profile_token_types_supported` ({{authorization-server-metadata}}) to determine which delegated output token types the AS can issue under this profile.
 
 
 ## Authorization Server Metadata {#authorization-server-metadata}
@@ -1041,7 +1041,7 @@ An AS or RS that expected the client and actor to identify the same party under 
 
 ## Delegation Chain Integrity
 
-The `act` claim MUST be set by a trusted AS that has validated the delegation relationship.  Resource servers MUST NOT accept tokens in which the `act` claim was demonstrably set by an untrusted party. Concretely, RS implementations MUST validate the token signature before extracting actor claims, and MUST verify that the issuer of the token is authoritative for the claims it contains.
+The `act` claim MUST be asserted or carried only by a party that the relying AS or RS trusts to represent the delegated actor relationship.  Depending on the flow, that trusted party can be an authorization server, a self-issuing client, or another issuer that local policy authorizes for that purpose.  Resource servers MUST NOT accept tokens in which the `act` claim was demonstrably set or carried by an untrusted party.  Concretely, RS implementations MUST validate the token signature before extracting actor claims, and MUST verify that the issuer of the token is trusted to convey the claims it contains.
 
 Because inner `act` objects are set by upstream ASes and not re-signed at each hop, the integrity of the entire delegation chain rests on the outermost token's signature.  Implementations SHOULD use short token lifetimes and MUST reject tokens whose `exp` has passed, regardless of chain depth.
 
