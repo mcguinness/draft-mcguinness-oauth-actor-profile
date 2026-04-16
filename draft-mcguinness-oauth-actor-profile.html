@@ -1751,12 +1751,12 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-actor-object-structure">
 <a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-actor-object-structure" class="section-name selfRef">Actor Object Structure</a>
         </h3>
-<p id="section-4.4-1">An actor object is a JSON object that is the value of the <code>act</code> claim. In addition to the <code>sub</code> claim required by <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, an actor object <span class="bcp14">MUST</span> contain an <code>iss</code> claim when the actor identifier authority differs from the enclosing token's <code>iss</code>, <span class="bcp14">SHOULD</span> contain a <code>sub_profile</code> claim, and <span class="bcp14">MAY</span> contain a <code>cnf</code> claim.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
+<p id="section-4.4-1">An actor object is a JSON object that is the value of the <code>act</code> claim. In addition to the <code>sub</code> claim required by <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, an actor object <span class="bcp14">MUST</span> contain an <code>iss</code> claim, <span class="bcp14">SHOULD</span> contain a <code>sub_profile</code> claim, and <span class="bcp14">MAY</span> contain a <code>cnf</code> claim.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-4.4-2">
 <pre>
 act-object = {
   "sub"         : StringOrURI,          ; REQUIRED
-  ? "iss"       : StringOrURI,          ; REQUIRED when different from enclosing token iss
+  "iss"         : StringOrURI,          ; REQUIRED
   "sub_profile" : JSON String,          ; RECOMMENDED
   "cnf"         : cnf-object,           ; OPTIONAL
   * StringOrURI =&gt; any                  ; extension claims
@@ -1773,8 +1773,9 @@ act-object = {
 <dt id="section-4.4-3.3">
 <code>iss</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-4.4-3.4">
-            <p id="section-4.4-3.4.1"><span class="bcp14">REQUIRED</span> when the authority for <code>act.sub</code> differs from the enclosing token's top-level <code>iss</code>; <span class="bcp14">OPTIONAL</span> otherwise.  When absent, recipients <span class="bcp14">MUST</span> treat <code>act.iss</code> as having the same value as the enclosing token's top-level <code>iss</code>.  <code>act.iss</code> identifies the authority for the actor identifier carried in <code>act.sub</code>, playing the same role for <code>act.sub</code> that the JWT <code>iss</code> claim plays for the token <code>sub</code>: just as <code>iss</code> + <code>sub</code> form a globally unique principal identifier in a JWT (see <span>[<a href="#RFC9493" class="cite xref">RFC9493</a>]</span>), <code>act.iss</code> + <code>act.sub</code> form a globally unique actor identifier within the delegation chain.  For URI, client, workload, or other deployment-specific identifiers, the value of <code>act.iss</code> <span class="bcp14">MUST</span> identify the authority that the deployment treats as authoritative for resolving or validating that actor identifier.  See "Cross-Domain Delegation" in <a href="#conventions" class="auto internal xref">Section 2</a>.  The value is a StringOrURI as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-4.4-3.4.1" class="pilcrow">¶</a></p>
-<p id="section-4.4-3.4.2">For example, a TTS might issue a Transaction Token with top-level <code>iss</code> equal to <code>https://tts.travel-provider.example</code> while setting <code>act.iss</code> for the booking tool to <code>https://as.travel-provider.example</code>, if local policy treats that AS as authoritative for the booking tool identifier namespace.  In that case, the token issuer and the actor-identifier authority differ, and <code>act.iss</code> <span class="bcp14">MUST</span> be present.  When the actor identifier authority and the token issuer are the same party, <code>act.iss</code> <span class="bcp14">MAY</span> be omitted.<a href="#section-4.4-3.4.2" class="pilcrow">¶</a></p>
+            <p id="section-4.4-3.4.1"><span class="bcp14">REQUIRED</span>.  Identifies the namespace authority for the actor identifier carried in <code>act.sub</code>, playing the same role for <code>act.sub</code> that the JWT <code>iss</code> claim plays for the token <code>sub</code>: just as <code>iss</code> + <code>sub</code> form a globally unique principal identifier in a JWT (see <span>[<a href="#RFC9493" class="cite xref">RFC9493</a>]</span>), <code>act.iss</code> + <code>act.sub</code> form a globally unique actor identifier within the delegation chain.  For URI, client, workload, or other deployment-specific identifiers, the value of <code>act.iss</code> <span class="bcp14">MUST</span> identify the authority that the deployment treats as authoritative for resolving or validating that actor identifier.  See "Cross-Domain Delegation" in <a href="#conventions" class="auto internal xref">Section 2</a>.  The value is a StringOrURI as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-4.4-3.4.1" class="pilcrow">¶</a></p>
+<p id="section-4.4-3.4.2">Unlike the credential issuer, which is an AS-internal concern resolved during assertion validation, <code>act.iss</code> identifies only the namespace authority and is not a credential-issuer claim.  The namespace authority and the credential issuer may be the same entity or different entities.<a href="#section-4.4-3.4.2" class="pilcrow">¶</a></p>
+<p id="section-4.4-3.4.3">For example, a TTS might issue a Transaction Token with top-level <code>iss</code> equal to <code>https://tts.travel-provider.example</code> while setting <code>act.iss</code> for the booking tool to <code>https://as.travel-provider.example</code>, if local policy treats that AS as authoritative for the booking tool identifier namespace.<a href="#section-4.4-3.4.3" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-4.4-3.5">
@@ -1871,12 +1872,12 @@ act-object = {
         <h3 id="name-backwards-compatibility">
 <a href="#section-4.8" class="section-number selfRef">4.8. </a><a href="#name-backwards-compatibility" class="section-name selfRef">Backwards Compatibility</a>
         </h3>
-<p id="section-4.8-1">This profile extends the base <code>act</code> claim semantics from <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> by requiring <code>iss</code> when the actor identifier authority differs from the enclosing token's issuer, and by defining <code>sub_profile</code> and optional actor-scoped confirmation semantics.  Deployments that receive an <code>act</code> object that conforms only to <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> but omits this profile's required members <span class="bcp14">MUST</span> treat that actor object as not conforming to this profile.<a href="#section-4.8-1" class="pilcrow">¶</a></p>
+<p id="section-4.8-1">This profile extends the base <code>act</code> claim semantics from <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> by unconditionally requiring <code>iss</code> in every <code>act</code> object, and by defining <code>sub_profile</code> and optional actor-scoped confirmation semantics.  Deployments that receive an <code>act</code> object that conforms only to <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> but omits this profile's required members <span class="bcp14">MUST</span> treat that actor object as not conforming to this profile.<a href="#section-4.8-1" class="pilcrow">¶</a></p>
 <p id="section-4.8-2">When a token or assertion is required by local policy or advertised metadata to conform to this profile, such non-conforming <code>act</code> objects <span class="bcp14">MUST</span> be rejected.  When profile conformance is not required, implementations <span class="bcp14">MAY</span> continue to process a base <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> <code>act</code> object according to local policy, but they <span class="bcp14">MUST NOT</span> infer profile-defined semantics for claims that are absent.<a href="#section-4.8-2" class="pilcrow">¶</a></p>
 <p id="section-4.8-3">The <span class="bcp14">RECOMMENDED</span> migration path for deployments currently using RFC 8693 <code>act</code> objects is:<a href="#section-4.8-3" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-4.8-4">
 <li id="section-4.8-4.1">
-            <p id="section-4.8-4.1.1">Begin emitting <code>act.iss</code> in newly issued tokens where the actor identifier authority differs from the enclosing token's <code>iss</code>.  For same-issuer cases where <code>act.iss</code> would equal the token <code>iss</code>, it <span class="bcp14">MAY</span> be omitted; profile-conformant consumers apply the default.  Existing consumers that do not recognize <code>act.iss</code> will ignore it.<a href="#section-4.8-4.1.1" class="pilcrow">¶</a></p>
+            <p id="section-4.8-4.1.1">Begin emitting <code>act.iss</code> in all newly issued tokens.  Existing consumers that do not recognize <code>act.iss</code> will ignore it.<a href="#section-4.8-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-4.8-4.2">
             <p id="section-4.8-4.2.1">Update consumers to validate <code>act.iss</code> per <a href="#actor-object-structure" class="auto internal xref">Section 4.4</a> once issuers have deployed step 1.<a href="#section-4.8-4.2.1" class="pilcrow">¶</a></p>
@@ -1921,7 +1922,7 @@ act-object = {
                 <code>act.iss</code>
 </td>
               <td class="text-left" rowspan="1" colspan="1">
-                <span class="bcp14">REQUIRED</span> when different from enclosing token <code>iss</code>; absent = default to enclosing <code>iss</code>
+                <span class="bcp14">REQUIRED</span>
 </td>
               <td class="text-left" rowspan="1" colspan="1">
                 <a href="#actor-object-structure" class="auto internal xref">Section 4.4</a>
@@ -2079,7 +2080,7 @@ act-object = {
 </dl>
 <p id="section-5.1-4">When the assertion or request context also identifies an OAuth client via <code>client_id</code>, <code>azp</code>, or an authenticated client credential, that client identity <span class="bcp14">MUST NOT</span> be treated as a substitute for <code>act.sub</code>; see step 7 in <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 5.2</a>.<a href="#section-5.1-4" class="pilcrow">¶</a></p>
 <p id="section-5.1-5">An Identity Assertion JWT Authorization Grant (ID-JAG) <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span> is a JWT produced by token exchange and presented via the JWT bearer grant.  When used as a JWT bearer assertion grant, this section applies.  Clients <span class="bcp14">SHOULD</span> use this path only when the AS's support for the actor-determination model has been confirmed via deployment documentation, prior agreement, or discovery.<a href="#section-5.1-5" class="pilcrow">¶</a></p>
-<p id="section-5.1-6">The following example shows an AS-issued assertion grant, which is the recommended pattern.  The Enterprise IdP AS performed Token Exchange, authenticated the agent as the OAuth client, established the delegation relationship under local policy, and signed the assertion.  Because <code>act.iss</code> equals the token <code>iss</code>, it is omitted; recipients default to the enclosing token's <code>iss</code> per <a href="#actor-object-structure" class="auto internal xref">Section 4.4</a>:<a href="#section-5.1-6" class="pilcrow">¶</a></p>
+<p id="section-5.1-6">The following example shows an AS-issued assertion grant, which is the recommended pattern.  The Enterprise IdP AS performed Token Exchange, authenticated the agent as the OAuth client, established the delegation relationship under local policy, and signed the assertion.  <code>act.iss</code> equals the token <code>iss</code> here because the enterprise AS is also the namespace authority for the agent's identifier:<a href="#section-5.1-6" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-5.1-7">
 <pre>
 {
@@ -2093,6 +2094,7 @@ act-object = {
   "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" },
   "act": {
     "sub": "https://agents.enterprise.example/travel-assistant",
+    "iss": "https://as.enterprise.example",
     "sub_profile": "ai_agent",
     "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" }
   }
@@ -2101,7 +2103,7 @@ act-object = {
 </div>
 <p id="section-5.1-8">The top-level <code>sub_profile</code> classifies the JWT's <code>sub</code>; <code>sub_profile</code> within <code>act</code> classifies the actor.  The top-level <code>cnf.jkt</code> binds the assertion to the agent's DPoP key; <code>act.cnf.jkt</code> records the same key as actor-associated key context.<a href="#section-5.1-8" class="pilcrow">¶</a></p>
 <p id="section-5.1-9">The AS-issued grant is the more trustworthy pattern because the issuing AS independently authenticated the agent and validated the delegation relationship before signing.  The receiving AS needs to trust only the enterprise AS as an issuer.<a href="#section-5.1-9" class="pilcrow">¶</a></p>
-<p id="section-5.1-10">For AS-issued grants, the issuing AS <span class="bcp14">MUST</span> set <code>act.iss</code> to the namespace it is authoritative for, typically its own issuer URI; it <span class="bcp14">MAY</span> omit <code>act.iss</code> when that value equals the token <code>iss</code>.<a href="#section-5.1-10" class="pilcrow">¶</a></p>
+<p id="section-5.1-10">For AS-issued grants, the issuing AS <span class="bcp14">MUST</span> set <code>act.iss</code> to the namespace it is authoritative for, typically its own issuer URI.<a href="#section-5.1-10" class="pilcrow">¶</a></p>
 <p id="section-5.1-11">Allowed issuer patterns are:<a href="#section-5.1-11" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.1-12.1">
@@ -2139,7 +2141,7 @@ act-object = {
 }
 </pre><a href="#section-5.1.1-2" class="pilcrow">¶</a>
 </div>
-<p id="section-5.1.1-3">Here <code>act.iss</code> (<code>https://as.enterprise.example</code>) differs from the token <code>iss</code> and <span class="bcp14">MUST</span> be present.  The client <span class="bcp14">MUST</span> set <code>act.iss</code> to the issuer namespace authoritative for its own identifier, typically the AS governing the namespace in which <code>act.sub</code> is registered; the client <span class="bcp14">MUST NOT</span> set <code>act.iss</code> to its own identifier unless it is itself the authoritative namespace owner.  The client <span class="bcp14">SHOULD</span> include <code>act.cnf.jkt</code> set to the JWK thumbprint of the key it will use for proof of possession.<a href="#section-5.1.1-3" class="pilcrow">¶</a></p>
+<p id="section-5.1.1-3">Here <code>act.iss</code> names the enterprise AS as the namespace authority for the agent's identifier, which is registered in that AS's namespace rather than the agent's own identifier space.  The client <span class="bcp14">MUST</span> set <code>act.iss</code> to the issuer namespace authoritative for its own identifier, typically the AS governing the namespace in which <code>act.sub</code> is registered; the client <span class="bcp14">MUST NOT</span> set <code>act.iss</code> to its own identifier unless it is itself the authoritative namespace owner.  The client <span class="bcp14">SHOULD</span> include <code>act.cnf.jkt</code> set to the JWK thumbprint of the key it will use for proof of possession.<a href="#section-5.1.1-3" class="pilcrow">¶</a></p>
 <p id="section-5.1.1-4">ASes <span class="bcp14">MUST NOT</span> accept self-issued assertion grants unless explicitly configured via local policy to do so; self-issued grant acceptance <span class="bcp14">MUST</span> be off by default.  When an AS does accept self-issued grants, it <span class="bcp14">MUST</span> apply heightened scrutiny to the claimed <code>sub</code> and delegation relationship.<a href="#section-5.1.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2159,7 +2161,7 @@ act-object = {
             <p id="section-5.2-2.2.1">The AS <span class="bcp14">MUST</span> determine that the assertion issuer is trusted to assert the relationship between the JWT <code>sub</code> and <code>act.sub</code>.  If the issuer does not identify the same logical entity as <code>act.sub</code> under local policy, the AS <span class="bcp14">MUST</span> apply local policy to determine whether the issuer is authorized to speak for that actor.<a href="#section-5.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-5.2-2.3">
-            <p id="section-5.2-2.3.1">The AS <span class="bcp14">MUST</span> verify that the effective <code>act.iss</code> value is authoritative for the identifier namespace of <code>act.sub</code>.  When <code>act.iss</code> is absent from the inbound <code>act</code> object, the AS <span class="bcp14">MUST</span> treat it as having the value of the inbound assertion's top-level <code>iss</code> before applying this step.  Whether a given <code>act.iss</code> is authoritative for the namespace containing <code>act.sub</code> is a local trust decision; this document defines no generic algorithm for proving namespace authority, as no such algorithm is universally applicable across identifier ecosystems.  Examples of mechanisms deployments use to make this determination include (but are not limited to):<a href="#section-5.2-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-5.2-2.3.1">The AS <span class="bcp14">MUST</span> verify that <code>act.iss</code> is authoritative for the identifier namespace of <code>act.sub</code>.  Whether a given <code>act.iss</code> is authoritative for the namespace containing <code>act.sub</code> is a local trust decision; this document defines no generic algorithm for proving namespace authority, as no such algorithm is universally applicable across identifier ecosystems.  Examples of mechanisms deployments use to make this determination include (but are not limited to):<a href="#section-5.2-2.3.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.2-2.3.2.1">
                 <p id="section-5.2-2.3.2.1.1">URL namespace containment for URI-shaped identifiers (e.g., <code>act.sub</code> uses the same scheme, host, and port as <code>act.iss</code>).<a href="#section-5.2-2.3.2.1.1" class="pilcrow">¶</a></p>
@@ -2335,13 +2337,13 @@ When DPoP is in use and the inbound assertion does not carry <code>act.cnf</code
 <p id="section-6.2-1">When an AS issues a JWT access token following acceptance of a JWT assertion grant that contains an <code>act</code> claim (<a href="#jwt-assertion-grants" class="auto internal xref">Section 5</a>) or a Token Exchange request (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) that carries explicit actor information, the AS <span class="bcp14">MUST</span> apply the following rules.  These requirements apply regardless of whether the inbound credential is a JWT assertion grant, a JWT access token, or a Transaction Token.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.2-2">
 <li id="section-6.2-2.1">
-            <p id="section-6.2-2.1.1">The AS <span class="bcp14">MUST</span> include an <code>act</code> claim in the issued access token that preserves or extends the delegation relationship conveyed in the inbound request.  The AS <span class="bcp14">MAY</span> add a new outermost <code>act</code> layer for a newly-identified actor but <span class="bcp14">MUST NOT</span> omit or contradict the validated inner chain.  The AS <span class="bcp14">MUST NOT</span> silently drop actor information.<a href="#section-6.2-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-6.2-2.1.1">The AS <span class="bcp14">MUST</span> include an <code>act</code> claim in the issued access token that preserves or extends the delegation relationship conveyed in the inbound request.  The AS <span class="bcp14">MAY</span> add a new outermost <code>act</code> layer for a newly-identified actor but <span class="bcp14">MUST NOT</span> omit, modify, or contradict the validated inner chain.  The AS <span class="bcp14">MUST NOT</span> silently drop actor information.<a href="#section-6.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.2-2.2">
             <p id="section-6.2-2.2.1">The AS <span class="bcp14">MUST</span> preserve <code>sub</code> to refer to the same underlying subject as the inbound token.  If the AS uses a different subject-identifier namespace, it <span class="bcp14">MAY</span> change the <code>sub</code> value only to re-express that same subject in the new namespace.  It <span class="bcp14">MUST NOT</span> replace <code>sub</code> with an identifier for a different subject.<a href="#section-6.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.2-2.3">
-            <p id="section-6.2-2.3.1">If the inbound token already carries an <code>act</code> chain (depth &gt; 1), the AS <span class="bcp14">MUST</span> nest the existing chain within a new outermost <code>act</code> for the newly-identified actor.  The new outermost <code>act</code> <span class="bcp14">MUST</span> include <code>act.sub</code> (the new actor's identifier) and <span class="bcp14">MUST</span> include <code>act.iss</code> when the actor identifier authority differs from the new token's <code>iss</code>; it <span class="bcp14">MAY</span> omit <code>act.iss</code> when that value would equal the new token's <code>iss</code>.<a href="#section-6.2-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-6.2-2.3.1">If the inbound token already carries an <code>act</code> chain (depth &gt; 1), the AS <span class="bcp14">MUST</span> nest the existing chain within a new outermost <code>act</code> for the newly-identified actor.  The new outermost <code>act</code> <span class="bcp14">MUST</span> include <code>act.sub</code> and <code>act.iss</code> for the newly-identified actor.  The namespace-authority obligation in this step applies only to the <code>act</code> object the AS creates for the current actor.  The AS <span class="bcp14">MUST NOT</span> rewrite <code>act.iss</code> or any other field in <code>act</code> objects inherited from the inbound subject token; those entries were authored by upstream ASes and their content is fixed at the point of authorship.<a href="#section-6.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.2-2.4">
             <p id="section-6.2-2.4.1">If the inbound actor information cannot be validated, or nesting would exceed the chain-depth limit in <a href="#delegation-chains" class="auto internal xref">Section 4.6</a>, the AS <span class="bcp14">MUST</span> reject the request.  The AS <span class="bcp14">MUST</span> return <code>invalid_request</code> when the chain-depth limit would be exceeded and <code>invalid_grant</code> when actor information fails validation; see <a href="#assertion-error-responses" class="auto internal xref">Section 5.3</a>.  The AS <span class="bcp14">MUST NOT</span> issue a token that partially preserves the delegation chain.<a href="#section-6.2-2.4.1" class="pilcrow">¶</a></p>
@@ -2397,7 +2399,7 @@ See <a href="#client-identity-delegation" class="auto internal xref">Section 12.
 <p id="section-6.3-2">When the resource server accepts delegated tokens, it <span class="bcp14">MUST</span>:<a href="#section-6.3-2" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.3-3">
 <li id="section-6.3-3.1">
-            <p id="section-6.3-3.1.1">Validate the token's signature, <code>iss</code>, <code>aud</code>, and temporal claims per <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>.<a href="#section-6.3-3.1.1" class="pilcrow">¶</a></p>
+            <p id="section-6.3-3.1.1">Validate the token's signature, <code>iss</code>, <code>aud</code>, and temporal claims per <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>.  If the resource advertises <code>actor_profile_required: true</code> (<a href="#protected-resource-metadata" class="auto internal xref">Section 10.3</a>) and the token's <code>act</code> object is missing <code>act.iss</code>, the RS <span class="bcp14">MUST</span> reject the request with HTTP 401 <code>invalid_token</code>.<a href="#section-6.3-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-6.3-3.2">
             <p id="section-6.3-3.2.1">If the token carries a top-level <code>cnf.jkt</code>, validate the accompanying DPoP proof per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>.  The DPoP proof <span class="bcp14">MUST</span> be signed by the key identified in <code>cnf.jkt</code>, which is the key of the immediate bearer—the outermost actor when delegation is present.  If the token carries <code>cnf.jkt</code> but no DPoP proof is present in the request, the RS <span class="bcp14">MUST</span> reject the request per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> Section 7.  If a DPoP proof is present but the token does not carry <code>cnf.jkt</code>, the RS <span class="bcp14">MUST</span> treat the token as a bearer token; the RS <span class="bcp14">MUST NOT</span> infer a confirmation binding from the DPoP proof key.<a href="#section-6.3-3.2.1" class="pilcrow">¶</a></p>
@@ -2618,7 +2620,7 @@ See <a href="#client-identity-delegation" class="auto internal xref">Section 12.
                 <p id="section-7.3-2.4.2.1.1">The TTS <span class="bcp14">MUST</span> set <code>act.sub</code> to the new presenter's identifier.<a href="#section-7.3-2.4.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-7.3-2.4.2.2">
-                <p id="section-7.3-2.4.2.2.1">The TTS <span class="bcp14">MUST</span> set <code>act.iss</code> to the issuer namespace authoritative for that identifier when it differs from the issued Transaction Token's <code>iss</code>; it <span class="bcp14">MAY</span> omit <code>act.iss</code> when that value would equal the token's <code>iss</code>.<a href="#section-7.3-2.4.2.2.1" class="pilcrow">¶</a></p>
+                <p id="section-7.3-2.4.2.2.1">The TTS <span class="bcp14">MUST</span> set <code>act.iss</code> to the issuer namespace authoritative for the new presenter's identifier.  This obligation applies only to the <code>act</code> object the TTS creates for the current presenter.  The TTS <span class="bcp14">MUST NOT</span> rewrite <code>act.iss</code> or any other field in <code>act</code> objects inherited from the inbound token; those entries were authored by upstream ASes and their content is fixed at the point of authorship.<a href="#section-7.3-2.4.2.2.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-7.3-2.4.2.3">
                 <p id="section-7.3-2.4.2.3.1">If the inbound token already carries an <code>act</code> chain, the TTS <span class="bcp14">MUST</span> nest it beneath the new outermost <code>act</code>.<a href="#section-7.3-2.4.2.3.1" class="pilcrow">¶</a></p>
@@ -3009,7 +3011,7 @@ As a safe default, a client that intends to make a request on behalf of another 
 }
 </pre><a href="#section-11.1-7" class="pilcrow">¶</a>
 </div>
-<p id="section-11.1-8">Explicit form (<code>act.iss</code> is omitted because it equals the token <code>iss</code>):<a href="#section-11.1-8" class="pilcrow">¶</a></p>
+<p id="section-11.1-8">Explicit form:<a href="#section-11.1-8" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-11.1-9">
 <pre>
 {
@@ -3019,6 +3021,7 @@ As a safe default, a client that intends to make a request on behalf of another 
   "azp": "travel-assistant-client-id",
   "act": {
     "sub": "https://agents.example.com/travel-assistant",
+    "iss": "https://as.example.com",
     "sub_profile": "ai_agent"
   },
   "scope": "booking:create"
