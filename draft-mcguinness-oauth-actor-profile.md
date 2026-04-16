@@ -156,7 +156,7 @@ Readers unfamiliar with the underlying specifications should consult {{RFC8693}}
 
 ## Relationship to Related Work
 
-**OAuth Token Exchange ({{RFC8693}})**: This document profiles and extends Token Exchange.  The `act` claim defined in {{RFC8693}} is the foundation; this document adds the required `iss` sub-claim, the RECOMMENDED `sub_profile` sub-claim, and the OPTIONAL `cnf` sub-claim, and specifies how the resulting actor object must be validated and propagated.  The Token Exchange processing rules in this document supplement, and do not replace, the base requirements of {{RFC8693}}.
+**OAuth Token Exchange ({{RFC8693}})**: This document is a profile of the `act` claim defined in {{RFC8693}}; it is not a reinterpretation of the Token Exchange protocol itself and not a general delegation framework spanning every token family.  The actor object structure and processing rules are defined in {{actor-profile}}, {{jwt-assertion-grants}}, {{jwt-access-tokens}}, and {{transaction-tokens}}; they supplement, and do not replace, the base requirements of {{RFC8693}}.
 
 **Identity Chaining ({{I-D.ietf-oauth-identity-chaining}})**: Identity Chaining defines end-to-end flows for passing a subject identity across trust-domain boundaries using Token Exchange and JWT assertion grants.  This document is complementary: where Identity Chaining focuses on the subject identity and the overall trust-chain flow, this document focuses on the actor representation carried within those same tokens — how the acting party is identified, classified, and validated alongside the subject at each hop.  Deployments that implement Identity Chaining can adopt this profile to add explicit, machine-readable actor semantics to the tokens that Identity Chaining flows produce and consume.
 
@@ -392,7 +392,7 @@ Delegation depth is defined as the number of `act` objects in the chain, countin
 
 ## Sender Constraint and Key Binding {#sender-constraint}
 
-When sender-constrained tokens are used with a delegated token, the top-level `cnf` claim identifies the key or certificate of the immediate presenter of that token.  When delegation is present, that immediate presenter is the outermost actor.  Authorization servers and resource servers validate current proof of possession against the top-level `cnf`, not against nested `act.cnf` values.
+When sender-constrained tokens are used with a delegated token, the top-level `cnf` claim identifies the key or certificate of the immediate presenter of that token.  When delegation is present, that immediate presenter is the outermost actor.  Authorization servers and resource servers validate current proof of possession against the top-level `cnf`, not against nested `act.cnf` values.  `act.cnf` values, at any nesting depth, do not create an additional proof-of-possession obligation at the resource server unless another specification or local policy explicitly requires it.
 
 When DPoP {{RFC9449}} is used:
 
@@ -536,14 +536,14 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 2.  The AS MUST determine that the assertion issuer is trusted to assert the relationship between the JWT `sub` and `act.sub`.  If the issuer does not identify the same logical entity as `act.sub` under local policy, the AS MUST apply local policy to determine whether the issuer is authorized to speak for that actor.
 
-3.  The AS MUST verify that the `act.iss` value is authoritative for the identifier namespace of `act.sub`.  An AS MUST establish this using one or more of the following mechanisms:
+3.  The AS MUST verify that the `act.iss` value is authoritative for the identifier namespace of `act.sub`.  Whether a given `act.iss` is authoritative for the namespace containing `act.sub` is a local trust decision; this document defines no generic algorithm for proving namespace authority, as no such algorithm is universally applicable across identifier ecosystems.  Examples of mechanisms deployments use to make this determination include (but are not limited to):
 
-    *  **URL namespace containment**: the `act.sub` identifier is within the URL namespace of `act.iss` (e.g., `act.sub` uses the same scheme, host, and port as `act.iss`).
-    *  **Federation metadata**: `act.iss` is listed as authoritative for the identifier namespace containing `act.sub` in federation metadata (e.g., {{OpenID.Federation}}) trusted by the AS.
-    *  **Pre-registration**: the AS has a pre-registered entry explicitly authorizing `act.iss` to assert identifiers of the form used in `act.sub`.
-    *  **Local policy**: an explicit AS policy rule authorizes `act.iss` to assert the specific class of identifier used in `act.sub`.
+    *  URL namespace containment for URI-shaped identifiers (e.g., `act.sub` uses the same scheme, host, and port as `act.iss`).
+    *  Federation metadata that lists `act.iss` as authoritative for the namespace containing `act.sub` (e.g., {{OpenID.Federation}}).
+    *  Pre-registration entries that explicitly authorize `act.iss` to assert identifiers of the form used in `act.sub`.
+    *  Local policy rules that authorize `act.iss` to assert the specific class of identifier used in `act.sub`.
 
-    If none of these mechanisms can be satisfied, the AS MUST reject the request with `invalid_grant`.
+    If the AS cannot establish through its local trust determination that `act.iss` is authoritative for the namespace containing `act.sub`, the AS MUST reject the request with `invalid_grant`.
 
 4.  The AS MUST verify that the `act.sub` is authorized to act on behalf of the assertion's `sub`, using the AS's own policy (for example, a pre-registered delegation grant, a consent record, or a policy rule).
 
@@ -603,7 +603,7 @@ When a cross-domain delegated token is needed beyond the original access token l
 *  The current presenter binding (`cnf`) is re-validated.
 *  Revocation of the delegation relationship takes effect immediately at the next token request.
 
-If an AS issues a refresh token in a delegated context, it MUST bind the refresh token to the specific (subject, actor) pair from the original grant and MUST NOT allow the refresh token to be used to obtain tokens for a different actor.  In cross-domain deployments, the AS SHOULD additionally ensure that refresh-token use does not bypass the revocation and trust-boundary checks that would otherwise occur when re-presenting the assertion grant.  The AS MUST revoke the refresh token immediately if the delegation relationship between the subject and actor is revoked.
+If an AS issues a refresh token in a delegated context, it MUST bind the refresh token to the specific (subject, actor) pair from the original grant and MUST NOT allow the refresh token to be used to obtain tokens for a different actor.  In cross-domain deployments, the AS SHOULD additionally ensure that refresh-token use does not bypass the revocation and trust-boundary checks that would otherwise occur when re-presenting the assertion grant.  When the delegation relationship between the subject and actor is revoked, the AS MUST ensure that the refresh token cannot be used to mint new delegated tokens after revocation is known to the AS.  The AS SHOULD revoke the refresh token immediately when it has authoritative knowledge of the revocation.  When immediate revocation is not observable (for example, in federated or cross-domain deployments where revocation signals may not be delivered in real time), the AS SHOULD require re-presentation of a current upstream assertion before issuing additional delegated tokens.
 
 
 # JWT Access Tokens {#jwt-access-tokens}
@@ -930,7 +930,7 @@ This document makes no independent requests to the "OAuth Entity Profiles" regis
 
 ## Overview
 
-This section defines a minimal set of metadata parameters that, together with the `entity_profiles_supported.actor` array defined in {{I-D.mora-oauth-entity-profiles}}, allow authorization servers and resource servers to advertise actor-profile support without out-of-band configuration.  These parameters provide partial capability negotiation only; they do not provide a complete machine-readable description of every supported grant path or method by which the AS determines the acting party.
+This section defines a minimal set of metadata parameters that, together with the `entity_profiles_supported.actor` array defined in {{I-D.mora-oauth-entity-profiles}}, allow authorization servers and resource servers to advertise actor-profile support without out-of-band configuration.  These parameters provide partial capability negotiation only; they do not provide a complete machine-readable description of every supported grant path or method by which the AS determines the acting party.  Capability negotiation is only a compatibility preflight and does not guarantee successful token issuance or resource access.
 
 The design principle is that **capability flags go in this spec's metadata; entity type enumeration goes in {{I-D.mora-oauth-entity-profiles}} metadata**.  Clients MUST use `entity_profiles_supported.actor` per {{I-D.mora-oauth-entity-profiles}} to determine which actor entity profiles the associated AS accepts for interoperability under this profile, and MUST use `actor_profile_token_types_supported` ({{authorization-server-metadata}}) to determine which delegated output token types the AS can issue under this profile.
 
