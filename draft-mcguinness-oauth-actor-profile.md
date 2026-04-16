@@ -58,7 +58,7 @@ normative:
      -
         fullname: Pamela Dingle
         organization: Microsoft
-    -
+     -
         fullname: Karl McGuinness
         organization: Independent
     date: 2026-04-15
@@ -1085,7 +1085,7 @@ Consequently:
 
 *  An RS that relies on an inner `act.iss` for audit or policy purposes MUST do so only when it trusts the outer token issuer to have validated and faithfully propagated that inner actor chain at issuance time.
 
-*  ASes that propagate inner actor chains during token exchange MUST independently validate each inner `act.sub` and `act.iss` before endorsing them in an issued token (see step 5 of {{jwt-assertion-grants-processing}}).  An AS that blindly forwards an inner `act` chain without validating it launders unverified actor claims into a token bearing its own signature.
+*  ASes that propagate inner actor chains during token exchange MUST independently validate each inner `act.sub` and `act.iss` before endorsing them in an issued token (see step 5 of {{jwt-assertion-grants-processing}}).  An AS that blindly forwards an inner `act` chain without validating it introduces unverified actor claims into a token bearing its own signature.
 
 *  Security policies that rely on inner actor identities for access control SHOULD be treated as lower-assurance than policies based on the outermost `act.sub`, which is validated by the immediate token issuer.
 
