@@ -8,7 +8,7 @@
 <meta content="Karl McGuinness" name="author">
 <meta content="
        OAuth deployments increasingly involve multi-principal scenarios where an agent or workload acts on behalf of a human user across organizational and trust-domain boundaries.  Existing specifications provide relevant building blocks but do not define a common profile for representing the delegated actor relationship across token types, classifying actor entity types, or signaling support between authorization servers and resource servers.  The result is inconsistent actor representation and interoperability gaps that force deployments to rely on proprietary conventions. 
-       This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity:  client_id  identifies the OAuth client registration,  sub  identifies the authorizing principal, and  act.sub  identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common  act  claim structure with  sub_profile  for machine-processable entity classification and  cnf  for actor-associated key context, applies uniformly across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  The document also registers metadata parameters for advertising and negotiating actor-profile support in cross-domain deployments. 
+       This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity:  client_id  identifies the OAuth client registration,  sub  identifies the authorizing principal, and  act.sub  identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common  act  claim structure with  sub_profile  for machine-processable entity classification and  cnf  for actor-associated key context, applies uniformly across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  The document also registers metadata parameters for advertising and negotiating actor-profile support in cross-domain deployments.  This document standardizes the token representation of delegation relationships and the processing rules for issuers and consumers; it does not standardize the upstream policies and mechanisms by which systems determine whether a given actor is authorized to act for a subject, which remain deployment-specific. 
     " name="description">
 <meta content="xml2rfc 3.32.0" name="generator">
 <meta content="oauth" name="keyword">
@@ -1089,7 +1089,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">OAuth deployments increasingly involve multi-principal scenarios where an agent or workload acts on behalf of a human user across organizational and trust-domain boundaries.  Existing specifications provide relevant building blocks but do not define a common profile for representing the delegated actor relationship across token types, classifying actor entity types, or signaling support between authorization servers and resource servers.  The result is inconsistent actor representation and interoperability gaps that force deployments to rely on proprietary conventions.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-<p id="section-abstract-2">This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity: <code>client_id</code> identifies the OAuth client registration, <code>sub</code> identifies the authorizing principal, and <code>act.sub</code> identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common <code>act</code> claim structure with <code>sub_profile</code> for machine-processable entity classification and <code>cnf</code> for actor-associated key context, applies uniformly across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  The document also registers metadata parameters for advertising and negotiating actor-profile support in cross-domain deployments.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity: <code>client_id</code> identifies the OAuth client registration, <code>sub</code> identifies the authorizing principal, and <code>act.sub</code> identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common <code>act</code> claim structure with <code>sub_profile</code> for machine-processable entity classification and <code>cnf</code> for actor-associated key context, applies uniformly across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  The document also registers metadata parameters for advertising and negotiating actor-profile support in cross-domain deployments.  This document standardizes the token representation of delegation relationships and the processing rules for issuers and consumers; it does not standardize the upstream policies and mechanisms by which systems determine whether a given actor is authorized to act for a subject, which remain deployment-specific.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1829,6 +1829,9 @@ act-object = {
               <li class="normal" id="section-4.4-3.8.3.3">
                 <p id="section-4.4-3.8.3.3.1">This applies only to the outermost <code>act</code>.  <code>act.cnf</code> values in nested inner objects are key history only and <span class="bcp14">MUST NOT</span> be used to drive proof-of-possession checks at any layer.<a href="#section-4.4-3.8.3.3.1" class="pilcrow">¶</a></p>
 </li>
+              <li class="normal" id="section-4.4-3.8.3.4">
+                <p id="section-4.4-3.8.3.4.1">An AS applying this check is verifying that the DPoP proof matches the key the asserting party claims to have used; it is not independently verifying that the actor possesses that key.  The security value of this check is bounded by the trustworthiness of the assertion issuer.  It does not substitute for validating the assertion issuer's authority per <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 6.2</a> step 2.<a href="#section-4.4-3.8.3.4.1" class="pilcrow">¶</a></p>
+</li>
             </ul>
 </dd>
         <dd class="break"></dd>
@@ -1843,16 +1846,17 @@ act-object = {
         </h3>
 <p id="section-4.5-1">Value preservation and propagation for unrecognized <code>sub_profile</code> values are governed by <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>.  An AS or RS <span class="bcp14">MUST NOT</span> reject a token or assertion solely because a <code>sub_profile</code> value is unrecognized; unrecognized values <span class="bcp14">MUST NOT</span> be used to infer authorization semantics.<a href="#section-4.5-1" class="pilcrow">¶</a></p>
 <p id="section-4.5-2">When local policy restricts the accepted set of <code>sub_profile</code> values for an actor, that set <span class="bcp14">SHOULD</span> be advertised via <code>entity_profiles_supported.actor</code> in AS metadata (<a href="#authorization-server-metadata" class="auto internal xref">Section 11.2</a>) so that clients can detect incompatibility before making a request.  Clients discover the accepted set for a given resource by consulting <code>entity_profiles_supported.actor</code> in the AS metadata for the AS listed in the resource's <code>authorization_servers</code> (<span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span>).<a href="#section-4.5-2" class="pilcrow">¶</a></p>
-<p id="section-4.5-3">When <code>sub_profile</code> contains multiple space-delimited values, the following rules apply to policy evaluation:<a href="#section-4.5-3" class="pilcrow">¶</a></p>
+<p id="section-4.5-3">When <code>sub_profile</code> is absent from an <code>act</code> object, implementations <span class="bcp14">MUST NOT</span> assume a specific entity type for the actor.  Resource servers that enforce entity-type-based access control <span class="bcp14">MUST</span> treat an absent <code>sub_profile</code> as an unclassified actor and <span class="bcp14">SHOULD</span> apply the more restrictive policy applicable to unknown entity types.<a href="#section-4.5-3" class="pilcrow">¶</a></p>
+<p id="section-4.5-4">When <code>sub_profile</code> contains multiple space-delimited values, the following rules apply to policy evaluation:<a href="#section-4.5-4" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-4.5-4.1">
-            <p id="section-4.5-4.1.1">An entity <span class="bcp14">MUST</span> be treated as matching a policy rule if any of its <code>sub_profile</code> values satisfies that rule.  For example, an entity with <code>"service ai_agent"</code> matches both a policy rule for <code>service</code> and a policy rule for <code>ai_agent</code>.<a href="#section-4.5-4.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-4.5-5.1">
+            <p id="section-4.5-5.1.1">An entity <span class="bcp14">MUST</span> be treated as matching a policy rule if any of its <code>sub_profile</code> values satisfies that rule.  For example, an entity with <code>"service ai_agent"</code> matches both a policy rule for <code>service</code> and a policy rule for <code>ai_agent</code>.<a href="#section-4.5-5.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-4.5-4.2">
-            <p id="section-4.5-4.2.1">When multiple values match different policy rules with conflicting outcomes, the more restrictive outcome <span class="bcp14">MUST</span> apply.  Implementations <span class="bcp14">MUST NOT</span> grant the union of all matched rules' privileges; they <span class="bcp14">MUST</span> apply least privilege across the matched set.<a href="#section-4.5-4.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-4.5-5.2">
+            <p id="section-4.5-5.2.1">When multiple values match different policy rules with conflicting outcomes, the more restrictive outcome <span class="bcp14">MUST</span> apply.  Implementations <span class="bcp14">MUST NOT</span> grant the union of all matched rules' privileges; they <span class="bcp14">MUST</span> apply least privilege across the matched set.<a href="#section-4.5-5.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-4.5-4.3">
-            <p id="section-4.5-4.3.1">When local policy accepts only a specific set of <code>sub_profile</code> values (e.g., via <code>entity_profiles_supported.actor</code>), the entity is accepted if at least one of its values appears in the accepted set.  Values not in the accepted set <span class="bcp14">MUST</span> be ignored for that acceptance check; they do not cause rejection on their own.<a href="#section-4.5-4.3.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-4.5-5.3">
+            <p id="section-4.5-5.3.1">When local policy accepts only a specific set of <code>sub_profile</code> values (e.g., via <code>entity_profiles_supported.actor</code>), the entity is accepted if at least one of its values appears in the accepted set.  Values not in the accepted set <span class="bcp14">MUST</span> be ignored for that acceptance check; they do not cause rejection on their own.<a href="#section-4.5-5.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1884,7 +1888,7 @@ act-object = {
 </pre><a href="#section-4.6-2" class="pilcrow">¶</a>
 </div>
 <p id="section-4.6-3">In this example the booking tool (outermost <code>act</code>) is the immediate actor for the travel assistant (nested <code>act</code>), which is acting for Alice (<code>sub</code>).  Each actor carries associated key history via <code>cnf.jkt</code>, and the chain carries prior-actor information to the extent that the current token issuer is trusted to have validated and faithfully propagated it.<a href="#section-4.6-3" class="pilcrow">¶</a></p>
-<p id="section-4.6-4">Implementations <span class="bcp14">MUST NOT</span> represent delegation depth greater than five levels.  Implementations that receive a token with more than five levels of nested <code>act</code> <span class="bcp14">MUST</span> reject it.  This limit protects against denial-of-service through unbounded chain parsing and simplifies policy evaluation; most practical delegation scenarios require two to three hops.<a href="#section-4.6-4" class="pilcrow">¶</a></p>
+<p id="section-4.6-4">The default maximum delegation depth is eight levels of nested <code>act</code> objects.  Implementations <span class="bcp14">MUST NOT</span> represent delegation depth greater than eight levels.  Implementations that receive a token with more than eight levels of nested <code>act</code> <span class="bcp14">MUST</span> reject it.  This limit protects against denial-of-service through unbounded chain parsing and simplifies policy evaluation; most practical delegation scenarios require two to three hops.  When a request would result in a chain that exceeds the limit, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_request</code>; it <span class="bcp14">MUST NOT</span> silently truncate the chain.<a href="#section-4.6-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="sender-constraint">
@@ -1913,7 +1917,20 @@ act-object = {
         </h3>
 <p id="section-4.8-1">This profile extends the base <code>act</code> claim semantics from <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> by requiring <code>iss</code> within each actor object and by defining <code>sub_profile</code> and optional actor-scoped confirmation semantics.  Deployments that receive an <code>act</code> object that conforms only to <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> but omits this profile's required members <span class="bcp14">MUST</span> treat that actor object as not conforming to this profile.<a href="#section-4.8-1" class="pilcrow">¶</a></p>
 <p id="section-4.8-2">When a token or assertion is required by local policy or advertised metadata to conform to this profile, such non-conforming <code>act</code> objects <span class="bcp14">MUST</span> be rejected.  When profile conformance is not required, implementations <span class="bcp14">MAY</span> continue to process a base <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> <code>act</code> object according to local policy, but they <span class="bcp14">MUST NOT</span> infer profile-defined semantics for claims that are absent.<a href="#section-4.8-2" class="pilcrow">¶</a></p>
-<p id="section-4.8-3">Implementations that previously treated <code>act.cnf</code> as an active sender-constraining mechanism (requiring proof of possession from each prior actor in a chain) should note that this document defines <code>act.cnf</code> as actor-associated key history for audit, diagnostics, and optional local policy only.  Active proof-of-possession requirements apply only to the top-level <code>cnf</code> claim and the immediate presenter.  Deployments that relied on per-hop <code>act.cnf</code> key verification for multi-hop security properties <span class="bcp14">MUST</span> review their key-verification logic against the semantics defined in <a href="#actor-object-structure" class="auto internal xref">Section 4.4</a> and <a href="#sender-constraint" class="auto internal xref">Section 4.7</a>.<a href="#section-4.8-3" class="pilcrow">¶</a></p>
+<p id="section-4.8-3">The <span class="bcp14">RECOMMENDED</span> migration path for deployments currently using RFC 8693 <code>act</code> objects is:<a href="#section-4.8-3" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-4.8-4">
+<li id="section-4.8-4.1">
+            <p id="section-4.8-4.1.1">Begin emitting <code>act.iss</code> in all newly issued tokens.  Existing consumers that do not recognize <code>act.iss</code> will ignore it; profile-conformant consumers will use it.<a href="#section-4.8-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.8-4.2">
+            <p id="section-4.8-4.2.1">Update consumers to validate <code>act.iss</code> per <a href="#actor-object-structure" class="auto internal xref">Section 4.4</a> once issuers have deployed step 1.<a href="#section-4.8-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.8-4.3">
+            <p id="section-4.8-4.3.1">Once all token issuers and consumers on a given path have been updated, enforce profile conformance via <code>actor_profile_required: true</code> in resource metadata.<a href="#section-4.8-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-4.8-5">This graduated approach avoids a flag-day cutover and allows incremental rollout across trust domains.<a href="#section-4.8-5" class="pilcrow">¶</a></p>
+<p id="section-4.8-6">Implementations that previously treated <code>act.cnf</code> as an active sender-constraining mechanism (requiring proof of possession from each prior actor in a chain) should note that this document defines <code>act.cnf</code> as actor-associated key history for audit, diagnostics, and optional local policy only.  Active proof-of-possession requirements apply only to the top-level <code>cnf</code> claim and the immediate presenter.  Deployments that relied on per-hop <code>act.cnf</code> key verification for multi-hop security properties <span class="bcp14">MUST</span> review their key-verification logic against the semantics defined in <a href="#actor-object-structure" class="auto internal xref">Section 4.4</a> and <a href="#sender-constraint" class="auto internal xref">Section 4.7</a>.<a href="#section-4.8-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="actor-profile-claims-summary">
@@ -2211,7 +2228,7 @@ If none of these mechanisms can be satisfied, the AS <span class="bcp14">MUST</s
                 <p id="section-6.2-2.5.2.1.1"><strong>Propagation decision</strong>: The AS <span class="bcp14">MUST</span> determine whether to propagate the inner chain into the issued token.  The AS <span class="bcp14">SHOULD</span> propagate it by preserving the nested structure, provided the total resulting chain depth does not exceed the limit in <a href="#delegation-chains" class="auto internal xref">Section 4.6</a>.  If the AS does not accept pre-chained assertions, it <span class="bcp14">MUST</span> reject the request.<a href="#section-6.2-2.5.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-6.2-2.5.2.2">
-                <p id="section-6.2-2.5.2.2.1"><strong>Validation of inner chain</strong>: An AS that propagates an inner chain <span class="bcp14">MUST</span> independently validate each inner <code>act.sub</code> and <code>act.iss</code> before including that chain in the issued token.  An AS that blindly forwards an inner chain without validating it introduces unverified actor claims into a token bearing its own signature.<a href="#section-6.2-2.5.2.2.1" class="pilcrow">¶</a></p>
+                <p id="section-6.2-2.5.2.2.1"><strong>Validation of inner chain</strong>: An AS that propagates an inner chain <span class="bcp14">MUST</span> independently validate each inner <code>act.sub</code> and <code>act.iss</code> before including that chain in the issued token.  If the AS cannot independently validate an inner chain, it <span class="bcp14">MUST NOT</span> propagate that chain; the AS <span class="bcp14">MUST</span> either reject the request with <code>invalid_grant</code> or, when local policy explicitly permits it, issue a token without the inner chain.  An AS <span class="bcp14">MUST NOT</span> silently carry forward an unvalidated inner chain; doing so introduces unverified actor claims into a token bearing its own signature.<a href="#section-6.2-2.5.2.2.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-6.2-2.5.2.3">
                 <p id="section-6.2-2.5.2.3.1"><strong>Delegation relationships</strong>: When the AS relies on the inner chain as a security-relevant delegation path (rather than informational audit context), it <span class="bcp14">MUST</span> also validate the delegation relationship at each hop in the nested chain according to local policy.<a href="#section-6.2-2.5.2.3.1" class="pilcrow">¶</a></p>
@@ -2243,7 +2260,7 @@ If none of these mechanisms can be satisfied, the AS <span class="bcp14">MUST</s
           <dt id="section-6.3-2.1">
 <code>invalid_request</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-6.3-2.2">
-            <p id="section-6.3-2.2.1">Use when the <code>act</code> claim structure is syntactically invalid, the delegation chain depth exceeds the limit in <a href="#delegation-chains" class="auto internal xref">Section 4.6</a>, or a required claim such as <code>act.sub</code> is absent.<a href="#section-6.3-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-6.3-2.2.1">Use when the <code>act</code> claim structure is syntactically invalid, the delegation chain depth exceeds the limit in <a href="#delegation-chains" class="auto internal xref">Section 4.6</a>, or a required claim such as <code>act.sub</code> or <code>act.iss</code> is absent.<a href="#section-6.3-2.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-6.3-2.3">
@@ -2314,7 +2331,7 @@ If none of these mechanisms can be satisfied, the AS <span class="bcp14">MUST</s
             <p id="section-7.1-2.2.1">The token was issued via Token Exchange (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) and the request carried explicit actor information, such as an <code>actor_token</code> or a <code>subject_token</code> that already carried an <code>act</code> chain; or<a href="#section-7.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-7.1-2.3">
-            <p id="section-7.1-2.3.1">The AS has independent knowledge — established by a pre-registered delegation grant, an explicit consent record, or a policy rule that names both the subject and the acting party — that the subject's rights are being exercised by a distinct, identifiable acting party whose identifier and entity type the AS can assert authoritatively.<a href="#section-7.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-7.1-2.3.1">The AS has independent knowledge — established by a pre-registered delegation grant, an explicit consent record, or a policy rule that names both the subject and the acting party — that the subject's rights are being exercised by a distinct, identifiable acting party whose identifier and entity type the AS can assert authoritatively.  Claims about actor identity derived solely from client authentication, without an explicit delegation record naming both the subject and the acting party, do not satisfy this condition.<a href="#section-7.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-7.1-3">When the AS determines the actor from authenticated client context, local delegation policy, or other deployment-specific inputs rather than from an explicit actor-carrying artifact, that is an operational allowance rather than an interoperable actor-proof mechanism defined by this document.  The interoperability defined here applies to the issued token and its processing, not to the upstream method by which the AS determined the actor.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
@@ -2479,66 +2496,71 @@ See <a href="#client-identity-delegation" class="auto internal xref">Section 13.
 <a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-overview-2" class="section-name selfRef">Overview</a>
         </h3>
 <p id="section-8.1-1">Transaction Tokens <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> are short-lived JWTs that capture the workload identity and request context for a series of related service calls within a single business transaction. They are issued by a Transaction Token Service (TTS), which is a specialized authorization server.<a href="#section-8.1-1" class="pilcrow">¶</a></p>
-<p id="section-8.1-2">A Transaction Token contains the following claims.  Claims marked <span class="bcp14">REQUIRED</span> are defined as such by <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>; claims marked <span class="bcp14">OPTIONAL</span> may be omitted at the issuer's discretion.<a href="#section-8.1-2" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-8.1-3">
-          <dt id="section-8.1-3.1">
+<ul class="normal ulEmpty">
+<li class="normal ulEmpty" id="section-8.1-2.1">
+            <p id="section-8.1-2.1.1">Note: The requirements in this section are written against the current version of <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>.  If that document changes its claim structure materially before publication, this section should be read in conjunction with the published version.<a href="#section-8.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-8.1-3">A Transaction Token contains the following claims.  Claims marked <span class="bcp14">REQUIRED</span> are defined as such by <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>; claims marked <span class="bcp14">OPTIONAL</span> may be omitted at the issuer's discretion.<a href="#section-8.1-3" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-8.1-4">
+          <dt id="section-8.1-4.1">
 <code>iss</code> (<span class="bcp14">OPTIONAL</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-8.1-3.2">
-            <p id="section-8.1-3.2.1">Issuer of the Transaction Token.  May be omitted when all tokens are scoped to a single Trust Domain.  When <code>iss</code> is omitted, recipients <span class="bcp14">MUST</span> rely on the trust-domain and issuer-identification rules of <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> and local deployment configuration rather than the generic outer-token <code>iss</code> processing rules in this document.<a href="#section-8.1-3.2.1" class="pilcrow">¶</a></p>
+          <dd style="margin-left: 1.5em" id="section-8.1-4.2">
+            <p id="section-8.1-4.2.1">Issuer of the Transaction Token.  May be omitted when all tokens are scoped to a single Trust Domain.  When <code>iss</code> is omitted, recipients <span class="bcp14">MUST</span> rely on the trust-domain and issuer-identification rules of <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> and local deployment configuration rather than the generic outer-token <code>iss</code> processing rules in this document.<a href="#section-8.1-4.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-8.1-3.3">
+<dt id="section-8.1-4.3">
 <code>aud</code> (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-8.1-3.4">
-            <p id="section-8.1-3.4.1">Identifies the Trust Domain in which the Transaction Token is valid.<a href="#section-8.1-3.4.1" class="pilcrow">¶</a></p>
+          <dd style="margin-left: 1.5em" id="section-8.1-4.4">
+            <p id="section-8.1-4.4.1">Identifies the Trust Domain in which the Transaction Token is valid.<a href="#section-8.1-4.4.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-8.1-3.5">
+<dt id="section-8.1-4.5">
 <code>iat</code> (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-8.1-3.6">
-            <p id="section-8.1-3.6.1">Issued-at time per <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-8.1-3.6.1" class="pilcrow">¶</a></p>
+          <dd style="margin-left: 1.5em" id="section-8.1-4.6">
+            <p id="section-8.1-4.6.1">Issued-at time per <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-8.1-4.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-8.1-3.7">
+<dt id="section-8.1-4.7">
 <code>exp</code> (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-8.1-3.8">
-            <p id="section-8.1-3.8.1">Expiration time per <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-8.1-3.8.1" class="pilcrow">¶</a></p>
+          <dd style="margin-left: 1.5em" id="section-8.1-4.8">
+            <p id="section-8.1-4.8.1">Expiration time per <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-8.1-4.8.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-8.1-3.9">
+<dt id="section-8.1-4.9">
 <code>sub</code> (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-8.1-3.10">
-            <p id="section-8.1-3.10.1">The identity of the human user or non-personal entity that originated the transaction.<a href="#section-8.1-3.10.1" class="pilcrow">¶</a></p>
+          <dd style="margin-left: 1.5em" id="section-8.1-4.10">
+            <p id="section-8.1-4.10.1">The identity of the human user or non-personal entity that originated the transaction.<a href="#section-8.1-4.10.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-8.1-3.11">
+<dt id="section-8.1-4.11">
 <code>scope</code> (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-8.1-3.12">
-            <p id="section-8.1-3.12.1">The transaction authorization scope, as defined by the TTS for the specific transaction.<a href="#section-8.1-3.12.1" class="pilcrow">¶</a></p>
+          <dd style="margin-left: 1.5em" id="section-8.1-4.12">
+            <p id="section-8.1-4.12.1">The transaction authorization scope, as defined by the TTS for the specific transaction.<a href="#section-8.1-4.12.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-8.1-3.13">
+<dt id="section-8.1-4.13">
 <code>txn</code> (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-8.1-3.14">
-            <p id="section-8.1-3.14.1">A transaction identifier that links all tokens in the same business transaction, as defined in <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>.<a href="#section-8.1-3.14.1" class="pilcrow">¶</a></p>
+          <dd style="margin-left: 1.5em" id="section-8.1-4.14">
+            <p id="section-8.1-4.14.1">A transaction identifier that links all tokens in the same business transaction, as defined in <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>.<a href="#section-8.1-4.14.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-8.1-3.15">
+<dt id="section-8.1-4.15">
 <code>req_wl</code> (<span class="bcp14">REQUIRED</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-8.1-3.16">
-            <p id="section-8.1-3.16.1">The workload identifier of the workload that requested the Transaction Token from the TTS.  When a Transaction Token is exchanged for a replacement, <code>req_wl</code> is updated to reflect the new requesting workload per <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>.  This claim provides TTS-level workload context and is not a substitute for <code>act.sub</code>; see <a href="#actor-claim-in-transaction-tokens" class="auto internal xref">Section 8.2</a>.<a href="#section-8.1-3.16.1" class="pilcrow">¶</a></p>
+          <dd style="margin-left: 1.5em" id="section-8.1-4.16">
+            <p id="section-8.1-4.16.1">The workload identifier of the workload that requested the Transaction Token from the TTS.  When a Transaction Token is exchanged for a replacement, <code>req_wl</code> is updated to reflect the new requesting workload per <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>.  This claim provides TTS-level workload context and is not a substitute for <code>act.sub</code>; see <a href="#actor-claim-in-transaction-tokens" class="auto internal xref">Section 8.2</a>.<a href="#section-8.1-4.16.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-8.1-3.17">
+<dt id="section-8.1-4.17">
 <code>tctx</code> (<span class="bcp14">OPTIONAL</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-8.1-3.18">
-            <p id="section-8.1-3.18.1">Transaction context information that remains stable across the call chain.<a href="#section-8.1-3.18.1" class="pilcrow">¶</a></p>
+          <dd style="margin-left: 1.5em" id="section-8.1-4.18">
+            <p id="section-8.1-4.18.1">Transaction context information that remains stable across the call chain.<a href="#section-8.1-4.18.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
-<dt id="section-8.1-3.19">
+<dt id="section-8.1-4.19">
 <code>rctx</code> (<span class="bcp14">OPTIONAL</span>):</dt>
-          <dd style="margin-left: 1.5em" id="section-8.1-3.20">
-            <p id="section-8.1-3.20.1">Request context information.  Defined sub-claims are <code>req_ip</code> (originating IP address) and <code>authn</code> (authentication method used).<a href="#section-8.1-3.20.1" class="pilcrow">¶</a></p>
+          <dd style="margin-left: 1.5em" id="section-8.1-4.20">
+            <p id="section-8.1-4.20.1">Request context information.  Defined sub-claims are <code>req_ip</code> (originating IP address) and <code>authn</code> (authentication method used).<a href="#section-8.1-4.20.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -3147,7 +3169,7 @@ As a safe default, a client that intends to make a request on behalf of another 
         <h3 id="name-delegation-depth-limits">
 <a href="#section-13.4" class="section-number selfRef">13.4. </a><a href="#name-delegation-depth-limits" class="section-name selfRef">Delegation Depth Limits</a>
         </h3>
-<p id="section-13.4-1">Unbounded delegation chains increase attack surface and complicate policy evaluation.  This document specifies a maximum depth of five nested <code>act</code> objects (<a href="#delegation-chains" class="auto internal xref">Section 4.6</a>), sufficient for foreseeable multi-hop scenarios.  Implementations that encounter chains exceeding this limit <span class="bcp14">MUST</span> reject the token to prevent denial-of-service through chain parsing.<a href="#section-13.4-1" class="pilcrow">¶</a></p>
+<p id="section-13.4-1">Unbounded delegation chains increase attack surface and complicate policy evaluation.  This document specifies a default maximum of eight nested <code>act</code> objects (<a href="#delegation-chains" class="auto internal xref">Section 4.6</a>), which covers realistic multi-tier enterprise architectures while still bounding parsing complexity.  Implementations that encounter chains exceeding this limit <span class="bcp14">MUST</span> reject the token to prevent denial-of-service through chain parsing.<a href="#section-13.4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="subprofile-trust">
@@ -3192,7 +3214,7 @@ As a safe default, a client that intends to make a request on behalf of another 
         <h3 id="name-delegation-revocation">
 <a href="#section-13.8" class="section-number selfRef">13.8. </a><a href="#name-delegation-revocation" class="section-name selfRef">Delegation Revocation</a>
         </h3>
-<p id="section-13.8-1">Token revocation (<span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span>) applies to individual tokens but does not revoke an underlying delegation relationship or invalidate already-issued downstream tokens in a delegation chain.  When Alice revokes her delegation to an agent, access tokens already issued to downstream actors remain valid until their <code>exp</code> time.  Short token lifetimes are the primary mitigation.<a href="#section-13.8-1" class="pilcrow">¶</a></p>
+<p id="section-13.8-1">Token revocation (<span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span>) applies to individual tokens but does not revoke an underlying delegation relationship or invalidate already-issued downstream tokens in a delegation chain.  When Alice revokes her delegation to an agent, access tokens already issued to downstream actors remain valid until their <code>exp</code> time.  Short token lifetimes are the primary mitigation; see <span>[<a href="#I-D.ietf-oauth-security-topics" class="cite xref">I-D.ietf-oauth-security-topics</a>]</span> for general access token lifetime guidance.<a href="#section-13.8-1" class="pilcrow">¶</a></p>
 <p id="section-13.8-2">Authorization servers <span class="bcp14">SHOULD</span> maintain a delegation grant registry mapping (subject, actor) pairs to active delegation relationships. When a delegation grant is revoked, the AS <span class="bcp14">MUST</span> refuse to issue new tokens for that (subject, actor) pair.  Because refresh tokens <span class="bcp14">SHOULD NOT</span> be issued for cross-domain delegated assertion grants (see <a href="#assertion-grant-refresh-tokens" class="auto internal xref">Section 6.4</a>), revocation of the delegation relationship typically takes effect at the next assertion grant presentation.  If an AS has issued refresh tokens in a delegated context, it <span class="bcp14">MUST</span> proactively revoke them when the delegation relationship is revoked.<a href="#section-13.8-2" class="pilcrow">¶</a></p>
 <p id="section-13.8-3">Resource servers in security-sensitive deployments <span class="bcp14">SHOULD</span> use token introspection (<span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>, <a href="#token-introspection" class="auto internal xref">Section 7.4</a>) rather than local JWT validation so that revocation state is checked on each request. Implementations <span class="bcp14">MUST NOT</span> use delegation chain depth as a rationale for skipping revocation checks.<a href="#section-13.8-3" class="pilcrow">¶</a></p>
 <p id="section-13.8-4">Operators deploying AI agent systems <span class="bcp14">MUST</span> provide end-users with a mechanism to enumerate and revoke active delegation grants.<a href="#section-13.8-4" class="pilcrow">¶</a></p>
