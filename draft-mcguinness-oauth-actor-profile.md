@@ -45,6 +45,7 @@ normative:
   RFC8693:
   RFC9068:
   RFC9449:
+  RFC9493:
   I-D.ietf-oauth-transaction-tokens:
   I-D.mora-oauth-entity-profiles:
     title: "OAuth Entity Profiles"
@@ -325,9 +326,9 @@ act-object = {
 : REQUIRED.  The subject identifier of the actor, as defined in {{RFC8693, Section 4.1}}.  This value identifies the acting party.  It is a StringOrURI as defined in {{RFC7519}}.
 
 `iss`:
-: REQUIRED.  The issuer namespace that is authoritative for the actor identifier carried in `act.sub`.  This value scopes `act.sub` to an issuer namespace so that relying parties can distinguish otherwise-colliding subject identifiers across domains.  It identifies the authority for the actor identifier itself, not merely the token issuer that copied or conveyed the claim.  `act.iss` answers the question "who owns the namespace in which this `act.sub` value is meaningful?" rather than "who issued the enclosing token?"  For URI, client, workload, or other deployment-specific identifiers, the value of `act.iss` MUST identify the authority that the deployment treats as authoritative for resolving or validating that actor identifier.  See "Cross-Domain Delegation" in {{conventions}}.  The value is a StringOrURI as defined in {{RFC7519}}.
+: REQUIRED.  The authority for the actor identifier carried in `act.sub`.  `act.iss` plays the same role for `act.sub` that the JWT `iss` claim plays for the token `sub`: just as `iss` + `sub` form a globally unique principal identifier in a JWT (see {{RFC9493}}), `act.iss` + `act.sub` form a globally unique actor identifier within the delegation chain.  `act.iss` is therefore the party whose namespace makes `act.sub` meaningful — it is not the issuer of the enclosing token, the AS that consumed the subject token, or the AS that copied this claim into the current token.  Relying parties MUST use `act.iss` to scope `act.sub` and MUST NOT treat `act.iss` as conveying token-provenance information about the enclosing credential.  For URI, client, workload, or other deployment-specific identifiers, the value of `act.iss` MUST identify the authority that the deployment treats as authoritative for resolving or validating that actor identifier.  See "Cross-Domain Delegation" in {{conventions}}.  The value is a StringOrURI as defined in {{RFC7519}}.
 
-  For example, a TTS might issue a Transaction Token with top-level `iss` equal to `https://tts.travel-provider.example` while setting `act.iss` for the booking tool to `https://as.travel-provider.example`, if local policy treats that AS as authoritative for the booking tool identifier namespace.  In that case, the token issuer and the actor-identifier authority differ, and both values are valid in their respective roles.
+  For example, a TTS might issue a Transaction Token with top-level `iss` equal to `https://tts.travel-provider.example` while setting `act.iss` for the booking tool to `https://as.travel-provider.example`, if local policy treats that AS as authoritative for the booking tool identifier namespace.  In that case, the token issuer and the actor-identifier authority differ, and both values are valid in their respective roles.  The outer `iss` tells a recipient who issued the token; `act.iss` tells a recipient which authority makes `act.sub` resolvable.
 
 `sub_profile`:
 : RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in Section 4.2 of {{I-D.mora-oauth-entity-profiles}}.  Values used within `act` objects MUST be registered with the "Actor Profile" usage location in the OAuth Entity Profiles registry (Section 14.1 of {{I-D.mora-oauth-entity-profiles}}) or be privately defined collision-resistant values.  If the acting entity fits more than one profile, multiple values MAY be included as a space-delimited string (e.g., `"service ai_agent"`).  Policy evaluation rules for multi-value strings are defined in {{forward-compat-sub-profile}}.
