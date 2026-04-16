@@ -204,6 +204,9 @@ Delegation Relationship:
 Local Policy:
 : Deployment-specific rules, configurations, or decisions made by an individual AS, RS, or organization that are not specified by this document.  Local policy MAY include delegation approval rules, scope-reduction algorithms, actor-identifier namespace mappings, and entity-profile acceptance criteria.  When this document references local policy, the specific decision logic is intentionally not standardized.
 
+Semantic Consistency:
+: Two identifiers or claims are semantically consistent when they refer to the same logical entity under trusted local mapping rules applicable to the context in which they appear.  When this document states that an AS or RS MUST verify semantic consistency between two identifiers, the AS or RS MUST apply its configured mapping rules to determine whether the identifiers are known to refer to the same entity; absent any applicable mapping rule, the identifiers MUST be treated as distinct.
+
 Examples in this document are illustrative and focus on actor-profile-related claims and processing.  They may omit unrelated claims, parameters, or validation steps required by the underlying specifications for a complete deployment.
 
 
@@ -371,7 +374,7 @@ Delegation chains MUST be represented by nesting `act` objects as specified in {
 ~~~
 In this example the booking tool (outermost `act`) is the immediate actor for the travel assistant (nested `act`), which is acting for Alice (`sub`).  Each actor carries associated key history via `cnf.jkt`, and the chain carries prior-actor information to the extent that the current token issuer is trusted to have validated and faithfully propagated it.
 
-The default maximum delegation depth is eight levels of nested `act` objects.  Implementations MUST NOT represent delegation depth greater than eight levels.  Implementations that receive a token with more than eight levels of nested `act` MUST reject it.  This limit protects against denial-of-service through unbounded chain parsing and simplifies policy evaluation; most practical delegation scenarios require two to three hops.  When a request would result in a chain that exceeds the limit, the AS MUST reject the request with `invalid_request`; it MUST NOT silently truncate the chain.
+Delegation depth is defined as the number of `act` objects in the chain, counting from the outermost.  A token with a single `act` object and no nested `act` within it has depth 1.  Each additional level of nesting adds 1.  Depth is counted on the resulting chain after any new outermost `act` is added, not on the inbound token.  The default maximum delegation depth is eight levels of nested `act` objects.  Implementations MUST NOT represent delegation depth greater than eight levels.  Implementations that receive a token with more than eight levels of nested `act` MUST reject it.  This limit protects against denial-of-service through unbounded chain parsing and simplifies policy evaluation; most practical delegation scenarios require two to three hops.  When a request would result in a chain that exceeds the limit, the AS MUST reject the request with `invalid_request`; it MUST NOT silently truncate the chain.
 
 
 ## Sender Constraint and Key Binding {#sender-constraint}
@@ -535,11 +538,13 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
     *  **Propagation decision**: The AS MUST determine whether to propagate the inner chain into the issued token.  The AS SHOULD propagate it by preserving the nested structure, provided the total resulting chain depth does not exceed the limit in {{delegation-chains}}.  If the AS does not accept pre-chained assertions, it MUST reject the request.
 
-    *  **Validation of inner chain**: An AS that propagates an inner chain MUST independently validate each inner `act.sub` and `act.iss` before including that chain in the issued token.  If the AS cannot independently validate an inner chain, it MUST NOT propagate that chain; the AS MUST either reject the request with `invalid_grant` or, when local policy explicitly permits it, issue a token without the inner chain.  An AS MUST NOT silently carry forward an unvalidated inner chain; doing so introduces unverified actor claims into a token bearing its own signature.
+    *  **Validation of inner chain**: An AS that propagates an inner chain MUST independently validate each inner `act.sub` and `act.iss` before including that chain in the issued token, applying the same namespace-authority mechanisms as step 3 and the same delegation-authorization mechanisms as step 4 of this section to each inner `act` object.  If the AS cannot independently validate an inner chain, it MUST NOT propagate that chain; the AS MUST either reject the request with `invalid_grant` or, when local policy explicitly permits it, issue a token without the inner chain.  An AS MUST NOT silently carry forward an unvalidated inner chain; doing so introduces unverified actor claims into a token bearing its own signature.
 
     *  **Delegation relationships**: When the AS relies on the inner chain as a security-relevant delegation path (rather than informational audit context), it MUST also validate the delegation relationship at each hop in the nested chain according to local policy.
 
 6.  The AS MUST verify proof of possession for the token request according to the token-endpoint proof mechanism in use (DPoP per {{RFC9449}} or mutual TLS per {{RFC8705}}).  When the outermost `act` object in the inbound assertion carries a `cnf.jkt` claim and local AS policy uses that value to verify the expected key for the actor-as-current-presenter, the AS MUST check that the inbound DPoP proof (or mTLS certificate) is consistent with the key identified in `act.cnf.jkt`.  If that check fails, the AS MUST reject the request with `invalid_grant`.  Nested `act.cnf` values below the outermost level are actor-associated key history and MUST NOT drive proof-of-possession requirements for the current request; see {{actor-object-structure}}.
+
+    When DPoP is in use and the inbound assertion does not carry `act.cnf`, the AS MUST still bind the issued token's top-level `cnf.jkt` to the public key from the DPoP proof submitted at the token endpoint, per {{RFC9449}}.  When mTLS ({{RFC8705}}) is used, the same optional local-policy key-consistency check applies to the outermost `act.cnf`: if the outermost `act.cnf` carries a certificate hash member (e.g., `x5t#S256`), the AS MAY verify that the mTLS client certificate presented with the request matches that value.  Nested `act.cnf` values in inner chain objects MUST NOT drive mTLS certificate requirements for the current request.
 
 7.  If the assertion or authenticated request context identifies an OAuth client separately from `act.sub`, the AS MAY use that client identity as an additional authorization input.  The AS MUST NOT infer that the client is authorized to act on behalf of the subject solely because the client initiated the request.  When the client identity is intended to identify the same acting party as `act.sub`, the AS MUST validate semantic consistency between the two identifiers before issuing a token.
 
@@ -600,7 +605,7 @@ A JWT access token {{RFC9068}} MUST include an `act` claim conforming to the act
 
 When the AS determines the actor from authenticated client context, local delegation policy, or other deployment-specific inputs rather than from an explicit actor-carrying artifact, that is an operational allowance rather than an interoperable actor-proof mechanism defined by this document.  The interoperability defined here applies to the issued token and its processing, not to the upstream method by which the AS determined the actor.
 
-When none of these conditions hold, the AS MUST NOT include an `act` claim in the issued token.
+When none of these conditions hold, the AS MUST NOT include an `act` claim in the issued token.  When a client explicitly requests a delegated output — for example by supplying an `actor_token` parameter in a Token Exchange request — but none of the above conditions hold and no independent delegation basis can be established, the AS MUST reject the request with `invalid_grant`.
 
 Some deployments also carry an `azp` claim as an auxiliary client-identity signal, often as an OpenID Connect carry-over used by vendors in practice.  It is referenced here for completeness, not because this document, {{RFC9068}}, or {{RFC8693}} makes it a required delegation input.  When an issuer uses both `azp` and `act.sub` to represent the same acting party, it MUST ensure they are semantically consistent.  Client identity claims (`client_id`, `azp`) identify the OAuth client, not the delegation relationship; they MUST NOT be treated as a substitute for `act`.  For migration and reconciliation rules, see {{migration-implicit-explicit}} and {{client-identity-delegation}}.
 
@@ -654,6 +659,7 @@ When an AS issues a JWT access token following acceptance of a JWT assertion gra
     *  When no `scope` parameter is specified, the AS SHOULD restrict scope to the minimum necessary for the stated purpose.
     *  The AS SHOULD further restrict scope based on policy for the (subject, actor) pair or the actor's `sub_profile`.
     *  The granted scope MUST be reflected in the issued token's `scope` claim.
+    *  If applying all reduction steps yields an empty scope, the AS MUST reject the request with `invalid_scope`.
 
 7.  If the inbound credential carries `client_id`, `azp`, or both, the AS MAY preserve those values per the output token profile or local policy.  If preserved:
 
@@ -671,7 +677,7 @@ When the resource server accepts delegated tokens, it MUST:
 
 1.  Validate the token's signature, `iss`, `aud`, and temporal claims per {{RFC9068}}.
 
-2.  If the token carries a top-level `cnf.jkt`, validate the accompanying DPoP proof per {{RFC9449}}.  The DPoP proof MUST be signed by the key identified in `cnf.jkt`, which is the key of the immediate bearer—the outermost actor when delegation is present.
+2.  If the token carries a top-level `cnf.jkt`, validate the accompanying DPoP proof per {{RFC9449}}.  The DPoP proof MUST be signed by the key identified in `cnf.jkt`, which is the key of the immediate bearer—the outermost actor when delegation is present.  If the token carries `cnf.jkt` but no DPoP proof is present in the request, the RS MUST reject the request per {{RFC9449}} Section 7.  If a DPoP proof is present but the token does not carry `cnf.jkt`, the RS MUST treat the token as a bearer token; the RS MUST NOT infer a confirmation binding from the DPoP proof key.
 
 3.  Extract the `sub` and the outermost `act.sub` as the two principals relevant for authorization policy.
 
@@ -693,7 +699,7 @@ When the resource server accepts delegated tokens, it MUST:
 
 ## Token Introspection {#token-introspection}
 
-When token introspection ({{RFC7662}}) is used, an AS that issues delegated tokens MUST include the `act` claim and top-level `sub_profile` claim in introspection responses for active tokens that carry those claims.  The AS MUST NOT omit actor profile claims from introspection responses, as their omission would misrepresent the delegation status of the token to the introspecting RS.
+When token introspection ({{RFC7662}}) is used, an AS that issues delegated tokens MUST include the `act` claim and top-level `sub_profile` claim in introspection responses for active tokens that carry those claims.  The AS MUST NOT omit actor profile claims from introspection responses, as their omission would misrepresent the delegation status of the token to the introspecting RS.  When a delegated token carries a nested `act` chain (delegation depth greater than 1), the introspection response MUST include the complete nested `act` structure; partial omission of inner `act` objects is not permitted.  An introspecting RS MUST treat the introspection response as a faithful representation of the token's full delegation chain.
 
 Resource servers using introspection for delegated tokens MUST apply the same delegated-token policy to the introspection response claims that they would apply to equivalent locally validated tokens, including actor authorization when required by local policy.  An RS that relies on introspection rather than local JWT validation MUST treat a missing `act` claim in the introspection response as indicating a non-delegated token and MUST NOT assume delegation when the claim is absent.
 
@@ -743,7 +749,7 @@ A Transaction Token contains the following claims.  Claims marked REQUIRED are d
 
 ## Actor Claim in Transaction Tokens {#actor-claim-in-transaction-tokens}
 
-In a delegated Transaction Token, the `act` claim conforming to this profile MUST be included to represent the current acting party and any prior delegation steps, as specified in {{transaction-token-service-processing}}.  In non-delegated Transaction Tokens, `act` is OPTIONAL.
+A Transaction Token is delegated for purposes of this document when it was issued for a business transaction initiated by a subject (`sub`) that is distinct from the workload currently processing the request, and when that workload is exercising the subject's authorization rather than acting under its own independent grant.  In a delegated Transaction Token, the `act` claim conforming to this profile MUST be included to represent the current acting party and any prior delegation steps, as specified in {{transaction-token-service-processing}}.  In non-delegated Transaction Tokens (those issued for a workload acting in its own right), `act` is OPTIONAL.
 
 `req_wl` identifies the workload that requested the token from the TTS.  `act.sub` identifies the immediate acting party in the subject identifier namespace used by this profile.  The authoritative actor identifier for authorization decisions under this document is the outermost `act.sub`; `req_wl` is supporting workload context.
 
@@ -822,6 +828,22 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
 6.  The TTS MUST set `scope` per {{I-D.ietf-oauth-transaction-tokens}} and MAY include `tctx` or `rctx` as appropriate.
 
 These same preservation rules apply regardless of whether the inbound credential is a JWT assertion grant, a JWT access token, or a Transaction Token, provided that the TTS supports issuing a Transaction Token from that input.
+
+
+## Transaction Token Service Error Responses {#tts-error-responses}
+
+When a TTS rejects a request for reasons related to actor-profile processing, it MUST return an OAuth error response per {{RFC6749, Section 5.2}} and {{RFC8693, Section 2.2}}.  The following error codes apply:
+
+`invalid_request`:
+: Use when the inbound token's `act` claim structure is syntactically invalid, the delegation chain depth would exceed the limit in {{delegation-chains}}, or a required actor-profile claim (`act.sub` or `act.iss`) is absent from an `act` object in the inbound token.
+
+`invalid_grant`:
+: Use when the inbound token fails validation, the `sub` identity cannot be preserved per step 1 of {{transaction-token-service-processing}}, or the depth limit would be exceeded and the request cannot be fulfilled.
+
+`access_denied`:
+: Use when local TTS policy does not permit the requesting workload to act as an actor in the delegation chain for the identified subject, or when the `act.sub_profile` of an inbound actor is not accepted under local policy.
+
+The `error_description` field SHOULD be included and SHOULD describe which aspect of actor-profile processing failed, to the extent permitted by the TTS's security and privacy policy.
 
 Transaction Token support is advertised using the `transaction_token_supported` AS metadata parameter and the `transaction_token_required` Protected Resource Metadata parameter, both defined in {{I-D.ietf-oauth-transaction-tokens, Section 8}}.  This document does not redefine those parameters.  When an AS or TTS can issue Transaction Tokens as delegated outputs under this profile, it MUST list `urn:ietf:params:oauth:token-type:txn_token` in `actor_profile_token_types_supported`.
 
