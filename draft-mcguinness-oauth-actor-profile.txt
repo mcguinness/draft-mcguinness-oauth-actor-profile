@@ -313,13 +313,13 @@ Table of Contents
 
 1.3.  Relationship to Related Work
 
-   *OAuth Token Exchange ([RFC8693])*: This document profiles and
-   extends Token Exchange.  The act claim defined in [RFC8693] is the
-   foundation; this document adds the required iss sub-claim, the
-   RECOMMENDED sub_profile sub-claim, and the OPTIONAL cnf sub-claim,
-   and specifies how the resulting actor object must be validated and
-   propagated.  The Token Exchange processing rules in this document
-   supplement, and do not replace, the base requirements of [RFC8693].
+   *OAuth Token Exchange ([RFC8693])*: This document is a profile of the
+   act claim defined in [RFC8693]; it is not a reinterpretation of the
+   Token Exchange protocol itself and not a general delegation framework
+   spanning every token family.  The actor object structure and
+   processing rules are defined in Section 4, Section 6, Section 7, and
+   Section 8; they supplement, and do not replace, the base requirements
+   of [RFC8693].
 
    *Identity Chaining ([I-D.ietf-oauth-identity-chaining])*: Identity
    Chaining defines end-to-end flows for passing a subject identity
@@ -912,7 +912,10 @@ Table of Contents
    immediate presenter of that token.  When delegation is present, that
    immediate presenter is the outermost actor.  Authorization servers
    and resource servers validate current proof of possession against the
-   top-level cnf, not against nested act.cnf values.
+   top-level cnf, not against nested act.cnf values.  act.cnf values, at
+   any nesting depth, do not create an additional proof-of-possession
+   obligation at the resource server unless another specification or
+   local policy explicitly requires it.
 
    When DPoP [RFC9449] is used:
 
@@ -1186,26 +1189,29 @@ Table of Contents
        the issuer is authorized to speak for that actor.
 
    3.  The AS MUST verify that the act.iss value is authoritative for
-       the identifier namespace of act.sub.  An AS MUST establish this
-       using one or more of the following mechanisms:
+       the identifier namespace of act.sub.  Whether a given act.iss is
+       authoritative for the namespace containing act.sub is a local
+       trust decision; this document defines no generic algorithm for
+       proving namespace authority, as no such algorithm is universally
+       applicable across identifier ecosystems.  Examples of mechanisms
+       deployments use to make this determination include (but are not
+       limited to):
 
-       *  *URL namespace containment*: the act.sub identifier is within
-          the URL namespace of act.iss (e.g., act.sub uses the same
-          scheme, host, and port as act.iss).
+       *  URL namespace containment for URI-shaped identifiers (e.g.,
+          act.sub uses the same scheme, host, and port as act.iss).
 
-       *  *Federation metadata*: act.iss is listed as authoritative for
-          the identifier namespace containing act.sub in federation
-          metadata (e.g., [OpenID.Federation]) trusted by the AS.
+       *  Federation metadata that lists act.iss as authoritative for
+          the namespace containing act.sub (e.g., [OpenID.Federation]).
 
-       *  *Pre-registration*: the AS has a pre-registered entry
-          explicitly authorizing act.iss to assert identifiers of the
-          form used in act.sub.
+       *  Pre-registration entries that explicitly authorize act.iss to
+          assert identifiers of the form used in act.sub.
 
-       *  *Local policy*: an explicit AS policy rule authorizes act.iss
-          to assert the specific class of identifier used in act.sub.
+       *  Local policy rules that authorize act.iss to assert the
+          specific class of identifier used in act.sub.
 
-       If none of these mechanisms can be satisfied, the AS MUST reject
-       the request with invalid_grant.
+       If the AS cannot establish through its local trust determination
+       that act.iss is authoritative for the namespace containing
+       act.sub, the AS MUST reject the request with invalid_grant.
 
    4.  The AS MUST verify that the act.sub is authorized to act on
        behalf of the assertion's sub, using the AS's own policy (for
@@ -1362,9 +1368,16 @@ Table of Contents
    obtain tokens for a different actor.  In cross-domain deployments,
    the AS SHOULD additionally ensure that refresh-token use does not
    bypass the revocation and trust-boundary checks that would otherwise
-   occur when re-presenting the assertion grant.  The AS MUST revoke the
-   refresh token immediately if the delegation relationship between the
-   subject and actor is revoked.
+   occur when re-presenting the assertion grant.  When the delegation
+   relationship between the subject and actor is revoked, the AS MUST
+   ensure that the refresh token cannot be used to mint new delegated
+   tokens after revocation is known to the AS.  The AS SHOULD revoke the
+   refresh token immediately when it has authoritative knowledge of the
+   revocation.  When immediate revocation is not observable (for
+   example, in federated or cross-domain deployments where revocation
+   signals may not be delivered in real time), the AS SHOULD require re-
+   presentation of a current upstream assertion before issuing
+   additional delegated tokens.
 
 7.  JWT Access Tokens
 
@@ -2022,7 +2035,9 @@ Table of Contents
    band configuration.  These parameters provide partial capability
    negotiation only; they do not provide a complete machine-readable
    description of every supported grant path or method by which the AS
-   determines the acting party.
+   determines the acting party.  Capability negotiation is only a
+   compatibility preflight and does not guarantee successful token
+   issuance or resource access.
 
    The design principle is that *capability flags go in this spec's
    metadata; entity type enumeration goes in
