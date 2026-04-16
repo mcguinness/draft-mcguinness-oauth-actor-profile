@@ -103,7 +103,7 @@ Table of Contents
      4.2.  Scope of This Profile
      4.3.  Implementation Summary
      4.4.  Actor Object Structure
-     4.5.  Forward Compatibility for sub_profile Values
+     4.5.  Multi-Value sub_profile Policy Evaluation
      4.6.  Delegation Chains
      4.7.  Sender Constraint and Key Binding
      4.8.  Backwards Compatibility
@@ -695,36 +695,25 @@ Table of Contents
       history only and MUST NOT be used to drive proof-of-possession
       checks at any layer.
 
-4.5.  Forward Compatibility for sub_profile Values
+   The client_profile claim defined in [I-D.mora-oauth-entity-profiles]
+   classifies the OAuth client and MUST NOT appear within an act object.
+   Client classification belongs at the top level of the token.  An AS
+   or RS that encounters a client_profile member inside an act node MAY
+   reject the token or ignore the offending member; it MUST NOT treat it
+   as a valid actor classification.
 
-   Because the OAuth Entity Profiles registry is extensible,
-   implementations will encounter sub_profile values that were not
-   defined when the implementation was built.  The following rules
-   govern handling of unrecognized values:
+4.5.  Multi-Value sub_profile Policy Evaluation
 
-   *  An AS or RS that does not recognize a sub_profile value MUST NOT
-      reject the token or assertion solely on that basis.  The value
-      MUST be treated as an opaque string and preserved without
-      modification when the token is transformed or propagated.
+   Value preservation and propagation for unrecognized sub_profile
+   values are governed by [I-D.mora-oauth-entity-profiles].  An AS or RS
+   MUST NOT reject a token or assertion solely because a sub_profile
+   value is unrecognized; unrecognized values MUST NOT be used to infer
+   authorization semantics.
 
-   *  When local policy requires that the sub_profile of a subject or
-      actor belong to a specific set of known values, and the presented
-      value is absent or not in that set, the AS or RS MAY reject the
-      request.  The accepted set SHOULD be advertised via
-      entity_profiles_supported (for subject profiles) or
-      entity_profiles_supported.actor (for actor profiles) in AS or RS
-      metadata, so that clients can detect incompatibility before making
-      a request.
-
-   *  An AS that propagates actor-profile claims into an issued token
-      MUST propagate unrecognized sub_profile values unchanged.  It MUST
-      NOT substitute, drop, or normalize a value it does not recognize.
-
-   *  Implementations MUST NOT infer authorization semantics from an
-      unrecognized sub_profile value.  Policy evaluation for
-      unrecognized values is a local decision; the safe default is to
-      treat the entity as having no additional privileges conferred by
-      that profile value.
+   When local policy restricts the accepted set of sub_profile values
+   for an actor, that set SHOULD be advertised via
+   entity_profiles_supported.actor in AS or RS metadata so that clients
+   can detect incompatibility before making a request.
 
    When sub_profile contains multiple space-delimited values, the
    following rules apply to policy evaluation:
@@ -743,9 +732,8 @@ Table of Contents
    *  When local policy accepts only a specific set of sub_profile
       values (e.g., via entity_profiles_supported.actor), the entity is
       accepted if at least one of its values appears in the accepted
-      set.  Values in the string that are not in the accepted set MUST
-      be ignored for the purposes of that acceptance check; they do not
-      cause rejection on their own.
+      set.  Values not in the accepted set MUST be ignored for that
+      acceptance check; they do not cause rejection on their own.
 
 4.6.  Delegation Chains
 
@@ -2337,7 +2325,7 @@ Table of Contents
       independently validate each inner act.sub and act.iss before
       endorsing them in an issued token (see step 5 of Section 6.2).  An
       AS that blindly forwards an inner act chain without validating it
-      launders unverified actor claims into a token bearing its own
+      introduces unverified actor claims into a token bearing its own
       signature.
 
    *  Security policies that rely on inner actor identities for access
@@ -2588,9 +2576,10 @@ Table of Contents
               transaction-tokens-08>.
 
    [I-D.mora-oauth-entity-profiles]
-              Mora, S. C. and P. Dingle, "OAuth Entity Profiles", 17
-              October 2025, <https://www.ietf.org/archive/id/draft-mora-
-              oauth-entity-profiles-00.txt>.
+              Mora, S. C., Dingle, P., and K. McGuinness, "OAuth Entity
+              Profiles", 15 April 2026,
+              <https://www.ietf.org/archive/id/draft-mora-oauth-entity-
+              profiles-01.txt>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -3062,4 +3051,4 @@ Author's Address
 
    Karl McGuinness
    Independent
-   Email: me@karlmcguinness.com
+   Email: public@karlmcguinness.com

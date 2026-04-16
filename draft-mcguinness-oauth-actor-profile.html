@@ -1205,7 +1205,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="auto internal xref">4.4</a>.  <a href="#name-actor-object-structure" class="internal xref">Actor Object Structure</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.5">
-                <p id="section-toc.1-1.4.2.5.1"><a href="#section-4.5" class="auto internal xref">4.5</a>.  <a href="#name-forward-compatibility-for-s" class="internal xref">Forward Compatibility for <code>sub_profile</code> Values</a></p>
+                <p id="section-toc.1-1.4.2.5.1"><a href="#section-4.5" class="auto internal xref">4.5</a>.  <a href="#name-multi-value-sub_profile-pol" class="internal xref">Multi-Value <code>sub_profile</code> Policy Evaluation</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.6">
                 <p id="section-toc.1-1.4.2.6.1"><a href="#section-4.6" class="auto internal xref">4.6</a>.  <a href="#name-delegation-chains" class="internal xref">Delegation Chains</a></p>
@@ -1804,28 +1804,16 @@ act-object = {
 </dd>
         <dd class="break"></dd>
 </dl>
+<p id="section-4.4-4">The <code>client_profile</code> claim defined in <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> classifies the OAuth client and <span class="bcp14">MUST NOT</span> appear within an <code>act</code> object.  Client classification belongs at the top level of the token.  An AS or RS that encounters a <code>client_profile</code> member inside an <code>act</code> node <span class="bcp14">MAY</span> reject the token or ignore the offending member; it <span class="bcp14">MUST NOT</span> treat it as a valid actor classification.<a href="#section-4.4-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="forward-compat-sub-profile">
 <section id="section-4.5">
-        <h3 id="name-forward-compatibility-for-s">
-<a href="#section-4.5" class="section-number selfRef">4.5. </a><a href="#name-forward-compatibility-for-s" class="section-name selfRef">Forward Compatibility for <code>sub_profile</code> Values</a>
+        <h3 id="name-multi-value-sub_profile-pol">
+<a href="#section-4.5" class="section-number selfRef">4.5. </a><a href="#name-multi-value-sub_profile-pol" class="section-name selfRef">Multi-Value <code>sub_profile</code> Policy Evaluation</a>
         </h3>
-<p id="section-4.5-1">Because the OAuth Entity Profiles registry is extensible, implementations will encounter <code>sub_profile</code> values that were not defined when the implementation was built.  The following rules govern handling of unrecognized values:<a href="#section-4.5-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-4.5-2.1">
-            <p id="section-4.5-2.1.1">An AS or RS that does not recognize a <code>sub_profile</code> value <span class="bcp14">MUST NOT</span> reject the token or assertion solely on that basis.  The value <span class="bcp14">MUST</span> be treated as an opaque string and preserved without modification when the token is transformed or propagated.<a href="#section-4.5-2.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-4.5-2.2">
-            <p id="section-4.5-2.2.1">When local policy requires that the <code>sub_profile</code> of a subject or actor belong to a specific set of known values, and the presented value is absent or not in that set, the AS or RS <span class="bcp14">MAY</span> reject the request.  The accepted set <span class="bcp14">SHOULD</span> be advertised via <code>entity_profiles_supported</code> (for subject profiles) or <code>entity_profiles_supported.actor</code> (for actor profiles) in AS or RS metadata, so that clients can detect incompatibility before making a request.<a href="#section-4.5-2.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-4.5-2.3">
-            <p id="section-4.5-2.3.1">An AS that propagates actor-profile claims into an issued token <span class="bcp14">MUST</span> propagate unrecognized <code>sub_profile</code> values unchanged.  It <span class="bcp14">MUST NOT</span> substitute, drop, or normalize a value it does not recognize.<a href="#section-4.5-2.3.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-4.5-2.4">
-            <p id="section-4.5-2.4.1">Implementations <span class="bcp14">MUST NOT</span> infer authorization semantics from an unrecognized <code>sub_profile</code> value.  Policy evaluation for unrecognized values is a local decision; the safe default is to treat the entity as having no additional privileges conferred by that profile value.<a href="#section-4.5-2.4.1" class="pilcrow">¶</a></p>
-</li>
-        </ul>
+<p id="section-4.5-1">Value preservation and propagation for unrecognized <code>sub_profile</code> values are governed by <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>.  An AS or RS <span class="bcp14">MUST NOT</span> reject a token or assertion solely because a <code>sub_profile</code> value is unrecognized; unrecognized values <span class="bcp14">MUST NOT</span> be used to infer authorization semantics.<a href="#section-4.5-1" class="pilcrow">¶</a></p>
+<p id="section-4.5-2">When local policy restricts the accepted set of <code>sub_profile</code> values for an actor, that set <span class="bcp14">SHOULD</span> be advertised via <code>entity_profiles_supported.actor</code> in AS or RS metadata so that clients can detect incompatibility before making a request.<a href="#section-4.5-2" class="pilcrow">¶</a></p>
 <p id="section-4.5-3">When <code>sub_profile</code> contains multiple space-delimited values, the following rules apply to policy evaluation:<a href="#section-4.5-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-4.5-4.1">
@@ -1835,7 +1823,7 @@ act-object = {
             <p id="section-4.5-4.2.1">When multiple values match different policy rules with conflicting outcomes, the more restrictive outcome <span class="bcp14">MUST</span> apply.  Implementations <span class="bcp14">MUST NOT</span> grant the union of all matched rules' privileges; they <span class="bcp14">MUST</span> apply least privilege across the matched set.<a href="#section-4.5-4.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.5-4.3">
-            <p id="section-4.5-4.3.1">When local policy accepts only a specific set of <code>sub_profile</code> values (e.g., via <code>entity_profiles_supported.actor</code>), the entity is accepted if at least one of its values appears in the accepted set.  Values in the string that are not in the accepted set <span class="bcp14">MUST</span> be ignored for the purposes of that acceptance check; they do not cause rejection on their own.<a href="#section-4.5-4.3.1" class="pilcrow">¶</a></p>
+            <p id="section-4.5-4.3.1">When local policy accepts only a specific set of <code>sub_profile</code> values (e.g., via <code>entity_profiles_supported.actor</code>), the entity is accepted if at least one of its values appears in the accepted set.  Values not in the accepted set <span class="bcp14">MUST</span> be ignored for that acceptance check; they do not cause rejection on their own.<a href="#section-4.5-4.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -3114,7 +3102,7 @@ As a safe default, a client that intends to make a request on behalf of another 
             <p id="section-13.6-4.1.1">An RS that relies on an inner <code>act.iss</code> for audit or policy purposes <span class="bcp14">MUST</span> do so only when it trusts the outer token issuer to have validated and faithfully propagated that inner actor chain at issuance time.<a href="#section-13.6-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-13.6-4.2">
-            <p id="section-13.6-4.2.1">ASes that propagate inner actor chains during token exchange <span class="bcp14">MUST</span> independently validate each inner <code>act.sub</code> and <code>act.iss</code> before endorsing them in an issued token (see step 5 of <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 6.2</a>).  An AS that blindly forwards an inner <code>act</code> chain without validating it launders unverified actor claims into a token bearing its own signature.<a href="#section-13.6-4.2.1" class="pilcrow">¶</a></p>
+            <p id="section-13.6-4.2.1">ASes that propagate inner actor chains during token exchange <span class="bcp14">MUST</span> independently validate each inner <code>act.sub</code> and <code>act.iss</code> before endorsing them in an issued token (see step 5 of <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 6.2</a>).  An AS that blindly forwards an inner <code>act</code> chain without validating it introduces unverified actor claims into a token bearing its own signature.<a href="#section-13.6-4.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-13.6-4.3">
             <p id="section-13.6-4.3.1">Security policies that rely on inner actor identities for access control <span class="bcp14">SHOULD</span> be treated as lower-assurance than policies based on the outermost <code>act.sub</code>, which is validated by the immediate token issuer.<a href="#section-13.6-4.3.1" class="pilcrow">¶</a></p>
@@ -3320,7 +3308,7 @@ As a safe default, a client that intends to make a request on behalf of another 
 <dd class="break"></dd>
 <dt id="I-D.mora-oauth-entity-profiles">[I-D.mora-oauth-entity-profiles]</dt>
         <dd>
-<span class="refAuthor">Mora, S. C.</span> and <span class="refAuthor">P. Dingle</span>, <span class="refTitle">"OAuth Entity Profiles"</span>, <time datetime="2025-10-17" class="refDate">17 October 2025</time>, <span>&lt;<a href="https://www.ietf.org/archive/id/draft-mora-oauth-entity-profiles-00.txt">https://www.ietf.org/archive/id/draft-mora-oauth-entity-profiles-00.txt</a>&gt;</span>. </dd>
+<span class="refAuthor">Mora, S. C.</span>, <span class="refAuthor">Dingle, P.</span>, and <span class="refAuthor">K. McGuinness</span>, <span class="refTitle">"OAuth Entity Profiles"</span>, <time datetime="2026-04-15" class="refDate">15 April 2026</time>, <span>&lt;<a href="https://www.ietf.org/archive/id/draft-mora-oauth-entity-profiles-01.txt">https://www.ietf.org/archive/id/draft-mora-oauth-entity-profiles-01.txt</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC2119">[RFC2119]</dt>
         <dd>
@@ -3861,7 +3849,7 @@ Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
 <div dir="auto" class="left"><span class="org">Independent</span></div>
 <div class="email">
 <span>Email:</span>
-<a href="mailto:me@karlmcguinness.com" class="email">me@karlmcguinness.com</a>
+<a href="mailto:public@karlmcguinness.com" class="email">public@karlmcguinness.com</a>
 </div>
 </address>
 </section>
