@@ -45,6 +45,7 @@ normative:
   RFC9728:
   RFC8693:
   RFC9068:
+  RFC8707:
   RFC9449:
   RFC9493:
   I-D.ietf-oauth-transaction-tokens:
@@ -716,6 +717,8 @@ When an AS issues a JWT access token following acceptance of a JWT assertion gra
     *  If preserving them would create ambiguity about the delegated actor relationship, the AS SHOULD omit them.
 
     See {{client-identity-delegation}} for the normative rules governing client identity and actor identity.
+
+8.  Clients SHOULD use the `resource` parameter ({{RFC8707}}) when requesting delegated tokens to restrict the issued token's `aud` claim to the intended resource server.  The AS MUST honor resource-indicator constraints in delegated token requests per {{RFC8693, Section 4.2}}.  Audience-scoped delegation limits the blast radius of a compromised token by preventing its presentation to resource servers other than the one it was issued for.  This profile does not define a new mechanism for audience restriction; it applies the existing `resource` parameter and `aud` claim semantics to the delegated-token context.
 
 
 ## Resource Server Processing {#jwt-access-token-rs-processing}
