@@ -445,7 +445,7 @@ Requirements for top-level claims vary by token type:
 |-------|--------------------|--------------------|-------------------|
 | `act` | REQUIRED when delegation is asserted | REQUIRED when delegated | REQUIRED when delegated |
 | `sub_profile` | RECOMMENDED | RECOMMENDED | propagated from inbound subject token |
-| `cnf.jkt` | OPTIONAL; set by issuing AS when DPoP binding is applied | REQUIRED when DPoP is used ({{sender-constraint}}) | REQUIRED; set by TTS to bind the new presenter |
+| `cnf.jkt` | REQUIRED when DPoP is used; otherwise OPTIONAL | REQUIRED when DPoP is used ({{sender-constraint}}) | REQUIRED; set by TTS to bind the new presenter |
 | `req_wl` | not applicable | not applicable | REQUIRED |
 
 The `sub_profile` claim MAY also appear as a top-level JWT claim (outside any `act` object) to classify the entity type of the token's `sub`.  Its value MUST be a space-delimited entity profile string per {{I-D.mora-oauth-entity-profiles}} and applies exclusively to `sub`; it does not affect `sub_profile` values within `act` objects.  Issuers SHOULD include a top-level `sub_profile` when they can authoritatively classify the subject entity type.
@@ -472,6 +472,9 @@ The following claims are defined for a JWT assertion grant that carries actor-pr
 
 `act` (REQUIRED when delegation is asserted):
 : The actor object identifying the entity exercising the subject's delegated rights.  MUST conform to the actor object structure defined in {{actor-profile}}.  MUST include `act.sub` and `act.iss`.
+
+`cnf.jkt` (REQUIRED when DPoP is used; otherwise OPTIONAL):
+: When the JWT assertion grant is sender-constrained with DPoP, the assertion MUST carry a top-level `cnf.jkt` identifying the DPoP key to which the assertion is bound.  When DPoP is not used, top-level `cnf` is OPTIONAL for JWT assertion grants unless required by another profile or local policy.
 
 When the assertion or request context also identifies an OAuth client via `client_id`, `azp`, or an authenticated client credential, that client identity MUST NOT be treated as a substitute for `act.sub`; see step 7 in {{jwt-assertion-grants-processing}}.
 
@@ -574,7 +577,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
     *  **No implicit authentication**: The AS MUST NOT treat any preserved inner actor as independently authenticated merely because it appears in the re-issued token, and preserving such an entry does not by itself endorse it for downstream access-control use.
 
-6.  The AS MUST verify proof of possession per the token-endpoint mechanism in use (DPoP per {{RFC9449}} or mTLS per {{RFC8705}}).  When DPoP is used, the AS MUST verify the DPoP proof against the top-level `cnf.jkt` of the inbound assertion grant, not the presenter's locally registered key.  In cross-domain flows the top-level `cnf.jkt` of the assertion grant was set by the upstream issuer; the receiving AS MUST treat that value as the expected key for the DPoP proof and MUST reject with `invalid_grant` if the proof does not match.  When the outermost `act.cnf` carries a key reference and local AS policy enables the optional sender-constraint check ({{actor-object-structure}}), the AS MUST additionally verify consistency with that key.  Inner `act.cnf` values MUST NOT drive proof-of-possession requirements for the current request.
+6.  The AS MUST verify proof of possession per the token-endpoint mechanism in use (DPoP per {{RFC9449}} or mTLS per {{RFC8705}}).  When DPoP is used, the inbound assertion grant MUST carry a top-level `cnf.jkt`, and the AS MUST verify the DPoP proof against that value rather than against the presenter's locally registered key.  In cross-domain flows the top-level `cnf.jkt` of the assertion grant was set by the upstream issuer; the receiving AS MUST treat that value as the expected key for the DPoP proof and MUST reject with `invalid_request` if it is absent or `invalid_grant` if the proof does not match.  When the outermost `act.cnf` carries a key reference and local AS policy enables the optional sender-constraint check ({{actor-object-structure}}), the AS MUST additionally verify consistency with that key.  Inner `act.cnf` values MUST NOT drive proof-of-possession requirements for the current request.
 
     > Note: The absence of `act.cnf` does not affect the DPoP binding obligation; {{RFC9449}} requires the AS to bind the issued token's top-level `cnf.jkt` to the DPoP proof key regardless.
 
@@ -590,7 +593,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 When an AS rejects a JWT assertion grant or Token Exchange request for reasons related to actor-profile validation, it MUST return an OAuth error response per {{RFC6749, Section 5.2}} and {{RFC8693, Section 2.2}}. The following error codes apply:
 
 `invalid_request`:
-: Use when the `act` claim structure is syntactically invalid, the delegation chain depth exceeds the limit in {{delegation-chains}}, or a required claim (`act.sub` or `act.iss`) is absent.
+: Use when the `act` claim structure is syntactically invalid, the delegation chain depth exceeds the limit in {{delegation-chains}}, a required claim (`act.sub` or `act.iss`) is absent, or a DPoP-bound JWT assertion grant omits the required top-level `cnf.jkt`.
 
 `invalid_grant`:
 : Use when the assertion or subject token cannot be validated, the issuer is not trusted to assert the delegation relationship, or the request's required proof-of-possession check cannot be confirmed.
@@ -599,7 +602,7 @@ When an AS rejects a JWT assertion grant or Token Exchange request for reasons r
 : Use when AS policy explicitly prohibits the identified actor (`act.sub`) from acting on behalf of the subject (`sub`) for the requested resource or scope, and the prohibition is a definitive policy decision (not a transient or recoverable failure).
 
 `actor_unauthorized`:
-: Use when the (`sub`, `act.sub`) pair is not authorized for the requested operation, but the failure is not a definitive prohibition.  Examples include: the actor's `sub_profile` is not in the accepted set, the delegation relationship could not be confirmed, or the actor lacks the required delegation grant for the requested scope.  This code allows clients and agent orchestrators to distinguish actor policy failures from credential or structural failures.  Unlike `access_denied`, `actor_unauthorized` implies that the failure may be remediable, for example by acquiring a token with a different actor identity or a broader delegation grant.
+: Use when the request fails a remediable actor-policy check for the (`sub`, `act.sub`) pair.  Examples include: the actor's `sub_profile` is not in the accepted set, the delegation relationship required by local policy is absent or could not be confirmed from current inputs, or the actor lacks the delegation grant required for the requested scope.  This code allows clients and agent orchestrators to distinguish actor policy mismatches from credential or structural failures.  `access_denied` remains for explicit deny policy rather than input-contingent actor-policy mismatch.
 
 The `error_description` field SHOULD be included and SHOULD describe which aspect of actor-profile validation failed, to the extent permitted by the AS's security and privacy policy.
 
@@ -761,7 +764,7 @@ When the resource server accepts delegated tokens, it MUST:
 
 When token introspection ({{RFC7662}}) is used, an AS that issues delegated tokens MUST include the `act` claim and top-level `sub_profile` claim in introspection responses for active tokens that carry those claims.  The AS MUST NOT omit actor profile claims from introspection responses, as their omission would misrepresent the delegation status of the token to the introspecting RS.  When a delegated token carries a nested `act` chain (delegation depth greater than 1), the AS MUST include the complete nested `act` structure in the introspection response.  If local privacy policy requires omitting specific inner chain entries, the AS MUST reject the introspection request rather than partially include the chain; partial inclusion would allow an introspecting RS to unknowingly treat an incomplete chain as complete.  An introspecting RS MUST treat the introspection response as a faithful representation of the token's full delegation chain.
 
-Opaque access tokens are not conformant to this profile.  When an AS issues a delegated opaque access token and supports introspection, it MAY expose actor-profile information through introspection.  When it does so, the introspection response MUST include the following claims for active delegated tokens:
+Opaque access tokens are not conformant to this profile.  When an AS issues a delegated opaque access token and supports introspection, it MAY expose equivalent actor-profile information through introspection.  When it does so, the following claims define the minimum equivalent introspection semantics for active delegated tokens; providing them does not make the opaque token itself conformant to this profile:
 
 *  `active`: REQUIRED.  MUST be `true` for an active token.
 *  `sub`: REQUIRED.  The subject of the delegated token, as defined in {{RFC7662}}.
@@ -920,7 +923,7 @@ When a TTS rejects a request for reasons related to actor-profile processing, it
 : Use when local TTS policy explicitly prohibits the requesting workload from acting in the delegation chain for the identified subject, and the prohibition is a definitive policy decision.
 
 `actor_unauthorized`:
-: Use when the (`sub`, `act.sub`) pair is not authorized for the requested transaction, but the failure is not a definitive prohibition.  Examples include: the `act.sub_profile` of an inbound actor is not in the accepted set for this TTS, or the delegation relationship could not be confirmed under local policy.  As with the equivalent AS error code ({{assertion-error-responses}}), this code signals a potentially remediable actor policy failure rather than a structural or credential error.
+: Use when the request fails a remediable actor-policy check for the (`sub`, `act.sub`) pair in the requested transaction.  Examples include: the `act.sub_profile` of an inbound actor is not in the accepted set for this TTS, or the delegation relationship required by local policy is absent or could not be confirmed from current inputs.  As with the equivalent AS error code ({{assertion-error-responses}}), this code signals an input-contingent actor-policy mismatch rather than a structural, credential, or explicit deny decision.
 
 The `error_description` field SHOULD be included and SHOULD describe which aspect of actor-profile processing failed, to the extent permitted by the TTS's security and privacy policy.
 
@@ -1049,7 +1052,7 @@ Example AS metadata fragment:
 Two new parameters are defined for use in Protected Resource Metadata ({{RFC9728}}):
 
 `actor_profile_required`:
-: OPTIONAL.  A boolean.  When `true`, the RS indicates that delegated requests for this resource are expected to use tokens carrying an `act` claim conforming to the actor profile defined in this document.  Clients SHOULD treat this as a strong indication that delegated access will require a conforming `act` claim.  An RS that enforces this policy for a given request path MUST reject tokens that omit `act` or that carry `act` claims not conforming to this profile.  When `false` or absent, actor-profile conformance is not advertised by metadata.  This parameter is resource-scoped, not path-scoped; {{RFC9728}} does not define sub-resource granularity for Protected Resource Metadata.  An RS that requires actor-profile conformance only on specific request paths (e.g., `/payments` but not `/profile`) MUST apply enforcement at the request layer and SHOULD set this parameter to `true` if any path requires it, so clients treat the resource as actor-profile-required overall.
+: OPTIONAL.  A boolean.  When `true`, the RS indicates that delegated requests for this resource are expected to use tokens carrying an `act` claim conforming to the actor profile defined in this document.  Clients SHOULD treat this as a strong indication that delegated access will require a conforming `act` claim.  An RS that enforces this policy for a given request path MUST reject tokens that omit `act` or that carry `act` claims not conforming to this profile.  When `false` or absent, actor-profile conformance is not advertised by metadata.  This parameter is resource-scoped, not path-scoped; {{RFC9728}} does not define sub-resource granularity for Protected Resource Metadata.  An RS that requires actor-profile conformance only on specific request paths (e.g., `/payments` but not `/profile`) MUST apply enforcement at the request layer.  Such an RS MAY set this parameter to `true` as a conservative resource-wide signal, but clients and deployment documentation SHOULD recognize that path-specific enforcement can be stricter than resource metadata alone expresses.
 
 `actor_authorization_required`:
 : OPTIONAL.  A boolean.  When `true`, the RS indicates that it expects evaluation of the actor as an authorization input in addition to the subject, as described in {{dual-principal-authorization}}.  Clients SHOULD treat this as meaning that a conforming `act`-carrying token is likely required for delegated access.  An RS that enforces this policy for a given request path MUST evaluate the (`sub`, outermost `act.sub`) relationship for that path and therefore also requires a conforming `act` claim there.  When `false` or absent, the RS makes no metadata declaration to clients about whether actor authorization is applied.
