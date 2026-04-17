@@ -393,7 +393,7 @@ Table of Contents
       defined in [RFC6749].
 
    Outermost Actor:  The act object at the top level of the delegation
-      chain — the one not nested inside any other act object.  When a
+      chain (the one not nested inside any other act object).  When a
       delegation chain of depth greater than one is present, the
       outermost actor identifies the immediate bearer of the token.
 
@@ -488,8 +488,8 @@ Table of Contents
    Actor context does not survive token transformation.  When a token is
       exchanged or minted by an intermediary AS, client context from the
       original request is not carried forward.  Each downstream consumer
-      sees only what the issuing AS encoded — in the absence of a common
-      actor profile, typically just the subject and the issuer.
+      sees only what the issuing AS encoded, typically just the subject
+      and the issuer in the absence of a common actor profile.
       Downstream services cannot apply actor-aware authorization policy,
       produce accurate audit records, or perform meaningful security
       analysis across a delegation chain.
@@ -856,7 +856,7 @@ Table of Contents
    When DPoP [RFC9449] is used:
 
    *  The top-level cnf.jkt of the token MUST identify the key of the
-      immediate presenter—the actor identified by the outermost act
+      immediate presenter, the actor identified by the outermost act
       claim.
 
    *  The cnf.jkt within each act object identifies keying material
@@ -1379,16 +1379,16 @@ Table of Contents
    *  The AS has independent knowledge, established by a pre-registered
       delegation grant, an explicit consent record, or a policy rule
       that explicitly authorizes the identified acting party (or a class
-      of acting parties) to exercise the subject's rights — that the
-      subject's rights are being exercised by a distinct, identifiable
-      acting party whose identifier and entity type the AS can assert
-      authoritatively.  A class-level rule such as "any agent in
-      namespace X may act for users in namespace Y" satisfies this
+      of acting parties) to exercise the subject's rights, establishing
+      that the subject's rights are being exercised by a distinct,
+      identifiable acting party whose identifier and entity type the AS
+      can assert authoritatively.  A class-level rule such as "any agent
+      in namespace X may act for users in namespace Y" satisfies this
       condition for a specific (subject, actor) pair that falls within
       the rule's scope.  A qualifying policy rule must be an explicit
-      delegation authorization record; a client registration alone —
-      without an accompanying delegation grant or delegation policy rule
-      that names or covers the subject — does not satisfy this
+      delegation authorization record; a client registration alone
+      (without an accompanying delegation grant or delegation policy
+      rule that names or covers the subject) does not satisfy this
       condition.  Claims about actor identity derived solely from client
       authentication, without any such delegation record or policy rule,
       do not satisfy this condition.
@@ -1545,8 +1545,8 @@ Table of Contents
        confirmation binding from the DPoP proof key.
 
           Note: When delegation is present, the key identified in
-          cnf.jkt is the key of the outermost actor — the immediate
-          bearer — since the outermost actor is the current presenter.
+          cnf.jkt is the key of the outermost actor (the immediate
+          bearer), since the outermost actor is the current presenter.
 
    3.  Extract the sub and the outermost act.sub as the two principals
        relevant for authorization policy.
@@ -2404,9 +2404,9 @@ Table of Contents
    regardless of chain depth.
 
    The act.iss values in inner act objects are assertion-based prior-
-   actor context — set by whoever constructed those objects at an
-   earlier hop, not by the issuer of the current token.  Implementations
-   MUST NOT treat an inner act.iss as independently authenticated merely
+   actor context set by whoever constructed those objects at an earlier
+   hop, not by the issuer of the current token.  Implementations MUST
+   NOT treat an inner act.iss as independently authenticated merely
    because it appears in the token; the trust basis is the outer token
    issuer's endorsement.  Consequently: an RS that relies on inner
    act.iss for audit or policy MUST do so only when it trusts the outer
@@ -2548,7 +2548,7 @@ Table of Contents
    act claim is present is susceptible to a confused deputy attack: a
    malicious actor exploits a subject's pre-existing permissions without
    the subject's ongoing consent simply by presenting a token that names
-   the subject in sub.  The mitigation is actor authorization —
+   the subject in sub.  The mitigation is actor authorization:
    evaluating both sub and act.sub before granting access.  Resource
    servers SHOULD implement actor authorization for delegated tokens
    under this document.
@@ -2779,8 +2779,8 @@ Table of Contents
    This document makes no independent requests to the "OAuth Entity
    Profiles" registry.  It normatively depends on the "Actor Profile"
    usage location, the actor array in entity_profiles_supported, and the
-   registration of user, service, and ai_agent with that usage location
-   — all of which are defined and requested by
+   registration of user, service, and ai_agent with that usage location,
+   all of which are defined and requested by
    [I-D.mora-oauth-entity-profiles].  The IANA actions for those entries
    are contingent on the progression of
    [I-D.mora-oauth-entity-profiles].
