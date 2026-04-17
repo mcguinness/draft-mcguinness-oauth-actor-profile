@@ -1629,6 +1629,17 @@ Table of Contents
        See Section 12.2 for the normative rules governing client
        identity and actor identity.
 
+   8.  Clients SHOULD use the resource parameter ([RFC8707]) when
+       requesting delegated tokens to restrict the issued token's aud
+       claim to the intended resource server.  The AS MUST honor
+       resource-indicator constraints in delegated token requests per
+       [RFC8693], Section 4.2.  Audience-scoped delegation limits the
+       blast radius of a compromised token by preventing its
+       presentation to resource servers other than the one it was issued
+       for.  This profile does not define a new mechanism for audience
+       restriction; it applies the existing resource parameter and aud
+       claim semantics to the delegated-token context.
+
 6.3.  Resource Server Processing
 
    Upon receiving a JWT access token that contains an act claim, a
@@ -3089,6 +3100,10 @@ Table of Contents
    [RFC9068]  Bertocci, V., "JSON Web Token (JWT) Profile for OAuth 2.0
               Access Tokens", RFC 9068, DOI 10.17487/RFC9068, October
               2021, <https://www.rfc-editor.org/info/rfc9068>.
+
+   [RFC8707]  Campbell, B., Bradley, J., and H. Tschofenig, "Resource
+              Indicators for OAuth 2.0", RFC 8707, DOI 10.17487/RFC8707,
+              February 2020, <https://www.rfc-editor.org/info/rfc8707>.
 
    [RFC9449]  Fett, D., Campbell, B., Bradley, J., Lodderstedt, T.,
               Jones, M., and D. Waite, "OAuth 2.0 Demonstrating Proof of

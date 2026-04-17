@@ -2517,6 +2517,9 @@ Deployments using non-HTTPS identifier schemes (e.g., URNs for workload identiti
 <p id="section-6.2-2.7.3">
 See <a href="#client-identity-delegation" class="auto internal xref">Section 12.2</a> for the normative rules governing client identity and actor identity.<a href="#section-6.2-2.7.3" class="pilcrow">¶</a></p>
 </li>
+          <li id="section-6.2-2.8">
+            <p id="section-6.2-2.8.1">Clients <span class="bcp14">SHOULD</span> use the <code>resource</code> parameter (<span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span>) when requesting delegated tokens to restrict the issued token's <code>aud</code> claim to the intended resource server.  The AS <span class="bcp14">MUST</span> honor resource-indicator constraints in delegated token requests per <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-4.2" class="relref">Section 4.2</a></span>.  Audience-scoped delegation limits the blast radius of a compromised token by preventing its presentation to resource servers other than the one it was issued for.  This profile does not define a new mechanism for audience restriction; it applies the existing <code>resource</code> parameter and <code>aud</code> claim semantics to the delegated-token context.<a href="#section-6.2-2.8.1" class="pilcrow">¶</a></p>
+</li>
         </ol>
 </section>
 </div>
@@ -3671,6 +3674,10 @@ As a safe default, a client that intends to make a request on behalf of another 
 <dt id="RFC9068">[RFC9068]</dt>
         <dd>
 <span class="refAuthor">Bertocci, V.</span>, <span class="refTitle">"JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens"</span>, <span class="seriesInfo">RFC 9068</span>, <span class="seriesInfo">DOI 10.17487/RFC9068</span>, <time datetime="2021-10" class="refDate">October 2021</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9068">https://www.rfc-editor.org/info/rfc9068</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8707">[RFC8707]</dt>
+        <dd>
+<span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"Resource Indicators for OAuth 2.0"</span>, <span class="seriesInfo">RFC 8707</span>, <span class="seriesInfo">DOI 10.17487/RFC8707</span>, <time datetime="2020-02" class="refDate">February 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8707">https://www.rfc-editor.org/info/rfc8707</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9449">[RFC9449]</dt>
         <dd>
