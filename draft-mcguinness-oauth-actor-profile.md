@@ -198,7 +198,7 @@ Resource Server (RS):
 : The server hosting protected resources as defined in {{RFC6749}}.
 
 Outermost Actor:
-: The `act` object at the top level of the delegation chain — the one not nested inside any other `act` object.  When a delegation chain of depth greater than one is present, the outermost actor identifies the immediate bearer of the token.
+: The `act` object at the top level of the delegation chain (the one not nested inside any other `act` object).  When a delegation chain of depth greater than one is present, the outermost actor identifies the immediate bearer of the token.
 
 Delegation Relationship:
 : A trust relationship indicating that a subject has authorized a specific actor to exercise the subject's rights within defined scope limits.  A delegation relationship may be expressed by a pre-registered delegation grant, an explicit consent record, a policy rule naming both parties, or an inbound assertion grant that the receiving AS has validated.
@@ -231,7 +231,7 @@ A single `client_id` may front multiple distinct actors.
 : An agent orchestration platform, a plugin host, or a multi-tenant automation service may operate as one registered client while executing requests on behalf of many different agents, tools, or workloads.  A resource server receiving two requests that share the same `client_id` cannot determine whether they originate from the same logical actor or from entirely different principals.  Authorization policy, rate limiting, audit logging, and anomaly detection all operate on the wrong granularity when the acting entity is not explicitly represented in the token.
 
 Actor context does not survive token transformation.
-: When a token is exchanged or minted by an intermediary AS, client context from the original request is not carried forward.  Each downstream consumer sees only what the issuing AS encoded — in the absence of a common actor profile, typically just the subject and the issuer.  Downstream services cannot apply actor-aware authorization policy, produce accurate audit records, or perform meaningful security analysis across a delegation chain.
+: When a token is exchanged or minted by an intermediary AS, client context from the original request is not carried forward.  Each downstream consumer sees only what the issuing AS encoded, typically just the subject and the issuer in the absence of a common actor profile.  Downstream services cannot apply actor-aware authorization policy, produce accurate audit records, or perform meaningful security analysis across a delegation chain.
 
 This specification addresses these limitations through explicit actor modeling: `client_id` identifies the OAuth client registration (unchanged), `sub` identifies the authorizing principal, and `act.sub` identifies the actor exercising that authorization.  These three identities can refer to different parties and must not be conflated.  Authenticated client identity remains a valid authorization input, but it is auxiliary to, not a substitute for, explicit actor identity.  The normative rules are in {{client-identity-delegation}}; reconciliation and migration rules are in {{migration-implicit-explicit}}; the requirement that actor context survive token transformation is in {{jwt-access-token-propagation}}.
 
@@ -373,7 +373,7 @@ When sender-constrained tokens are used with a delegated token, the top-level `c
 
 When DPoP {{RFC9449}} is used:
 
-*  The top-level `cnf.jkt` of the token MUST identify the key of the immediate presenter—the actor identified by the outermost `act` claim.
+*  The top-level `cnf.jkt` of the token MUST identify the key of the immediate presenter, the actor identified by the outermost `act` claim.
 *  The `cnf.jkt` within each `act` object identifies keying material associated with that specific actor in the delegation chain.
 
 This separation ensures that the resource server can verify the current presenter while carrying forward actor-associated key history for prior actors in the delegation chain within the trust model of the current issuer.  In single-hop cases, the top-level `cnf` and outermost `act.cnf` can carry the same value because the current presenter and current actor are the same party.  In multi-hop cases, the top-level `cnf` identifies the current presenter for the current token, while nested `act.cnf` values can preserve actor-key context for earlier hops.
@@ -609,7 +609,7 @@ A JWT access token {{RFC9068}} MUST include an `act` claim conforming to the act
 
 *  The token was issued following acceptance of a JWT assertion grant that itself contained an `act` claim per {{jwt-assertion-grants}};
 *  The token was issued via Token Exchange ({{RFC8693}}) and the request carried explicit actor information, such as an `actor_token` or a `subject_token` that already carried an `act` chain; or
-*  The AS has independent knowledge, established by a pre-registered delegation grant, an explicit consent record, or a policy rule that explicitly authorizes the identified acting party (or a class of acting parties) to exercise the subject's rights — that the subject's rights are being exercised by a distinct, identifiable acting party whose identifier and entity type the AS can assert authoritatively.  A class-level rule such as "any agent in namespace X may act for users in namespace Y" satisfies this condition for a specific (subject, actor) pair that falls within the rule's scope.  A qualifying policy rule must be an explicit delegation authorization record; a client registration alone — without an accompanying delegation grant or delegation policy rule that names or covers the subject — does not satisfy this condition.  Claims about actor identity derived solely from client authentication, without any such delegation record or policy rule, do not satisfy this condition.
+*  The AS has independent knowledge, established by a pre-registered delegation grant, an explicit consent record, or a policy rule that explicitly authorizes the identified acting party (or a class of acting parties) to exercise the subject's rights, establishing that the subject's rights are being exercised by a distinct, identifiable acting party whose identifier and entity type the AS can assert authoritatively.  A class-level rule such as "any agent in namespace X may act for users in namespace Y" satisfies this condition for a specific (subject, actor) pair that falls within the rule's scope.  A qualifying policy rule must be an explicit delegation authorization record; a client registration alone (without an accompanying delegation grant or delegation policy rule that names or covers the subject) does not satisfy this condition.  Claims about actor identity derived solely from client authentication, without any such delegation record or policy rule, do not satisfy this condition.
 
 When the AS determines the actor from authenticated client context, local delegation policy, or other deployment-specific inputs rather than from an explicit actor-carrying artifact, that is an operational allowance rather than an interoperable actor-proof mechanism defined by this document.  The interoperability defined here applies to the issued token and its processing, not to the upstream method by which the AS determined the actor.
 
@@ -680,7 +680,7 @@ When the resource server accepts delegated tokens, it MUST:
 
 2.  If the token carries a top-level `cnf.jkt`, validate the accompanying DPoP proof per {{RFC9449, Section 7}}.  If a DPoP proof is present but the token does not carry `cnf.jkt`, the RS MUST treat the token as a bearer token; the RS MUST NOT infer a confirmation binding from the DPoP proof key.
 
-    > Note: When delegation is present, the key identified in `cnf.jkt` is the key of the outermost actor — the immediate bearer — since the outermost actor is the current presenter.
+    > Note: When delegation is present, the key identified in `cnf.jkt` is the key of the outermost actor (the immediate bearer), since the outermost actor is the current presenter.
 
 3.  Extract the `sub` and the outermost `act.sub` as the two principals relevant for authorization policy.
 
@@ -1099,7 +1099,7 @@ An attacker who can inject or forge `act` claims can impersonate an arbitrary ac
 
 Because inner `act` objects are set by upstream ASes and not re-signed at each hop, the integrity of the entire delegation chain rests on the outermost token's signature.  Implementations SHOULD use short token lifetimes and MUST reject tokens whose `exp` has passed, regardless of chain depth.
 
-The `act.iss` values in inner `act` objects are assertion-based prior-actor context — set by whoever constructed those objects at an earlier hop, not by the issuer of the current token.  Implementations MUST NOT treat an inner `act.iss` as independently authenticated merely because it appears in the token; the trust basis is the outer token issuer's endorsement.  Consequently: an RS that relies on inner `act.iss` for audit or policy MUST do so only when it trusts the outer issuer to have validated and faithfully propagated that chain; ASes that propagate inner chains MUST validate inner `act.sub` and `act.iss` entries only when those entries are used as inputs to issuance decisions per {{jwt-assertion-grants-processing}} step 5; and security policies relying on inner actor identities for access control SHOULD be treated as lower-assurance and deployment-specific relative to policies based on the outermost `act.sub`.
+The `act.iss` values in inner `act` objects are assertion-based prior-actor context set by whoever constructed those objects at an earlier hop, not by the issuer of the current token.  Implementations MUST NOT treat an inner `act.iss` as independently authenticated merely because it appears in the token; the trust basis is the outer token issuer's endorsement.  Consequently: an RS that relies on inner `act.iss` for audit or policy MUST do so only when it trusts the outer issuer to have validated and faithfully propagated that chain; ASes that propagate inner chains MUST validate inner `act.sub` and `act.iss` entries only when those entries are used as inputs to issuance decisions per {{jwt-assertion-grants-processing}} step 5; and security policies relying on inner actor identities for access control SHOULD be treated as lower-assurance and deployment-specific relative to policies based on the outermost `act.sub`.
 
 When a token crosses organizational boundaries, the receiving AS or RS MUST apply appropriate trust evaluation.  ASes performing token exchange MUST evaluate cross-domain delegation grants explicitly and SHOULD NOT grant cross-domain actors the same rights as same-domain actors absent an explicit trust decision that makes them equivalent.
 
@@ -1147,7 +1147,7 @@ The internal mechanism by which an AS tracks delegation state (whether a formal 
 
 ## Confused Deputy
 
-A resource server that evaluates only the subject principal when an `act` claim is present is susceptible to a confused deputy attack: a malicious actor exploits a subject's pre-existing permissions without the subject's ongoing consent simply by presenting a token that names the subject in `sub`.  The mitigation is actor authorization — evaluating both `sub` and `act.sub` before granting access.  Resource servers SHOULD implement actor authorization for delegated tokens under this document.
+A resource server that evaluates only the subject principal when an `act` claim is present is susceptible to a confused deputy attack: a malicious actor exploits a subject's pre-existing permissions without the subject's ongoing consent simply by presenting a token that names the subject in `sub`.  The mitigation is actor authorization: evaluating both `sub` and `act.sub` before granting access.  Resource servers SHOULD implement actor authorization for delegated tokens under this document.
 
 ## Actor-Authorization Bypass
 
@@ -1258,7 +1258,7 @@ This document does not request independent JWT Claims Registry entries for the `
 
 ## OAuth Entity Profiles Registry {#iana-entity-profiles}
 
-This document makes no independent requests to the "OAuth Entity Profiles" registry.  It normatively depends on the "Actor Profile" usage location, the `actor` array in `entity_profiles_supported`, and the registration of `user`, `service`, and `ai_agent` with that usage location — all of which are defined and requested by {{I-D.mora-oauth-entity-profiles}}.  The IANA actions for those entries are contingent on the progression of {{I-D.mora-oauth-entity-profiles}}.
+This document makes no independent requests to the "OAuth Entity Profiles" registry.  It normatively depends on the "Actor Profile" usage location, the `actor` array in `entity_profiles_supported`, and the registration of `user`, `service`, and `ai_agent` with that usage location, all of which are defined and requested by {{I-D.mora-oauth-entity-profiles}}.  The IANA actions for those entries are contingent on the progression of {{I-D.mora-oauth-entity-profiles}}.
 
 
 
