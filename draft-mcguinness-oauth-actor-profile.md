@@ -48,6 +48,8 @@ normative:
   RFC9449:
   RFC9493:
   I-D.ietf-oauth-transaction-tokens:
+  I-D.ietf-wimse-workload-creds:
+  I-D.ietf-wimse-wpt:
   I-D.mora-oauth-entity-profiles:
     title: "OAuth Entity Profiles"
     author:
@@ -82,8 +84,6 @@ informative:
     date: 2026-03-02
     target: https://www.ietf.org/archive/id/draft-ietf-oauth-identity-assertion-authz-grant-02.txt
   I-D.ietf-oauth-security-topics:
-  I-D.ietf-wimse-workload-creds:
-  I-D.ietf-wimse-wpt:
   OpenID.Core:
     title: "OpenID Connect Core 1.0"
     author:
@@ -261,7 +261,7 @@ The following invariants define the interoperable core of this profile:
 *  `sub` is the authorizing principal.
 *  The outermost `act.sub` is the immediate actor for the current token presentation.
 *  `act.iss` identifies namespace authority for `act.sub`; it is not a credential-issuer claim or hop-provenance marker.
-*  Nested `act` objects are preserved prior-actor context unless a deployment explicitly applies additional local-policy processing to them.
+*  Nested `act` objects are preserved prior-actor context unless a deployment explicitly applies additional local-policy processing to them; this profile does not standardize authorization semantics for those nested entries.
 *  `client_id` and `azp` are OAuth client identifiers, not actor identifiers.
 
 ## What This Profile Does Not Standardize
@@ -277,6 +277,8 @@ This profile does not standardize the following:
 ## Conformance Scope
 
 Conformance to this profile means that issuers and consumers represent, preserve, validate, and interpret actor claims consistently according to this document.  This profile standardizes interoperable representation and baseline processing for delegated actors.  It does not require every deployment to enforce authorization of the (`sub`, outermost `act.sub`) pair on every request, although such enforcement is RECOMMENDED for security-sensitive delegated access.
+
+Same-domain deployments will often satisfy these requirements with straightforward local configuration for namespace authority and identifier mapping.  Cross-domain deployments typically require explicit trust-framework or bilateral agreement decisions and therefore have a higher interoperability burden under this profile.
 
 The actor profile is applicable to:
 
@@ -593,16 +595,28 @@ When an AS rejects a JWT assertion grant or Token Exchange request for reasons r
 : Use when the assertion or subject token cannot be validated, the issuer is not trusted to assert the delegation relationship, or the request's required proof-of-possession check cannot be confirmed.
 
 `access_denied`:
-: Use when AS policy does not permit the identified actor (`act.sub`) to act on behalf of the subject (`sub`), or when the requested scope exceeds what is permitted for this (subject, actor) pair.
+: Use when AS policy explicitly prohibits the identified actor (`act.sub`) from acting on behalf of the subject (`sub`) for the requested resource or scope, and the prohibition is a definitive policy decision (not a transient or recoverable failure).
+
+`actor_unauthorized`:
+: Use when the (`sub`, `act.sub`) pair is not authorized for the requested operation, but the failure is not a definitive prohibition.  Examples include: the actor's `sub_profile` is not in the accepted set, the delegation relationship could not be confirmed, or the actor lacks the required delegation grant for the requested scope.  This code allows clients and agent orchestrators to distinguish actor policy failures from credential or structural failures.  Unlike `access_denied`, `actor_unauthorized` implies that the failure may be remediable, for example by acquiring a token with a different actor identity or a broader delegation grant.
 
 The `error_description` field SHOULD be included and SHOULD describe which aspect of actor-profile validation failed, to the extent permitted by the AS's security and privacy policy.
 
-Example rejection:
+Example of a definitive prohibition:
 
 ~~~json
 {
   "error": "access_denied",
-  "error_description": "actor_profile not permitted for requested scope"
+  "error_description": "actor is explicitly denied access for this subject"
+}
+~~~
+
+Example of an actor not authorized for the requested scope:
+
+~~~json
+{
+  "error": "actor_unauthorized",
+  "error_description": "act.sub_profile not accepted for payments:create"
 }
 ~~~
 
@@ -625,6 +639,14 @@ If an AS issues a refresh token in a delegated context, it MUST bind the refresh
 *  When revocation is not immediately observable (e.g., in federated or cross-domain deployments), the AS SHOULD require re-presentation of a current upstream assertion before issuing additional delegated tokens.
 
 In cross-domain deployments the AS SHOULD ensure that refresh-token use does not bypass the revocation and trust-boundary checks that would apply when re-presenting the assertion grant.
+
+When a delegated refresh token is presented, the AS SHOULD re-validate the delegation basis before issuing additional delegated tokens.  At minimum this means:
+
+*  Verifying that the delegation relationship between the subject and actor has not been revoked since the original grant.
+*  Verifying that the actor's `sub_profile` and namespace authority (`act.iss`) remain consistent with the AS's current local policy.
+*  Verifying that the scope of the refresh token does not exceed what the current delegation relationship permits.
+
+If the delegation relationship has changed since the original grant (for example, the actor's `sub_profile` has changed, the permitted scope has been narrowed, or the delegation grant has been updated), the AS SHOULD issue a token reflecting the current delegation state rather than the state captured at the time of the original grant.
 
 
 # JWT Access Tokens {#jwt-access-tokens}
@@ -722,7 +744,7 @@ When the resource server accepts delegated tokens, it MUST:
 
     *  If signature, `iss`, `aud`, or temporal validation fails: HTTP 401 with `WWW-Authenticate: Bearer error="invalid_token"`.
     *  If DPoP proof validation for `cnf.jkt` fails: HTTP 401 per {{RFC9449, Section 7}}.
-    *  If the token is structurally valid but the actor fails an authorization evaluation required by local policy, including actor authorization when required: HTTP 403.  The RS MUST NOT use `error="insufficient_scope"` to signal actor authorization failures; that error code indicates the token's scope is insufficient for the operation and implies the client should retry with broader scope, which does not describe an actor identity or delegation policy failure.  When the actor's `sub_profile` is not accepted under the actor-profile policy applicable to the resource, the RS SHOULD return HTTP 403 without an OAuth error code.
+    *  If the token is structurally valid but the actor fails an authorization evaluation required by local policy, including actor authorization when required: HTTP 403 with `error="actor_unauthorized"` in the `WWW-Authenticate` challenge per {{RFC6750, Section 3.1}}.  The RS MUST NOT use `error="insufficient_scope"` to signal actor authorization failures; that error code indicates the token's scope is insufficient for the operation and implies the client should retry with broader scope, which does not describe an actor identity or delegation policy failure.
     *  The RS MUST NOT include actor-specific rejection details in error responses exposed to clients outside the trust domain.
 
 
@@ -730,7 +752,16 @@ When the resource server accepts delegated tokens, it MUST:
 
 When token introspection ({{RFC7662}}) is used, an AS that issues delegated tokens MUST include the `act` claim and top-level `sub_profile` claim in introspection responses for active tokens that carry those claims.  The AS MUST NOT omit actor profile claims from introspection responses, as their omission would misrepresent the delegation status of the token to the introspecting RS.  When a delegated token carries a nested `act` chain (delegation depth greater than 1), the AS MUST include the complete nested `act` structure in the introspection response.  If local privacy policy requires omitting specific inner chain entries, the AS MUST reject the introspection request rather than partially include the chain; partial inclusion would allow an introspecting RS to unknowingly treat an incomplete chain as complete.  An introspecting RS MUST treat the introspection response as a faithful representation of the token's full delegation chain.
 
-This document does not define a general actor-profile format for opaque access tokens and does not make opaque access tokens conformant to this profile.  The introspection requirements in this section define only the minimum response semantics when an AS chooses, under local policy, to expose equivalent actor-profile information for an opaque token.
+Opaque access tokens are not conformant to this profile.  When an AS issues a delegated opaque access token and supports introspection, it MAY expose actor-profile information through introspection.  When it does so, the introspection response MUST include the following claims for active delegated tokens:
+
+*  `active`: REQUIRED.  MUST be `true` for an active token.
+*  `sub`: REQUIRED.  The subject of the delegated token, as defined in {{RFC7662}}.
+*  `act`: REQUIRED.  The complete actor object conforming to {{actor-object-structure}}, including `act.sub`, `act.iss`, and any nested `act` chain, structured identically to the JWT form defined in this document.
+*  `sub_profile`: REQUIRED when the AS can authoritatively classify the subject entity type.
+*  `scope`: REQUIRED.  The effective scope of the token.
+*  `iss`: REQUIRED when the AS has a stable issuer identifier.
+
+The AS MUST NOT omit the `act` claim or `sub_profile` from the introspection response when those claims are part of the delegated token's authorization context.  An introspecting RS MUST apply the same delegated-token processing to this response as it would to a directly validated JWT access token carrying equivalent claims.
 
 Resource servers using introspection for delegated tokens MUST apply the same delegated-token policy to the introspection response claims that they would apply to equivalent locally validated tokens, including actor authorization when required by local policy.  An RS that relies on introspection rather than local JWT validation MUST treat a missing `act` claim in the introspection response as an inconsistency whenever local policy, protected resource metadata, or other token context indicates that the token is delegated or that actor-profile conformance is required.  In such cases, the RS MUST reject the token.  Only when no such requirement or indication exists MAY the RS treat an active introspection response without `act` as representing a non-delegated token.
 
@@ -859,9 +890,7 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
     *  If the inbound token already carries an `act` chain, the TTS MUST nest it beneath the new outermost `act`.
     *  The TTS SHOULD set `act.sub_profile` based on its knowledge of the new presenter's entity type.
 
-6.  The TTS MUST bind the issued Transaction Token to the new presenter by setting the top-level `cnf` claim per the deployment's proof mechanism.  When the mechanism uses a public-key thumbprint, the TTS MUST set `cnf.jkt` to the new presenter's key.
-
-    > Note: In WIMSE-based deployments, presenter binding is established via a Workload Identity Token (WIT) and Workload Proof Token (WPT) {{I-D.ietf-wimse-workload-creds}}{{I-D.ietf-wimse-wpt}}.
+6.  The TTS MUST bind the issued Transaction Token to the new presenter by setting the top-level `cnf` claim per the deployment's proof mechanism.  When the mechanism uses a public-key thumbprint, the TTS MUST set `cnf.jkt` to the new presenter's key.  When WIMSE-based workload credentials are used, the TTS MUST authenticate the requesting workload using a Workload Identity Token (WIT) per {{I-D.ietf-wimse-workload-creds}} and MUST require a Workload Proof Token (WPT) per {{I-D.ietf-wimse-wpt}} to bind the issued Transaction Token to the new presenter.
 
 7.  The TTS MAY include `tctx` or `rctx` as appropriate.  The `scope` of a Transaction Token captures the transaction-authorization intent for this token instance as defined by the TTS; it does not directly correspond to the OAuth access token scope that governs what the subject has authorized.  Accordingly, the least-privilege scope-reduction rule in {{jwt-access-token-propagation}} step 6 does not apply to Transaction Token issuance.
 
@@ -879,7 +908,10 @@ When a TTS rejects a request for reasons related to actor-profile processing, it
 : Use when the inbound token fails validation, the `sub` identity cannot be preserved per step 1 of {{transaction-token-service-processing}}, or inbound actor information that the TTS relies on for security-relevant processing cannot be validated per step 4 of {{transaction-token-service-processing}}.
 
 `access_denied`:
-: Use when local TTS policy does not permit the requesting workload to act as an actor in the delegation chain for the identified subject, or when the `act.sub_profile` of an inbound actor is not accepted under local policy.
+: Use when local TTS policy explicitly prohibits the requesting workload from acting in the delegation chain for the identified subject, and the prohibition is a definitive policy decision.
+
+`actor_unauthorized`:
+: Use when the (`sub`, `act.sub`) pair is not authorized for the requested transaction, but the failure is not a definitive prohibition.  Examples include: the `act.sub_profile` of an inbound actor is not in the accepted set for this TTS, or the delegation relationship could not be confirmed under local policy.  As with the equivalent AS error code ({{assertion-error-responses}}), this code signals a potentially remediable actor policy failure rather than a structural or credential error.
 
 The `error_description` field SHOULD be included and SHOULD describe which aspect of actor-profile processing failed, to the extent permitted by the TTS's security and privacy policy.
 
@@ -888,7 +920,7 @@ Transaction Token support is advertised using the `transaction_token_supported` 
 
 # Actor Authorization at the Resource Server {#dual-principal-authorization}
 
-This section elaborates on the actor-authorization requirements referenced in step 5 of {{jwt-access-token-rs-processing}} and in {{actor-claim-in-transaction-tokens}}, and describes how resource servers SHOULD implement them.
+This section elaborates on the actor-authorization requirements referenced in step 5 of {{jwt-access-token-rs-processing}} and in {{actor-claim-in-transaction-tokens}}, and describes how resource servers SHOULD implement them.  It standardizes authorization of the (`sub`, outermost `act.sub`) pair only; any use of nested `act` objects in authorization remains deployment-specific and outside this profile's interoperable semantics.
 
 ## Authorization Model
 
@@ -900,9 +932,9 @@ When a token contains both `sub` and an `act` claim, a resource server has two i
 
 Actor authorization at the resource server evaluates both principals and the relationship between them, that is, whether the outermost actor is authorized to act on behalf of the subject.  This specification recommends this subject-plus-actor evaluation model for delegated tokens, but does not require every RS to use it in every deployment.
 
-For Transaction Tokens, the primary policy pair remains (`sub`, `act.sub`).  The `req_wl` claim provides workload context from the TTS and is not a replacement for `act.sub`.  Nested `act` objects provide prior-actor context for audit, policy refinement, or chain validation.
+For Transaction Tokens, the primary policy pair remains (`sub`, `act.sub`).  The `req_wl` claim provides workload context from the TTS and is not a replacement for `act.sub`.  Nested `act` objects provide prior-actor context for audit or other deployment-specific processing; this document does not standardize their authorization use.
 
-This specification defines subject-plus-actor evaluation as the interoperable baseline.  Deployments MAY apply multi-principal authorization under local policy by considering one or more nested `act` objects as additional authorization, trust, or risk inputs in addition to `sub` and the outermost `act.sub`.  This specification does not require or standardize such evaluation, and clients MUST NOT assume that nested actors will be used for authorization unless deployment-specific agreements say otherwise.
+This specification defines subject-plus-actor evaluation as the interoperable baseline.  Deployments MAY apply multi-principal authorization under local policy by considering one or more nested `act` objects as additional trust or risk inputs in addition to `sub` and the outermost `act.sub`, but this specification does not standardize such authorization behavior, and clients MUST NOT assume that nested actors will be used for authorization unless deployment-specific agreements say otherwise.
 
 ## Resource Server Processing {#dual-principal-rs-processing}
 
@@ -973,6 +1005,9 @@ One new parameter is defined for use in the AS metadata document ({{RFC8414}}):
 
   When absent, the AS makes no claim about delegated output token types under this profile.
 
+`actor_profile_max_chain_depth`:
+: OPTIONAL.  A positive integer indicating the maximum delegation chain depth (as defined in {{delegation-chains}}) that this AS will accept in inbound tokens and produce in issued tokens under this profile.  When absent, the AS makes no commitment beyond the floor described in {{delegation-chains}}.  Clients SHOULD use this value when constructing multi-hop chains to avoid building chains the AS will reject.
+
 The entity profile types the AS accepts for actors are advertised via the `entity_profiles_supported.actor` array defined in {{I-D.mora-oauth-entity-profiles}}, not via a separate metadata parameter.  DPoP support is advertised via `dpop_signing_alg_values_supported` per {{RFC9449}}.
 
 Example AS metadata fragment:
@@ -991,6 +1026,7 @@ Example AS metadata fragment:
     "urn:ietf:params:oauth:token-type:jwt",
     "urn:ietf:params:oauth:token-type:txn_token"
   ],
+  "actor_profile_max_chain_depth": 5,
   "entity_profiles_supported": {
     "client": ["service", "ai_agent"],
     "subject": ["user", "service", "ai_agent"],
@@ -1009,6 +1045,9 @@ Two new parameters are defined for use in Protected Resource Metadata ({{RFC9728
 `actor_authorization_required`:
 : OPTIONAL.  A boolean.  When `true`, the RS indicates that it expects evaluation of the actor as an authorization input in addition to the subject, as described in {{dual-principal-authorization}}.  Clients SHOULD treat this as meaning that a conforming `act`-carrying token is likely required for delegated access.  An RS that enforces this policy for a given request path MUST evaluate the (`sub`, outermost `act.sub`) relationship for that path and therefore also requires a conforming `act` claim there.  When `false` or absent, the RS makes no metadata declaration to clients about whether actor authorization is applied.
 
+`actor_profile_max_chain_depth`:
+: OPTIONAL.  A positive integer indicating the maximum delegation chain depth that this RS will accept in tokens presented to it.  When absent, the RS makes no commitment about supported depth beyond what {{delegation-chains}} requires.  Clients SHOULD use this value when constructing multi-hop chains to avoid presenting tokens the RS will reject.
+
 Clients discover which actor entity profile values the RS's AS will accept by consulting `entity_profiles_supported.actor` in the AS metadata for the AS listed in the resource's `authorization_servers`.
 
 Example Protected Resource Metadata fragment:
@@ -1020,7 +1059,8 @@ Example Protected Resource Metadata fragment:
     "https://as.travel-provider.example"
   ],
   "actor_profile_required": true,
-  "actor_authorization_required": true
+  "actor_authorization_required": true,
+  "actor_profile_max_chain_depth": 3
 }
 ~~~
 
@@ -1034,6 +1074,7 @@ The following points describe a RECOMMENDED way a client can use these metadata 
 
     *  `actor_profile_token_types_supported` to determine whether the desired delegated output token type is advertised.
     *  `entity_profiles_supported.actor` to confirm the client's own entity profile (its `sub_profile` value) is in the accepted list.
+    *  `actor_profile_max_chain_depth` (AS) and `actor_profile_max_chain_depth` (RS, from step 1) to confirm the required chain depth is within bounds for both the issuing AS and the target RS.  If the intended chain depth exceeds either advertised maximum, the client should treat that path as unsupported.
 
 3.  If `actor_profile_required` is `true` at the RS and the client's entity profile is not listed in `entity_profiles_supported.actor` at the AS, a prudent client will generally avoid a delegation-based request and surface the mismatch to the invoking system.  If the desired delegated output token type is not listed in `actor_profile_token_types_supported`, a prudent client will usually treat that output as unavailable.  If `actor_authorization_required` is `true`, the client should expect the RS to require actor evaluation in addition to subject evaluation and should acquire a token whose actor information can satisfy that policy.  If the listed metadata is insufficient to determine whether the AS supports the needed input grant or exchange path, the client may need deployment-specific configuration or documentation.
 
@@ -1118,6 +1159,8 @@ Mismatch example, where the client and actor identify different parties:
 An AS or RS that expected the client and actor to identify the same party under trusted local mapping rules would typically reject this token unless those rules explicitly bind `travel-assistant-client-id` to `https://agents.other-provider.example/concierge-bot`.  If no such mapping rule exists, the safer interpretation is to treat the identifiers as distinct.
 
 # Security Considerations
+
+This document does not define a trust framework for establishing namespace authority, proving delegation approval, or validating subject-identifier translation.  Security for those decisions depends on deployment-specific policy and external agreements.
 
 ## Delegation Chain Integrity and Trust {#delegation-chain-integrity}
 
@@ -1274,10 +1317,15 @@ The `req_wl` claim in Transaction Tokens can also expose sensitive information a
 
 ## OAuth Authorization Server Metadata Registry
 
-This document requests IANA to register the following value in the "OAuth Authorization Server Metadata" registry ({{RFC8414}}):
+This document requests IANA to register the following values in the "OAuth Authorization Server Metadata" registry ({{RFC8414}}):
 
 *  Metadata Name: `actor_profile_token_types_supported`
 *  Metadata Description: JSON array of delegated output token-type URIs that the AS can issue while applying actor-profile processing per this document
+*  Change Controller: IETF
+*  Reference: {{authorization-server-metadata}} of this document
+
+*  Metadata Name: `actor_profile_max_chain_depth`
+*  Metadata Description: Positive integer indicating the maximum delegation chain depth the AS will accept in inbound tokens and produce in issued tokens under this profile
 *  Change Controller: IETF
 *  Reference: {{authorization-server-metadata}} of this document
 
@@ -1295,6 +1343,22 @@ This document requests IANA to register the following values in the "OAuth Prote
 *  Metadata Description: Boolean indicating whether the RS advertises that it evaluates the actor as an authorization input in addition to the subject for delegated tokens
 *  Change Controller: IETF
 *  Reference: {{protected-resource-metadata}} of this document
+
+*  Metadata Name: `actor_profile_max_chain_depth`
+*  Metadata Description: Positive integer indicating the maximum delegation chain depth the RS will accept in tokens presented to it
+*  Change Controller: IETF
+*  Reference: {{protected-resource-metadata}} of this document
+
+
+## OAuth Error Registry {#iana-error-codes}
+
+This document requests IANA to register the following value in the "OAuth Extensions Error Registry" ({{RFC6749, Section 11.4}}):
+
+*  Error Name: `actor_unauthorized`
+*  Error Usage Location: Token endpoint response, resource server response
+*  Related Protocol Extension: OAuth Actor Profile for Delegation
+*  Change Controller: IETF
+*  Reference: {{assertion-error-responses}} of this document
 
 
 ## JWT Claims Registry
