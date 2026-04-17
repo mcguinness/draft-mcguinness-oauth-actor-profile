@@ -281,6 +281,15 @@ Conformance to this profile means that issuers and consumers represent, preserve
 
 Same-domain deployments will often satisfy these requirements with straightforward local configuration for namespace authority and identifier mapping.  Cross-domain deployments typically require explicit trust-framework or bilateral agreement decisions and therefore have a higher interoperability burden under this profile.
 
+## Failure Model
+
+At a high level, this profile uses the following failure model:
+
+*  malformed or missing required actor claims result in rejection
+*  failed `act.iss` namespace-authority validation results in rejection
+*  delegation chains that exceed the applicable local maximum result in rejection
+*  failure of authorization for the (`sub`, outermost `act.sub`) pair results in denial under local policy
+
 The actor profile is applicable to:
 
 *  JWT assertion grants ({{jwt-assertion-grants}})
@@ -1078,23 +1087,11 @@ Example Protected Resource Metadata fragment:
 
 ## Capability Signaling Usage
 
-The following points describe a RECOMMENDED way a client can use these metadata as a preflight compatibility check.  They do not define a required client algorithm:
+Clients can use Protected Resource Metadata ({{RFC9728}}) to determine whether a resource advertises actor-profile conformance (`actor_profile_required`), authorization of the (`sub`, outermost `act.sub`) pair (`actor_authorization_required`), and any advertised resource-side chain-depth limit (`actor_profile_max_chain_depth`).  Clients can use the associated AS metadata ({{RFC8414}}) to determine whether the AS advertises compatible delegated output token types (`actor_profile_token_types_supported`), accepted actor entity profiles (`entity_profiles_supported.actor`), and any AS-side chain-depth limit (`actor_profile_max_chain_depth`).
 
-1.  A client can fetch Protected Resource Metadata ({{RFC9728}}) for the target API and inspect `actor_profile_required`, `actor_authorization_required`, and `authorization_servers`.
+These signals are advisory capability indicators, not a complete machine-readable description of every supported grant path.  A client that detects an obvious mismatch, such as an unsupported delegated output token type, an actor entity profile outside the advertised accepted set, or a required chain depth that exceeds an advertised maximum, will ordinarily avoid that path or rely on deployment-specific configuration.  As a safe default, a client that intends to make a request on behalf of another principal should treat `actor_profile_required: true` as indicating that it likely needs an explicit `act`-carrying token for that resource.
 
-2.  A client can fetch AS metadata ({{RFC8414}}) for the listed AS and inspect:
-
-    *  `actor_profile_token_types_supported` to determine whether the desired delegated output token type is advertised.
-    *  `entity_profiles_supported.actor` to confirm the client's own entity profile (its `sub_profile` value) is in the accepted list.
-    *  `actor_profile_max_chain_depth` (AS) and `actor_profile_max_chain_depth` (RS, from step 1) to confirm the required chain depth is within bounds for both the issuing AS and the target RS.  If the intended chain depth exceeds either advertised maximum, the client should treat that path as unsupported.
-
-3.  If `actor_profile_required` is `true` at the RS and the client's entity profile is not listed in `entity_profiles_supported.actor` at the AS, a prudent client will generally avoid a delegation-based request and surface the mismatch to the invoking system.  If the desired delegated output token type is not listed in `actor_profile_token_types_supported`, a prudent client will usually treat that output as unavailable.  If `actor_authorization_required` is `true`, the client should expect the RS to require actor evaluation in addition to subject evaluation and should acquire a token whose actor information can satisfy that policy.  If the listed metadata is insufficient to determine whether the AS supports the needed input grant or exchange path, the client may need deployment-specific configuration or documentation.
-
-    As a safe default, a client that intends to make a request on behalf of another principal should treat `actor_profile_required: true` as meaning that it likely needs an explicit `act`-carrying token for that resource.  When both are available, clients are encouraged to prefer acquisition paths that explicitly carry actor information over paths that depend on AS-derived actor determination.
-
-4.  The client then proceeds per {{jwt-assertion-grants}} for JWT assertion grants or per {{RFC8693}} for token-exchange requests.  When the delegated request explicitly carries actor-profile claims and `act.sub_profile` is included, its value SHOULD be drawn from the `entity_profiles_supported.actor` accepted list when that metadata is available.  When actor information is derived by the AS from authenticated client context or other local policy, the client can consult deployment documentation or AS metadata before relying on the AS to issue a delegated token under this profile.
-
-5.  The RS validates the resulting token according to the rules for that token type and applies local delegated-token policy.  If the RS requires actor authorization, it applies that policy per {{dual-principal-authorization}}.  For JWT access tokens, see {{jwt-access-token-rs-processing}}.  For Transaction Tokens, see {{I-D.ietf-oauth-transaction-tokens}} together with {{transaction-tokens}} of this document.
+When a delegated request explicitly carries actor-profile claims and `act.sub_profile` is included, its value SHOULD be drawn from the `entity_profiles_supported.actor` accepted list when that metadata is available.  When actor information is instead derived by the AS from authenticated client context or other local policy, metadata and deployment documentation can help a client assess whether the resulting token is likely to satisfy the resource's delegated-token expectations.
 
 Example client preflight failure:
 
@@ -1516,7 +1513,7 @@ Presenter key bindings:
 
 ## Discovery and Capability Negotiation
 
-The agent checks the Travel Provider AS metadata ({{discovery-capability-negotiation}}) to confirm actor-profile support before initiating the flow:
+The agent consults the Travel Provider AS metadata ({{discovery-capability-negotiation}}) as an advisory compatibility check before initiating the flow:
 
 ~~~json
 {
@@ -1532,7 +1529,7 @@ The agent checks the Travel Provider AS metadata ({{discovery-capability-negotia
   }
 }
 ~~~
-The agent confirms that its `sub_profile` (`ai_agent`) is listed in `entity_profiles_supported.actor`, that both `jwt` and `access_token` are covered by `actor_profile_token_types_supported`, and that the Booking Tool RS requires explicit actor-profile support and actor authorization.
+The agent observes that its `sub_profile` (`ai_agent`) is listed in `entity_profiles_supported.actor` and that both `jwt` and `access_token` are covered by `actor_profile_token_types_supported`.  These metadata do not guarantee success, but they indicate that the delegated-token path is plausibly compatible with the Booking Tool RS's advertised requirements.
 
 
 ## Step 1: User Authentication — ID Token
@@ -1614,7 +1611,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer
 &scope=booking%3Acreate
 ~~~
 
-The Travel Provider AS performs actor-profile processing per {{jwt-assertion-grants-processing}}: it verifies the request's DPoP proof against the current presenter binding and checks that `act.sub_profile` (`ai_agent`) is permitted as an actor for the requested scope.  It issues an access token preserving the actor chain:
+The Travel Provider AS performs actor-profile processing per {{jwt-assertion-grants-processing}}: it verifies the request's DPoP proof against the top-level `cnf.jkt` in the inbound ID-JAG and checks that `act.sub_profile` (`ai_agent`) is permitted as an actor for the requested scope under local policy.  It issues an access token preserving the actor chain:
 
 ~~~json
 {
