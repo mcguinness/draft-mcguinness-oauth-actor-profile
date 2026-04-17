@@ -574,35 +574,37 @@ Table of Contents
    The following table summarizes the minimum implementation obligations
    by role:
 
-   +===========+=============+===================================+=============================+
-   |Role       |Inputs       |Minimum checks                     |Outputs / behavior           |
-   +===========+=============+===================================+=============================+
-   |Assertion- |JWT assertion|Validate JWT; trust issuer;        |Preserve actor in issued     |
-   |consuming  |grant with   |validate (sub, actor) delegation;  |token; see Section 5.2       |
-   |AS         |act          |enforce chain-depth limit;         |                             |
-   |           |             |optionally verify act.cnf key      |                             |
-   +-----------+-------------+-----------------------------------+-----------------------------+
-   |Token-     |subject_token|Validate token; trust issuer;      |Issue token with preserved or|
-   |exchange AS|or inbound   |validate actor authorization;      |extended act chain; see      |
-   |           |token with   |enforce scope reduction and chain- |Section 6.2                  |
-   |           |act chain    |depth limit                        |                             |
-   +-----------+-------------+-----------------------------------+-----------------------------+
-   |Resource   |Access token |Validate token; validate top-level |Apply delegated-token policy;|
-   |Server     |or           |cnf binding; evaluate subject;     |advertise                    |
-   |           |Transaction  |evaluate actor when required by    |actor_authorization_required;|
-   |           |Token with   |local policy                       |see Section 6.3              |
-   |           |act          |                                   |                             |
-   +-----------+-------------+-----------------------------------+-----------------------------+
-   |Transaction|Inbound token|Validate token; authenticate       |Preserve sub; set req_wl; add|
-   |Token      |with subject |workload; enforce chain-depth      |new outermost act; see       |
-   |Service    |and optional |limit; bind new presenter key      |Section 7.3                  |
-   |           |act chain    |                                   |                             |
-   +-----------+-------------+-----------------------------------+-----------------------------+
-   |Client or  |AS and RS    |Check                              |Detect likely capability     |
-   |Agent      |metadata     |entity_profiles_supported.actor and|mismatch; see Section 10     |
-   |           |             |actor_profile_token_types_supported|                             |
-   |           |             |when available                     |                             |
-   +-----------+-------------+-----------------------------------+-----------------------------+
+   +===========+=============+===================================+============================+
+   |Role       |Inputs       |Minimum checks                     |Outputs / behavior          |
+   +===========+=============+===================================+============================+
+   |Assertion- |JWT assertion|Validate JWT; trust issuer;        |Preserve actor in issued    |
+   |consuming  |grant with   |validate (sub, actor) delegation;  |token; see Section 5.2      |
+   |AS         |act          |enforce local chain-depth maximum  |                            |
+   |           |             |per Section 4.5; optionally verify |                            |
+   |           |             |act.cnf key                        |                            |
+   +-----------+-------------+-----------------------------------+----------------------------+
+   |Token-     |subject_token|Validate token; trust issuer;      |Issue token with preserved  |
+   |exchange AS|or inbound   |validate actor authorization;      |or extended act chain; see  |
+   |           |token with   |enforce scope reduction and local  |Section 6.2                 |
+   |           |act chain    |chain-depth maximum per Section 4.5|                            |
+   +-----------+-------------+-----------------------------------+----------------------------+
+   |Resource   |Access token |Validate token; validate top-level |Apply delegated-token       |
+   |Server     |or           |cnf binding; evaluate subject;     |policy; advertise           |
+   |           |Transaction  |evaluate actor when required by    |actor_authorization_required|
+   |           |Token with   |local policy                       |when enforcing actor        |
+   |           |act          |                                   |authorization; see          |
+   |           |             |                                   |Section 6.3                 |
+   +-----------+-------------+-----------------------------------+----------------------------+
+   |Transaction|Inbound token|Validate token; authenticate       |Preserve sub; set req_wl;   |
+   |Token      |with subject |workload; enforce local chain-depth|add new outermost act; see  |
+   |Service    |and optional |maximum per Section 4.5; bind new  |Section 7.3                 |
+   |           |act chain    |presenter key                      |                            |
+   +-----------+-------------+-----------------------------------+----------------------------+
+   |Client or  |AS and RS    |Check                              |Detect likely capability    |
+   |Agent      |metadata     |entity_profiles_supported.actor and|mismatch; see Section 10    |
+   |           |             |actor_profile_token_types_supported|                            |
+   |           |             |when available                     |                            |
+   +-----------+-------------+-----------------------------------+----------------------------+
 
                                   Table 1
 
@@ -813,16 +815,21 @@ Table of Contents
    and no nested act within it has depth 1.  Each additional level of
    nesting adds 1.  Depth is counted on the resulting chain after any
    new outermost act is added, not on the inbound token.
-   Implementations MUST support at least one level of delegation and
-   SHOULD support at least five levels of nested act objects to
+   Implementations MUST support at least one level of delegation (depth
+   1) and SHOULD support at least five levels of nested act objects to
    accommodate realistic multi-tier architectures (e.g., user →
-   orchestrator → agent → tool → internal service).  Implementations MAY
-   support larger depths and SHOULD define and enforce a local maximum
+   orchestrator → agent → tool → internal service).  An implementation
+   that supports only depth 1 and rejects all depth-2 or deeper chains
+   is conformant to this document but will not interoperate with multi-
+   hop deployments.  For multi-hop interoperability, implementations
+   SHOULD support at least five levels.  Implementations MAY support
+   larger depths and SHOULD define and enforce a local maximum
    delegation depth according to deployment needs.  Implementations that
    receive a token exceeding their configured local maximum delegation
-   depth MUST reject it.  When a request would result in a chain that
-   exceeds that local limit, the AS MUST reject the request with
-   invalid_request; it MUST NOT silently truncate the chain.
+   depth MUST reject it with invalid_request.  When a request would
+   result in a chain that exceeds that local limit, the AS MUST reject
+   the request with invalid_request; it MUST NOT silently truncate the
+   chain.
 
 4.6.  Sender Constraint and Key Binding
 
@@ -998,9 +1005,6 @@ Table of Contents
    sub (REQUIRED):  The principal on whose behalf the grant is being
       made.
 
-   jti (REQUIRED):  A unique identifier for the assertion per [RFC7523],
-      Section 3, used to prevent replay.
-
    sub_profile (RECOMMENDED):  Classifies the entity type of sub.  MUST
       conform to the values defined in Section 4.
 
@@ -1106,16 +1110,30 @@ Table of Contents
    ASes MUST NOT accept self-issued assertion grants unless explicitly
    configured via local policy to do so; self-issued grant acceptance
    MUST be off by default.  When an AS does accept self-issued grants,
-   it MUST apply the validation requirements of this specification and
-   the replay, sender-constraining, and JWT-validation requirements of
-   the underlying specifications it relies upon.  The AS SHOULD NOT
-   treat the self-asserted delegation claim alone as a sufficient basis
-   under step 4 of Section 5.2; an independent delegation basis such as
-   a pre-registered grant or consent record is RECOMMENDED.  Any
-   additional verification of the claimed sub is a deployment-specific
-   subject-identity matter outside the scope of this document.  This
-   document does not define any additional self-issued-proof mechanism
-   beyond those underlying specifications.
+   it MUST at minimum:
+
+   *  Validate the JWT signature using the key identified in the JWT
+      header, obtained from a trusted source (e.g., a pre-registered
+      public key for the self-issuing party).
+
+   *  Verify the exp, iat, and nbf claims per [RFC7519].
+
+   *  Reject assertions whose jti has already been accepted within the
+      assertion's validity window to prevent replay.
+
+   *  Verify proof of possession per the token-endpoint mechanism in use
+      (DPoP per [RFC9449] or mTLS per [RFC8705]).
+
+   *  Apply the actor-profile validation requirements of this
+      specification (steps 2–7 of Section 5.2).
+
+   The AS SHOULD NOT treat the self-asserted delegation claim alone as a
+   sufficient basis under step 4 of Section 5.2; an independent
+   delegation basis such as a pre-registered grant or consent record is
+   RECOMMENDED.  Any additional verification of the claimed sub is a
+   deployment-specific subject-identity matter outside the scope of this
+   document.  This document does not define any additional self-issued-
+   proof mechanism beyond those listed above.
 
 5.2.  Authorization Server Processing
 
@@ -1130,9 +1148,12 @@ Table of Contents
        delegation on behalf of the actor identified by act.sub.  For
        self-issued grants, see Section 5.1.1.
 
-   3.  The AS MUST verify that act.iss is authoritative for the
-       identifier namespace of act.sub.  Mechanisms deployments use to
-       make this determination include (but are not limited to):
+   3.  If act.iss is absent from the inbound act object, the AS MUST
+       reject the request with invalid_request; an absent act.iss is a
+       structural violation, not a validation failure.  Otherwise, the
+       AS MUST verify that act.iss is authoritative for the identifier
+       namespace of act.sub.  Mechanisms deployments use to make this
+       determination include (but are not limited to):
 
        *  URL namespace containment for HTTPS URI identifiers: when both
           act.iss and act.sub are HTTPS URIs, deployments often treat
@@ -1335,16 +1356,20 @@ Table of Contents
 
    *  The AS has independent knowledge, established by a pre-registered
       delegation grant, an explicit consent record, or a policy rule
-      that covers the specific (subject, actor) pair or the class of
-      actors to which the acting party belongs, that the subject's
-      rights are being exercised by a distinct, identifiable acting
-      party whose identifier and entity type the AS can assert
+      that explicitly authorizes the identified acting party (or a class
+      of acting parties) to exercise the subject's rights — that the
+      subject's rights are being exercised by a distinct, identifiable
+      acting party whose identifier and entity type the AS can assert
       authoritatively.  A class-level rule such as "any agent in
       namespace X may act for users in namespace Y" satisfies this
       condition for a specific (subject, actor) pair that falls within
-      the rule's scope.  Claims about actor identity derived solely from
-      client authentication, without any such delegation record or
-      policy rule, do not satisfy this condition.
+      the rule's scope.  A qualifying policy rule must be an explicit
+      delegation authorization record; a client registration alone —
+      without an accompanying delegation grant or delegation policy rule
+      that names or covers the subject — does not satisfy this
+      condition.  Claims about actor identity derived solely from client
+      authentication, without any such delegation record or policy rule,
+      do not satisfy this condition.
 
    When the AS determines the actor from authenticated client context,
    local delegation policy, or other deployment-specific inputs rather
@@ -1442,8 +1467,10 @@ Table of Contents
        would exceed the chain-depth limit in Section 4.5, the AS MUST
        reject the request.  The AS MUST return invalid_request when the
        chain-depth limit would be exceeded and invalid_grant when actor
-       information fails validation; see Section 5.3.  The AS MUST NOT
-       issue a token that partially preserves the delegation chain.
+       information fails validation; error codes are as defined in
+       Section 5.3 and apply equally to token exchange requests
+       producing JWT access tokens.  The AS MUST NOT issue a token that
+       partially preserves the delegation chain.
 
    5.  The AS SHOULD include sub_profile in the issued token's top-level
        claims if it can authoritatively classify the token's sub entity
@@ -1487,12 +1514,14 @@ Table of Contents
        request with HTTP 401 invalid_token.
 
    2.  If the token carries a top-level cnf.jkt, validate the
-       accompanying DPoP proof per [RFC9449], Section 7.  When
-       delegation is present, the key identified in cnf.jkt is the key
-       of the outermost actor — the immediate bearer.  If a DPoP proof
-       is present but the token does not carry cnf.jkt, the RS MUST
-       treat the token as a bearer token; the RS MUST NOT infer a
+       accompanying DPoP proof per [RFC9449], Section 7.  If a DPoP
+       proof is present but the token does not carry cnf.jkt, the RS
+       MUST treat the token as a bearer token; the RS MUST NOT infer a
        confirmation binding from the DPoP proof key.
+
+          Note: When delegation is present, the key identified in
+          cnf.jkt is the key of the outermost actor — the immediate
+          bearer — since the outermost actor is the current presenter.
 
    3.  Extract the sub and the outermost act.sub as the two principals
        relevant for authorization policy.
@@ -1534,15 +1563,15 @@ Table of Contents
 
        *  If the token is structurally valid but the actor fails an
           authorization evaluation required by local policy, including
-          actor authorization when required: HTTP 403.  When the
-          subject's scope was sufficient but the actor lacked
-          authorization, the RS SHOULD include
-          error="insufficient_scope" in the WWW-Authenticate challenge.
-          When the actor's sub_profile is not accepted under the actor-
-          profile policy applicable to the resource, the RS SHOULD
-          either return HTTP 403 without an OAuth error code or map the
-          failure to error="insufficient_scope" when that accurately
-          reflects the policy model.
+          actor authorization when required: HTTP 403.  The RS MUST NOT
+          use error="insufficient_scope" to signal actor authorization
+          failures; that error code indicates the token's scope is
+          insufficient for the operation and implies the client should
+          retry with broader scope, which does not describe an actor
+          identity or delegation policy failure.  When the actor's
+          sub_profile is not accepted under the actor-profile policy
+          applicable to the resource, the RS SHOULD return HTTP 403
+          without an OAuth error code.
 
        *  The RS MUST NOT include actor-specific rejection details in
           error responses exposed to clients outside the trust domain.
@@ -1555,13 +1584,14 @@ Table of Contents
    claims.  The AS MUST NOT omit actor profile claims from introspection
    responses, as their omission would misrepresent the delegation status
    of the token to the introspecting RS.  When a delegated token carries
-   a nested act chain (delegation depth greater than 1), the
-   introspection response SHOULD include the complete nested act
-   structure.  If local privacy policy requires omitting specific inner
-   chain entries, the AS SHOULD reject the request rather than partially
-   include the chain.  An introspecting RS MUST treat the introspection
-   response as a faithful representation of the token's full delegation
-   chain.
+   a nested act chain (delegation depth greater than 1), the AS MUST
+   include the complete nested act structure in the introspection
+   response.  If local privacy policy requires omitting specific inner
+   chain entries, the AS MUST reject the introspection request rather
+   than partially include the chain; partial inclusion would allow an
+   introspecting RS to unknowingly treat an incomplete chain as
+   complete.  An introspecting RS MUST treat the introspection response
+   as a faithful representation of the token's full delegation chain.
 
    This document does not define a general actor-profile format for
    opaque access tokens.  The introspection requirements in this section
@@ -1600,11 +1630,12 @@ Table of Contents
    transaction.  They are issued by a Transaction Token Service (TTS),
    which is a specialized authorization server.
 
-      Note: The requirements in this section are written against the
-      current version of [I-D.ietf-oauth-transaction-tokens].  If that
-      document changes its claim structure materially before
-      publication, this section should be read in conjunction with the
-      published version.
+   [RFC Editor: Before publication of this document, verify that the
+   Transaction Token claim structure defined here (the claims listed in
+   Section 7.2 and Section 7.3) remains consistent with the published
+   version of [I-D.ietf-oauth-transaction-tokens].  If that document
+   changes its claim structure materially, coordinate with the authors
+   to update this section accordingly before publication.]
 
    A Transaction Token contains the following claims.  Claims marked
    REQUIRED are defined as such by [I-D.ietf-oauth-transaction-tokens];
@@ -2438,13 +2469,10 @@ Table of Contents
 12.4.  Delegation Depth Limits
 
    Unbounded delegation chains increase attack surface and complicate
-   policy evaluation.  This document requires support for delegated
-   tokens and RECOMMENDS support for at least five nested act objects
-   (Section 4.5) to accommodate realistic multi-tier architectures,
-   while allowing deployments to support larger depths under local
-   policy.  Implementations that encounter chains exceeding their
-   configured local maximum MUST reject the token to prevent denial-of-
-   service through chain parsing.
+   policy evaluation.  Depth support and interoperability requirements
+   are defined in Section 4.5.  Implementations that encounter chains
+   exceeding their configured local maximum MUST reject the token to
+   prevent denial-of-service through chain parsing.
 
 12.5.  Sub_profile Trust
 
@@ -2601,6 +2629,18 @@ Table of Contents
    contexts where cross-domain correlation of user activity is not
    required or authorized.
 
+   The act.sub_profile claim discloses the entity type of the actor,
+   including values such as ai_agent that reveal that a request is being
+   made by an automated agent on behalf of the subject.  In some
+   jurisdictions or deployment contexts, this disclosure may be legally
+   significant or may reveal sensitive information about user behavior
+   and tool composition that should not flow across trust-domain
+   boundaries.  Issuers SHOULD consider audience-specific disclosure
+   constraints when including act.sub_profile in cross-domain tokens,
+   and SHOULD omit or suppress actor entity-type values when the
+   recipient does not require them for authorization, audit, or policy
+   enforcement.
+
    The req_wl claim in Transaction Tokens can also expose sensitive
    information about internal workload topology and service composition.
    Transaction Token Services SHOULD disclose req_wl only to relying
@@ -2633,9 +2673,10 @@ Table of Contents
 
    *  Metadata Name: actor_profile_required
 
-   *  Metadata Description: Boolean indicating whether the RS requires
-      delegated requests to use tokens carrying an act claim conforming
-      to this profile
+   *  Metadata Description: Boolean indicating whether the RS advertises
+      that delegated requests for this resource are expected to use
+      tokens carrying an act claim conforming to the OAuth Actor Profile
+      for Delegation
 
    *  Change Controller: IETF
 
@@ -2643,9 +2684,9 @@ Table of Contents
 
    *  Metadata Name: actor_authorization_required
 
-   *  Metadata Description: Boolean indicating whether the RS requires
-      actor authorization in addition to subject authorization per this
-      document
+   *  Metadata Description: Boolean indicating whether the RS advertises
+      that it evaluates the actor as an authorization input in addition
+      to the subject for delegated tokens
 
    *  Change Controller: IETF
 
@@ -2707,6 +2748,12 @@ Table of Contents
               (JWT) Profile for OAuth 2.0 Client Authentication and
               Authorization Grants", RFC 7523, DOI 10.17487/RFC7523, May
               2015, <https://www.rfc-editor.org/info/rfc7523>.
+
+   [RFC8705]  Campbell, B., Bradley, J., Sakimura, N., and T.
+              Lodderstedt, "OAuth 2.0 Mutual-TLS Client Authentication
+              and Certificate-Bound Access Tokens", RFC 8705,
+              DOI 10.17487/RFC8705, February 2020,
+              <https://www.rfc-editor.org/info/rfc8705>.
 
    [RFC7662]  Richer, J., Ed., "OAuth 2.0 Token Introspection",
               RFC 7662, DOI 10.17487/RFC7662, October 2015,
@@ -2778,12 +2825,6 @@ Table of Contents
    [RFC6749]  Hardt, D., Ed., "The OAuth 2.0 Authorization Framework",
               RFC 6749, DOI 10.17487/RFC6749, October 2012,
               <https://www.rfc-editor.org/info/rfc6749>.
-
-   [RFC8705]  Campbell, B., Bradley, J., Sakimura, N., and T.
-              Lodderstedt, "OAuth 2.0 Mutual-TLS Client Authentication
-              and Certificate-Bound Access Tokens", RFC 8705,
-              DOI 10.17487/RFC8705, February 2020,
-              <https://www.rfc-editor.org/info/rfc8705>.
 
    [RFC9700]  Lodderstedt, T., Bradley, J., Labunets, A., and D. Fett,
               "Best Current Practice for OAuth 2.0 Security", BCP 240,
