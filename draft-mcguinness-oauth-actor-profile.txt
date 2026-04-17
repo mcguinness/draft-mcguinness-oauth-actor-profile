@@ -643,21 +643,26 @@ Table of Contents
    |Role       |Inputs       |Minimum checks                     |Outputs / behavior          |
    +===========+=============+===================================+============================+
    |Assertion- |JWT assertion|Validate JWT; trust issuer;        |Preserve actor in issued    |
-   |consuming  |grant with   |validate (sub, actor) delegation;  |token; see Section 5.2      |
-   |AS         |act          |enforce local chain-depth maximum  |                            |
+   |consuming  |grant with   |validate delegation for the (sub,  |token; see Section 5.2      |
+   |AS         |act          |outermost act.sub) relationship;   |                            |
+   |           |             |enforce local chain-depth maximum  |                            |
    |           |             |per Section 4.8; optionally verify |                            |
    |           |             |act.cnf key                        |                            |
    +-----------+-------------+-----------------------------------+----------------------------+
    |Token-     |subject_token|Validate token; trust issuer;      |Issue token with preserved  |
-   |exchange AS|or inbound   |validate actor authorization;      |or extended act chain; see  |
-   |           |token with   |enforce scope reduction and local  |Section 6.2                 |
-   |           |act chain    |chain-depth maximum per Section 4.8|                            |
+   |exchange AS|or inbound   |validate authorization for the     |or extended act chain; see  |
+   |           |token with   |(sub, outermost act.sub)           |Section 6.2                 |
+   |           |act chain    |relationship when required by local|                            |
+   |           |             |policy; enforce scope reduction and|                            |
+   |           |             |local chain-depth maximum per      |                            |
+   |           |             |Section 4.8                        |                            |
    +-----------+-------------+-----------------------------------+----------------------------+
    |Resource   |Access token |Validate token; validate top-level |Apply delegated-token       |
    |Server     |or           |cnf binding; evaluate subject;     |policy; advertise           |
-   |           |Transaction  |evaluate actor when required by    |actor_authorization_required|
-   |           |Token with   |local policy                       |when enforcing actor        |
-   |           |act          |                                   |authorization; see          |
+   |           |Transaction  |evaluate authorization of the (sub,|actor_authorization_required|
+   |           |Token with   |outermost act.sub) pair when       |when enforcing authorization|
+   |           |act          |required by local policy           |of the (sub, outermost      |
+   |           |             |                                   |act.sub) pair; see          |
    |           |             |                                   |Section 6.3                 |
    +-----------+-------------+-----------------------------------+----------------------------+
    |Transaction|Inbound token|Validate token; authenticate       |Preserve sub; set req_wl;   |
@@ -1309,12 +1314,17 @@ Table of Contents
 
    6.  The AS MUST verify proof of possession per the token-endpoint
        mechanism in use (DPoP per [RFC9449] or mTLS per [RFC8705]).
-       When the outermost act.cnf carries a key reference (jkt for DPoP,
-       x5t#S256 for mTLS) and local AS policy enables the optional
-       sender-constraint check (Section 4.6), the AS MUST verify
-       consistency with that key and MUST reject with invalid_grant on
-       failure.  Inner act.cnf values MUST NOT drive proof-of-possession
-       requirements for the current request.
+       When DPoP is used, the AS MUST verify the DPoP proof against the
+       top-level cnf.jkt of the inbound assertion grant, not the
+       presenter's locally registered key.  In cross-domain flows the
+       top-level cnf.jkt of the assertion grant was set by the upstream
+       issuer; the receiving AS MUST treat that value as the expected
+       key for the DPoP proof and MUST reject with invalid_grant if the
+       proof does not match.  When the outermost act.cnf carries a key
+       reference and local AS policy enables the optional sender-
+       constraint check (Section 4.6), the AS MUST additionally verify
+       consistency with that key.  Inner act.cnf values MUST NOT drive
+       proof-of-possession requirements for the current request.
 
           Note: The absence of act.cnf does not affect the DPoP binding
           obligation; [RFC9449] requires the AS to bind the issued
@@ -1509,6 +1519,17 @@ Table of Contents
    issued token and its processing, not to the upstream method by which
    the AS determined the actor.
 
+   The authorization code flow is within scope of the third condition
+   above.  When a resource owner interactively authorizes an agent via
+   /authorize, the AS MAY include act in the issued access token if it
+   has independent knowledge (a pre-registered delegation grant,
+   explicit consent record, or policy rule) that the OAuth client is
+   acting as a distinct actor on behalf of the resource owner.  The
+   actor identity MUST be derived from that delegation record or policy
+   rule, not from the client registration alone.  If no such basis
+   exists, the AS MUST NOT include act in the access token issued via
+   the authorization code flow.
+
    When none of these conditions hold, the AS MUST NOT include an act
    claim in the issued token.  When a client explicitly requests a
    delegated output — for example by supplying an actor_token parameter
@@ -1518,6 +1539,23 @@ Table of Contents
    redefine the semantics of actor_token or subject_token in the Token
    Exchange request itself; it defines only how validated actor
    information is represented in the issued JWT.
+
+   When a Token Exchange request includes both a subject_token that
+   already carries an act chain and an explicit actor_token parameter,
+   the AS MUST treat the actor_token as the authoritative source for the
+   immediate actor's identity.  The AS MUST validate the actor_token per
+   Section 5.2 steps 2–6 and use the identity it conveys to construct
+   the outermost act in the issued token.  If the actor_token identity
+   is inconsistent with the outermost actor in the subject_token's act
+   chain and local policy does not permit them to diverge, the AS MUST
+   reject the request with invalid_grant.  If the AS accepts the request
+   despite the inconsistency, it MUST use the actor_token identity as
+   the outermost act.sub and MUST nest the subject_token's inbound chain
+   beneath it.  When only one of the two sources is present, the AS uses
+   whichever is available.  When the authorization code flow produces a
+   token with a pre-registered delegation grant (third condition above),
+   actor_token is not applicable and the AS derives the actor from local
+   policy.
 
    Some deployments also carry an azp claim as an auxiliary client-
    identity signal, often as an OpenID Connect carry-over used by
@@ -1595,6 +1633,13 @@ Table of Contents
        act.iss or any other field in inherited act objects, regardless
        of inbound chain depth; those entries were authored by upstream
        issuers and are fixed at the point of authorship.
+
+       When the actor identity was derived from an actor_token parameter
+       rather than from an act claim in the subject_token, the outermost
+       act in the issued token is AS-asserted based on the validated
+       actor_token; it is not chain-propagated from the subject token.
+       Consumers MUST NOT infer that the actor_token-derived act was
+       present in or endorsed by the subject token issuer.
 
    4.  If the inbound actor information cannot be validated, or nesting
        would exceed the chain-depth limit in Section 4.8, the AS MUST
@@ -1712,12 +1757,15 @@ Table of Contents
           authorization evaluation required by local policy, including
           actor authorization when required: HTTP 403 with
           error="actor_unauthorized" in the WWW-Authenticate challenge
-          per [RFC6750], Section 3.1.  The RS MUST NOT use
-          error="insufficient_scope" to signal actor authorization
-          failures; that error code indicates the token's scope is
-          insufficient for the operation and implies the client should
-          retry with broader scope, which does not describe an actor
-          identity or delegation policy failure.
+          per [RFC6750], Section 3.1.  The error attribute in the WWW-
+          Authenticate header supports extension values registered in
+          the OAuth Extensions Error Registry; actor_unauthorized is
+          registered by this document (Section 14.3) and MAY appear
+          there.  The RS MUST NOT use error="insufficient_scope" to
+          signal actor authorization failures; that error code indicates
+          the token's scope is insufficient for the operation and
+          implies the client should retry with broader scope, which does
+          not describe an actor identity or delegation policy failure.
 
        *  The RS MUST NOT include actor-specific rejection details in
           error responses exposed to clients outside the trust domain.
@@ -2336,7 +2384,14 @@ Table of Contents
       act claim.  An RS that enforces this policy for a given request
       path MUST reject tokens that omit act or that carry act claims not
       conforming to this profile.  When false or absent, actor-profile
-      conformance is not advertised by metadata.
+      conformance is not advertised by metadata.  This parameter is
+      resource-scoped, not path-scoped; [RFC9728] does not define sub-
+      resource granularity for Protected Resource Metadata.  An RS that
+      requires actor-profile conformance only on specific request paths
+      (e.g., /payments but not /profile) MUST apply enforcement at the
+      request layer and SHOULD set this parameter to true if any path
+      requires it, so clients treat the resource as actor-profile-
+      required overall.
 
    actor_authorization_required:  OPTIONAL.  A boolean.  When true, the
       RS indicates that it expects evaluation of the actor as an
@@ -2472,6 +2527,10 @@ Table of Contents
    identifiers and explicit actor claims during rollout, measure and
    reconcile mismatches, and then require act where explicit delegation
    is needed.
+
+   A deployment that chooses explicit delegation only can reject non-act
+   delegated requests entirely and omit legacy client-identity
+   reconciliation.
 
    One safe migration pattern is:
 
@@ -2733,23 +2792,24 @@ Table of Contents
    act claim is present is susceptible to a confused deputy attack: a
    malicious actor exploits a subject's pre-existing permissions without
    the subject's ongoing consent simply by presenting a token that names
-   the subject in sub.  The mitigation is actor authorization:
-   evaluating both sub and act.sub before granting access.  Resource
-   servers SHOULD implement actor authorization for delegated tokens
-   under this document.
+   the subject in sub.  The mitigation is authorization of the (sub,
+   outermost act.sub) pair before granting access.  Resource servers
+   SHOULD implement such evaluation for delegated tokens under this
+   document.
 
 12.8.  Actor-Authorization Bypass
 
    A resource server that advertises actor_authorization_required: true
-   but fails to enforce actor authorization on every code path allows an
-   attacker to bypass that requirement by exploiting gaps in the
-   enforcement logic.  Resource servers that require actor authorization
-   SHOULD advertise that behavior using actor_authorization_required:
-   true and MUST apply the evaluation on every request path where they
-   enforce that requirement, including introspection-based validation
-   paths.  Deployments that choose not to require actor authorization
-   SHOULD follow the narrowly scoped and explicitly documented
-   informational-only cases described in Section 8.
+   but fails to enforce authorization of the (sub, outermost act.sub)
+   pair on every code path allows an attacker to bypass that requirement
+   by exploiting gaps in the enforcement logic.  Resource servers that
+   require such authorization SHOULD advertise that behavior using
+   actor_authorization_required: true and MUST apply the evaluation on
+   every request path where they enforce that requirement, including
+   introspection-based validation paths.  Deployments that choose not to
+   require such authorization SHOULD follow the narrowly scoped and
+   explicitly documented informational-only cases described in
+   Section 8.
 
 12.9.  Subject Namespace Translation
 
@@ -3539,12 +3599,13 @@ B.6.  Step 4: Agent Calls Booking Tool API
 
    {"origin": "SFO", "destination": "NYC", "depart": "2026-04-15"}
 
-   The Booking Tool RS applies actor authorization (Section 8): it
-   evaluates both Alice (sub, sub_profile: user) and the Travel
-   Assistant (act.sub, sub_profile: ai_agent).  Because the RS
-   advertises actor_authorization_required: true, both principals MUST
-   be independently authorized.  The act.sub_profile value is checked
-   against entity_profiles_supported.actor per Section 9.
+   The Booking Tool RS applies authorization of the (sub, outermost
+   act.sub) pair (Section 8): it evaluates Alice (sub, sub_profile:
+   user) together with the Travel Assistant (act.sub, sub_profile:
+   ai_agent) for the requested operation.  Because the RS advertises
+   actor_authorization_required: true, the (sub, outermost act.sub)
+   relationship MUST satisfy local policy.  The act.sub_profile value is
+   checked against entity_profiles_supported.actor per Section 9.
 
 B.7.  Step 5: Booking Tool Exchanges Access Token for Transaction Token
 
@@ -3630,13 +3691,14 @@ B.8.  Step 6: Booking Tool Calls Inventory Service
    WIMSE specifications: the WPT proves possession of the key identified
    by the WIT, wth binds the proof to the presented WIT, and tth binds
    it to the presented Transaction Token.  The Inventory Service then
-   applies actor authorization (Section 8): Alice (sub) governs data
-   access policy (e.g., travel tier); the Booking Tool (act.sub) is the
-   authorized internal workload.  The req_wl claim provides consistent
-   TTS workload context for the same service in this example.  The
-   nested act.act.sub (Travel Assistant) is carried as prior delegation
-   context and is not evaluated for access control at this internal
-   tier, consistent with the guidance on inner actors in Section 8.2.
+   applies authorization of the (sub, outermost act.sub) pair
+   (Section 8): Alice (sub) governs data access policy (e.g., travel
+   tier), and the Booking Tool (act.sub) is the authorized internal
+   workload for that request.  The req_wl claim provides consistent TTS
+   workload context for the same service in this example.  The nested
+   act.act.sub (Travel Assistant) is carried as prior delegation context
+   and is not evaluated for access control at this internal tier,
+   consistent with the guidance on inner actors in Section 8.2.
 
 B.9.  Summary of Token Transformations
 
