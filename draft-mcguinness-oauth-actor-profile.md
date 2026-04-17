@@ -254,6 +254,30 @@ Neither AS metadata {{RFC8414}} nor Protected Resource Metadata {{RFC9728}} defi
 
 This profile specifies an extended form of the `act` claim defined in {{RFC8693}}.  When an implementation elects to use this profile in a context where an actor is distinct from the subject, it MUST apply the profile as defined in this section.  This document standardizes actor-profile claim structure, processing rules, and discovery metadata.  It does not standardize delegation approval policy, trust framework decisions, or identifier-mapping logic; those remain deployment-specific.  The absence of an explicit actor-carrying inbound credential MUST NOT be interpreted as meaning that the OAuth client automatically defines the delegated actor.
 
+## Profile Invariants
+
+The following invariants define the interoperable core of this profile:
+
+*  `sub` is the authorizing principal.
+*  The outermost `act.sub` is the immediate actor for the current token presentation.
+*  `act.iss` identifies namespace authority for `act.sub`; it is not a credential-issuer claim or hop-provenance marker.
+*  Nested `act` objects are preserved prior-actor context unless a deployment explicitly applies additional local-policy processing to them.
+*  `client_id` and `azp` are OAuth client identifiers, not actor identifiers.
+
+## What This Profile Does Not Standardize
+
+This profile does not standardize the following:
+
+*  delegation approval, consent, or grant-management policy
+*  subject-identifier translation mechanisms or proof of subject equivalence across namespaces
+*  authorization semantics for nested `act` objects
+*  client discovery or preflight algorithms beyond the metadata semantics defined here
+*  cross-domain trust frameworks for establishing namespace authority for `act.iss`
+
+## Conformance Scope
+
+Conformance to this profile means that issuers and consumers represent, preserve, validate, and interpret actor claims consistently according to this document.  This profile standardizes interoperable representation and baseline processing for delegated actors.  It does not require every deployment to enforce authorization of the (`sub`, outermost `act.sub`) pair on every request, although such enforcement is RECOMMENDED for security-sensitive delegated access.
+
 The actor profile is applicable to:
 
 *  JWT assertion grants ({{jwt-assertion-grants}})
@@ -319,6 +343,8 @@ When an `act` object contains extension members beyond those defined in this doc
 ## Multi-Value `sub_profile` Policy Evaluation {#forward-compat-sub-profile}
 
 Value preservation and propagation for unrecognized `sub_profile` values are governed by {{I-D.mora-oauth-entity-profiles}}.  An AS or RS MUST NOT reject a token or assertion solely because a `sub_profile` value is unrecognized; unrecognized values MUST NOT be used to infer authorization semantics.
+
+The `sub_profile` claim improves local policy expression and coarse compatibility signaling, but it does not make authorization outcomes portable across deployments.  Two deployments can accept the same `sub_profile` value while applying different authorization consequences to it.
 
 When local policy restricts the accepted set of `sub_profile` values for an actor, that set SHOULD be advertised via `entity_profiles_supported.actor` in AS metadata ({{authorization-server-metadata}}) so that clients can detect incompatibility before making a request.  Clients discover the accepted set for a given resource by consulting `entity_profiles_supported.actor` in the AS metadata for the AS listed in the resource's `authorization_servers` ({{RFC9728}}).
 
@@ -531,7 +557,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
     *  Pre-registration entries that explicitly authorize `act.iss` to assert identifiers of the form used in `act.sub`.
     *  Local policy rules that authorize `act.iss` to assert the specific class of identifier used in `act.sub`.
 
-    Deployments using non-HTTPS identifier schemes (e.g., URNs for workload identities) MUST establish namespace authority through one of the other mechanisms above or an equivalent local trust determination.  Interoperability for such schemes is generally deployment-specific and MUST NOT be assumed across trust domains absent explicit agreement or another trust framework.  If the AS cannot establish that `act.iss` is authoritative for the namespace containing `act.sub`, the AS MUST reject the request with `invalid_grant`.
+    Deployments using non-HTTPS identifier schemes (e.g., URNs for workload identities) MUST establish namespace authority through one of the other mechanisms above or an equivalent local trust determination.  Interoperability for such schemes is generally deployment-specific and MUST NOT be assumed across trust domains absent explicit agreement or another trust framework.  More generally, cross-domain interoperability for `act.iss` validation is only well-defined when the participating parties share a trust framework or an explicit agreement about namespace authority.  If the AS cannot establish that `act.iss` is authoritative for the namespace containing `act.sub`, the AS MUST reject the request with `invalid_grant`.
 
 4.  Before issuing a token, the AS SHOULD evaluate whether `act.sub` is authorized to exercise delegation on behalf of `sub`, using the AS's local policy (for example, a pre-registered delegation grant, an explicit consent record, or a policy rule covering the acting party).  When AS policy explicitly prohibits the identified actor from acting on behalf of the subject, the AS MUST return `access_denied`.  This document does not standardize the form that delegation authorization must take.
 
@@ -872,7 +898,7 @@ When a token contains both `sub` and an `act` claim, a resource server has two i
 
 *  **Actor principal** (`act.sub`): the party that is making the immediate request.  This principal may be in a different organizational domain and trust level from the subject.
 
-Actor authorization at the resource server evaluates both principals and the relationship between them, that is, whether the outermost actor is authorized to act on behalf of the subject.  This specification recommends this subject-plus-actor-pair evaluation model for delegated tokens, but does not require every RS to use it in every deployment.
+Actor authorization at the resource server evaluates both principals and the relationship between them, that is, whether the outermost actor is authorized to act on behalf of the subject.  This specification recommends this subject-plus-actor evaluation model for delegated tokens, but does not require every RS to use it in every deployment.
 
 For Transaction Tokens, the primary policy pair remains (`sub`, `act.sub`).  The `req_wl` claim provides workload context from the TTS and is not a replacement for `act.sub`.  Nested `act` objects provide prior-actor context for audit, policy refinement, or chain validation.
 
@@ -1137,6 +1163,8 @@ The `sub_profile` claim is asserted by the token issuer and is only as trustwort
 
 ## Delegation Revocation
 
+The revocation-related requirements in this section are limited to how this profile interacts with already-issued tokens and refresh behavior.
+
 Token revocation ({{RFC7009}}) applies to individual tokens but does not revoke an underlying delegation relationship or invalidate already-issued downstream tokens in a delegation chain.  When Alice revokes her delegation to an agent, access tokens already issued to downstream actors remain valid until their `exp` time.  Short token lifetimes are the primary mitigation; see {{I-D.ietf-oauth-security-topics}} for general access token lifetime guidance.
 
 The AS SHOULD refuse to issue new tokens for a (subject, actor) pair when it has authoritative knowledge that the delegation relationship has been revoked.  If the AS has issued refresh tokens in a delegated context, it SHOULD proactively revoke them when the delegation relationship is revoked.  Implementations MUST NOT use delegation chain depth as a rationale for skipping revocation checks.
@@ -1151,7 +1179,7 @@ A resource server that evaluates only the subject principal when an `act` claim 
 
 ## Actor-Authorization Bypass
 
-A resource server that advertises `actor_authorization_required: true` but fails to enforce actor evaluation on every code path allows an attacker to bypass that requirement by exploiting gaps in the enforcement logic.  Resource servers that require actor authorization SHOULD advertise that behavior using `actor_authorization_required: true` and MUST apply the evaluation on every request path where they enforce that requirement, including introspection-based validation paths.  Deployments that choose not to require actor authorization SHOULD follow the narrowly scoped and explicitly documented informational-only cases described in {{dual-principal-authorization}}.
+A resource server that advertises `actor_authorization_required: true` but fails to enforce actor authorization on every code path allows an attacker to bypass that requirement by exploiting gaps in the enforcement logic.  Resource servers that require actor authorization SHOULD advertise that behavior using `actor_authorization_required: true` and MUST apply the evaluation on every request path where they enforce that requirement, including introspection-based validation paths.  Deployments that choose not to require actor authorization SHOULD follow the narrowly scoped and explicitly documented informational-only cases described in {{dual-principal-authorization}}.
 
 ## Subject Namespace Translation
 
@@ -1201,6 +1229,24 @@ This token is structurally non-conforming to this profile.  An AS processing it 
 ### Over-depth delegated chain
 
 If a request would cause the resulting nested `act` chain to exceed the implementation's configured local maximum delegation depth, the issuer MUST reject the request with `invalid_request`; it MUST NOT silently truncate the chain.
+
+### Pair authorization failure at the resource server
+
+~~~json
+{
+  "iss": "https://as.example.com",
+  "sub": "https://idp.example.com/users/alice",
+  "aud": "https://api.example.com",
+  "scope": "payments:create",
+  "act": {
+    "sub": "https://agents.example.com/travel-assistant",
+    "iss": "https://as.example.com",
+    "sub_profile": "ai_agent"
+  }
+}
+~~~
+
+If the token is otherwise valid but the resource server's local policy does not permit the (`sub`, outermost `act.sub`) pair for `payments:create`, and the resource enforces `actor_authorization_required`, the RS MUST reject the request with HTTP 403.
 
 ## Token Substitution
 
