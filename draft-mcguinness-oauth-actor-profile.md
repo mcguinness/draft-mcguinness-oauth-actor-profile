@@ -281,15 +281,6 @@ Conformance to this profile means that issuers and consumers represent, preserve
 
 Same-domain deployments will often satisfy these requirements with straightforward local configuration for namespace authority and identifier mapping.  Cross-domain deployments typically require explicit trust-framework or bilateral agreement decisions and therefore have a higher interoperability burden under this profile.
 
-## Failure Model
-
-At a high level, this profile uses the following failure model:
-
-*  malformed or missing required actor claims result in rejection
-*  failed `act.iss` namespace-authority validation results in rejection
-*  delegation chains that exceed the applicable local maximum result in rejection
-*  failure of authorization for the (`sub`, outermost `act.sub`) pair results in denial under local policy
-
 The actor profile is applicable to:
 
 *  JWT assertion grants ({{jwt-assertion-grants}})
