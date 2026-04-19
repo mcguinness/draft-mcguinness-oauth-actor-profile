@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-04-14T01:18:03.340321+00:00",
+  "timestamp": "2026-04-19T01:20:29.905121+00:00",
   "repo": "mcguinness/draft-mcguinness-oauth-actor-profile",
   "labels": [
     {
@@ -88,13 +88,13 @@
       "labels": [],
       "body": "Adds optional act_receipts support to the actor-profile draft.\r\n\r\n`act_receipts` are signed per-hop receipt JWTs that travel alongside the readable act chain. They let an issuer record cryptographic provenance for each actor hop, so a verifier can validate who added each hop and how the chain was extended across trust boundaries.\r\n\r\nThis PR includes:\r\n\r\n  - a new Actor Chain Receipts section defining receipt structure, chaining, issuer behavior, and recipient validation\r\n  - a simplified secure core for receipts:\r\n      - required claims: `iss`, `sub`, `act_sub`, `act_iss`, `prev`, `iat`\r\n      - asymmetric signatures only\r\n      - no receipt-level `exp` or extra ordering rules\r\n  - explicit all-or-nothing validation for the visible `act` chain\r\n  - subject-continuity handling for cross-issuer hops\r\n  - key-discovery and trust rules:\r\n      - discoverable keys preferred\r\n      - local-policy fallback allowed for pretrusted issuers\r\n  - new metadata:\r\n      - `actor_receipts_supported`\r\n      - `actor_receipts_required`\r\n  - client capability-negotiation updates for receipt-aware paths\r\n  - security text positioning `act_receipts` as the optional stronger provenance mechanism\r\n  - appendix examples showing `act_receipts` being created and extended across the end-to-end flow",
       "createdAt": "2026-04-09T05:08:15Z",
-      "updatedAt": "2026-04-09T05:08:15Z",
+      "updatedAt": "2026-04-17T16:15:13Z",
       "baseRepository": "mcguinness/draft-mcguinness-oauth-actor-profile",
       "baseRefName": "main",
-      "baseRefOid": "fa36f3317b23fb01b3cc26a2a7db9fc0dfd24bab",
+      "baseRefOid": "8ff2e5a609d9cc67aee09735716d1e23e72ca3d6",
       "headRepository": "mcguinness/draft-mcguinness-oauth-actor-profile",
       "headRefName": "actor-receipts",
-      "headRefOid": "cfa17e4be2e18008dbc5a27b2c77948ed2a07da9",
+      "headRefOid": "952044e03b94d14457159a6664943c897a8990f5",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
