@@ -582,8 +582,9 @@ Table of Contents
    |               |             |                                   |                            |rules   |
    +===============+=============+===================================+============================+========+
    |Assertion-     |JWT assertion|Validate JWT; trust issuer;        |Preserve actor in issued    |Section |
-   |consuming AS   |grant with   |validate delegation for (sub,      |token                       |4.1.2   |
-   |               |act          |outermost act.sub); enforce chain- |                            |        |
+   |consuming AS   |grant with   |validate delegation when required  |token                       |4.1.2   |
+   |               |act          |by the applicable processing path  |                            |        |
+   |               |             |or local policy; enforce chain-    |                            |        |
    |               |             |depth limit; optionally verify     |                            |        |
    |               |             |act.cnf key                        |                            |        |
    +---------------+-------------+-----------------------------------+----------------------------+--------+
@@ -1981,11 +1982,11 @@ AddOutermostActor(inbound_chain, new_actor):
      +========+=========================+============================+
      | Claim  | Status                  | Actor-profile relevance    |
      +========+=========================+============================+
-     | iss    | SHOULD when carrying    | Used to detect cross-      |
-     |        | act; OPTIONAL otherwise | domain actor chains by     |
-     |        | (SHOULD when crossing   | comparing act.iss to iss;  |
-     |        | trust domains)          | cross-domain detection not |
-     |        |                         | applicable when absent     |
+     | iss    | REQUIRED when carrying  | Identifies the Transaction |
+     |        | act; OPTIONAL otherwise | Token issuer and, when act |
+     |        | (SHOULD when crossing   | is present, provides the   |
+     |        | trust domains)          | outer-token issuer context |
+     |        |                         | required by this profile   |
      +--------+-------------------------+----------------------------+
      | aud    | REQUIRED                | Identifies the Trust       |
      |        |                         | Domain                     |
@@ -3196,13 +3197,16 @@ AddOutermostActor(inbound_chain, new_actor):
    SHOULD apply more conservative policy and MAY reject the request when
    its local policy requires a complete delegation chain.
 
-   Opaque access tokens are not conformant to this profile.  When an AS
-   issues a delegated opaque access token and supports introspection, it
-   MAY expose equivalent actor-profile information through
-   introspection.  When it does so, the following claims define the
-   minimum equivalent introspection semantics for active delegated
-   tokens; providing them does not make the opaque token itself
-   conformant to this profile:
+   Opaque access tokens are not conformant to this profile as token
+   formats.  When an AS issues a delegated opaque access token and
+   supports introspection, it MAY expose equivalent actor-profile
+   information through introspection for RS processing.  This is a
+   deployment-specific compatibility mechanism for opaque tokens; it
+   does not make the opaque token itself conformant to this profile, and
+   support for this path MUST NOT be inferred solely from
+   actor_profile_required or actor_authorization_required metadata.
+   When used, the following claims define the minimum equivalent
+   introspection semantics for active delegated tokens:
 
    *  active: REQUIRED.  MUST be true for an active token.
 
@@ -3462,33 +3466,43 @@ AddOutermostActor(inbound_chain, new_actor):
 
    actor_profile_required:  OPTIONAL.  A boolean.  When true, the RS
       indicates that delegated requests for this resource are expected
-      to use tokens carrying an act claim conforming to the actor
-      profile defined in this document.  Clients SHOULD treat this as a
-      strong indication that delegated access will require a conforming
-      act claim.  An RS that enforces this policy for a given request
-      path MUST reject tokens that omit act or that carry act claims not
-      conforming to this profile.  When false or absent, actor-profile
-      conformance is not advertised by metadata.  This parameter is
-      resource-scoped, not path-scoped; [RFC9728] does not define sub-
-      resource granularity for Protected Resource Metadata.  An RS that
-      requires actor-profile conformance only on specific request paths
-      (e.g., /payments but not /profile) MUST apply enforcement at the
-      request layer.  Such an RS MAY set this parameter to true as a
-      conservative resource-wide signal, but clients and deployment
-      documentation SHOULD recognize that path-specific enforcement can
-      be stricter than resource metadata alone expresses.
+      to provide actor-profile information conforming to this document's
+      semantics.  For JWT access tokens and Transaction Tokens, this
+      ordinarily means a token carrying an act claim conforming to this
+      profile.  In deployments that use opaque access tokens, equivalent
+      actor-profile information MAY instead be conveyed to the RS via
+      introspection, but such support is deployment-specific and the
+      opaque token itself is not conformant to this profile.  Clients
+      SHOULD treat this as a strong indication that delegated access
+      will require either a conforming act claim in the token or an
+      explicitly documented opaque-token/introspection path providing
+      equivalent claims.  An RS that enforces this policy for a given
+      request path MUST reject delegated requests for which neither a
+      conforming act claim nor equivalent introspection-derived actor-
+      profile information is available to the RS.  When false or absent,
+      actor-profile conformance is not advertised by metadata.  This
+      parameter is resource-scoped, not path-scoped; [RFC9728] does not
+      define sub-resource granularity for Protected Resource Metadata.
+      An RS that requires actor-profile conformance only on specific
+      request paths (e.g., /payments but not /profile) MUST apply
+      enforcement at the request layer.  Such an RS MAY set this
+      parameter to true as a conservative resource-wide signal, but
+      clients and deployment documentation SHOULD recognize that path-
+      specific enforcement can be stricter than resource metadata alone
+      expresses.
 
    actor_authorization_required:  OPTIONAL.  A boolean.  When true, the
       RS signals that it ordinarily evaluates the actor as an
       authorization input in addition to the subject, as described in
-      Section 6.  Clients SHOULD treat this as meaning that a conforming
-      act-carrying token is likely required for delegated access.  An RS
-      that advertises this parameter SHOULD evaluate the (sub, outermost
-      act.sub) relationship on the request paths for which it intends
-      that signal to apply and therefore will ordinarily require a
-      conforming act claim there.  When false or absent, the RS makes no
-      metadata declaration to clients about whether actor authorization
-      is applied.
+      Section 6.  Clients SHOULD treat this as meaning that actor-
+      profile information is likely required for delegated access.  An
+      RS that advertises this parameter SHOULD evaluate the (sub,
+      outermost act.sub) relationship on the request paths for which it
+      intends that signal to apply and therefore will ordinarily require
+      a conforming act claim for self-contained tokens or equivalent act
+      information via introspection in opaque-token deployments.  When
+      false or absent, the RS makes no metadata declaration to clients
+      about whether actor authorization is applied.
 
    actor_profile_max_chain_depth:  OPTIONAL.  A positive integer
       indicating the maximum delegation chain depth that this RS will
@@ -3537,7 +3551,9 @@ AddOutermostActor(inbound_chain, new_actor):
    configuration.  As a safe default, a client that intends to make a
    request on behalf of another principal should treat
    actor_profile_required: true as indicating that it likely needs an
-   explicit act-carrying token for that resource.
+   explicit act-carrying token for that resource, unless deployment
+   documentation explicitly defines a delegated opaque-token path in
+   which introspection supplies equivalent actor-profile claims.
 
    When a delegated request explicitly carries actor-profile claims and
    act.sub_profile is included, its value SHOULD be drawn from the
@@ -4214,9 +4230,8 @@ AddOutermostActor(inbound_chain, new_actor):
    *  Metadata Name: actor_profile_required
 
    *  Metadata Description: Boolean indicating whether the RS advertises
-      that delegated requests for this resource are expected to use
-      tokens carrying an act claim conforming to the OAuth Actor Profile
-      for Delegation
+      that delegated requests for this resource are expected to provide
+      actor-profile information conforming to this document's semantics
 
    *  Change Controller: IETF
 
