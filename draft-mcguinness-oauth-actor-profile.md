@@ -104,7 +104,7 @@ informative:
 
 OAuth deployments increasingly involve multi-principal scenarios where an agent or workload acts on behalf of a human user across organizational and trust-domain boundaries.  Existing specifications provide relevant building blocks but do not define a common profile for representing the delegated actor relationship across token types, classifying actor entity types, or signaling support between authorization servers and resource servers.  The result is inconsistent actor representation and interoperability gaps that force deployments to rely on proprietary conventions.
 
-This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity: `client_id` identifies the OAuth client registration, `sub` identifies the authorizing principal, and `act.sub` identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common `act` claim structure with `sub_profile` for machine-processable entity classification and `cnf` for actor-associated key context, applies uniformly across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  It also defines how supporting Token Exchange inputs such as ID tokens, refresh tokens, JWT actor credentials, and the `may_act` claim are processed when introducing subject or actor identity into that three-token actor-profile model.  The document also registers metadata parameters for advertising actor-profile support and partial capability signals in cross-domain deployments.  This document standardizes the token representation of delegation relationships and the processing rules for issuers and consumers; it does not standardize the upstream policies and mechanisms by which systems determine whether a given actor is authorized to act for a subject, which remain deployment-specific.
+This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity: `client_id` identifies the OAuth client registration, `sub` identifies the authorizing principal, and `act.sub` identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common `act` claim structure with `sub_profile` for machine-processable entity classification, applies existing top-level `cnf` sender-constraint mechanisms consistently across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  It also defines how supporting Token Exchange inputs such as ID tokens, refresh tokens, JWT actor credentials, and the `may_act` claim are processed when introducing subject or actor identity into that three-token actor-profile model.  The document also registers metadata parameters for advertising actor-profile support and partial capability signals in cross-domain deployments.  This document standardizes the token representation of delegation relationships and the processing rules for issuers and consumers; it does not standardize the upstream policies and mechanisms by which systems determine whether a given actor is authorized to act for a subject, which remain deployment-specific.
 
 
 --- middle
@@ -119,7 +119,7 @@ The design center of this document is delegation clarity.  `client_id` identifie
 
 This document addresses that gap by specifying:
 
-*  A common actor profile structure that reuses `act` from {{RFC8693}} and adds `sub_profile` for entity-type classification and `cnf` for actor-associated key context.
+*  A common actor profile structure that reuses `act` from {{RFC8693}} and adds `sub_profile` for entity-type classification.
 *  Processing rules for profiled token families and supporting Token Exchange inputs, including how actor-profile information is validated and preserved across supported token transformations.
 *  Resource-server guidance for evaluating delegated access using the (`sub`, outermost `act.sub`) pair.
 *  Integration with OAuth Entity Profiles and discovery metadata so actor classification and capability signaling can be used consistently across deployments.
@@ -232,7 +232,7 @@ The following table summarizes the minimum implementation obligations by role.  
 
 | Role | Inputs | Minimum checks | Outputs / behavior | Detailed rules |
 |------|--------|----------------|--------------------|----------------|
-| Assertion-consuming AS | JWT assertion grant with `act` | Validate JWT; trust issuer; validate delegation when required by the applicable processing path or local policy; enforce chain-depth limit; optionally verify `act.cnf` key | Preserve actor in issued token | {{jwt-assertion-grants-processing}} |
+| Assertion-consuming AS | JWT assertion grant with `act` | Validate JWT; trust issuer; validate delegation when required by the applicable processing path or local policy; enforce chain-depth limit | Preserve actor in issued token | {{jwt-assertion-grants-processing}} |
 | Token-exchange AS (subject_token) | ID token, JWT assertion grant, JWT access token, refresh token, or Transaction Token as `subject_token` | Validate per credential type; trust issuer; validate delegation when required by local policy; enforce scope reduction and chain-depth limit | Issue token with preserved or extended `act` chain | {{id-token-as-subject-token}}, {{jwt-assertion-grant-as-subject-token}}, {{jwt-access-token-as-subject-token}}, {{refresh-token-as-subject-token}}, {{txn-token-as-subject-token}}; then {{jwt-access-token-propagation}} |
 | Token-exchange AS (actor_token) | Workload identity credential, JWT client assertion, or JWT access token as `actor_token` | Validate per credential type; trust issuer; verify proof of possession; derive outermost actor identity | Construct outermost `act` from validated actor identity; then apply {{jwt-access-token-propagation}} | {{workload-identity-as-actor-token}}, {{jwt-client-assertion-as-actor-token}}, {{jwt-access-token-as-actor-token}} |
 | Resource Server | Access token or Transaction Token carrying `act` | Validate token; validate presenter binding; evaluate subject; evaluate (`sub`, outermost `act.sub`) pair when required by local policy | Apply delegated-token policy; advertise `actor_authorization_required` when enforcing (`sub`, outermost `act.sub`) authorization | {{jwt-access-token-rs-processing}}, {{txn-token-rs-processing}} |
@@ -267,12 +267,7 @@ act-object = {
 `sub_profile`:
 : RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in Section 4.2 of {{I-D.mora-oauth-entity-profiles}}.  Values used within `act` objects MUST be registered with the "Actor Profile" usage location in the OAuth Entity Profiles registry (Section 14.1 of {{I-D.mora-oauth-entity-profiles}}) or be privately defined collision-resistant values.  If the acting entity fits more than one profile, multiple values MAY be included as a space-delimited string (e.g., `"service ai_agent"`).  Policy evaluation rules for multi-value strings are defined in {{forward-compat-sub-profile}}.
 
-`cnf`:
-: OPTIONAL.  A confirmation claim as defined in {{RFC7800, Section 3.1}}.  When present, carries keying material associated with the actor identified by this `act` object.  It is distinct from the top-level `cnf` claim, which identifies the keying material the current token presenter MUST use to demonstrate proof of possession.  `act.cnf` does not create a presenter-binding obligation for the current token.  When a public key is conveyed, the `jkt` member is RECOMMENDED.
-
-  For the **outermost** `act` object, `cnf` carries the actor-associated key of the immediate acting party.  When an inbound assertion's outermost `act` carries a `cnf.jkt` value, an AS that has explicitly configured a key-consistency check SHOULD verify that the inbound DPoP proof (or mTLS certificate) is consistent with that key and MUST return `invalid_grant` if the check fails.  This check confirms that the proof matches the key the asserting party claimed; it does not independently verify actor key possession and its assurance is bounded by the trustworthiness of the assertion issuer.  It does not substitute for issuer-authority validation per {{jwt-assertion-grants-processing}} step 2.  ASes that have not explicitly configured this check SHOULD ignore `act.cnf` for proof-of-possession purposes.
-
-  For **inner** (nested) `act` objects, `cnf` records the actor-associated key from an earlier hop as endorsed by the outer token issuer.  Inner `act.cnf` values MUST NOT drive proof-of-possession requirements at any verification layer.
+Per-actor key provenance within the delegation chain is outside the scope of this profile.  The current presenter's keying material is conveyed only by the token's top-level `cnf` claim, as described in {{sender-constraint}}.  Other members carried inside an `act` object, including any confirmation-style members defined by another profile, do not have standardized proof-of-possession semantics under this document unless another specification explicitly defines them.
 
 The `client_profile` claim defined in {{I-D.mora-oauth-entity-profiles}} classifies the OAuth client and MUST NOT appear within an `act` object.  Client classification belongs at the top level of the token.  An AS or RS that encounters a `client_profile` member inside an `act` node MAY reject the token or ignore the offending member; it MUST NOT treat it as a valid actor classification.
 
@@ -317,17 +312,15 @@ This document uses the following terminology consistently:
     "sub": "https://tools.example.com/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
-    "cnf": { "jkt": "0ZcOCORZNYy...9ZhHiZN" },
     "act": {
       "sub": "https://agents.example.com/travel-assistant",
       "iss": "https://as.enterprise.example",
-      "sub_profile": "ai_agent",
-      "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8A...CQ" }
+      "sub_profile": "ai_agent"
     }
   }
 }
 ~~~
-In this example the booking tool (outermost `act`) is the current outermost actor.  The delegation chain originates with Alice (`sub`), who first authorized the travel assistant (nested `act`); the travel assistant then sub-delegated to the booking tool, which is now the immediate presenter.  Each actor carries associated key context via `cnf.jkt`, and the chain carries prior-actor information to the extent that the current token issuer is trusted to have validated and faithfully propagated it.
+In this example the booking tool (outermost `act`) is the current outermost actor.  The delegation chain originates with Alice (`sub`), who first authorized the travel assistant (nested `act`); the travel assistant then sub-delegated to the booking tool, which is now the immediate presenter.  The chain carries prior-actor information to the extent that the current token issuer is trusted to have validated and faithfully propagated it.
 
 Delegation depth is defined as the number of `act` objects in the chain, counting from the outermost.  A token with a single `act` object and no nested `act` within it has depth 1.  Each additional level of nesting adds 1.  Depth is counted on the resulting chain after any new outermost `act` is added, not on the inbound token.  Implementations MUST support at least one level of delegation (depth 1).  Implementations intended for cross-domain multi-hop interoperability SHOULD support at least five levels of nested `act` objects to accommodate realistic multi-tier architectures (e.g., user → orchestrator → agent → tool → internal service).  An implementation that supports only depth 1 and rejects all depth-2 or deeper chains is conformant to this document but will not interoperate with multi-hop deployments.  Same-domain deployments MAY support a shallower local maximum when that limit is sufficient for their architecture.  Implementations MAY support larger depths and SHOULD define and enforce a local maximum delegation depth according to deployment needs.  Implementations that receive a token exceeding their configured local maximum delegation depth MUST reject it with `invalid_request`.  When a request would result in a chain that exceeds that local limit, the AS MUST reject the request with `invalid_request`; it MUST NOT silently truncate the chain.
 
@@ -367,7 +360,6 @@ AddOutermostActor(inbound_chain, new_actor):
   outermost.sub         = new_actor.sub      // REQUIRED
   outermost.iss         = new_actor.iss      // REQUIRED: namespace authority for new_actor.sub
   outermost.sub_profile = new_actor.sub_profile  // RECOMMENDED when known
-  outermost.cnf         = new_actor.cnf      // OPTIONAL
 
   if inbound_chain is present:
     outermost.act = inbound_chain  // nest entire validated inbound chain
@@ -402,18 +394,17 @@ When Agent A (the inbound outermost actor) triggers a request that establishes A
 
 ## Sender Constraint and Key Binding {#sender-constraint}
 
-When sender-constrained tokens are used with a delegated token, the top-level `cnf` claim identifies the key or certificate of the immediate presenter of that token.  When delegation is present, that immediate presenter is the outermost actor.  Authorization servers and resource servers validate current proof of possession against the top-level `cnf`, not against nested `act.cnf` values.  `act.cnf` values, at any nesting depth, do not create an additional proof-of-possession obligation at the resource server unless another specification or local policy explicitly requires it.
+When sender-constrained tokens are used with a delegated token, the top-level `cnf` claim identifies the key or certificate of the immediate presenter of that token.  When delegation is present, that immediate presenter is ordinarily the party identified by the outermost actor.  Authorization servers and resource servers validate current proof of possession against the top-level `cnf`.
 
 When a sender-constrained token is used only as an inbound credential in Token Exchange, its top-level `cnf` remains binding information for that inbound token instance.  If the exchange keeps the same presenter, the requester proves possession of that key per the underlying sender-constraint mechanism.  If the exchange legitimately introduces a distinct new presenter established by an `actor_token` or by the output-token mechanism (for example, Transaction Token issuance that re-binds the delegation chain to a new presenter), the AS validates the current requester's proof under the credential or mechanism that establishes that new presenter and MUST NOT require the new presenter to prove possession of the prior presenter's key solely because the inbound `subject_token` was sender-constrained.
 
 When DPoP {{RFC9449}} is used:
 
 *  The top-level `cnf.jkt` of the token MUST identify the key of the immediate presenter, the actor identified by the outermost `act` claim.
-*  The `cnf.jkt` within each `act` object identifies keying material associated with that specific actor in the delegation chain.
 
-This separation ensures that the resource server can verify the current presenter while carrying forward actor-associated key history for prior actors in the delegation chain within the trust model of the current issuer.  In single-hop cases, the top-level `cnf` and outermost `act.cnf` can carry the same value because the current presenter and current actor are the same party.  In multi-hop cases, the top-level `cnf` identifies the current presenter for the current token, while nested `act.cnf` values can preserve actor-key context for earlier hops.
+This profile does not define per-actor confirmation members within nested `act` objects.  Stronger prior-hop key provenance, if needed, would require another profile layered on top of this one.
 
-When mTLS ({{RFC8705}}) is used instead of DPoP, the top-level `cnf.x5t#S256` identifies the current presenter's certificate. Actor-associated key history in `act.cnf` SHOULD use a confirmation member appropriate to the mechanism in use; where a public key is conveyed, `jkt` is RECOMMENDED.
+When mTLS ({{RFC8705}}) is used instead of DPoP, the top-level `cnf.x5t#S256` identifies the current presenter's certificate.
 
 ## Proof-of-Possession Validation in Delegated Requests {#delegated-pop-validation}
 
@@ -421,7 +412,7 @@ The following normative rules govern proof-of-possession (PoP) validation for al
 
 ### Top-Level `cnf` Governs the Current Presenter
 
-The top-level `cnf` claim of any token identifies the key or certificate of the current presenter.  The AS or RS MUST validate proof of possession against the top-level `cnf`, not against any `act.cnf` value.  `act.cnf` values at any depth MUST NOT drive proof-of-possession requirements for the current request (see {{actor-object-structure}}).
+The top-level `cnf` claim of any token identifies the key or certificate of the current presenter.  The AS or RS MUST validate proof of possession against the top-level `cnf`.  Confirmation-style members that appear inside an `act` object due to another specification do not have standardized proof-of-possession semantics under this document.
 
 ### DPoP-Bound Assertion Grants
 
@@ -430,8 +421,6 @@ When a JWT assertion grant is sender-constrained with DPoP ({{RFC9449}}):
 1.  The assertion MUST carry a top-level `cnf.jkt` identifying the DPoP key to which the assertion is bound.  If `cnf.jkt` is absent, the AS MUST reject with `invalid_request`.
 2.  The AS MUST verify the DPoP proof against the `cnf.jkt` value in the assertion, not against the presenter's locally registered key.
 3.  In cross-domain flows where `cnf.jkt` was set by an upstream issuer, the AS SHOULD treat the inbound `cnf.jkt` as the expected key and SHOULD reject with `invalid_grant` if the DPoP proof does not match, unless another sender-constraint profile or explicit local binding rule defines a different continuity model.
-4.  The optional `act.cnf.jkt` consistency check ({{actor-object-structure}}) applies only to the outermost `act` object and only when explicitly configured by local policy.  An AS that has not explicitly configured this check MUST NOT enforce it.
-
 ### Actor Tokens Carrying `cnf.jkt`
 
 When an `actor_token` of any credential type carries `cnf.jkt`:
@@ -465,7 +454,6 @@ The sub-claims of the `act` object have the same requirement level regardless of
 | `act.sub` | REQUIRED when an `act` claim is present | {{actor-object-structure}} |
 | `act.iss` | REQUIRED | {{actor-object-structure}} |
 | `act.sub_profile` | RECOMMENDED | {{actor-object-structure}} |
-| `act.cnf` | OPTIONAL | {{actor-object-structure}} |
 
 Requirements for top-level claims vary by token type:
 
@@ -527,13 +515,12 @@ The following example shows an AS-issued assertion grant, which is the recommend
   "act": {
     "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
-    "sub_profile": "ai_agent",
-    "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" }
+    "sub_profile": "ai_agent"
   }
 }
 ~~~
 
-The top-level `sub_profile` classifies the JWT's `sub`; `sub_profile` within `act` classifies the actor.  The top-level `cnf.jkt` binds the assertion to the agent's DPoP key; `act.cnf.jkt` records the same key as actor-associated key context.
+The top-level `sub_profile` classifies the JWT's `sub`; `sub_profile` within `act` classifies the actor.  The top-level `cnf.jkt` binds the assertion to the agent's DPoP key.
 
 The AS-issued grant is the more trustworthy pattern because the issuing AS independently authenticated the agent and validated the delegation relationship before signing.  The receiving AS needs to trust only the enterprise AS as an issuer.
 
@@ -561,13 +548,12 @@ In a self-issued assertion grant, the agent itself is `iss` and directly asserts
   "act": {
     "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
-    "sub_profile": "ai_agent",
-    "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" }
+      "sub_profile": "ai_agent"
+    }
   }
-}
 ~~~
 
-Here `act.iss` names the enterprise AS as the namespace authority for the agent's identifier, which is registered in that AS's namespace rather than the agent's own identifier space.  The client MUST set `act.iss` to the issuer namespace authoritative for its own identifier, typically the AS governing the namespace in which `act.sub` is registered; the client MUST NOT set `act.iss` to its own identifier unless it is itself the authoritative namespace owner.  The client SHOULD include `act.cnf.jkt` set to the JWK thumbprint of the key it will use for proof of possession.
+Here `act.iss` names the enterprise AS as the namespace authority for the agent's identifier, which is registered in that AS's namespace rather than the agent's own identifier space.  The client MUST set `act.iss` to the issuer namespace authoritative for its own identifier, typically the AS governing the namespace in which `act.sub` is registered; the client MUST NOT set `act.iss` to its own identifier unless it is itself the authoritative namespace owner.
 
 ASes MUST NOT accept self-issued assertion grants unless explicitly configured via local policy to do so; self-issued grant acceptance MUST be off by default.  When an AS does accept self-issued grants, it MUST at minimum:
 
@@ -605,10 +591,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 6.  The AS MUST verify proof of possession per the token-endpoint mechanism in use (DPoP per {{RFC9449}} or mTLS per {{RFC8705}}).
 
     *  **DPoP**: The inbound assertion grant MUST carry a top-level `cnf.jkt`.  The AS MUST verify the DPoP proof against that value rather than the presenter's locally registered key.  In cross-domain flows the `cnf.jkt` was set by the upstream issuer; the AS SHOULD treat it as the expected key and SHOULD reject with `invalid_request` if it is absent or `invalid_grant` if the proof does not match, unless another sender-constraint profile or explicit local binding rule defines a different continuity model.
-    *  **Optional actor-key check**: When the outermost `act.cnf` carries a key reference and local AS policy enables the optional sender-constraint check ({{actor-object-structure}}), the AS MUST additionally verify consistency with that key.
-    *  **Inner `act.cnf`**: Inner `act.cnf` values MUST NOT drive proof-of-possession requirements for the current request.
-
-    > Note: The absence of `act.cnf` does not affect the DPoP binding obligation; {{RFC9449}} requires the AS to bind the issued token's top-level `cnf.jkt` to the DPoP proof key regardless.
+    > Note: The absence of confirmation members inside `act` does not affect the DPoP binding obligation; {{RFC9449}} requires the AS to bind the issued token's top-level `cnf.jkt` to the DPoP proof key regardless.
 
 7.  If the assertion or authenticated request context identifies an OAuth client separately from `act.sub`:
 
@@ -643,7 +626,7 @@ The following claims are defined for a JWT access token that carries actor-profi
 : The actor object identifying the entity exercising the subject's delegated rights.  MUST conform to the actor object structure defined in {{actor-profile}}.  MUST include `act.sub` and `act.iss`.  When the token does not represent delegation, `act` MUST be omitted.
 
 `cnf` (REQUIRED when sender-constrained; otherwise OPTIONAL):
-: Binds the access token to the current presenter when a sender-constraining mechanism such as DPoP or mTLS is used.  `act.cnf`, when present, records actor-associated key context and does not replace the top-level presenter binding.
+: Binds the access token to the current presenter when a sender-constraining mechanism such as DPoP or mTLS is used.
 
 `client_id` and `azp` (OPTIONAL):
 : Identify the OAuth client when carried in the token.  They do not identify the delegated actor and MUST NOT be used as a substitute for `act`.
@@ -670,13 +653,12 @@ The following example shows a JWT access token with actor profile claims:
   "act": {
     "sub": "https://agents.example.com/travel-assistant",
     "iss": "https://as.enterprise.example",
-    "sub_profile": "ai_agent",
-    "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" }
+    "sub_profile": "ai_agent"
   }
 }
 ~~~
 
-In this single-hop case the top-level bearer key and `act.cnf.jkt` are identical because the actor is the bearer.  The differing `client_id`, `azp`, and `act.sub` values in this example are intentional: they illustrate a deployment where client-facing identifiers and actor identifiers are distinct and must be reconciled, if at all, only through trusted local mapping rules.  In multi-hop chains each actor carries a distinct key; see {{appendix-cross-domain}}.
+In this single-hop case the top-level bearer key identifies the same party as the outermost actor because the actor is the bearer.  The differing `client_id`, `azp`, and `act.sub` values in this example are intentional: they illustrate a deployment where client-facing identifiers and actor identifiers are distinct and must be reconciled, if at all, only through trusted local mapping rules.  In multi-hop chains each actor remains a distinct identity in the chain; see {{appendix-cross-domain}}.
 
 ## Issuance Outside Token Exchange
 
@@ -1071,12 +1053,10 @@ The following example shows a Transaction Token after two hops:
     "sub": "https://tools.example.com/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
-    "cnf": { "jkt": "0ZcOCORZNYy9ZhHiZN..." },
     "act": {
       "sub": "https://agents.example.com/travel-assistant",
       "iss": "https://as.enterprise.example",
-      "sub_profile": "ai_agent",
-      "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" }
+      "sub_profile": "ai_agent"
     }
   }
 }
@@ -1127,7 +1107,7 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
     *  If the inbound token already carries an `act` chain, the TTS MUST nest it beneath the new outermost `act`.
     *  The TTS SHOULD set `act.sub_profile` based on its knowledge of the new presenter's entity type.
 
-7.  When the issued Transaction Token includes a top-level presenter-binding claim such as `cnf`, that binding applies to the current presenter and remains distinct from any `act.cnf` values in the actor chain.  The underlying presenter-authentication and proof mechanism is defined by {{I-D.ietf-oauth-transaction-tokens}} and any applicable deployment profile, not by this document.
+7.  When the issued Transaction Token includes a top-level presenter-binding claim such as `cnf`, that binding applies to the current presenter.  The underlying presenter-authentication and proof mechanism is defined by {{I-D.ietf-oauth-transaction-tokens}} and any applicable deployment profile, not by this document.
 
 8.  Transaction Token fields other than actor-profile claims, including `scope`, `tctx`, and `rctx`, are defined by {{I-D.ietf-oauth-transaction-tokens}} and local policy.  This document does not standardize their issuance semantics.
 
@@ -1281,7 +1261,7 @@ When the resource server accepts delegated Transaction Tokens, it MUST:
 
 1.  Validate the Transaction Token per {{I-D.ietf-oauth-transaction-tokens}} and local deployment profile: signature, `aud`, temporal claims, and issuer identification.  When the token carries an `act` claim, the top-level `iss` claim MUST be present and the RS MUST validate it as the Transaction Token issuer identifier.  When the token carries no `act` claim and `iss` is absent, the RS MUST determine the issuer using the trust-domain and issuer-identification rules of {{I-D.ietf-oauth-transaction-tokens}} and local deployment configuration.  If local policy for the request path requires actor-profile conformance, including when the resource advertises `actor_profile_required: true` ({{protected-resource-metadata}}), and the token carries no `act` claim or carries an `act` object missing `act.iss`, the RS MUST reject the request.
 
-2.  When the token carries a top-level presenter-binding claim such as `cnf`, validate the accompanying proof according to {{I-D.ietf-oauth-transaction-tokens}} and the applicable deployment profile.  The top-level presenter binding applies to the current presenter only and is distinct from any `act.cnf` values in the actor chain.
+2.  When the token carries a top-level presenter-binding claim such as `cnf`, validate the accompanying proof according to {{I-D.ietf-oauth-transaction-tokens}} and the applicable deployment profile.  The top-level presenter binding applies to the current presenter only.
 
 3.  Extract `sub` and the outermost `act.sub` as the two principals relevant for authorization policy.  If `req_wl` is present, treat it as supporting workload context only.  The RS MUST NOT treat `req_wl` as a substitute for `act.sub`.  When local policy expects `req_wl` and the outermost `act.sub` to identify the same party, the RS SHOULD verify semantic consistency; if that consistency cannot be established, the RS MUST either treat them as distinct identifiers or reject the request according to local policy.
 
@@ -1324,7 +1304,6 @@ The following claims are available as subject-plus-actor policy inputs:
 | `sub_profile` | Subject | Entity type of the subject |
 | `act.sub` | Actor | Immediate acting principal |
 | `act.sub_profile` | Actor | Entity type of the actor identified by `act.sub` |
-| `act.cnf.jkt` | Actor | Actor-associated key reference for the actor identified by `act.sub` |
 | `scope` | Both | Authorized scope |
 | `req_wl` (Transaction Token) | Actor | Workload that requested the Transaction Token from the TTS; supporting context alongside, but not a substitute for, the outermost `act.sub` |
 
@@ -1478,7 +1457,7 @@ When an AS receives an inbound token or assertion whose `act` object omits `act.
 *  If local policy or advertised metadata requires actor-profile conformance for the request path, the AS MUST reject the request.  It MUST return `invalid_request` consistent with {{actor-profile-error-responses}}.
 *  If actor-profile conformance is not required, the AS MAY process the inbound `act` object under local policy only for non-profile behavior.  It MUST NOT rewrite an inherited actor entry to add `act.iss`, and it MUST NOT omit the inbound `act` claim from an issued token that would otherwise preserve or extend the chain under this profile.  Any request path that would preserve or extend such a non-conforming chain into an actor-profile token MUST be rejected.
 
-Implementations that previously treated `act.cnf` as an active sender-constraining mechanism at every chain depth should note that this document restricts optional PoP use of `act.cnf` to the outermost `act` object only, under explicit local AS policy.  For inner (non-outermost) `act` objects, `act.cnf` is actor-associated key context and MUST NOT drive proof-of-possession requirements.  The active PoP obligation always rests on the top-level `cnf` claim and the immediate presenter.  Deployments that relied on per-hop `act.cnf` key verification for multi-hop security properties MUST review their key-verification logic against the semantics defined in {{actor-object-structure}} and {{sender-constraint}}.
+Implementations that previously treated confirmation members inside `act` as active sender-constraining mechanisms should note that this document defines proof-of-possession only through the top-level `cnf` claim and the immediate presenter.  Deployments that relied on per-hop actor-key verification for multi-hop security properties will need a separate provenance mechanism or profile rather than the core actor profile defined here.
 
 ## Refresh Token Issuance Considerations {#assertion-grant-refresh-tokens}
 
@@ -1596,17 +1575,14 @@ Client identity, such as `client_id`, `azp`, or authenticated client context, is
 
 The detailed migration rules and transition patterns are defined in {{migration-implicit-explicit}}.
 
-## Actor Identity Binding
+## Presenter Binding
 
-Without top-level presenter proof of possession, a leaked token can be replayed by any party.  When an `act.cnf.jkt` is present:
+Without top-level presenter proof of possession, a leaked token can be replayed by any party.
 
-*  The AS that set this value SHOULD have verified the actor's possession of the corresponding key before including it.
 *  The RS SHOULD require the presenter-proof mechanism appropriate to the token type and deployment for the top-level `cnf.jkt` or other top-level confirmation information.  For example, JWT access tokens commonly use DPoP or mTLS, while Transaction Tokens can use the workload proof mechanism defined by their deployment profile.
-*  The RS MAY use `act.cnf` as audit, diagnostic, or policy input, but MUST NOT treat nested `act.cnf` values as independently verifiable presenter bindings for prior hops.
+*  Deployments that use sender-constrained tokens for delegated access SHOULD apply that protection to the current presenter to reduce delegation-token theft risk.
 
-Deployments that use sender-constrained tokens for delegated access SHOULD apply that protection to the current presenter to reduce delegation-token theft risk, and MAY carry `act.cnf` for actor-chain visibility.
-
-Inner `act.cnf` values do not by themselves provide independently verifiable provenance for prior actor hops across trust boundaries.  An intermediate issuer that is trusted to issue a new token can also rewrite nested actor-chain content, including inner `act.cnf` values.  Accordingly, inner `act.cnf` is useful for carrying actor-associated key context from earlier hops, but it does not solve cross-domain integrity or non-repudiation for those hops.  Stronger assurance for prior-hop provenance would require an additional mechanism outside the scope of this document, such as signed hop receipts, transparency-log-based recording, or another future extension.
+This document does not define per-hop actor-key provenance within the delegation chain.  Stronger assurance for prior-hop provenance would require an additional mechanism outside the scope of this document, such as signed hop receipts, transparency-log-based recording, or another future extension.
 
 ## Delegation Depth Limits
 
@@ -1835,8 +1811,7 @@ The Enterprise AS issues a JWT access token for the Payroll API:
   "act": {
     "sub": "https://services.example.com/payroll-batch",
     "iss": "https://as.example.com",
-    "sub_profile": "service",
-    "cnf": { "jkt": "SvcJKT-123" }
+    "sub_profile": "service"
   }
 }
 ~~~
@@ -1861,12 +1836,10 @@ After processing the payroll request, the Payroll API exchanges the inbound acce
     "sub": "https://services.example.com/payroll-api",
     "iss": "https://as.example.com",
     "sub_profile": "service",
-    "cnf": { "jkt": "ApiJKT-456" },
     "act": {
       "sub": "https://services.example.com/payroll-batch",
       "iss": "https://as.example.com",
-      "sub_profile": "service",
-      "cnf": { "jkt": "SvcJKT-123" }
+      "sub_profile": "service"
     }
   }
 }
@@ -2005,13 +1978,12 @@ The Enterprise IdP AS applies scope reduction and validates the client-bound pro
   "act": {
     "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
-    "sub_profile": "ai_agent",
-    "cnf": { "jkt": "AgentJKT-NzbLsXh8uDCcd7MN" }
+    "sub_profile": "ai_agent"
   }
 }
 ~~~
 
-The `act` object records the agent as the authorized actor.  The `client_id` and `azp` values identify the OAuth client used in the exchange, while `act.sub` identifies the delegated actor.  In this example those identifiers are the same URI, so the shared RFC 7523 client assertion and `actor_token` remain conformant with {{RFC7523}} while still making the actor explicit in the issued token.  Both `cnf.jkt` (top-level, for DPoP binding) and `act.cnf.jkt` (actor-associated key reference) are set to `AgentJKT` because the agent is both the bearer and the acting principal at this stage.
+The `act` object records the agent as the authorized actor.  The `client_id` and `azp` values identify the OAuth client used in the exchange, while `act.sub` identifies the delegated actor.  In this example those identifiers are the same URI, so the shared RFC 7523 client assertion and `actor_token` remain conformant with {{RFC7523}} while still making the actor explicit in the issued token.  The top-level `cnf.jkt` is set to `AgentJKT` because the agent is the current presenter at this stage.
 
 
 ## Step 3: Agent Exchanges ID-JAG for Access Token at Travel Provider AS
@@ -2047,8 +2019,7 @@ The Travel Provider AS performs actor-profile processing per {{jwt-assertion-gra
   "act": {
     "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
-    "sub_profile": "ai_agent",
-    "cnf": { "jkt": "AgentJKT-NzbLsXh8uDCcd7MN" }
+    "sub_profile": "ai_agent"
   }
 }
 ~~~
@@ -2122,18 +2093,16 @@ The TTS applies actor-profile processing per {{transaction-token-service-process
     "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
-    "cnf": { "jkt": "ToolJKT-0ZcOCORZNYy9ZhHi" },
     "act": {
       "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
-      "sub_profile": "ai_agent",
-      "cnf": { "jkt": "AgentJKT-NzbLsXh8uDCcd7MN" }
+      "sub_profile": "ai_agent"
     }
   }
 }
 ~~~
 
-The presenter binding rotates at this step: `cnf.jkt` is now `ToolJKT`, and the outermost `act.cnf.jkt` matches it because the Booking Tool is now the current actor.  The nested `act.act.cnf.jkt` retains the agent's original key, illustrating the multi-hop key-rotation property described in {{sender-constraint}}.
+The presenter binding rotates at this step: `cnf.jkt` is now `ToolJKT` because the Booking Tool is the current presenter.  The nested actor chain records that the Booking Tool is now the current actor and that the Travel Assistant was the prior delegated actor.
 
 
 ## Step 6: Booking Tool Calls Inventory Service
