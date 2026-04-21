@@ -120,11 +120,9 @@ The design center of this document is delegation clarity.  `client_id` identifie
 This document addresses that gap by specifying:
 
 *  A common actor profile structure that reuses `act` from {{RFC8693}} and adds `sub_profile` for entity-type classification and `cnf` for actor-associated key context.
-*  How the actor profile is expressed and validated in each profiled token type: JWT assertion grants ({{jwt-assertion-grants}}), JWT access tokens ({{jwt-access-tokens}}), and Transaction Tokens ({{transaction-tokens}}), and how supporting Token Exchange inputs feed those profiled outputs.
-*  How actor-profile information is preserved across supported token transformations.
-*  Resource-server actor-authorization guidance ({{dual-principal-authorization}}), recommending that resource servers enforce policy over the (subject, actor) pair and define when they require actor evaluation.
-*  Use of the OAuth Entity Profiles actor support ({{entity-profile-extension}}) defined in {{I-D.mora-oauth-entity-profiles}}, so existing entity classifications can be used consistently in actor position.
-*  Discovery metadata and capability-negotiation procedures ({{discovery-capability-negotiation}}) for authorization servers that offer Token Exchange or Transaction Token issuance, and for resource servers that consume delegated tokens.
+*  Processing rules for profiled token families and supporting Token Exchange inputs, including how actor-profile information is validated and preserved across supported token transformations.
+*  Resource-server guidance for evaluating delegated access using the (`sub`, outermost `act.sub`) pair.
+*  Integration with OAuth Entity Profiles and discovery metadata so actor classification and capability signaling can be used consistently across deployments.
 
 The mechanisms are general-purpose and apply beyond AI agent scenarios.  This document is a profile and extension of existing OAuth building blocks; unless stated otherwise, the requirements of {{RFC8693}}, {{RFC9068}}, {{RFC9449}}, and {{I-D.ietf-oauth-transaction-tokens}} continue to apply.
 
@@ -237,7 +235,7 @@ This profile does not standardize the following:
 
 ## Conformance Scope
 
-Conformance to this profile means that issuers and consumers represent, preserve, validate, and interpret actor claims consistently according to this document.  This profile standardizes interoperable representation and baseline processing for delegated actors.  It does not require every deployment to enforce authorization of the (`sub`, outermost `act.sub`) pair on every request, although such enforcement is RECOMMENDED for security-sensitive delegated access.
+Conformance to this profile means that issuers and consumers represent, preserve, validate, and interpret actor claims consistently according to this document.  It does not require every deployment to enforce authorization of the (`sub`, outermost `act.sub`) pair on every request, although such enforcement is RECOMMENDED for security-sensitive delegated access.
 
 Same-domain deployments will often satisfy these requirements with straightforward local configuration for namespace authority and identifier mapping.  Cross-domain deployments typically require explicit trust-framework or bilateral agreement decisions and therefore have a higher interoperability burden under this profile.
 
@@ -1458,7 +1456,9 @@ Example client preflight failure:
 
 If the RS metadata advertises `"actor_profile_required": true`, but the target AS metadata advertises `"entity_profiles_supported": { "actor": ["service"] }` and the client's acting entity profile is `ai_agent`, the client would ordinarily stop before making the token request because the AS does not advertise support for the actor type the client would need to represent.
 
-# Operational Guidance
+# Deployment Considerations
+
+This chapter provides deployment and migration guidance for adopting the OAuth Actor Profile in systems that currently rely on implicit delegation or older `act` semantics.
 
 ## Backwards Compatibility
 
@@ -1485,11 +1485,7 @@ Implementations that previously treated `act.cnf` as an active sender-constraini
 
 This document does not standardize whether an AS issues refresh tokens in response to delegated JWT assertion grant requests, how such refresh tokens are revoked, or whether later use of such refresh tokens requires re-presentation of upstream delegation artifacts.  Those decisions remain deployment-specific.  When a refresh token is later used to obtain a delegated output token, the actor-profile rules in {{refresh-token-as-subject-token}} and the output-token rules of this document apply.
 
-## Deployment Considerations
-
-This section provides guidance for deploying the OAuth Actor Profile in systems that currently rely on implicit delegation or client-identity-based actor inference.
-
-### Establishing `act.iss` Namespace Authority {#act-iss-authority-guidance}
+## Establishing `act.iss` Namespace Authority {#act-iss-authority-guidance}
 
 This profile requires issuers and consumers to determine whether `act.iss` is authoritative for the identifier namespace of `act.sub`, but it does not define a universal validation algorithm.  That determination depends on a trusted framework or local policy.
 
@@ -1507,7 +1503,7 @@ Examples:
 *  `act.iss = https://as.enterprise.example` and `act.sub = https://idp.enterprise.example/users/alice` would not ordinarily be treated as authoritative by URL containment alone, because the host differs.
 *  For non-HTTPS identifier schemes such as workload-identity URNs, deployments typically rely on registry, federation, or other explicit local trust configuration rather than URL-based rules.
 
-### Migration from Implicit to Explicit Delegation {#migration-implicit-explicit}
+## Migration from Implicit to Explicit Delegation {#migration-implicit-explicit}
 
 The invariant of this document is that `client_id` identifies the OAuth client registration, `sub` identifies the authorizing principal, and `act.sub` is the authoritative actor identity signal when delegation is present.  Migration from implicit delegation is the process of making this distinction explicit in tokens where these roles were previously conflated through `client_id` or inferred from token-request context.
 
