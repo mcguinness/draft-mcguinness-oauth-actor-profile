@@ -173,12 +173,11 @@ Table of Contents
        7.2.2.  Authorization Server Metadata
        7.2.3.  Protected Resource Metadata
        7.2.4.  Capability Signaling Usage
-   8.  Operational Guidance
+   8.  Deployment Considerations
      8.1.  Backwards Compatibility
      8.2.  Refresh Token Issuance Considerations
-     8.3.  Deployment Considerations
-       8.3.1.  Establishing act.iss Namespace Authority
-       8.3.2.  Migration from Implicit to Explicit Delegation
+     8.3.  Establishing act.iss Namespace Authority
+     8.4.  Migration from Implicit to Explicit Delegation
    9.  Security Considerations
      9.1.  Delegation Chain Integrity and Trust
      9.2.  Client Identity and Delegation
@@ -274,27 +273,16 @@ Table of Contents
       and adds sub_profile for entity-type classification and cnf for
       actor-associated key context.
 
-   *  How the actor profile is expressed and validated in each profiled
-      token type: JWT assertion grants (Section 4.1), JWT access tokens
-      (Section 4.2), and Transaction Tokens (Section 4.3), and how
-      supporting Token Exchange inputs feed those profiled outputs.
+   *  Processing rules for profiled token families and supporting Token
+      Exchange inputs, including how actor-profile information is
+      validated and preserved across supported token transformations.
 
-   *  How actor-profile information is preserved across supported token
-      transformations.
+   *  Resource-server guidance for evaluating delegated access using the
+      (sub, outermost act.sub) pair.
 
-   *  Resource-server actor-authorization guidance (Section 6),
-      recommending that resource servers enforce policy over the
-      (subject, actor) pair and define when they require actor
-      evaluation.
-
-   *  Use of the OAuth Entity Profiles actor support (Section 7.1)
-      defined in [I-D.mora-oauth-entity-profiles], so existing entity
-      classifications can be used consistently in actor position.
-
-   *  Discovery metadata and capability-negotiation procedures
-      (Section 7.2) for authorization servers that offer Token Exchange
-      or Transaction Token issuance, and for resource servers that
-      consume delegated tokens.
+   *  Integration with OAuth Entity Profiles and discovery metadata so
+      actor classification and capability signaling can be used
+      consistently across deployments.
 
    The mechanisms are general-purpose and apply beyond AI agent
    scenarios.  This document is a profile and extension of existing
@@ -528,12 +516,10 @@ Table of Contents
 
    Conformance to this profile means that issuers and consumers
    represent, preserve, validate, and interpret actor claims
-   consistently according to this document.  This profile standardizes
-   interoperable representation and baseline processing for delegated
-   actors.  It does not require every deployment to enforce
-   authorization of the (sub, outermost act.sub) pair on every request,
-   although such enforcement is RECOMMENDED for security-sensitive
-   delegated access.
+   consistently according to this document.  It does not require every
+   deployment to enforce authorization of the (sub, outermost act.sub)
+   pair on every request, although such enforcement is RECOMMENDED for
+   security-sensitive delegated access.
 
    Same-domain deployments will often satisfy these requirements with
    straightforward local configuration for namespace authority and
@@ -1453,7 +1439,7 @@ AddOutermostActor(inbound_chain, new_actor):
        defined when the participating parties share such a trust
        framework or explicit agreement.  If the AS cannot establish that
        act.iss is authoritative for the namespace containing act.sub,
-       the AS MUST reject the request with invalid_grant.  Section 8.3.1
+       the AS MUST reject the request with invalid_grant.  Section 8.3
        provides non-normative examples of local validation approaches.
 
    4.  Before issuing a token, the AS SHOULD evaluate whether act.sub is
@@ -1696,8 +1682,8 @@ AddOutermostActor(inbound_chain, new_actor):
    processing SHOULD use act rather than treating client identity claims
    as a substitute when act is present in the token.  Deployments that
    rely on such substitution are outside the interoperable scope of this
-   profile.  For migration and reconciliation rules, see Section 8.3.2
-   and Section 9.2.
+   profile.  For migration and reconciliation rules, see Section 8.4 and
+   Section 9.2.
 
    The following example shows a JWT access token with actor profile
    claims:
@@ -3573,7 +3559,11 @@ AddOutermostActor(inbound_chain, new_actor):
    the AS does not advertise support for the actor type the client would
    need to represent.
 
-8.  Operational Guidance
+8.  Deployment Considerations
+
+   This chapter provides deployment and migration guidance for adopting
+   the OAuth Actor Profile in systems that currently rely on implicit
+   delegation or older act semantics.
 
 8.1.  Backwards Compatibility
 
@@ -3652,13 +3642,7 @@ AddOutermostActor(inbound_chain, new_actor):
    rules in Section 5.5.2 and the output-token rules of this document
    apply.
 
-8.3.  Deployment Considerations
-
-   This section provides guidance for deploying the OAuth Actor Profile
-   in systems that currently rely on implicit delegation or client-
-   identity-based actor inference.
-
-8.3.1.  Establishing act.iss Namespace Authority
+8.3.  Establishing act.iss Namespace Authority
 
    This profile requires issuers and consumers to determine whether
    act.iss is authoritative for the identifier namespace of act.sub, but
@@ -3702,7 +3686,7 @@ AddOutermostActor(inbound_chain, new_actor):
       deployments typically rely on registry, federation, or other
       explicit local trust configuration rather than URL-based rules.
 
-8.3.2.  Migration from Implicit to Explicit Delegation
+8.4.  Migration from Implicit to Explicit Delegation
 
    The invariant of this document is that client_id identifies the OAuth
    client registration, sub identifies the authorizing principal, and
@@ -3897,7 +3881,7 @@ AddOutermostActor(inbound_chain, new_actor):
       path or legacy policy input remains available.
 
    The detailed migration rules and transition patterns are defined in
-   Section 8.3.2.
+   Section 8.4.
 
 9.3.  Actor Identity Binding
 
