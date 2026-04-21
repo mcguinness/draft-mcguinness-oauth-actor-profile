@@ -242,14 +242,13 @@ The following table summarizes the minimum implementation obligations by role.  
 
 ## Actor Object Structure
 
-An actor object is a JSON object that is the value of the `act` claim. In addition to the `sub` claim required by {{RFC8693}}, an actor object MUST contain an `iss` claim, SHOULD contain a `sub_profile` claim, and MAY contain a `cnf` claim.
+An actor object is a JSON object that is the value of the `act` claim. In addition to the `sub` claim required by {{RFC8693}}, an actor object MUST contain an `iss` claim and SHOULD contain a `sub_profile` claim.
 
 ~~~
 act-object = {
   "sub"           : StringOrURI,        ; REQUIRED
   "iss"           : StringOrURI,        ; REQUIRED
   ? "sub_profile" : JSON String,        ; RECOMMENDED
-  ? "cnf"         : cnf-object,         ; OPTIONAL
   * StringOrURI => any                  ; extension claims
 }
 ~~~
@@ -1766,7 +1765,7 @@ This document requests IANA to register the following value in the "OAuth Token 
 
 ## JWT Claims Registry
 
-This document does not request independent JWT Claims Registry entries for the `act` object sub-claims (`iss`, `sub_profile`, `cnf`, and any extension claims) it defines or profiles.  These values appear only within the JSON object value of the `act` claim, which is already registered in the JWT Claims Registry by {{RFC8693}}.  Sub-object keys within a registered claim are scoped to that claim's JSON object and do not require separate top-level registry entries.
+This document does not request independent JWT Claims Registry entries for the `act` object sub-claims (`iss`, `sub_profile`, and any extension claims) it defines or profiles.  These values appear only within the JSON object value of the `act` claim, which is already registered in the JWT Claims Registry by {{RFC8693}}.  Sub-object keys within a registered claim are scoped to that claim's JSON object and do not require separate top-level registry entries.
 
 
 ## OAuth Entity Profiles Registry {#iana-entity-profiles}
