@@ -137,17 +137,13 @@ Alice authorizes an AI agent to book a business trip on her behalf, and the requ
 
 **Identity Chaining ({{I-D.ietf-oauth-identity-chaining}})**: Identity Chaining addresses cross-domain subject-identity propagation; this document addresses actor representation within those same tokens.  The two are complementary and designed to be used together.
 
-**Identity Assertion JWT Authorization Grant ({{I-D.ietf-oauth-identity-assertion-authz-grant}})**: An ID-JAG carrying an `act` claim is processed per {{jwt-assertion-grants}} of this document.  See {{appendix-cross-domain}} for an end-to-end example.
+**Identity Assertion JWT Authorization Grant ({{I-D.ietf-oauth-identity-assertion-authz-grant}})**: An ID-JAG carrying an `act` claim is processed per {{jwt-assertion-grants-processing}} of this document.  See {{appendix-cross-domain}} for an end-to-end example.
 
 **OAuth Entity Profiles ({{I-D.mora-oauth-entity-profiles}})**: Defines `sub_profile`, `client_profile`, `entity_profiles_supported`, and the entity profile registry.  This document consumes those mechanisms for actor classification and makes no independent registry requests.
 
 **Transaction Tokens ({{I-D.ietf-oauth-transaction-tokens}})**: This document extends the Transaction Token claim model with actor-profile support and adds actor-profile-specific TTS processing rules.  Base Transaction Token requirements continue to apply.
 
 **WIMSE Workload Identity ({{I-D.ietf-wimse-workload-creds}}{{I-D.ietf-wimse-wpt}})**: Defines workload credentials used to authenticate workloads at token endpoints.  This document is mechanism-agnostic; {{appendix-cross-domain}} illustrates a WIMSE-based TTS presenter binding.
-
-**JWT-Only Scope for Access Tokens**: This document defines actor-profile requirements for JWT assertion grants, JWT-formatted access tokens, and Transaction Tokens.  It does not define an equivalent profile for opaque access tokens.  Deployments using opaque access tokens, including as `subject_token` or `actor_token` inputs to Token Exchange, are out of scope for this document.  An AS MAY translate introspection results for an opaque access token into equivalent local inputs for deployment-specific use, but that behavior is not interoperable behavior defined by this document.
-
-**Relationship to Token Exchange Request Semantics**: This document profiles token contents and the processing of those contents once present.  It does not redefine the request semantics of {{RFC8693}}, including the syntax or baseline meaning of `subject_token`, `actor_token`, `resource`, `audience`, or `requested_token_type`.  When such inputs carry or imply actor information, this document defines only how that information is represented in issued tokens and how issuers and consumers process it.
 
 
 # Conventions and Definitions {#conventions}
@@ -239,9 +235,13 @@ Conformance to this profile means that issuers and consumers represent, preserve
 
 Same-domain deployments will often satisfy these requirements with straightforward local configuration for namespace authority and identifier mapping.  Cross-domain deployments typically require explicit trust-framework or bilateral agreement decisions and therefore have a higher interoperability burden under this profile.
 
+This profile defines actor-profile requirements for JWT assertion grants, JWT-formatted access tokens, and Transaction Tokens.  It does not define an equivalent interoperable profile for opaque access tokens.  Deployments using opaque access tokens, including as `subject_token` or `actor_token` inputs to Token Exchange, are out of scope for this document.  An AS MAY translate introspection results for an opaque access token into equivalent local inputs for deployment-specific use, but that behavior is not interoperable behavior defined by this document.
+
 The actor profile defines processing rules for the following token types as issued outputs: JWT assertion grants ({{jwt-assertion-grants}}), JWT-formatted access tokens ({{jwt-access-tokens}}), and Transaction Tokens ({{transaction-tokens}}).  It also defines Token Exchange input processing for JWT assertion grants, JWT access tokens, OpenID Connect ID tokens, refresh tokens, and Transaction Tokens as `subject_token`, and for workload identity credentials, JWT client assertions, and JWT access tokens as `actor_token`.  The `may_act` pre-authorization claim ({{may-act}}) applies to any JWT used as `subject_token`.
 
 Subject to endpoint policy and the underlying token-exchange or grant mechanism, implementations MAY transform a supported input token type into a supported output token type for which this document defines the relevant issuance processing.  This document normatively defines JWT assertion grant issuance ({{jwt-assertion-grant-issuance}}), JWT access token issuance via {{jwt-access-token-propagation}} after authorization-grant processing, Token Exchange processing, or Transaction Token Service processing, and Transaction Token issuance from inbound JWT assertion grants, JWT access tokens, or Transaction Tokens under {{transaction-token-service-processing}}.  It does not require every implementation to support every possible cross-product of supported inputs and outputs.  When an implementation supports a path defined by this document, actor profile information MUST be preserved and validated as specified for the resulting token type.
+
+This document profiles token contents and the processing of those contents once present.  It does not redefine the request semantics of {{RFC8693}}, including the syntax or baseline meaning of `subject_token`, `actor_token`, `resource`, `audience`, or `requested_token_type`.  When such inputs carry or imply actor information, this document defines only how that information is represented in issued tokens and how issuers and consumers process it.
 
 For worked examples showing the actor profile in use in both same-domain service delegation and cross-domain delegation, see {{appendix-service-to-service}} and {{appendix-cross-domain}}.
 
@@ -497,16 +497,14 @@ Requirements for top-level claims vary by token type:
 
 The `sub_profile` claim MAY also appear as a top-level JWT claim (outside any `act` object) to classify the entity type of the token's `sub`.  Its value MUST be a space-delimited entity profile string per {{I-D.mora-oauth-entity-profiles}} and applies exclusively to `sub`; it does not affect `sub_profile` values within `act` objects.  Issuers SHOULD include a top-level `sub_profile` when they can authoritatively classify the subject entity type.
 
-Detailed semantics and processing rules are defined in {{jwt-assertion-grants-processing}}, {{delegated-token-profiles}}, {{token-exchange-processing}}, and {{transaction-token-service-processing}}.
+Detailed token definitions and processing rules are defined in {{jwt-assertion-grants}}, {{jwt-access-tokens}}, {{token-exchange-processing}}, and {{transaction-token-service-processing}}.
 
 
-# JWT Assertion Grant Processing {#token-type-processing}
+# JWT Assertion Grants {#jwt-assertion-grants}
 
-This chapter defines the actor-profile structure and authorization-grant processing rules for JWT assertion grants.  Delegated output-token profiles, Token Exchange processing, and Transaction Token Service processing are defined in later chapters.
+This chapter defines the actor-profile structure and authorization-grant processing rules for JWT assertion grants.  JWT access-token structure, Token Exchange processing, and Transaction Token Service processing are defined in later chapters.
 
-## JWT Assertion Grants {#jwt-assertion-grants}
-
-### Structure {#jwt-assertion-grants-structure}
+## Structure {#jwt-assertion-grants-structure}
 
 Actor-profile requirements apply to any JWT used as an authorization grant under {{RFC7521}} and {{RFC7523}}, independent of how or by which specification it was produced.  One such profile is the Identity Assertion JWT Authorization Grant (ID-JAG, {{I-D.ietf-oauth-identity-assertion-authz-grant}}), a JWT bearer grant produced by Token Exchange.
 
@@ -568,7 +566,7 @@ Allowed issuer patterns are:
 *  an assertion carrying a pre-existing nested `act` chain where the current JWT `iss` is trusted to carry forward prior actor assertions, and
 *  a self-issued actor assertion (see {{self-issued-grants}} below).
 
-#### Self-Issued Grants {#self-issued-grants}
+### Self-Issued Grants {#self-issued-grants}
 
 In a self-issued assertion grant, the agent itself is `iss` and directly asserts Alice's delegation to itself in `act.sub`.  No upstream AS has authenticated the agent or pre-validated the delegation relationship.
 
@@ -603,7 +601,7 @@ ASes MUST NOT accept self-issued assertion grants unless explicitly configured v
 The AS SHOULD NOT treat the self-asserted delegation claim alone as a sufficient basis under step 4 of {{jwt-assertion-grants-processing}}; an independent delegation basis such as a pre-registered grant or consent record is RECOMMENDED.  Any additional verification of the claimed `sub` is a deployment-specific subject-identity matter outside the scope of this document.  This document does not define any additional self-issued-proof mechanism beyond those listed above.
 
 
-### Processing as an Authorization Grant {#jwt-assertion-grants-processing}
+## Authorization Grant Processing {#jwt-assertion-grants-processing}
 
 When an AS receives a JWT assertion grant containing an `act` claim:
 
@@ -643,23 +641,15 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 9.  The AS MAY add additional `sub_profile` or `act` metadata to the issued token based on its own knowledge of the principals.
 
-# Delegated Token Profiles {#delegated-token-profiles}
+# JWT Access Tokens {#jwt-access-tokens}
 
-This chapter defines the actor-profile structure of delegated JWT output token types used by this document.  Authorization-grant processing, Token Exchange processing, and Transaction Token Service processing reference these profiles when constructing or evaluating output tokens.  Transaction Token structure is defined separately in {{transaction-tokens}}.
+This chapter defines the actor-profile structure of delegated JWT access tokens used by this document.
 
-## JWT Assertion Grant
-
-### Structure
-
-A delegated JWT assertion grant issued under this profile MUST satisfy the structural requirements in {{jwt-assertion-grants-structure}}.  This document does not define an additional JWT assertion-grant claim model beyond that structure; Token Exchange issuance rules for delegated JWT assertion grants are defined in {{jwt-assertion-grant-issuance}}.
-
-## JWT Access Token {#jwt-access-tokens}
-
-### Structure
+## Structure {#jwt-access-tokens-structure}
 
 A JWT access token {{RFC9068}} MUST include an `act` claim conforming to the actor profile defined in {{actor-profile}} when any of the following conditions hold:
 
-*  The token was issued following acceptance of a JWT assertion grant that itself contained an `act` claim per {{jwt-assertion-grants}};
+*  The token was issued following acceptance of a JWT assertion grant that itself contained an `act` claim per {{jwt-assertion-grants-structure}};
 *  The token was issued via Token Exchange ({{RFC8693}}) and the request carried explicit actor information, such as an `actor_token` or a `subject_token` that already carried an `act` chain; or
 *  The AS has independent knowledge, established by a pre-registered delegation grant, an explicit consent record, a policy rule, or a client registration, that authorizes the identified acting party (or a class of acting parties) to exercise the subject's rights, and can assert that party's identifier and entity type authoritatively.  A class-level rule such as "any agent in namespace X may act for users in namespace Y" satisfies this condition for a specific (subject, actor) pair that falls within the rule's scope.  A client registration MAY satisfy this condition when it uniquely identifies a single distinct acting entity and the AS can derive the actor's identifier from the registration alone (for example, a dedicated registration for a specific agent or service).  A client registration that fronts multiple distinct acting entities (for example, an agent orchestration platform or shared-client deployment) does NOT satisfy this condition, because `client_id` alone does not identify the runtime actor in those cases.
 *  The AS obtained explicit delegation consent from the resource owner during the interactive authorization session (for example, the resource owner approved a consent prompt that identifies the acting party by name or identifier), and the AS can derive the actor's identifier and entity type from that consent record.
@@ -706,7 +696,7 @@ In this single-hop case the top-level bearer key and `act.cnf.jkt` are identical
 
 Each credential type presented as `subject_token` or `actor_token` in a Token Exchange request is processed per the applicable rules in this chapter.  These rules explain how subject or actor identity is introduced into the actor-profile model; they do not redefine the core `act` semantics in {{actor-profile}}.
 
-This chapter covers RFC 8693 Token Exchange input processing and the output-token issuance rules for JWT assertion grants and JWT access tokens.  Structural requirements for those delegated output token types are defined in {{delegated-token-profiles}}.  Transaction Token issuance is defined separately in {{transaction-token-service}}.
+This chapter covers RFC 8693 Token Exchange input processing and the output-token issuance rules for JWT assertion grants and JWT access tokens.  JWT assertion-grant structure is defined in {{jwt-assertion-grants-structure}}.  JWT access-token structure is defined in {{jwt-access-tokens-structure}}.  Transaction Token issuance is defined separately in {{transaction-token-service}}.
 
 Authorization-server error handling for requests processed in this chapter is defined in {{actor-profile-error-responses}}.
 
@@ -761,7 +751,7 @@ When a Token Exchange request ({{RFC8693}}) presents a Transaction Token as the 
 
 6.  The AS MUST apply the propagation rules in {{jwt-access-token-propagation}}.  For a Transaction Token used as `subject_token`, this document defines only the actor-profile consequences of the inbound `sub`, `act`, `req_wl`, and presenter-binding state.  Transaction Token field semantics and any transaction-specific scope handling remain defined by {{I-D.ietf-oauth-transaction-tokens}}, {{RFC8693}}, and local policy.
 
-### OpenID Connect ID Tokens {#id-tokens}
+### OpenID Connect ID Token {#id-tokens}
 
 #### Overview {#id-token-overview}
 
@@ -769,7 +759,7 @@ An OpenID Connect ID token {{OpenID.Core}} is a JWT issued by an OpenID Provider
 
 In this profile, ID tokens serve as `subject_token` in Token Exchange requests to introduce a user identity into a delegation chain.  The acting party is established by the `actor_token`.  This is the foundational pattern for cross-domain identity chaining: the user's OIDC identity flows forward as `sub` in the issued token while the actor identity becomes `act.sub`.
 
-#### Processing as a Token Exchange subject_token {#id-token-as-subject-token}
+#### Processing {#id-token-as-subject-token}
 
 When a Token Exchange request ({{RFC8693}}) presents an ID token as the `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:id_token`), the AS MUST apply the following steps.
 
@@ -783,7 +773,7 @@ When a Token Exchange request ({{RFC8693}}) presents an ID token as the `subject
 
 5.  The AS MUST apply the propagation rules in {{jwt-access-token-propagation}} to determine the remaining claims in the issued token.  Because an ID token carries no inbound `act` chain and no OAuth scope ceiling, actor-chain construction and scope determination come from the `actor_token` (if any), {{RFC8693}}, and local policy rather than from the ID token itself.
 
-### Refresh Tokens {#refresh-tokens}
+### Refresh Token {#refresh-tokens}
 
 #### Overview {#refresh-token-overview}
 
@@ -795,7 +785,7 @@ Refresh tokens MUST NOT be used as `actor_token`.  They carry no actor identity,
 
 This document does not standardize client-binding policy, cross-client presentation policy, or cross-AS acceptance policy for refresh tokens used as `subject_token`.  Those behaviors remain deployment-specific.
 
-#### Processing as a Token Exchange subject_token {#refresh-token-as-subject-token}
+#### Processing {#refresh-token-as-subject-token}
 
 When a Token Exchange request ({{RFC8693}}) presents a refresh token as the `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:refresh_token`), the AS MUST apply the following steps.
 
@@ -846,7 +836,7 @@ When the AS processes a Token Exchange request whose JWT `subject_token` carries
 
 ## Actor Tokens
 
-### JWT Client Assertion as Token Exchange actor_token {#jwt-client-assertion-as-actor-token}
+### JWT Client Assertion {#jwt-client-assertion-as-actor-token}
 
 #### Overview
 
@@ -877,7 +867,7 @@ When a Token Exchange request includes an `actor_token` that is a JWT client ass
 
 #### Overview {#workload-identity-overview}
 
-A workload identity credential is a JWT that asserts the identity of a software workload (such as a microservice, AI agent, or batch job) issued by a workload identity provider.  Unlike JWT assertion grants ({{jwt-assertion-grants}}), whose `sub` identifies the user or principal on whose behalf the grant is made, a workload identity credential has the workload's own identifier in `sub`, making it the natural credential type for establishing an agent or service as the acting party in a Token Exchange request.  The WIMSE working group defines workload identity credentials in {{I-D.ietf-wimse-workload-creds}}.  Profile disambiguation and `actor_token_type` assignment are defined in {{token-exchange-processing}}.  This section defines the actor-profile processing rules that apply when such a credential is presented as `actor_token`.
+A workload identity credential is a JWT that asserts the identity of a software workload (such as a microservice, AI agent, or batch job) issued by a workload identity provider.  Unlike JWT assertion grants ({{jwt-assertion-grants-structure}}), whose `sub` identifies the user or principal on whose behalf the grant is made, a workload identity credential has the workload's own identifier in `sub`, making it the natural credential type for establishing an agent or service as the acting party in a Token Exchange request.  The WIMSE working group defines workload identity credentials in {{I-D.ietf-wimse-workload-creds}}.  Profile disambiguation and `actor_token_type` assignment are defined in {{token-exchange-processing}}.  This section defines the actor-profile processing rules that apply when such a credential is presented as `actor_token`.
 
 The recommended pattern for agentic Token Exchange is therefore:
 
@@ -887,7 +877,7 @@ The recommended pattern for agentic Token Exchange is therefore:
 
 This pattern ensures that the agent proves its own identity cryptographically while the subject token carries the user's delegated authorization.
 
-#### Processing as a Token Exchange actor_token {#workload-identity-as-actor-token}
+#### Processing {#workload-identity-as-actor-token}
 
 When a Token Exchange request ({{RFC8693}}) includes an `actor_token` that is a workload identity credential, the AS MUST apply the following steps.
 
@@ -905,7 +895,7 @@ When a Token Exchange request ({{RFC8693}}) includes an `actor_token` that is a 
     *  If inconsistent with the outermost actor in the `subject_token`'s chain and local policy does not permit divergence, the AS MUST reject with `invalid_grant`.
     *  Any prior `act` chain in the `actor_token` itself MUST NOT be automatically merged with the `subject_token`'s chain; the AS MUST omit it from the issued token unless local policy defines a single unambiguous ordering, in which case the AS MAY preserve it subject to the chain-depth limit in {{delegation-chains}}.
 
-### JWT Access Token as Token Exchange actor_token {#jwt-access-token-as-actor-token}
+### JWT Access Token {#jwt-access-token-as-actor-token}
 
 #### Overview
 
@@ -930,7 +920,7 @@ When a Token Exchange request includes an `actor_token` that is a JWT access tok
 
 5.  When a `subject_token` is also present and carries an `act` chain: the outermost actor identity derived from the `actor_token` per step 3 takes precedence; if inconsistent with the outermost actor in the `subject_token`'s chain and local policy does not permit divergence, the AS MUST reject with `invalid_grant`.  When the `actor_token` itself carries `act`, the `actor_token`'s inner chain MUST NOT be merged with the `subject_token`'s chain.
 
-## Token Issuance Rules
+## Output Token Rules
 
 ### JWT Assertion Grant Output {#jwt-assertion-grant-issuance}
 
@@ -938,7 +928,7 @@ When `requested_token_type` in a Token Exchange request ({{RFC8693}}) designates
 
 ### JWT Access Token Output {#jwt-access-token-propagation}
 
-The issued JWT access token MUST satisfy the structural requirements in {{jwt-access-tokens}}.  This section is the common output step for Token Exchange paths in this chapter that produce a JWT access token.  It is reached after completing the credential-type-specific `subject_token` and `actor_token` processing defined above, or after Transaction Token Service processing.
+The issued JWT access token MUST satisfy the structural requirements in {{jwt-access-tokens-structure}}.  This section is the common output step for Token Exchange paths in this chapter that produce a JWT access token.  It is reached after completing the credential-type-specific `subject_token` and `actor_token` processing defined above, or after Transaction Token Service processing.
 
 After completing the type-specific validation steps for any `subject_token` defined in this chapter ({{jwt-assertion-grant-as-subject-token}}, {{jwt-access-token-as-subject-token}}, {{id-token-as-subject-token}}, {{refresh-token-as-subject-token}}, {{txn-token-as-subject-token}}) or after Transaction Token Service processing ({{transaction-token-service-processing}}), the AS MUST apply the following rules when issuing a JWT access token.  These rules govern the actor chain, subject, and scope in the issued token regardless of inbound credential type.
 
@@ -1109,7 +1099,7 @@ When the TTS receives a Transaction Token as `subject_token`, it MUST apply {{tx
 
 When a delegated Transaction Token is issued, the newly authenticated presenter becomes the new outermost actor for that token.  Presenter proof is governed by {{I-D.ietf-oauth-transaction-tokens}} and the applicable deployment profile, while the actor-profile consequences of that presenter change are defined in {{transaction-token-service-processing}}.
 
-## Token Issuance Rules {#transaction-token-service-processing}
+## Transaction Token Output Rules {#transaction-token-service-processing}
 
 When a TTS receives a token-exchange request to issue or refresh a Transaction Token from an inbound JWT assertion grant, JWT access token, or Transaction Token that carries actor-profile claims, it MUST apply the following rules:
 
@@ -1890,7 +1880,7 @@ All claim values, JKT thumbprints, and domain names are synthetic.
 
 ## Scenario and Parties
 
-Alice's travel-assistant agent authenticates to the Enterprise IdP AS to obtain an ID Token.  The agent then performs a Token Exchange at the same AS to obtain the ID-JAG.  The ID-JAG is then presented to the Travel Provider AS using the JWT bearer grant, as described in {{jwt-assertion-grants}}.  The agent exchanges the ID-JAG for an access token at the Travel Provider AS and calls the Booking Tool API.  The Booking Tool exchanges the access token for a Transaction Token to call an internal inventory service.
+Alice's travel-assistant agent authenticates to the Enterprise IdP AS to obtain an ID Token.  The agent then performs a Token Exchange at the same AS to obtain the ID-JAG.  The ID-JAG is then presented to the Travel Provider AS using the JWT bearer grant, as described in {{jwt-assertion-grants-processing}}.  The agent exchanges the ID-JAG for an access token at the Travel Provider AS and calls the Booking Tool API.  The Booking Tool exchanges the access token for a Transaction Token to call an internal inventory service.
 
 ~~~
 Enterprise domain                 Travel Provider domain
@@ -2024,7 +2014,7 @@ The `act` object records the agent as the authorized actor.  The `client_id` and
 
 ## Step 3: Agent Exchanges ID-JAG for Access Token at Travel Provider AS
 
-The agent presents the ID-JAG as a JWT Bearer authorization grant ({{RFC7523}}) to the Travel Provider AS.  In this usage, the ID-JAG functions as a profiled JWT assertion grant, so the processing rules in {{jwt-assertion-grants}} apply to it:
+The agent presents the ID-JAG as a JWT Bearer authorization grant ({{RFC7523}}) to the Travel Provider AS.  In this usage, the ID-JAG functions as a profiled JWT assertion grant, so the processing rules in {{jwt-assertion-grants-processing}} apply to it:
 
 ~~~
 POST /token HTTP/1.1
