@@ -282,7 +282,7 @@ act-object = {
   For example, a TTS might issue a Transaction Token with top-level `iss` equal to `https://tts.travel-provider.example` while setting `act.iss` for the booking tool to `https://as.travel-provider.example`, if local policy treats that AS as authoritative for the booking tool identifier namespace.  This is valid and expected: the TTS is the token issuer, while `https://as.travel-provider.example` is the namespace authority for the booking tool identifier.
 
 `sub_profile`:
-: RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in Section 4.2 of {{I-D.mora-oauth-entity-profiles}}.  Values used within `act` objects MUST be registered with the "Actor Profile" usage location in the OAuth Entity Profiles registry (Section 14.1 of {{I-D.mora-oauth-entity-profiles}}) or be privately defined collision-resistant values.  If the acting entity fits more than one profile, multiple values MAY be included as a space-delimited string (e.g., `"service ai_agent"`).  Policy evaluation rules for multi-value strings are defined in {{forward-compat-sub-profile}}.
+: RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in Section 4.2 of {{I-D.mora-oauth-entity-profiles}}.  Values used within `act` objects MUST be registered with the "Actor Profile" usage location in the OAuth Entity Profiles registry (Section 14.1 of {{I-D.mora-oauth-entity-profiles}}) or be privately defined collision-resistant values.  If the acting entity fits more than one profile, multiple values MAY be included as a space-delimited string (e.g., `"service ai_agent"`).  Interoperability requirements and implementation guidance for multi-value strings are discussed in {{forward-compat-sub-profile}}.
 
 Per-actor key provenance within the delegation chain is outside the scope of this profile.  The current presenter's keying material is conveyed only by the token's top-level `cnf` claim, as described in {{sender-constraint}}.  Other members carried inside an `act` object, including any confirmation-style members defined by another profile, do not have standardized proof-of-possession semantics under this document unless another specification explicitly defines them.
 
@@ -291,23 +291,27 @@ The `client_profile` claim defined in {{I-D.mora-oauth-entity-profiles}} classif
 When an `act` object contains extension members beyond those defined in this document, issuers and consumers MUST ignore unrecognized members unless another specification or local policy defines their meaning.  An issuer that re-issues a validated actor chain MAY preserve unrecognized extension members in inherited `act` objects under local policy.  However, companion profiles that need independently verifiable provenance, per-hop receipts, or other chain-wide state SHOULD use the top-level extension pattern described in {{companion-profile-extensibility}} rather than relying on inherited `act`-object extension members.
 
 
-## Multi-Value `sub_profile` Policy Evaluation {#forward-compat-sub-profile}
+## `sub_profile` Interoperability and Implementation Guidance {#forward-compat-sub-profile}
 
 Value preservation and propagation for unrecognized `sub_profile` values are governed by {{I-D.mora-oauth-entity-profiles}}.  An AS or RS MUST NOT reject a token or assertion solely because a `sub_profile` value is unrecognized; unrecognized values MUST NOT be used to infer authorization semantics.
 
 The `sub_profile` claim improves local policy expression and coarse compatibility signaling, but it does not make authorization outcomes portable across deployments.  Two deployments can accept the same `sub_profile` value while applying different authorization consequences to it.
 
+This document does not define interoperable authorization semantics for single-valued or multi-valued `sub_profile`.  Whether and how `sub_profile` affects access control, scope restriction, or other authorization decisions is a local policy matter.
+
 When local policy restricts the accepted set of `sub_profile` values for an actor, that set SHOULD be advertised via `entity_profiles_supported.actor` in AS metadata ({{authorization-server-metadata}}) so that clients can detect incompatibility before making a request.  Clients discover the accepted set for a given resource by consulting `entity_profiles_supported.actor` in the AS metadata for the AS listed in the resource's `authorization_servers` ({{RFC9728}}).
 
 When `sub_profile` is absent from an `act` object, implementations MUST NOT assume a specific entity type for the actor.  Resource servers that enforce entity-type-based access control MUST treat an absent `sub_profile` as an unclassified actor and SHOULD apply the more restrictive policy applicable to unknown entity types.
 
-When `sub_profile` contains multiple space-delimited values, the following guidance applies to policy evaluation:
+### Implementation Guidance
 
-*  As a safe default, an entity can be treated as matching a policy rule if any of its `sub_profile` values satisfies that rule.  For example, an entity with `"service ai_agent"` matches both a policy rule for `service` and a policy rule for `ai_agent`.
+When `sub_profile` contains multiple space-delimited values, the following non-normative guidance may be useful for local policy evaluation:
 
-*  When multiple values match different policy rules with conflicting outcomes, implementations are encouraged to apply the more restrictive outcome rather than the union of all matched rules' privileges.  The specific conflict resolution logic is a local policy decision; this document recommends least privilege across the matched set as a safe default.
+*  A simple local rule is to treat an entity as matching a policy rule if any of its `sub_profile` values satisfies that rule.  For example, an entity with `"service ai_agent"` would match both a policy rule for `service` and a policy rule for `ai_agent`.
 
-*  When local policy accepts only a specific set of `sub_profile` values (e.g., via `entity_profiles_supported.actor`), the entity can be accepted if at least one of its values appears in the accepted set.  Values not in the accepted set SHOULD be ignored for that acceptance check; they do not by themselves require rejection.
+*  When multiple values match different policy rules with conflicting outcomes, a safer local choice is to apply the more restrictive outcome rather than the union of all matched rules' privileges.
+
+*  When local policy accepts only a specific set of `sub_profile` values (for example, values advertised via `entity_profiles_supported.actor`), one possible local rule is to treat the entity as compatible when at least one of its values appears in the accepted set.  Deployments can instead choose stricter handling.
 
 
 ## Delegation Chains {#delegation-chains}
