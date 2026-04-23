@@ -137,12 +137,9 @@ Table of Contents
    6.  Token Exchange Processing
      6.1.  Presenter Transition Model
      6.2.  Subject Tokens
-       6.2.1.  JWT Assertion Grant
-       6.2.2.  JWT Access Token
-       6.2.3.  Transaction Token
-       6.2.4.  OpenID Connect ID Token
-       6.2.5.  Refresh Token
-       6.2.6.  may_act Pre-Authorization
+       6.2.1.  Token-State Subject Tokens
+       6.2.2.  Identity-Only Subject Tokens
+       6.2.3.  may_act Pre-Authorization
      6.3.  Actor Tokens
        6.3.1.  JWT Client Assertion
        6.3.2.  Workload Identity Credential
@@ -525,7 +522,7 @@ Table of Contents
    refresh tokens, and Transaction Tokens as subject_token, and for
    workload identity credentials, JWT client assertions, and JWT access
    tokens as actor_token.  The may_act pre-authorization claim
-   (Section 6.2.6) applies to any JWT used as subject_token.
+   (Section 6.2.3) applies to any JWT used as subject_token.
 
    Subject to endpoint policy and the underlying token-exchange or grant
    mechanism, implementations MAY transform a supported input token type
@@ -599,61 +596,62 @@ Table of Contents
    defined; readers using this table as a quick-reference checklist may
    follow those links directly.
 
-   +===============+=============+===================================+============================+========+
-   |Role           |Inputs       |Minimum checks                     |Outputs / behavior          |Detailed|
-   |               |             |                                   |                            |rules   |
-   +===============+=============+===================================+============================+========+
-   |Assertion-     |JWT assertion|Validate JWT; trust issuer;        |Preserve actor in issued    |Section |
-   |consuming AS   |grant with   |validate delegation when required  |token                       |4.2     |
-   |               |act          |by the applicable processing path  |                            |        |
-   |               |             |or local policy; enforce chain-    |                            |        |
-   |               |             |depth limit                        |                            |        |
-   +---------------+-------------+-----------------------------------+----------------------------+--------+
-   |Token-exchange |ID token, JWT|Validate per credential type; trust|Issue token with preserved  |Section |
-   |AS             |assertion    |issuer; validate delegation when   |or extended act chain       |6.2.4.2,|
-   |(subject_token)|grant, JWT   |required by local policy; enforce  |                            |Section |
-   |               |access token,|scope reduction and chain-depth    |                            |6.2.1,  |
-   |               |refresh      |limit                              |                            |Section |
-   |               |token, or    |                                   |                            |6.2.2,  |
-   |               |Transaction  |                                   |                            |Section |
-   |               |Token as     |                                   |                            |6.2.5.2,|
-   |               |subject_token|                                   |                            |Section |
-   |               |             |                                   |                            |6.2.3;  |
-   |               |             |                                   |                            |then    |
-   |               |             |                                   |                            |Section |
-   |               |             |                                   |                            |6.4.2   |
-   +---------------+-------------+-----------------------------------+----------------------------+--------+
-   |Token-exchange |Workload     |Validate per credential type; trust|Construct outermost act from|Section |
-   |AS             |identity     |issuer; verify proof of possession;|validated actor identity;   |6.3.2.2,|
-   |(actor_token)  |credential,  |derive outermost actor identity    |then apply Section 6.4.2    |Section |
-   |               |JWT client   |                                   |                            |6.3.1,  |
-   |               |assertion, or|                                   |                            |Section |
-   |               |JWT access   |                                   |                            |6.3.3   |
-   |               |token as     |                                   |                            |        |
-   |               |actor_token  |                                   |                            |        |
-   +---------------+-------------+-----------------------------------+----------------------------+--------+
-   |Resource Server|Access token |Validate token; validate presenter |Apply delegated-token       |Section |
-   |               |or           |binding; evaluate subject; evaluate|policy; advertise           |9.3,    |
-   |               |Transaction  |(sub, outermost act.sub) pair when |actor_authorization_required|Section |
-   |               |Token        |required by local policy           |when enforcing (sub,        |9.4     |
-   |               |carrying act |                                   |outermost act.sub)          |        |
-   |               |             |                                   |authorization               |        |
-   +---------------+-------------+-----------------------------------+----------------------------+--------+
-   |Transaction    |JWT assertion|Validate inbound actor information;|Preserve sub; treat req_wl  |Section |
-   |Token Service  |grant, JWT   |preserve subject identity; enforce |as supporting context; add  |7.4     |
-   |               |access token,|chain-depth limit; apply presenter |new outermost act           |        |
-   |               |or           |authentication per Transaction     |                            |        |
-   |               |Transaction  |Token mechanism                    |                            |        |
-   |               |Token with   |                                   |                            |        |
-   |               |subject and  |                                   |                            |        |
-   |               |optional act |                                   |                            |        |
-   |               |chain        |                                   |                            |        |
-   +---------------+-------------+-----------------------------------+----------------------------+--------+
-   |Client or Agent|AS and RS    |Check                              |Detect likely capability    |Section |
-   |               |metadata     |entity_profiles_supported.actor and|mismatch                    |10.2    |
-   |               |             |actor_profile_token_types_supported|                            |        |
-   |               |             |when available                     |                            |        |
-   +---------------+-------------+-----------------------------------+----------------------------+--------+
+   +===============+==============+===================================+============================+========+
+   |Role           |Inputs        |Minimum checks                     |Outputs / behavior          |Detailed|
+   |               |              |                                   |                            |rules   |
+   +===============+==============+===================================+============================+========+
+   |Assertion-     |JWT assertion |Validate JWT; trust issuer;        |Preserve actor in issued    |Section |
+   |consuming AS   |grant with act|validate delegation when required  |token                       |4.2     |
+   |               |              |by the applicable processing path  |                            |        |
+   |               |              |or local policy; enforce chain-    |                            |        |
+   |               |              |depth limit                        |                            |        |
+   +---------------+--------------+-----------------------------------+----------------------------+--------+
+   |Token-exchange |Identity-only |Validate per credential type; apply|Issue token with preserved  |Section |
+   |AS             |(id_token,    |class-specific subject, actor-     |or extended act chain when  |6.1,    |
+   |(subject_token)|refresh_token)|chain, and presenter rules; trust  |inbound token-state supports|Section |
+   |               |or token-state|issuer; validate delegation when   |it; otherwise derive any new|6.2.2.3,|
+   |               |(jwt,         |required by local policy; enforce  |act from current-exchange   |Section |
+   |               |access_token, |scope reduction and chain-depth    |inputs only                 |6.2.1.1,|
+   |               |txn_token)    |limit                              |                            |Section |
+   |               |subject_token |                                   |                            |6.2.1.2,|
+   |               |input         |                                   |                            |Section |
+   |               |              |                                   |                            |6.2.2.6,|
+   |               |              |                                   |                            |Section |
+   |               |              |                                   |                            |6.2.1.3;|
+   |               |              |                                   |                            |then    |
+   |               |              |                                   |                            |Section |
+   |               |              |                                   |                            |6.4.2   |
+   +---------------+--------------+-----------------------------------+----------------------------+--------+
+   |Token-exchange |Workload      |Validate per credential type; trust|Construct outermost act from|Section |
+   |AS             |identity      |issuer; verify proof of possession;|validated actor identity;   |6.3.2.2,|
+   |(actor_token)  |credential,   |derive outermost actor identity    |then apply Section 6.4.2    |Section |
+   |               |JWT client    |                                   |                            |6.3.1,  |
+   |               |assertion, or |                                   |                            |Section |
+   |               |JWT access    |                                   |                            |6.3.3   |
+   |               |token as      |                                   |                            |        |
+   |               |actor_token   |                                   |                            |        |
+   +---------------+--------------+-----------------------------------+----------------------------+--------+
+   |Resource Server|Access token  |Validate token; validate presenter |Apply delegated-token       |Section |
+   |               |or Transaction|binding; evaluate subject; evaluate|policy; advertise           |9.3,    |
+   |               |Token carrying|(sub, outermost act.sub) pair when |actor_authorization_required|Section |
+   |               |act           |required by local policy           |when enforcing (sub,        |9.4     |
+   |               |              |                                   |outermost act.sub)          |        |
+   |               |              |                                   |authorization               |        |
+   +---------------+--------------+-----------------------------------+----------------------------+--------+
+   |Transaction    |JWT assertion |Validate inbound actor information;|Preserve sub; treat req_wl  |Section |
+   |Token Service  |grant, JWT    |preserve subject identity; enforce |as supporting context; add  |7.4     |
+   |               |access token, |chain-depth limit; apply presenter |new outermost act           |        |
+   |               |or Transaction|authentication per Transaction     |                            |        |
+   |               |Token with    |Token mechanism                    |                            |        |
+   |               |subject and   |                                   |                            |        |
+   |               |optional act  |                                   |                            |        |
+   |               |chain         |                                   |                            |        |
+   +---------------+--------------+-----------------------------------+----------------------------+--------+
+   |Client or Agent|AS and RS     |Check                              |Detect likely capability    |Section |
+   |               |metadata      |entity_profiles_supported.actor and|mismatch                    |10.2    |
+   |               |              |actor_profile_token_types_supported|                            |        |
+   |               |              |when available                     |                            |        |
+   +---------------+--------------+-----------------------------------+----------------------------+--------+
 
                                   Table 1
 
@@ -1676,6 +1674,21 @@ AddOutermostActor(inbound_chain, new_actor):
       tokens, and Transaction Tokens.  They can carry inbound act state
       and can carry top-level cnf for the current presenter.
 
+   These two classes also determine how inbound delegation state is
+   introduced into Token Exchange processing:
+
+   *  *Identity-only subject tokens* establish sub and MAY establish
+      supporting subject state such as sub_profile or an authorization
+      ceiling.  They do not establish inbound act state, do not
+      establish presenter continuity, and do not by themselves justify
+      carrying act into the issued token.
+
+   *  *Token-state subject tokens* establish sub and MAY establish
+      sub_profile, inbound act chain state, and current-presenter
+      binding through top-level cnf.  They are therefore the only
+      subject_token inputs from which this document defines
+      interoperable actor-chain preservation and presenter continuation.
+
    Token Exchange under this profile runs in exactly one of two
    presenter-transition modes:
 
@@ -1721,7 +1734,33 @@ AddOutermostActor(inbound_chain, new_actor):
 
 6.2.  Subject Tokens
 
-6.2.1.  JWT Assertion Grant
+   This section is organized by the two semantic subject_token classes
+   defined in Section 6.1.  The class-level text defines the common
+   actor-profile consequences.  The individual token sections then
+   define only the validation and extraction rules specific to each
+   token type.
+
+6.2.1.  Token-State Subject Tokens
+
+   JWT assertion grants, JWT access tokens, and Transaction Tokens are
+   token-state subject_token inputs.  For these inputs, this document
+   defines the following common model:
+
+   *  the validated token establishes the inbound sub;
+
+   *  sub_profile, if present and trusted, becomes inbound supporting
+      subject state;
+
+   *  act, if present, becomes inbound delegation-chain state for
+      Section 6.4.2 or Section 7.4;
+
+   *  top-level cnf, if present, makes the input eligible for presenter
+      continuation under Section 3.12;
+
+   *  if top-level cnf is absent, the token still MAY be used in
+      presenter-rebind mode for bearer-to-PoP upgrade.
+
+6.2.1.1.  JWT Assertion Grant
 
    When a Token Exchange request ([RFC8693]) presents a JWT assertion
    grant as the subject_token, the AS MUST apply the validation rules of
@@ -1739,7 +1778,7 @@ AddOutermostActor(inbound_chain, new_actor):
    The AS MUST apply scope reduction per [RFC8693], Section 4 and MUST
    then apply the propagation rules in Section 6.4.2.
 
-6.2.2.  JWT Access Token
+6.2.1.2.  JWT Access Token
 
    When a Token Exchange request ([RFC8693]) presents a JWT access token
    as the subject_token (subject_token_type=urn:ietf:params:oauth:token-
@@ -1779,7 +1818,7 @@ AddOutermostActor(inbound_chain, new_actor):
    After completing these steps, the AS MUST apply the propagation rules
    in Section 6.4.2.
 
-6.2.3.  Transaction Token
+6.2.1.3.  Transaction Token
 
    When a Token Exchange request ([RFC8693]) presents a Transaction
    Token as the subject_token
@@ -1831,9 +1870,32 @@ AddOutermostActor(inbound_chain, new_actor):
        defined by [I-D.ietf-oauth-transaction-tokens], [RFC8693], and
        local policy.
 
-6.2.4.  OpenID Connect ID Token
+6.2.2.  Identity-Only Subject Tokens
 
-6.2.4.1.  Overview
+   ID tokens and refresh tokens are identity-only subject_token inputs.
+   For these inputs, this document defines the following common model:
+
+   *  the validated input establishes sub;
+
+   *  sub_profile, if available from the validated input or trusted
+      state, becomes supporting subject state;
+
+   *  the input does not establish inbound act chain state for
+      propagation;
+
+   *  the input does not establish presenter continuity;
+
+   *  any act in the issued token therefore comes from a validated
+      actor_token or another independent delegation basis under local
+      policy;
+
+   *  any sender-constrained issued token is therefore issued in
+      presenter-rebind mode, with the new presenter established in the
+      current exchange.
+
+6.2.2.1.  OpenID Connect ID Token
+
+6.2.2.2.  Overview
 
    An OpenID Connect ID token [OpenID.Core] is a JWT issued by an OpenID
    Provider (OP) that asserts the authenticated identity of a user.  Its
@@ -1851,7 +1913,7 @@ AddOutermostActor(inbound_chain, new_actor):
    OIDC identity flows forward as sub in the issued token while the
    actor identity becomes act.sub.
 
-6.2.4.2.  Processing
+6.2.2.3.  Processing
 
    When a Token Exchange request ([RFC8693]) presents an ID token as the
    subject_token (subject_token_type=urn:ietf:params:oauth:token-
@@ -1888,9 +1950,9 @@ AddOutermostActor(inbound_chain, new_actor):
        actor_token (if any), [RFC8693], and local policy rather than
        from the ID token itself.
 
-6.2.5.  Refresh Token
+6.2.2.4.  Refresh Token
 
-6.2.5.1.  Overview
+6.2.2.5.  Overview
 
    A refresh token is a long-lived credential issued by an AS to a
    specific OAuth client that authorizes that client to obtain new
@@ -1917,7 +1979,7 @@ AddOutermostActor(inbound_chain, new_actor):
    tokens used as subject_token.  Those behaviors remain deployment-
    specific.
 
-6.2.5.2.  Processing
+6.2.2.6.  Processing
 
    When a Token Exchange request ([RFC8693]) presents a refresh token as
    the subject_token (subject_token_type=urn:ietf:params:oauth:token-
@@ -1955,9 +2017,9 @@ AddOutermostActor(inbound_chain, new_actor):
    in Section 6.4.2 to determine the remaining claims in the issued
    token.
 
-6.2.6.  may_act Pre-Authorization
+6.2.3.  may_act Pre-Authorization
 
-6.2.6.1.  Overview
+6.2.3.1.  Overview
 
    The may_act claim ([RFC8693], Section 4.4) is defined for JWTs and
    token introspection responses.  When a JWT subject_token carries
@@ -1980,7 +2042,7 @@ AddOutermostActor(inbound_chain, new_actor):
    may_act is an input to Token Exchange processing and MUST NOT be
    propagated into the issued token.
 
-6.2.6.2.  Processing
+6.2.3.2.  Processing
 
    When the AS processes a Token Exchange request whose JWT
    subject_token carries a may_act claim, the AS MUST apply the
@@ -2304,17 +2366,18 @@ AddOutermostActor(inbound_chain, new_actor):
    The issued JWT access token MUST satisfy the structural requirements
    in Section 5.1.  This section is the common output step for Token
    Exchange paths in this chapter that produce a JWT access token.  It
-   is reached after completing the credential-type-specific
-   subject_token and actor_token processing defined above, or after
-   Transaction Token Service processing.
+   is reached after completing the applicable class-level and type-
+   specific subject_token processing defined above, the applicable
+   actor_token processing, or Transaction Token Service processing.
 
-   After completing the type-specific validation steps for any
-   subject_token defined in this chapter (Section 6.2.1, Section 6.2.2,
-   Section 6.2.4.2, Section 6.2.5.2, Section 6.2.3) or after Transaction
-   Token Service processing (Section 7.4), the AS MUST apply the
-   following rules when issuing a JWT access token.  These rules govern
-   the actor chain, subject, and scope in the issued token regardless of
-   inbound credential type.
+   After completing the applicable subject_token processing in this
+   chapter, whether for an identity-only input (Section 6.2.2.3,
+   Section 6.2.2.6) or a token-state input (Section 6.2.1.1,
+   Section 6.2.1.2, Section 6.2.1.3), or after Transaction Token Service
+   processing (Section 7.4), the AS MUST apply the following rules when
+   issuing a JWT access token.  These rules govern the actor chain,
+   subject, and scope in the issued token regardless of inbound
+   credential type.
 
    When both a subject_token carrying an inbound act chain and an
    actor_token are present, the validated actor_token determines the new
@@ -2675,11 +2738,16 @@ AddOutermostActor(inbound_chain, new_actor):
 
 7.2.  Supported Subject Tokens
 
+   The TTS accepts only token-state subject_token inputs.  Identity-only
+   inputs such as ID tokens and refresh tokens do not carry the inbound
+   actor-chain or presenter state needed for Section 7.4 and are
+   therefore outside the scope of the TTS profile defined here.
+
 7.2.1.  JWT Assertion Grant
 
    When the TTS receives a JWT assertion grant as subject_token, it MUST
    apply the validation, presenter-continuity, and scope-reduction rules
-   in Section 6.2.1.  Instead of applying Section 6.4.2, the TTS uses
+   in Section 6.2.1.1.  Instead of applying Section 6.4.2, the TTS uses
    the resulting subject identity, optional sub_profile, inbound act
    chain, proof-of-possession state, and effective scope ceiling as the
    inbound delegation state for Section 7.4.
@@ -2687,14 +2755,14 @@ AddOutermostActor(inbound_chain, new_actor):
 7.2.2.  JWT Access Token
 
    When the TTS receives a JWT access token as subject_token, it MUST
-   apply Section 6.2.2 steps 1 through 5.  Instead of applying
+   apply Section 6.2.1.2 steps 1 through 5.  Instead of applying
    Section 6.4.2, the TTS uses the resulting inbound delegation state as
    input to Section 7.4.
 
 7.2.3.  Transaction Token
 
    When the TTS receives a Transaction Token as subject_token, it MUST
-   apply Section 6.2.3 steps 1 through 5.  Instead of applying
+   apply Section 6.2.1.3 steps 1 through 5.  Instead of applying
    Section 6.4.2, the TTS uses the extracted sub, optional sub_profile,
    inbound act chain, req_wl, and presenter-binding state as input to
    Section 7.4.
@@ -2816,7 +2884,7 @@ AddOutermostActor(inbound_chain, new_actor):
 7.5.  may_act Pre-Authorization
 
    When the inbound subject_token presented to the TTS is a JWT carrying
-   may_act, the TTS MUST apply the matching rules in Section 6.2.6.2
+   may_act, the TTS MUST apply the matching rules in Section 6.2.3.2
    using the newly authenticated presenter as the candidate actor
    identity that would become the new outermost act in the issued
    Transaction Token.  A matching may_act MAY satisfy the delegation-
@@ -3688,7 +3756,7 @@ AddOutermostActor(inbound_chain, new_actor):
    tokens requires re-presentation of upstream delegation artifacts.
    Those decisions remain deployment-specific.  When a refresh token is
    later used to obtain a delegated output token, the actor-profile
-   rules in Section 6.2.5.2 and the output-token rules of this document
+   rules in Section 6.2.2.6 and the output-token rules of this document
    apply.
 
 11.3.  Establishing act.iss Namespace Authority

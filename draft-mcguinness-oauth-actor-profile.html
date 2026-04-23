@@ -1278,22 +1278,13 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-subject-tokens" class="internal xref">Subject Tokens</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2.2.1">
-                    <p id="section-toc.1-1.6.2.2.2.1.1"><a href="#section-6.2.1" class="auto internal xref">6.2.1</a>.  <a href="#name-jwt-assertion-grant" class="internal xref">JWT Assertion Grant</a></p>
+                    <p id="section-toc.1-1.6.2.2.2.1.1"><a href="#section-6.2.1" class="auto internal xref">6.2.1</a>.  <a href="#name-token-state-subject-tokens" class="internal xref">Token-State Subject Tokens</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2.2.2">
-                    <p id="section-toc.1-1.6.2.2.2.2.1"><a href="#section-6.2.2" class="auto internal xref">6.2.2</a>.  <a href="#name-jwt-access-token" class="internal xref">JWT Access Token</a></p>
+                    <p id="section-toc.1-1.6.2.2.2.2.1"><a href="#section-6.2.2" class="auto internal xref">6.2.2</a>.  <a href="#name-identity-only-subject-token" class="internal xref">Identity-Only Subject Tokens</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2.2.3">
-                    <p id="section-toc.1-1.6.2.2.2.3.1"><a href="#section-6.2.3" class="auto internal xref">6.2.3</a>.  <a href="#name-transaction-token" class="internal xref">Transaction Token</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2.2.4">
-                    <p id="section-toc.1-1.6.2.2.2.4.1"><a href="#section-6.2.4" class="auto internal xref">6.2.4</a>.  <a href="#name-openid-connect-id-token" class="internal xref">OpenID Connect ID Token</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2.2.5">
-                    <p id="section-toc.1-1.6.2.2.2.5.1"><a href="#section-6.2.5" class="auto internal xref">6.2.5</a>.  <a href="#name-refresh-token" class="internal xref">Refresh Token</a></p>
-</li>
-                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2.2.6">
-                    <p id="section-toc.1-1.6.2.2.2.6.1"><a href="#section-6.2.6" class="auto internal xref">6.2.6</a>.  <a href="#name-may_act-pre-authorization" class="internal xref">may_act Pre-Authorization</a></p>
+                    <p id="section-toc.1-1.6.2.2.2.3.1"><a href="#section-6.2.3" class="auto internal xref">6.2.3</a>.  <a href="#name-may_act-pre-authorization" class="internal xref">may_act Pre-Authorization</a></p>
 </li>
                 </ul>
 </li>
@@ -1773,7 +1764,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-3.4-1">Conformance to this profile means that issuers and consumers represent, preserve, validate, and interpret actor claims consistently according to this document.  It does not require every deployment to enforce authorization of the (<code>sub</code>, outermost <code>act.sub</code>) pair on every request, although such enforcement is <span class="bcp14">RECOMMENDED</span> for security-sensitive delegated access.<a href="#section-3.4-1" class="pilcrow">¶</a></p>
 <p id="section-3.4-2">Same-domain deployments will often satisfy these requirements with straightforward local configuration for namespace authority and identifier mapping.  Cross-domain deployments typically require explicit trust-framework or bilateral agreement decisions and therefore have a higher interoperability burden under this profile.<a href="#section-3.4-2" class="pilcrow">¶</a></p>
 <p id="section-3.4-3">This profile defines actor-profile requirements for JWT assertion grants, JWT-formatted access tokens, and Transaction Tokens.  It does not define an equivalent interoperable profile for opaque access tokens.  Deployments using opaque access tokens, including as <code>subject_token</code> or <code>actor_token</code> inputs to Token Exchange, are out of scope for this document.  An AS <span class="bcp14">MAY</span> translate introspection results for an opaque access token into equivalent local inputs for deployment-specific use, but that behavior is not interoperable behavior defined by this document.<a href="#section-3.4-3" class="pilcrow">¶</a></p>
-<p id="section-3.4-4">The actor profile defines processing rules for the following token types as issued outputs: JWT assertion grants (<a href="#jwt-assertion-grants" class="auto internal xref">Section 4</a>), JWT-formatted access tokens (<a href="#jwt-access-tokens" class="auto internal xref">Section 5</a>), and Transaction Tokens (<a href="#transaction-tokens" class="auto internal xref">Section 7.1</a>).  It also defines Token Exchange input processing for JWT assertion grants, JWT access tokens, OpenID Connect ID tokens, refresh tokens, and Transaction Tokens as <code>subject_token</code>, and for workload identity credentials, JWT client assertions, and JWT access tokens as <code>actor_token</code>.  The <code>may_act</code> pre-authorization claim (<a href="#may-act" class="auto internal xref">Section 6.2.6</a>) applies to any JWT used as <code>subject_token</code>.<a href="#section-3.4-4" class="pilcrow">¶</a></p>
+<p id="section-3.4-4">The actor profile defines processing rules for the following token types as issued outputs: JWT assertion grants (<a href="#jwt-assertion-grants" class="auto internal xref">Section 4</a>), JWT-formatted access tokens (<a href="#jwt-access-tokens" class="auto internal xref">Section 5</a>), and Transaction Tokens (<a href="#transaction-tokens" class="auto internal xref">Section 7.1</a>).  It also defines Token Exchange input processing for JWT assertion grants, JWT access tokens, OpenID Connect ID tokens, refresh tokens, and Transaction Tokens as <code>subject_token</code>, and for workload identity credentials, JWT client assertions, and JWT access tokens as <code>actor_token</code>.  The <code>may_act</code> pre-authorization claim (<a href="#may-act" class="auto internal xref">Section 6.2.3</a>) applies to any JWT used as <code>subject_token</code>.<a href="#section-3.4-4" class="pilcrow">¶</a></p>
 <p id="section-3.4-5">Subject to endpoint policy and the underlying token-exchange or grant mechanism, implementations <span class="bcp14">MAY</span> transform a supported input token type into a supported output token type for which this document defines the relevant issuance processing.  This document normatively defines JWT assertion grant issuance (<a href="#jwt-assertion-grant-issuance" class="auto internal xref">Section 6.4.1</a>), JWT access token issuance via <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a> after authorization-grant processing, Token Exchange processing, or Transaction Token Service processing, and Transaction Token issuance from inbound JWT assertion grants, JWT access tokens, or Transaction Tokens under <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a>.  It does not require every implementation to support every possible cross-product of supported inputs and outputs.  When an implementation supports a path defined by this document, actor profile information <span class="bcp14">MUST</span> be preserved and validated as specified for the resulting token type.<a href="#section-3.4-5" class="pilcrow">¶</a></p>
 <p id="section-3.4-6">This document profiles token contents and the processing of those contents once present.  It does not redefine the request semantics of <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, including the syntax or baseline meaning of <code>subject_token</code>, <code>actor_token</code>, <code>resource</code>, <code>audience</code>, or <code>requested_token_type</code>.  When such inputs carry or imply actor information, this document defines only how that information is represented in issued tokens and how issuers and consumers process it.<a href="#section-3.4-6" class="pilcrow">¶</a></p>
 <p id="section-3.4-7">For worked examples showing the actor profile in use in both same-domain service delegation and cross-domain delegation, see <a href="#appendix-service-to-service" class="auto internal xref">Appendix A</a> and <a href="#appendix-cross-domain" class="auto internal xref">Appendix B</a>.<a href="#section-3.4-7" class="pilcrow">¶</a></p>
@@ -1836,12 +1827,11 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Token-exchange AS (subject_token)</td>
-              <td class="text-left" rowspan="1" colspan="1">ID token, JWT assertion grant, JWT access token, refresh token, or Transaction Token as <code>subject_token</code>
-</td>
-              <td class="text-left" rowspan="1" colspan="1">Validate per credential type; trust issuer; validate delegation when required by local policy; enforce scope reduction and chain-depth limit</td>
-              <td class="text-left" rowspan="1" colspan="1">Issue token with preserved or extended <code>act</code> chain</td>
+              <td class="text-left" rowspan="1" colspan="1">Identity-only (<code>id_token</code>, <code>refresh_token</code>) or token-state (<code>jwt</code>, <code>access_token</code>, <code>txn_token</code>) <code>subject_token</code> input</td>
+              <td class="text-left" rowspan="1" colspan="1">Validate per credential type; apply class-specific subject, actor-chain, and presenter rules; trust issuer; validate delegation when required by local policy; enforce scope reduction and chain-depth limit</td>
+              <td class="text-left" rowspan="1" colspan="1">Issue token with preserved or extended <code>act</code> chain when inbound token-state supports it; otherwise derive any new <code>act</code> from current-exchange inputs only</td>
               <td class="text-left" rowspan="1" colspan="1">
-                <a href="#id-token-as-subject-token" class="auto internal xref">Section 6.2.4.2</a>, <a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 6.2.1</a>, <a href="#jwt-access-token-as-subject-token" class="auto internal xref">Section 6.2.2</a>, <a href="#refresh-token-as-subject-token" class="auto internal xref">Section 6.2.5.2</a>, <a href="#txn-token-as-subject-token" class="auto internal xref">Section 6.2.3</a>; then <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>
+                <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>, <a href="#id-token-as-subject-token" class="auto internal xref">Section 6.2.2.3</a>, <a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 6.2.1.1</a>, <a href="#jwt-access-token-as-subject-token" class="auto internal xref">Section 6.2.1.2</a>, <a href="#refresh-token-as-subject-token" class="auto internal xref">Section 6.2.2.6</a>, <a href="#txn-token-as-subject-token" class="auto internal xref">Section 6.2.1.3</a>; then <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>
 </td>
             </tr>
             <tr>
@@ -2641,20 +2631,29 @@ PreserveChain(inbound_chain):
             <p id="section-6.1-2.2.1"><strong>Token-state subject tokens</strong>: JWT assertion grants, JWT access tokens, and Transaction Tokens.  They can carry inbound <code>act</code> state and can carry top-level <code>cnf</code> for the current presenter.<a href="#section-6.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-6.1-3">Token Exchange under this profile runs in exactly one of two presenter-transition modes:<a href="#section-6.1-3" class="pilcrow">¶</a></p>
+<p id="section-6.1-3">These two classes also determine how inbound delegation state is introduced into Token Exchange processing:<a href="#section-6.1-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-6.1-4.1">
-            <p id="section-6.1-4.1.1"><strong>Presenter continuation</strong>: no validated <code>actor_token</code> establishing a new presenter is supplied.  The issued token keeps the presenter of a PoP-capable token-state <code>subject_token</code>.<a href="#section-6.1-4.1.1" class="pilcrow">¶</a></p>
+            <p id="section-6.1-4.1.1"><strong>Identity-only subject tokens</strong> establish <code>sub</code> and <span class="bcp14">MAY</span> establish supporting subject state such as <code>sub_profile</code> or an authorization ceiling.  They do not establish inbound <code>act</code> state, do not establish presenter continuity, and do not by themselves justify carrying <code>act</code> into the issued token.<a href="#section-6.1-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.1-4.2">
-            <p id="section-6.1-4.2.1"><strong>Presenter rebind</strong>: a validated <code>actor_token</code> establishes a new presenter for the issued token.  When the output token is sender-constrained, its top-level <code>cnf</code> is bound to that new presenter.<a href="#section-6.1-4.2.1" class="pilcrow">¶</a></p>
+            <p id="section-6.1-4.2.1"><strong>Token-state subject tokens</strong> establish <code>sub</code> and <span class="bcp14">MAY</span> establish <code>sub_profile</code>, inbound <code>act</code> chain state, and current-presenter binding through top-level <code>cnf</code>.  They are therefore the only <code>subject_token</code> inputs from which this document defines interoperable actor-chain preservation and presenter continuation.<a href="#section-6.1-4.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-6.1-5">This document defines presenter rebind only when a validated <code>actor_token</code> establishes the new presenter.  Other ways an implementation might authenticate or install a new presenter are deployment-specific and outside the scope of this document.<a href="#section-6.1-5" class="pilcrow">¶</a></p>
-<p id="section-6.1-6">When the inbound <code>subject_token</code> is bearer or identity-only, presenter continuation is unavailable, but presenter rebind remains available.  This bearer-to-PoP upgrade path lets a deployment exchange an existing bearer-style input for a sender-constrained output token without changing the actor semantics defined by this profile.<a href="#section-6.1-6" class="pilcrow">¶</a></p>
-<p id="section-6.1-7">A rebind-capable <code>actor_token</code> under this profile is a <strong>direct presenter credential</strong>: its own top-level subject identity names the new presenter, and the request proves possession according to that credential profile when sender-constrained output is being established.<a href="#section-6.1-7" class="pilcrow">¶</a></p>
-<p id="section-6.1-8">For legacy bearer-to-PoP migration, the recommended interoperable pattern is to present the existing bearer-style or identity-only credential as <code>subject_token</code>, present a direct presenter credential as <code>actor_token</code>, and issue a sender-constrained output token in presenter-rebind mode.  Deployments that need to preserve an inbound delegation chain while changing presenters <span class="bcp14">SHOULD</span> use the delegated credential as <code>subject_token</code> and a separate direct presenter credential as <code>actor_token</code>.<a href="#section-6.1-8" class="pilcrow">¶</a></p>
-<p id="section-6.1-9">JWT assertion grants are not suitable for use as <code>actor_token</code> in Token Exchange.  Their <code>sub</code> identifies the subject of delegation rather than the acting party.  Requests that need to establish an agent, workload, or client as the actor <span class="bcp14">SHOULD</span> use one of the actor credential types defined in this chapter instead.<a href="#section-6.1-9" class="pilcrow">¶</a></p>
+<p id="section-6.1-5">Token Exchange under this profile runs in exactly one of two presenter-transition modes:<a href="#section-6.1-5" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.1-6.1">
+            <p id="section-6.1-6.1.1"><strong>Presenter continuation</strong>: no validated <code>actor_token</code> establishing a new presenter is supplied.  The issued token keeps the presenter of a PoP-capable token-state <code>subject_token</code>.<a href="#section-6.1-6.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.1-6.2">
+            <p id="section-6.1-6.2.1"><strong>Presenter rebind</strong>: a validated <code>actor_token</code> establishes a new presenter for the issued token.  When the output token is sender-constrained, its top-level <code>cnf</code> is bound to that new presenter.<a href="#section-6.1-6.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-6.1-7">This document defines presenter rebind only when a validated <code>actor_token</code> establishes the new presenter.  Other ways an implementation might authenticate or install a new presenter are deployment-specific and outside the scope of this document.<a href="#section-6.1-7" class="pilcrow">¶</a></p>
+<p id="section-6.1-8">When the inbound <code>subject_token</code> is bearer or identity-only, presenter continuation is unavailable, but presenter rebind remains available.  This bearer-to-PoP upgrade path lets a deployment exchange an existing bearer-style input for a sender-constrained output token without changing the actor semantics defined by this profile.<a href="#section-6.1-8" class="pilcrow">¶</a></p>
+<p id="section-6.1-9">A rebind-capable <code>actor_token</code> under this profile is a <strong>direct presenter credential</strong>: its own top-level subject identity names the new presenter, and the request proves possession according to that credential profile when sender-constrained output is being established.<a href="#section-6.1-9" class="pilcrow">¶</a></p>
+<p id="section-6.1-10">For legacy bearer-to-PoP migration, the recommended interoperable pattern is to present the existing bearer-style or identity-only credential as <code>subject_token</code>, present a direct presenter credential as <code>actor_token</code>, and issue a sender-constrained output token in presenter-rebind mode.  Deployments that need to preserve an inbound delegation chain while changing presenters <span class="bcp14">SHOULD</span> use the delegated credential as <code>subject_token</code> and a separate direct presenter credential as <code>actor_token</code>.<a href="#section-6.1-10" class="pilcrow">¶</a></p>
+<p id="section-6.1-11">JWT assertion grants are not suitable for use as <code>actor_token</code> in Token Exchange.  Their <code>sub</code> identifies the subject of delegation rather than the acting party.  Requests that need to establish an agent, workload, or client as the actor <span class="bcp14">SHOULD</span> use one of the actor credential types defined in this chapter instead.<a href="#section-6.1-11" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="subject-tokens">
@@ -2662,216 +2661,270 @@ PreserveChain(inbound_chain):
         <h3 id="name-subject-tokens">
 <a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-subject-tokens" class="section-name selfRef">Subject Tokens</a>
         </h3>
-<div id="jwt-assertion-grant-as-subject-token">
+<p id="section-6.2-1">This section is organized by the two semantic <code>subject_token</code> classes defined in <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>.  The class-level text defines the common actor-profile consequences.  The individual token sections then define only the validation and extraction rules specific to each token type.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+<div id="token-state-subject-tokens">
 <section id="section-6.2.1">
-          <h4 id="name-jwt-assertion-grant">
-<a href="#section-6.2.1" class="section-number selfRef">6.2.1. </a><a href="#name-jwt-assertion-grant" class="section-name selfRef">JWT Assertion Grant</a>
+          <h4 id="name-token-state-subject-tokens">
+<a href="#section-6.2.1" class="section-number selfRef">6.2.1. </a><a href="#name-token-state-subject-tokens" class="section-name selfRef">Token-State Subject Tokens</a>
           </h4>
-<p id="section-6.2.1-1">When a Token Exchange request (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) presents a JWT assertion grant as the <code>subject_token</code>, the AS <span class="bcp14">MUST</span> apply the validation rules of <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a> (steps 1 through 7) to validate the inbound token.  Steps 8 and 9 of that section do not apply; propagation and scope reduction are governed by the rules below and by <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>.<a href="#section-6.2.1-1" class="pilcrow">¶</a></p>
-<p id="section-6.2.1-2">A JWT assertion grant used as <code>subject_token</code> is a token-state input for <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>.  If it carries top-level <code>cnf</code>, presenter continuation requires proof for that binding per <a href="#delegated-pop-validation" class="auto internal xref">Section 3.12</a>.  If it does not carry top-level <code>cnf</code>, it still <span class="bcp14">MAY</span> be used as a bearer subject token in presenter-rebind mode for bearer-to-PoP upgrade when a validated <code>actor_token</code> establishes the new presenter.<a href="#section-6.2.1-2" class="pilcrow">¶</a></p>
-<p id="section-6.2.1-3">The AS <span class="bcp14">MUST</span> apply scope reduction per <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-4" class="relref">Section 4</a></span> and <span class="bcp14">MUST</span> then apply the propagation rules in <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>.<a href="#section-6.2.1-3" class="pilcrow">¶</a></p>
+<p id="section-6.2.1-1">JWT assertion grants, JWT access tokens, and Transaction Tokens are token-state <code>subject_token</code> inputs.  For these inputs, this document defines the following common model:<a href="#section-6.2.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.2.1-2.1">
+              <p id="section-6.2.1-2.1.1">the validated token establishes the inbound <code>sub</code>;<a href="#section-6.2.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.2.1-2.2">
+              <p id="section-6.2.1-2.2.1"><code>sub_profile</code>, if present and trusted, becomes inbound supporting subject state;<a href="#section-6.2.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.2.1-2.3">
+              <p id="section-6.2.1-2.3.1"><code>act</code>, if present, becomes inbound delegation-chain state for <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a> or <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a>;<a href="#section-6.2.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.2.1-2.4">
+              <p id="section-6.2.1-2.4.1">top-level <code>cnf</code>, if present, makes the input eligible for presenter continuation under <a href="#delegated-pop-validation" class="auto internal xref">Section 3.12</a>;<a href="#section-6.2.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.2.1-2.5">
+              <p id="section-6.2.1-2.5.1">if top-level <code>cnf</code> is absent, the token still <span class="bcp14">MAY</span> be used in presenter-rebind mode for bearer-to-PoP upgrade.<a href="#section-6.2.1-2.5.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<div id="jwt-assertion-grant-as-subject-token">
+<section id="section-6.2.1.1">
+            <h5 id="name-jwt-assertion-grant">
+<a href="#section-6.2.1.1" class="section-number selfRef">6.2.1.1. </a><a href="#name-jwt-assertion-grant" class="section-name selfRef">JWT Assertion Grant</a>
+            </h5>
+<p id="section-6.2.1.1-1">When a Token Exchange request (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) presents a JWT assertion grant as the <code>subject_token</code>, the AS <span class="bcp14">MUST</span> apply the validation rules of <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a> (steps 1 through 7) to validate the inbound token.  Steps 8 and 9 of that section do not apply; propagation and scope reduction are governed by the rules below and by <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>.<a href="#section-6.2.1.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.2.1.1-2">A JWT assertion grant used as <code>subject_token</code> is a token-state input for <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>.  If it carries top-level <code>cnf</code>, presenter continuation requires proof for that binding per <a href="#delegated-pop-validation" class="auto internal xref">Section 3.12</a>.  If it does not carry top-level <code>cnf</code>, it still <span class="bcp14">MAY</span> be used as a bearer subject token in presenter-rebind mode for bearer-to-PoP upgrade when a validated <code>actor_token</code> establishes the new presenter.<a href="#section-6.2.1.1-2" class="pilcrow">¶</a></p>
+<p id="section-6.2.1.1-3">The AS <span class="bcp14">MUST</span> apply scope reduction per <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-4" class="relref">Section 4</a></span> and <span class="bcp14">MUST</span> then apply the propagation rules in <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>.<a href="#section-6.2.1.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="jwt-access-token-as-subject-token">
-<section id="section-6.2.2">
-          <h4 id="name-jwt-access-token">
-<a href="#section-6.2.2" class="section-number selfRef">6.2.2. </a><a href="#name-jwt-access-token" class="section-name selfRef">JWT Access Token</a>
-          </h4>
-<p id="section-6.2.2-1">When a Token Exchange request (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) presents a JWT access token as the <code>subject_token</code> (<code>subject_token_type=urn:ietf:params:oauth:token-type:access_token</code>), the AS <span class="bcp14">MUST</span> apply the following steps.  Use of an opaque access token as the <code>subject_token</code> is outside the interoperable scope of this profile.  An AS <span class="bcp14">MAY</span> translate introspection results for an opaque access token into equivalent local inputs for deployment-specific use, but that behavior is not interoperable behavior defined by this document.<a href="#section-6.2.2-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-6.2.2-2">
-<li id="section-6.2.2-2.1">
-              <p id="section-6.2.2-2.1.1">The AS <span class="bcp14">MUST</span> validate the inbound JWT access token per <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>: signature, <code>iss</code>, <code>exp</code>, and <code>nbf</code>.  Because a JWT access token used as <code>subject_token</code> was issued for a resource server, its <code>aud</code> will not ordinarily include the Token Exchange AS's token endpoint; the AS <span class="bcp14">MUST NOT</span> reject the inbound token solely because its <code>aud</code> does not include the AS's token endpoint URI.<a href="#section-6.2.2-2.1.1" class="pilcrow">¶</a></p>
+<section id="section-6.2.1.2">
+            <h5 id="name-jwt-access-token">
+<a href="#section-6.2.1.2" class="section-number selfRef">6.2.1.2. </a><a href="#name-jwt-access-token" class="section-name selfRef">JWT Access Token</a>
+            </h5>
+<p id="section-6.2.1.2-1">When a Token Exchange request (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) presents a JWT access token as the <code>subject_token</code> (<code>subject_token_type=urn:ietf:params:oauth:token-type:access_token</code>), the AS <span class="bcp14">MUST</span> apply the following steps.  Use of an opaque access token as the <code>subject_token</code> is outside the interoperable scope of this profile.  An AS <span class="bcp14">MAY</span> translate introspection results for an opaque access token into equivalent local inputs for deployment-specific use, but that behavior is not interoperable behavior defined by this document.<a href="#section-6.2.1.2-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.2.1.2-2">
+<li id="section-6.2.1.2-2.1">
+                <p id="section-6.2.1.2-2.1.1">The AS <span class="bcp14">MUST</span> validate the inbound JWT access token per <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>: signature, <code>iss</code>, <code>exp</code>, and <code>nbf</code>.  Because a JWT access token used as <code>subject_token</code> was issued for a resource server, its <code>aud</code> will not ordinarily include the Token Exchange AS's token endpoint; the AS <span class="bcp14">MUST NOT</span> reject the inbound token solely because its <code>aud</code> does not include the AS's token endpoint URI.<a href="#section-6.2.1.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li id="section-6.2.2-2.2">
-              <p id="section-6.2.2-2.2.1">The AS <span class="bcp14">MUST</span> verify that the inbound token's <code>iss</code> is trusted under local policy to assert the delegation chain it carries.  If not, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>.<a href="#section-6.2.2-2.2.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.1.2-2.2">
+                <p id="section-6.2.1.2-2.2.1">The AS <span class="bcp14">MUST</span> verify that the inbound token's <code>iss</code> is trusted under local policy to assert the delegation chain it carries.  If not, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>.<a href="#section-6.2.1.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
-            <li id="section-6.2.2-2.3">
-              <p id="section-6.2.2-2.3.1">If the inbound token carries top-level <code>cnf</code>, it is a PoP-capable token-state input for <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>, and the AS <span class="bcp14">MUST</span> apply the continuation or rebind rules in <a href="#delegated-pop-validation" class="auto internal xref">Section 3.12</a>.  If the inbound token carries no top-level <code>cnf</code>, it is a bearer <code>subject_token</code> for PoP purposes and <span class="bcp14">MAY</span> still be used in presenter-rebind mode for bearer-to-PoP upgrade.<a href="#section-6.2.2-2.3.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.1.2-2.3">
+                <p id="section-6.2.1.2-2.3.1">If the inbound token carries top-level <code>cnf</code>, it is a PoP-capable token-state input for <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>, and the AS <span class="bcp14">MUST</span> apply the continuation or rebind rules in <a href="#delegated-pop-validation" class="auto internal xref">Section 3.12</a>.  If the inbound token carries no top-level <code>cnf</code>, it is a bearer <code>subject_token</code> for PoP purposes and <span class="bcp14">MAY</span> still be used in presenter-rebind mode for bearer-to-PoP upgrade.<a href="#section-6.2.1.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
-            <li id="section-6.2.2-2.4">
-              <p id="section-6.2.2-2.4.1">The AS <span class="bcp14">MUST</span> extract <code>sub</code>, <code>sub_profile</code> (if present), and <code>act</code> (if present) from the validated token as the inbound delegation state for <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>.<a href="#section-6.2.2-2.4.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.1.2-2.4">
+                <p id="section-6.2.1.2-2.4.1">The AS <span class="bcp14">MUST</span> extract <code>sub</code>, <code>sub_profile</code> (if present), and <code>act</code> (if present) from the validated token as the inbound delegation state for <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>.<a href="#section-6.2.1.2-2.4.1" class="pilcrow">¶</a></p>
 </li>
-            <li id="section-6.2.2-2.5">
-              <p id="section-6.2.2-2.5.1">The AS <span class="bcp14">MUST</span> apply scope reduction per <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-4" class="relref">Section 4</a></span>.  The effective scope of the issued token <span class="bcp14">MUST NOT</span> exceed the inbound token's effective scope.<a href="#section-6.2.2-2.5.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.1.2-2.5">
+                <p id="section-6.2.1.2-2.5.1">The AS <span class="bcp14">MUST</span> apply scope reduction per <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-4" class="relref">Section 4</a></span>.  The effective scope of the issued token <span class="bcp14">MUST NOT</span> exceed the inbound token's effective scope.<a href="#section-6.2.1.2-2.5.1" class="pilcrow">¶</a></p>
 </li>
-          </ol>
-<p id="section-6.2.2-3">After completing these steps, the AS <span class="bcp14">MUST</span> apply the propagation rules in <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>.<a href="#section-6.2.2-3" class="pilcrow">¶</a></p>
+            </ol>
+<p id="section-6.2.1.2-3">After completing these steps, the AS <span class="bcp14">MUST</span> apply the propagation rules in <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>.<a href="#section-6.2.1.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="txn-token-as-subject-token">
-<section id="section-6.2.3">
-          <h4 id="name-transaction-token">
-<a href="#section-6.2.3" class="section-number selfRef">6.2.3. </a><a href="#name-transaction-token" class="section-name selfRef">Transaction Token</a>
-          </h4>
-<p id="section-6.2.3-1">When a Token Exchange request (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) presents a Transaction Token as the <code>subject_token</code> (<code>subject_token_type=urn:ietf:params:oauth:token-type:txn_token</code>) to a regular AS (not a TTS), the AS <span class="bcp14">MUST</span> apply the following steps.<a href="#section-6.2.3-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-6.2.3-2">
-<li id="section-6.2.3-2.1">
-              <p id="section-6.2.3-2.1.1">The AS <span class="bcp14">MUST</span> validate the Transaction Token per <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>: signature, <code>aud</code>, <code>exp</code>, and <code>iat</code>, and it <span class="bcp14">MUST</span> establish the token issuer identity.  When the inbound Transaction Token carries an <code>act</code> claim, the top-level <code>iss</code> claim <span class="bcp14">MUST</span> be present; if it is absent, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_request</code>.  When <code>iss</code> is present, the AS <span class="bcp14">MUST</span> validate it as the Transaction Token issuer identifier.  When <code>iss</code> is absent and the token carries no <code>act</code> claim, the AS <span class="bcp14">MUST</span> determine the issuer using the trust-domain and issuer-identification rules of <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> and local deployment configuration.  If validation fails or the issuer identity cannot be established, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>.<a href="#section-6.2.3-2.1.1" class="pilcrow">¶</a></p>
+<section id="section-6.2.1.3">
+            <h5 id="name-transaction-token">
+<a href="#section-6.2.1.3" class="section-number selfRef">6.2.1.3. </a><a href="#name-transaction-token" class="section-name selfRef">Transaction Token</a>
+            </h5>
+<p id="section-6.2.1.3-1">When a Token Exchange request (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) presents a Transaction Token as the <code>subject_token</code> (<code>subject_token_type=urn:ietf:params:oauth:token-type:txn_token</code>) to a regular AS (not a TTS), the AS <span class="bcp14">MUST</span> apply the following steps.<a href="#section-6.2.1.3-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.2.1.3-2">
+<li id="section-6.2.1.3-2.1">
+                <p id="section-6.2.1.3-2.1.1">The AS <span class="bcp14">MUST</span> validate the Transaction Token per <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>: signature, <code>aud</code>, <code>exp</code>, and <code>iat</code>, and it <span class="bcp14">MUST</span> establish the token issuer identity.  When the inbound Transaction Token carries an <code>act</code> claim, the top-level <code>iss</code> claim <span class="bcp14">MUST</span> be present; if it is absent, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_request</code>.  When <code>iss</code> is present, the AS <span class="bcp14">MUST</span> validate it as the Transaction Token issuer identifier.  When <code>iss</code> is absent and the token carries no <code>act</code> claim, the AS <span class="bcp14">MUST</span> determine the issuer using the trust-domain and issuer-identification rules of <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> and local deployment configuration.  If validation fails or the issuer identity cannot be established, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>.<a href="#section-6.2.1.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
-            <li id="section-6.2.3-2.2">
-              <p id="section-6.2.3-2.2.1">The AS <span class="bcp14">MUST</span> verify that the Transaction Token issuer identified in step 1 is trusted under local policy.  If not, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>.<a href="#section-6.2.3-2.2.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.1.3-2.2">
+                <p id="section-6.2.1.3-2.2.1">The AS <span class="bcp14">MUST</span> verify that the Transaction Token issuer identified in step 1 is trusted under local policy.  If not, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>.<a href="#section-6.2.1.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
-            <li id="section-6.2.3-2.3">
-              <p id="section-6.2.3-2.3.1">If the inbound Transaction Token carries a top-level presenter-binding claim such as <code>cnf</code>, it is a PoP-capable token-state input for <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>, and the AS <span class="bcp14">MUST</span> apply the continuation or rebind rules in <a href="#delegated-pop-validation" class="auto internal xref">Section 3.12</a> using the proof mechanism defined by <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> and the applicable deployment profile.  If the inbound Transaction Token carries no top-level presenter binding, it <span class="bcp14">MAY</span> still be used in presenter-rebind mode for bearer-to-PoP upgrade.<a href="#section-6.2.3-2.3.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.1.3-2.3">
+                <p id="section-6.2.1.3-2.3.1">If the inbound Transaction Token carries a top-level presenter-binding claim such as <code>cnf</code>, it is a PoP-capable token-state input for <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>, and the AS <span class="bcp14">MUST</span> apply the continuation or rebind rules in <a href="#delegated-pop-validation" class="auto internal xref">Section 3.12</a> using the proof mechanism defined by <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> and the applicable deployment profile.  If the inbound Transaction Token carries no top-level presenter binding, it <span class="bcp14">MAY</span> still be used in presenter-rebind mode for bearer-to-PoP upgrade.<a href="#section-6.2.1.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
-            <li id="section-6.2.3-2.4">
-              <p id="section-6.2.3-2.4.1">The AS <span class="bcp14">MUST</span> extract <code>sub</code>, <code>sub_profile</code> (if present), and <code>act</code> (if present) from the validated Transaction Token as the inbound delegation state for <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>.<a href="#section-6.2.3-2.4.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.1.3-2.4">
+                <p id="section-6.2.1.3-2.4.1">The AS <span class="bcp14">MUST</span> extract <code>sub</code>, <code>sub_profile</code> (if present), and <code>act</code> (if present) from the validated Transaction Token as the inbound delegation state for <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>.<a href="#section-6.2.1.3-2.4.1" class="pilcrow">¶</a></p>
 </li>
-            <li id="section-6.2.3-2.5">
-              <p id="section-6.2.3-2.5.1">The <code>req_wl</code> claim identifies the workload that requested the Transaction Token from the TTS and provides informational context about the transaction origin.  The AS <span class="bcp14">MAY</span> use <code>req_wl</code> for audit or local policy decisions but <span class="bcp14">MUST NOT</span> carry it forward into the issued JWT access token.<a href="#section-6.2.3-2.5.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.1.3-2.5">
+                <p id="section-6.2.1.3-2.5.1">The <code>req_wl</code> claim identifies the workload that requested the Transaction Token from the TTS and provides informational context about the transaction origin.  The AS <span class="bcp14">MAY</span> use <code>req_wl</code> for audit or local policy decisions but <span class="bcp14">MUST NOT</span> carry it forward into the issued JWT access token.<a href="#section-6.2.1.3-2.5.1" class="pilcrow">¶</a></p>
 </li>
-            <li id="section-6.2.3-2.6">
-              <p id="section-6.2.3-2.6.1">The AS <span class="bcp14">MUST</span> apply the propagation rules in <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>.  For a Transaction Token used as <code>subject_token</code>, this document defines only the actor-profile consequences of the inbound <code>sub</code>, <code>act</code>, <code>req_wl</code>, and presenter-binding state.  Transaction Token field semantics and any transaction-specific scope handling remain defined by <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>, <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, and local policy.<a href="#section-6.2.3-2.6.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.1.3-2.6">
+                <p id="section-6.2.1.3-2.6.1">The AS <span class="bcp14">MUST</span> apply the propagation rules in <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>.  For a Transaction Token used as <code>subject_token</code>, this document defines only the actor-profile consequences of the inbound <code>sub</code>, <code>act</code>, <code>req_wl</code>, and presenter-binding state.  Transaction Token field semantics and any transaction-specific scope handling remain defined by <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>, <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, and local policy.<a href="#section-6.2.1.3-2.6.1" class="pilcrow">¶</a></p>
 </li>
-          </ol>
+            </ol>
 </section>
 </div>
-<div id="id-tokens">
-<section id="section-6.2.4">
-          <h4 id="name-openid-connect-id-token">
-<a href="#section-6.2.4" class="section-number selfRef">6.2.4. </a><a href="#name-openid-connect-id-token" class="section-name selfRef">OpenID Connect ID Token</a>
+</section>
+</div>
+<div id="identity-only-subject-tokens">
+<section id="section-6.2.2">
+          <h4 id="name-identity-only-subject-token">
+<a href="#section-6.2.2" class="section-number selfRef">6.2.2. </a><a href="#name-identity-only-subject-token" class="section-name selfRef">Identity-Only Subject Tokens</a>
           </h4>
+<p id="section-6.2.2-1">ID tokens and refresh tokens are identity-only <code>subject_token</code> inputs.  For these inputs, this document defines the following common model:<a href="#section-6.2.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.2.2-2.1">
+              <p id="section-6.2.2-2.1.1">the validated input establishes <code>sub</code>;<a href="#section-6.2.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.2.2-2.2">
+              <p id="section-6.2.2-2.2.1"><code>sub_profile</code>, if available from the validated input or trusted state, becomes supporting subject state;<a href="#section-6.2.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.2.2-2.3">
+              <p id="section-6.2.2-2.3.1">the input does not establish inbound <code>act</code> chain state for propagation;<a href="#section-6.2.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.2.2-2.4">
+              <p id="section-6.2.2-2.4.1">the input does not establish presenter continuity;<a href="#section-6.2.2-2.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.2.2-2.5">
+              <p id="section-6.2.2-2.5.1">any <code>act</code> in the issued token therefore comes from a validated <code>actor_token</code> or another independent delegation basis under local policy;<a href="#section-6.2.2-2.5.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-6.2.2-2.6">
+              <p id="section-6.2.2-2.6.1">any sender-constrained issued token is therefore issued in presenter-rebind mode, with the new presenter established in the current exchange.<a href="#section-6.2.2-2.6.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<div id="id-tokens">
+<section id="section-6.2.2.1">
+            <h5 id="name-openid-connect-id-token">
+<a href="#section-6.2.2.1" class="section-number selfRef">6.2.2.1. </a><a href="#name-openid-connect-id-token" class="section-name selfRef">OpenID Connect ID Token</a>
+          </h5>
+</section>
+</div>
 <div id="id-token-overview">
-<section id="section-6.2.4.1">
+<section id="section-6.2.2.2">
             <h5 id="name-overview-2">
-<a href="#section-6.2.4.1" class="section-number selfRef">6.2.4.1. </a><a href="#name-overview-2" class="section-name selfRef">Overview</a>
+<a href="#section-6.2.2.2" class="section-number selfRef">6.2.2.2. </a><a href="#name-overview-2" class="section-name selfRef">Overview</a>
             </h5>
-<p id="section-6.2.4.1-1">An OpenID Connect ID token <span>[<a href="#OpenID.Core" class="cite xref">OpenID.Core</a>]</span> is a JWT issued by an OpenID Provider (OP) that asserts the authenticated identity of a user.  Its <code>sub</code> identifies the user, its <code>aud</code> identifies the relying party (the OAuth client) to which it was issued, and it may carry <code>azp</code> as an authorized-party/client identifier per <span>[<a href="#OpenID.Core" class="cite xref">OpenID.Core</a>]</span>.  Under this profile, <code>aud</code> and <code>azp</code> remain client-identity inputs; they do not establish actor identity.  ID tokens carry no <code>act</code> claim and no delegation chain; they establish the user's identity only.<a href="#section-6.2.4.1-1" class="pilcrow">¶</a></p>
-<p id="section-6.2.4.1-2">In this profile, ID tokens serve as <code>subject_token</code> in Token Exchange requests to introduce a user identity into a delegation chain.  The acting party is established by the <code>actor_token</code>.  This is the foundational pattern for cross-domain identity chaining: the user's OIDC identity flows forward as <code>sub</code> in the issued token while the actor identity becomes <code>act.sub</code>.<a href="#section-6.2.4.1-2" class="pilcrow">¶</a></p>
+<p id="section-6.2.2.2-1">An OpenID Connect ID token <span>[<a href="#OpenID.Core" class="cite xref">OpenID.Core</a>]</span> is a JWT issued by an OpenID Provider (OP) that asserts the authenticated identity of a user.  Its <code>sub</code> identifies the user, its <code>aud</code> identifies the relying party (the OAuth client) to which it was issued, and it may carry <code>azp</code> as an authorized-party/client identifier per <span>[<a href="#OpenID.Core" class="cite xref">OpenID.Core</a>]</span>.  Under this profile, <code>aud</code> and <code>azp</code> remain client-identity inputs; they do not establish actor identity.  ID tokens carry no <code>act</code> claim and no delegation chain; they establish the user's identity only.<a href="#section-6.2.2.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.2.2.2-2">In this profile, ID tokens serve as <code>subject_token</code> in Token Exchange requests to introduce a user identity into a delegation chain.  The acting party is established by the <code>actor_token</code>.  This is the foundational pattern for cross-domain identity chaining: the user's OIDC identity flows forward as <code>sub</code> in the issued token while the actor identity becomes <code>act.sub</code>.<a href="#section-6.2.2.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="id-token-as-subject-token">
-<section id="section-6.2.4.2">
+<section id="section-6.2.2.3">
             <h5 id="name-processing">
-<a href="#section-6.2.4.2" class="section-number selfRef">6.2.4.2. </a><a href="#name-processing" class="section-name selfRef">Processing</a>
+<a href="#section-6.2.2.3" class="section-number selfRef">6.2.2.3. </a><a href="#name-processing" class="section-name selfRef">Processing</a>
             </h5>
-<p id="section-6.2.4.2-1">When a Token Exchange request (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) presents an ID token as the <code>subject_token</code> (<code>subject_token_type=urn:ietf:params:oauth:token-type:id_token</code>), the AS <span class="bcp14">MUST</span> apply the following steps.<a href="#section-6.2.4.2-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-6.2.4.2-2">
-<li id="section-6.2.4.2-2.1">
-                <p id="section-6.2.4.2-2.1.1">The AS <span class="bcp14">MUST</span> validate the ID token per <span>[<a href="#OpenID.Core" class="cite xref">OpenID.Core</a>]</span> and local policy before using it as actor-profile input.  Any checks on <code>aud</code> or <code>azp</code> remain OpenID Connect and client-identity checks; they do not by themselves establish the delegated actor under this profile.<a href="#section-6.2.4.2-2.1.1" class="pilcrow">¶</a></p>
+<p id="section-6.2.2.3-1">When a Token Exchange request (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) presents an ID token as the <code>subject_token</code> (<code>subject_token_type=urn:ietf:params:oauth:token-type:id_token</code>), the AS <span class="bcp14">MUST</span> apply the following steps.<a href="#section-6.2.2.3-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.2.2.3-2">
+<li id="section-6.2.2.3-2.1">
+                <p id="section-6.2.2.3-2.1.1">The AS <span class="bcp14">MUST</span> validate the ID token per <span>[<a href="#OpenID.Core" class="cite xref">OpenID.Core</a>]</span> and local policy before using it as actor-profile input.  Any checks on <code>aud</code> or <code>azp</code> remain OpenID Connect and client-identity checks; they do not by themselves establish the delegated actor under this profile.<a href="#section-6.2.2.3-2.1.1" class="pilcrow">¶</a></p>
 </li>
-              <li id="section-6.2.4.2-2.2">
-                <p id="section-6.2.4.2-2.2.1">The AS <span class="bcp14">MUST</span> use the validated ID token's <code>sub</code> as the subject identity for the issued token, subject to the same-subject preservation rule in <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a> step 2.<a href="#section-6.2.4.2-2.2.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.2.3-2.2">
+                <p id="section-6.2.2.3-2.2.1">The AS <span class="bcp14">MUST</span> use the validated ID token's <code>sub</code> as the subject identity for the issued token, subject to the same-subject preservation rule in <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a> step 2.<a href="#section-6.2.2.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
-              <li id="section-6.2.4.2-2.3">
-                <p id="section-6.2.4.2-2.3.1">The AS <span class="bcp14">SHOULD</span> set <code>sub_profile</code> to <code>user</code> in the issued token if it can authoritatively classify the ID token's <code>sub</code> as a human user identity and no conflicting subject classification is available under local policy.<a href="#section-6.2.4.2-2.3.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.2.3-2.3">
+                <p id="section-6.2.2.3-2.3.1">The AS <span class="bcp14">SHOULD</span> set <code>sub_profile</code> to <code>user</code> in the issued token if it can authoritatively classify the ID token's <code>sub</code> as a human user identity and no conflicting subject classification is available under local policy.<a href="#section-6.2.2.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
-              <li id="section-6.2.4.2-2.4">
-                <p id="section-6.2.4.2-2.4.1">The ID token is an identity-only <code>subject_token</code> for <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>.  It does not establish actor identity or presenter continuity.  If an <code>actor_token</code> is present, the AS <span class="bcp14">MUST</span> process it per its type-specific rules and <span class="bcp14">MUST</span> use the derived actor identity as <code>act.sub</code>.  If the issued token is sender-constrained, that <code>actor_token</code> also establishes the new presenter for presenter-rebind mode.  If no <code>actor_token</code> or independent delegation basis is present, the AS <span class="bcp14">MUST NOT</span> include <code>act</code> in the issued token.<a href="#section-6.2.4.2-2.4.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.2.3-2.4">
+                <p id="section-6.2.2.3-2.4.1">The ID token is an identity-only <code>subject_token</code> for <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>.  It does not establish actor identity or presenter continuity.  If an <code>actor_token</code> is present, the AS <span class="bcp14">MUST</span> process it per its type-specific rules and <span class="bcp14">MUST</span> use the derived actor identity as <code>act.sub</code>.  If the issued token is sender-constrained, that <code>actor_token</code> also establishes the new presenter for presenter-rebind mode.  If no <code>actor_token</code> or independent delegation basis is present, the AS <span class="bcp14">MUST NOT</span> include <code>act</code> in the issued token.<a href="#section-6.2.2.3-2.4.1" class="pilcrow">¶</a></p>
 </li>
-              <li id="section-6.2.4.2-2.5">
-                <p id="section-6.2.4.2-2.5.1">The AS <span class="bcp14">MUST</span> apply the propagation rules in <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a> to determine the remaining claims in the issued token.  Because an ID token carries no inbound <code>act</code> chain and no OAuth scope ceiling, actor-chain construction and scope determination come from the <code>actor_token</code> (if any), <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, and local policy rather than from the ID token itself.<a href="#section-6.2.4.2-2.5.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.2.3-2.5">
+                <p id="section-6.2.2.3-2.5.1">The AS <span class="bcp14">MUST</span> apply the propagation rules in <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a> to determine the remaining claims in the issued token.  Because an ID token carries no inbound <code>act</code> chain and no OAuth scope ceiling, actor-chain construction and scope determination come from the <code>actor_token</code> (if any), <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, and local policy rather than from the ID token itself.<a href="#section-6.2.2.3-2.5.1" class="pilcrow">¶</a></p>
 </li>
             </ol>
-</section>
-</div>
 </section>
 </div>
 <div id="refresh-tokens">
-<section id="section-6.2.5">
-          <h4 id="name-refresh-token">
-<a href="#section-6.2.5" class="section-number selfRef">6.2.5. </a><a href="#name-refresh-token" class="section-name selfRef">Refresh Token</a>
-          </h4>
+<section id="section-6.2.2.4">
+            <h5 id="name-refresh-token">
+<a href="#section-6.2.2.4" class="section-number selfRef">6.2.2.4. </a><a href="#name-refresh-token" class="section-name selfRef">Refresh Token</a>
+          </h5>
+</section>
+</div>
 <div id="refresh-token-overview">
-<section id="section-6.2.5.1">
+<section id="section-6.2.2.5">
             <h5 id="name-overview-3">
-<a href="#section-6.2.5.1" class="section-number selfRef">6.2.5.1. </a><a href="#name-overview-3" class="section-name selfRef">Overview</a>
+<a href="#section-6.2.2.5" class="section-number selfRef">6.2.2.5. </a><a href="#name-overview-3" class="section-name selfRef">Overview</a>
             </h5>
-<p id="section-6.2.5.1-1">A refresh token is a long-lived credential issued by an AS to a specific OAuth client that authorizes that client to obtain new access tokens without repeating end-user authentication.  Refresh tokens are opaque by design; they do not carry claims such as <code>sub</code> or <code>act</code> and are validated through the issuing AS's own token store rather than by signature verification.<a href="#section-6.2.5.1-1" class="pilcrow">¶</a></p>
-<p id="section-6.2.5.1-2">Refresh tokens <span class="bcp14">MAY</span> be presented as <code>subject_token</code> in a Token Exchange request to introduce a user's existing authorization into a delegation chain; for example, when an agent that holds a user's refresh token needs a delegated access token for a specific resource.  Because refresh tokens carry no identity claims directly, the actor <span class="bcp14">MUST</span> be established by an <code>actor_token</code> in the same request or by an independent delegation basis under local policy.<a href="#section-6.2.5.1-2" class="pilcrow">¶</a></p>
-<p id="section-6.2.5.1-3">Refresh tokens <span class="bcp14">MUST NOT</span> be used as <code>actor_token</code>.  They carry no actor identity, are opaque credentials bound to a user authorization grant rather than to a workload or client identity, and cannot supply the <code>sub</code> value required to construct <code>act.sub</code>.<a href="#section-6.2.5.1-3" class="pilcrow">¶</a></p>
-<p id="section-6.2.5.1-4">This document does not standardize client-binding policy, cross-client presentation policy, or cross-AS acceptance policy for refresh tokens used as <code>subject_token</code>.  Those behaviors remain deployment-specific.<a href="#section-6.2.5.1-4" class="pilcrow">¶</a></p>
+<p id="section-6.2.2.5-1">A refresh token is a long-lived credential issued by an AS to a specific OAuth client that authorizes that client to obtain new access tokens without repeating end-user authentication.  Refresh tokens are opaque by design; they do not carry claims such as <code>sub</code> or <code>act</code> and are validated through the issuing AS's own token store rather than by signature verification.<a href="#section-6.2.2.5-1" class="pilcrow">¶</a></p>
+<p id="section-6.2.2.5-2">Refresh tokens <span class="bcp14">MAY</span> be presented as <code>subject_token</code> in a Token Exchange request to introduce a user's existing authorization into a delegation chain; for example, when an agent that holds a user's refresh token needs a delegated access token for a specific resource.  Because refresh tokens carry no identity claims directly, the actor <span class="bcp14">MUST</span> be established by an <code>actor_token</code> in the same request or by an independent delegation basis under local policy.<a href="#section-6.2.2.5-2" class="pilcrow">¶</a></p>
+<p id="section-6.2.2.5-3">Refresh tokens <span class="bcp14">MUST NOT</span> be used as <code>actor_token</code>.  They carry no actor identity, are opaque credentials bound to a user authorization grant rather than to a workload or client identity, and cannot supply the <code>sub</code> value required to construct <code>act.sub</code>.<a href="#section-6.2.2.5-3" class="pilcrow">¶</a></p>
+<p id="section-6.2.2.5-4">This document does not standardize client-binding policy, cross-client presentation policy, or cross-AS acceptance policy for refresh tokens used as <code>subject_token</code>.  Those behaviors remain deployment-specific.<a href="#section-6.2.2.5-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="refresh-token-as-subject-token">
-<section id="section-6.2.5.2">
+<section id="section-6.2.2.6">
             <h5 id="name-processing-2">
-<a href="#section-6.2.5.2" class="section-number selfRef">6.2.5.2. </a><a href="#name-processing-2" class="section-name selfRef">Processing</a>
+<a href="#section-6.2.2.6" class="section-number selfRef">6.2.2.6. </a><a href="#name-processing-2" class="section-name selfRef">Processing</a>
             </h5>
-<p id="section-6.2.5.2-1">When a Token Exchange request (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) presents a refresh token as the <code>subject_token</code> (<code>subject_token_type=urn:ietf:params:oauth:token-type:refresh_token</code>), the AS <span class="bcp14">MUST</span> apply the following steps.<a href="#section-6.2.5.2-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-6.2.5.2-2">
-<li id="section-6.2.5.2-2.1">
-                <p id="section-6.2.5.2-2.1.1">The AS <span class="bcp14">MUST</span> validate the refresh token through its own token store or a trusted back-channel with the issuing AS.  Signature-based validation does not apply.  If the token is expired, revoked, or otherwise invalid, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>.<a href="#section-6.2.5.2-2.1.1" class="pilcrow">¶</a></p>
+<p id="section-6.2.2.6-1">When a Token Exchange request (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) presents a refresh token as the <code>subject_token</code> (<code>subject_token_type=urn:ietf:params:oauth:token-type:refresh_token</code>), the AS <span class="bcp14">MUST</span> apply the following steps.<a href="#section-6.2.2.6-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.2.2.6-2">
+<li id="section-6.2.2.6-2.1">
+                <p id="section-6.2.2.6-2.1.1">The AS <span class="bcp14">MUST</span> validate the refresh token through its own token store or a trusted back-channel with the issuing AS.  Signature-based validation does not apply.  If the token is expired, revoked, or otherwise invalid, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>.<a href="#section-6.2.2.6-2.1.1" class="pilcrow">¶</a></p>
 </li>
-              <li id="section-6.2.5.2-2.2">
-                <p id="section-6.2.5.2-2.2.1">The AS <span class="bcp14">MUST</span> extract the subject identity and authorized scope associated with the refresh token from its token store or other trusted refresh-token state.  The <code>sub</code> of the user associated with the refresh token becomes <code>sub</code> in the issued token.  The AS <span class="bcp14">SHOULD</span> set <code>sub_profile</code> in the issued token if it can authoritatively classify the subject entity type.<a href="#section-6.2.5.2-2.2.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.2.6-2.2">
+                <p id="section-6.2.2.6-2.2.1">The AS <span class="bcp14">MUST</span> extract the subject identity and authorized scope associated with the refresh token from its token store or other trusted refresh-token state.  The <code>sub</code> of the user associated with the refresh token becomes <code>sub</code> in the issued token.  The AS <span class="bcp14">SHOULD</span> set <code>sub_profile</code> in the issued token if it can authoritatively classify the subject entity type.<a href="#section-6.2.2.6-2.2.1" class="pilcrow">¶</a></p>
 </li>
-              <li id="section-6.2.5.2-2.3">
-                <p id="section-6.2.5.2-2.3.1">Refresh tokens are identity-only <code>subject_token</code> inputs for <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>; they do not establish presenter continuity.  The acting party <span class="bcp14">MUST</span> be established by an <code>actor_token</code> or an independent delegation basis under local policy.  If neither is present, the AS <span class="bcp14">MUST NOT</span> include <code>act</code> in the issued token.  If an <code>actor_token</code> is present, the AS <span class="bcp14">MUST</span> process it per its type-specific rules and <span class="bcp14">MUST</span> use the actor identity derived by those rules as the outermost actor in the issued token.  If the issued token is sender-constrained, that <code>actor_token</code> also establishes the new presenter for presenter-rebind mode.<a href="#section-6.2.5.2-2.3.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.2.6-2.3">
+                <p id="section-6.2.2.6-2.3.1">Refresh tokens are identity-only <code>subject_token</code> inputs for <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>; they do not establish presenter continuity.  The acting party <span class="bcp14">MUST</span> be established by an <code>actor_token</code> or an independent delegation basis under local policy.  If neither is present, the AS <span class="bcp14">MUST NOT</span> include <code>act</code> in the issued token.  If an <code>actor_token</code> is present, the AS <span class="bcp14">MUST</span> process it per its type-specific rules and <span class="bcp14">MUST</span> use the actor identity derived by those rules as the outermost actor in the issued token.  If the issued token is sender-constrained, that <code>actor_token</code> also establishes the new presenter for presenter-rebind mode.<a href="#section-6.2.2.6-2.3.1" class="pilcrow">¶</a></p>
 </li>
-              <li id="section-6.2.5.2-2.4">
-                <p id="section-6.2.5.2-2.4.1">The effective scope of the issued token <span class="bcp14">MUST</span> be a subset of the scope authorized by the refresh token.  The AS <span class="bcp14">MUST</span> apply scope reduction per <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-4" class="relref">Section 4</a></span> against that ceiling.<a href="#section-6.2.5.2-2.4.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.2.6-2.4">
+                <p id="section-6.2.2.6-2.4.1">The effective scope of the issued token <span class="bcp14">MUST</span> be a subset of the scope authorized by the refresh token.  The AS <span class="bcp14">MUST</span> apply scope reduction per <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-4" class="relref">Section 4</a></span> against that ceiling.<a href="#section-6.2.2.6-2.4.1" class="pilcrow">¶</a></p>
 </li>
             </ol>
-<p id="section-6.2.5.2-3">After completing steps 1-4, the AS <span class="bcp14">MUST</span> apply the propagation rules in <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a> to determine the remaining claims in the issued token.<a href="#section-6.2.5.2-3" class="pilcrow">¶</a></p>
+<p id="section-6.2.2.6-3">After completing steps 1-4, the AS <span class="bcp14">MUST</span> apply the propagation rules in <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a> to determine the remaining claims in the issued token.<a href="#section-6.2.2.6-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
 </div>
 <div id="may-act">
-<section id="section-6.2.6">
+<section id="section-6.2.3">
           <h4 id="name-may_act-pre-authorization">
-<a href="#section-6.2.6" class="section-number selfRef">6.2.6. </a><a href="#name-may_act-pre-authorization" class="section-name selfRef">may_act Pre-Authorization</a>
+<a href="#section-6.2.3" class="section-number selfRef">6.2.3. </a><a href="#name-may_act-pre-authorization" class="section-name selfRef">may_act Pre-Authorization</a>
           </h4>
 <div id="may-act-overview">
-<section id="section-6.2.6.1">
+<section id="section-6.2.3.1">
             <h5 id="name-overview-4">
-<a href="#section-6.2.6.1" class="section-number selfRef">6.2.6.1. </a><a href="#name-overview-4" class="section-name selfRef">Overview</a>
+<a href="#section-6.2.3.1" class="section-number selfRef">6.2.3.1. </a><a href="#name-overview-4" class="section-name selfRef">Overview</a>
             </h5>
-<p id="section-6.2.6.1-1">The <code>may_act</code> claim (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-4.4" class="relref">Section 4.4</a></span>) is defined for JWTs and token introspection responses.  When a JWT <code>subject_token</code> carries <code>may_act</code> in a Token Exchange request, the claim is a single JSON object identifying one authorized actor for the subject identified by the containing JWT.  The object contains identity claims for that authorized actor; it is similar in purpose to <code>act</code> but is not constrained to have exactly the same member set.  For this profile's delegation-authorization shortcut, <code>sub</code> is the minimum identity member and <code>iss</code> is required for baseline interoperable matching unless the authoritative namespace for that <code>sub</code> is established unambiguously by the containing token or trusted local policy.  When present in a JWT <code>subject_token</code>, <code>may_act</code> allows the AS to satisfy its delegation-authorization requirement from information embedded in the subject token, without requiring an independent policy lookup.  The delegation-authorization check is defined by the type-specific processing section for the <code>subject_token</code> type in use (e.g., step 4 of <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a> for JWT assertion grants).<a href="#section-6.2.6.1-1" class="pilcrow">¶</a></p>
-<p id="section-6.2.6.1-2"><code>may_act</code> is an input to Token Exchange processing and <span class="bcp14">MUST NOT</span> be propagated into the issued token.<a href="#section-6.2.6.1-2" class="pilcrow">¶</a></p>
+<p id="section-6.2.3.1-1">The <code>may_act</code> claim (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-4.4" class="relref">Section 4.4</a></span>) is defined for JWTs and token introspection responses.  When a JWT <code>subject_token</code> carries <code>may_act</code> in a Token Exchange request, the claim is a single JSON object identifying one authorized actor for the subject identified by the containing JWT.  The object contains identity claims for that authorized actor; it is similar in purpose to <code>act</code> but is not constrained to have exactly the same member set.  For this profile's delegation-authorization shortcut, <code>sub</code> is the minimum identity member and <code>iss</code> is required for baseline interoperable matching unless the authoritative namespace for that <code>sub</code> is established unambiguously by the containing token or trusted local policy.  When present in a JWT <code>subject_token</code>, <code>may_act</code> allows the AS to satisfy its delegation-authorization requirement from information embedded in the subject token, without requiring an independent policy lookup.  The delegation-authorization check is defined by the type-specific processing section for the <code>subject_token</code> type in use (e.g., step 4 of <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a> for JWT assertion grants).<a href="#section-6.2.3.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.2.3.1-2"><code>may_act</code> is an input to Token Exchange processing and <span class="bcp14">MUST NOT</span> be propagated into the issued token.<a href="#section-6.2.3.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="may-act-processing">
-<section id="section-6.2.6.2">
+<section id="section-6.2.3.2">
             <h5 id="name-processing-3">
-<a href="#section-6.2.6.2" class="section-number selfRef">6.2.6.2. </a><a href="#name-processing-3" class="section-name selfRef">Processing</a>
+<a href="#section-6.2.3.2" class="section-number selfRef">6.2.3.2. </a><a href="#name-processing-3" class="section-name selfRef">Processing</a>
             </h5>
-<p id="section-6.2.6.2-1">When the AS processes a Token Exchange request whose JWT <code>subject_token</code> carries a <code>may_act</code> claim, the AS <span class="bcp14">MUST</span> apply the following rules.<a href="#section-6.2.6.2-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-6.2.6.2-2">
-<li id="section-6.2.6.2-2.1">
-                <p id="section-6.2.6.2-2.1.1">The AS <span class="bcp14">MUST</span> validate the <code>subject_token</code> per its type-specific rules before evaluating <code>may_act</code>.  A <code>may_act</code> claim in an invalid or untrusted token <span class="bcp14">MUST NOT</span> be used.<a href="#section-6.2.6.2-2.1.1" class="pilcrow">¶</a></p>
+<p id="section-6.2.3.2-1">When the AS processes a Token Exchange request whose JWT <code>subject_token</code> carries a <code>may_act</code> claim, the AS <span class="bcp14">MUST</span> apply the following rules.<a href="#section-6.2.3.2-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.2.3.2-2">
+<li id="section-6.2.3.2-2.1">
+                <p id="section-6.2.3.2-2.1.1">The AS <span class="bcp14">MUST</span> validate the <code>subject_token</code> per its type-specific rules before evaluating <code>may_act</code>.  A <code>may_act</code> claim in an invalid or untrusted token <span class="bcp14">MUST NOT</span> be used.<a href="#section-6.2.3.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
-              <li id="section-6.2.6.2-2.2">
-                <p id="section-6.2.6.2-2.2.1">The AS <span class="bcp14">MUST</span> compare the actor identity it is prepared to use for the issued token against the identity claims in <code>may_act</code>.  For this profile, the candidate actor identity is the (<code>act.iss</code>, <code>act.sub</code>) pair that would appear in the issued token if the request succeeds.  When an <code>actor_token</code> is present, that candidate identity is the <code>actor_token</code>'s derived actor identity.  When no <code>actor_token</code> is present, the AS <span class="bcp14">MAY</span> derive a candidate actor identity from the authenticated client's identity only if local policy defines an explicit trusted mapping from that client identity to both the actor identifier and its authoritative namespace; absent such a mapping, the authenticated client identity <span class="bcp14">MUST NOT</span> be treated as a substitute for <code>act.sub</code>.<a href="#section-6.2.6.2-2.2.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.3.2-2.2">
+                <p id="section-6.2.3.2-2.2.1">The AS <span class="bcp14">MUST</span> compare the actor identity it is prepared to use for the issued token against the identity claims in <code>may_act</code>.  For this profile, the candidate actor identity is the (<code>act.iss</code>, <code>act.sub</code>) pair that would appear in the issued token if the request succeeds.  When an <code>actor_token</code> is present, that candidate identity is the <code>actor_token</code>'s derived actor identity.  When no <code>actor_token</code> is present, the AS <span class="bcp14">MAY</span> derive a candidate actor identity from the authenticated client's identity only if local policy defines an explicit trusted mapping from that client identity to both the actor identifier and its authoritative namespace; absent such a mapping, the authenticated client identity <span class="bcp14">MUST NOT</span> be treated as a substitute for <code>act.sub</code>.<a href="#section-6.2.3.2-2.2.1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-6.2.6.2-2.2.2.1">
-                    <p id="section-6.2.6.2-2.2.2.1.1">If <code>may_act</code> contains both <code>sub</code> and <code>iss</code>, the AS <span class="bcp14">MUST</span> compare that pair to the candidate (<code>act.iss</code>, <code>act.sub</code>) pair using exact equality or trusted local semantic-consistency rules.<a href="#section-6.2.6.2-2.2.2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-6.2.3.2-2.2.2.1">
+                    <p id="section-6.2.3.2-2.2.2.1.1">If <code>may_act</code> contains both <code>sub</code> and <code>iss</code>, the AS <span class="bcp14">MUST</span> compare that pair to the candidate (<code>act.iss</code>, <code>act.sub</code>) pair using exact equality or trusted local semantic-consistency rules.<a href="#section-6.2.3.2-2.2.2.1.1" class="pilcrow">¶</a></p>
 </li>
-                  <li class="normal" id="section-6.2.6.2-2.2.2.2">
-                    <p id="section-6.2.6.2-2.2.2.2.1">If <code>may_act</code> contains <code>sub</code> but omits <code>iss</code>, the AS <span class="bcp14">MUST NOT</span> treat <code>may_act</code> as a sufficient basis for delegation authorization unless the containing token issuer or trusted local policy unambiguously establishes the authoritative namespace for that <code>sub</code>.<a href="#section-6.2.6.2-2.2.2.2.1" class="pilcrow">¶</a></p>
+                  <li class="normal" id="section-6.2.3.2-2.2.2.2">
+                    <p id="section-6.2.3.2-2.2.2.2.1">If <code>may_act</code> contains <code>sub</code> but omits <code>iss</code>, the AS <span class="bcp14">MUST NOT</span> treat <code>may_act</code> as a sufficient basis for delegation authorization unless the containing token issuer or trusted local policy unambiguously establishes the authoritative namespace for that <code>sub</code>.<a href="#section-6.2.3.2-2.2.2.2.1" class="pilcrow">¶</a></p>
 </li>
-                  <li class="normal" id="section-6.2.6.2-2.2.2.3">
-                    <p id="section-6.2.6.2-2.2.2.3.1">If <code>may_act</code> omits <code>sub</code>, the AS <span class="bcp14">MUST NOT</span> use it as a sufficient basis for delegation authorization.<a href="#section-6.2.6.2-2.2.2.3.1" class="pilcrow">¶</a></p>
+                  <li class="normal" id="section-6.2.3.2-2.2.2.3">
+                    <p id="section-6.2.3.2-2.2.2.3.1">If <code>may_act</code> omits <code>sub</code>, the AS <span class="bcp14">MUST NOT</span> use it as a sufficient basis for delegation authorization.<a href="#section-6.2.3.2-2.2.2.3.1" class="pilcrow">¶</a></p>
 </li>
-                  <li class="normal" id="section-6.2.6.2-2.2.2.4">
-                    <p id="section-6.2.6.2-2.2.2.4.1">Other members in <code>may_act</code> <span class="bcp14">MAY</span> refine local policy but do not define additional interoperable identity-matching inputs under this profile.<a href="#section-6.2.6.2-2.2.2.4.1" class="pilcrow">¶</a></p>
+                  <li class="normal" id="section-6.2.3.2-2.2.2.4">
+                    <p id="section-6.2.3.2-2.2.2.4.1">Other members in <code>may_act</code> <span class="bcp14">MAY</span> refine local policy but do not define additional interoperable identity-matching inputs under this profile.<a href="#section-6.2.3.2-2.2.2.4.1" class="pilcrow">¶</a></p>
 </li>
                 </ul>
-<p id="section-6.2.6.2-2.2.3">
-If the resulting issuer-scoped actor identity matches the party identified by <code>may_act</code>, the AS <span class="bcp14">MAY</span> treat that match as a sufficient basis for its delegation-authorization requirement for the <code>subject_token</code> type in use, subject to local policy.<a href="#section-6.2.6.2-2.2.3" class="pilcrow">¶</a></p>
-<p id="section-6.2.6.2-2.2.4">
-When both <code>may_act</code> and an <code>actor_token</code> are present, the following rules govern their interaction:<a href="#section-6.2.6.2-2.2.4" class="pilcrow">¶</a></p>
+<p id="section-6.2.3.2-2.2.3">
+If the resulting issuer-scoped actor identity matches the party identified by <code>may_act</code>, the AS <span class="bcp14">MAY</span> treat that match as a sufficient basis for its delegation-authorization requirement for the <code>subject_token</code> type in use, subject to local policy.<a href="#section-6.2.3.2-2.2.3" class="pilcrow">¶</a></p>
+<p id="section-6.2.3.2-2.2.4">
+When both <code>may_act</code> and an <code>actor_token</code> are present, the following rules govern their interaction:<a href="#section-6.2.3.2-2.2.4" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-6.2.6.2-2.2.5.1">
-                    <p id="section-6.2.6.2-2.2.5.1.1">A matching <code>may_act</code> <span class="bcp14">MAY</span> satisfy the delegation-authorization requirement but does not supply or override the actor identity.  The <code>actor_token</code> remains the authoritative source for <code>act.sub</code> in the issued token.<a href="#section-6.2.6.2-2.2.5.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-6.2.3.2-2.2.5.1">
+                    <p id="section-6.2.3.2-2.2.5.1.1">A matching <code>may_act</code> <span class="bcp14">MAY</span> satisfy the delegation-authorization requirement but does not supply or override the actor identity.  The <code>actor_token</code> remains the authoritative source for <code>act.sub</code> in the issued token.<a href="#section-6.2.3.2-2.2.5.1.1" class="pilcrow">¶</a></p>
 </li>
-                  <li class="normal" id="section-6.2.6.2-2.2.5.2">
-                    <p id="section-6.2.6.2-2.2.5.2.1">The AS <span class="bcp14">MUST NOT</span> use a matching <code>may_act</code> to replace the <code>actor_token</code>'s derived identity in the issued token's <code>act.sub</code>.<a href="#section-6.2.6.2-2.2.5.2.1" class="pilcrow">¶</a></p>
+                  <li class="normal" id="section-6.2.3.2-2.2.5.2">
+                    <p id="section-6.2.3.2-2.2.5.2.1">The AS <span class="bcp14">MUST NOT</span> use a matching <code>may_act</code> to replace the <code>actor_token</code>'s derived identity in the issued token's <code>act.sub</code>.<a href="#section-6.2.3.2-2.2.5.2.1" class="pilcrow">¶</a></p>
 </li>
-                  <li class="normal" id="section-6.2.6.2-2.2.5.3">
-                    <p id="section-6.2.6.2-2.2.5.3.1">When <code>may_act</code> identifies a different party than the <code>actor_token</code>'s derived identity, the AS <span class="bcp14">MUST</span> use the <code>actor_token</code>'s derived identity as <code>act.sub</code> and <span class="bcp14">MUST</span> fall back to its independent delegation-authorization policy per step 5.  A non-matching <code>may_act</code> is not itself grounds for rejection.<a href="#section-6.2.6.2-2.2.5.3.1" class="pilcrow">¶</a></p>
+                  <li class="normal" id="section-6.2.3.2-2.2.5.3">
+                    <p id="section-6.2.3.2-2.2.5.3.1">When <code>may_act</code> identifies a different party than the <code>actor_token</code>'s derived identity, the AS <span class="bcp14">MUST</span> use the <code>actor_token</code>'s derived identity as <code>act.sub</code> and <span class="bcp14">MUST</span> fall back to its independent delegation-authorization policy per step 5.  A non-matching <code>may_act</code> is not itself grounds for rejection.<a href="#section-6.2.3.2-2.2.5.3.1" class="pilcrow">¶</a></p>
 </li>
                 </ul>
 </li>
-              <li id="section-6.2.6.2-2.3">
-                <p id="section-6.2.6.2-2.3.1">A <code>may_act</code> match does not override other validation requirements.  The AS <span class="bcp14">MUST</span> still validate the <code>actor_token</code>, verify issuer trust, and enforce proof of possession per the applicable type-specific section.  When client identity is used under step 2 via trusted mapping, the AS <span class="bcp14">MUST</span> apply the same semantic-consistency rules described in <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a> step 7 and <a href="#client-identity-delegation" class="auto internal xref">Section 12.2</a>.<a href="#section-6.2.6.2-2.3.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.3.2-2.3">
+                <p id="section-6.2.3.2-2.3.1">A <code>may_act</code> match does not override other validation requirements.  The AS <span class="bcp14">MUST</span> still validate the <code>actor_token</code>, verify issuer trust, and enforce proof of possession per the applicable type-specific section.  When client identity is used under step 2 via trusted mapping, the AS <span class="bcp14">MUST</span> apply the same semantic-consistency rules described in <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a> step 7 and <a href="#client-identity-delegation" class="auto internal xref">Section 12.2</a>.<a href="#section-6.2.3.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
-              <li id="section-6.2.6.2-2.4">
-                <p id="section-6.2.6.2-2.4.1">The AS <span class="bcp14">MUST NOT</span> carry <code>may_act</code> forward into the issued token.  The claim is consumed during Token Exchange processing and <span class="bcp14">MUST NOT</span> appear in any output token type defined by this profile.<a href="#section-6.2.6.2-2.4.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.3.2-2.4">
+                <p id="section-6.2.3.2-2.4.1">The AS <span class="bcp14">MUST NOT</span> carry <code>may_act</code> forward into the issued token.  The claim is consumed during Token Exchange processing and <span class="bcp14">MUST NOT</span> appear in any output token type defined by this profile.<a href="#section-6.2.3.2-2.4.1" class="pilcrow">¶</a></p>
 </li>
-              <li id="section-6.2.6.2-2.5">
-                <p id="section-6.2.6.2-2.5.1">When <code>may_act</code> is present but the actor's identity does not match the party identified there, the AS <span class="bcp14">MUST</span> fall back to its independent delegation-authorization policy applicable to the <code>subject_token</code> type in use.  A non-matching <code>may_act</code> is not itself grounds for rejecting the request.<a href="#section-6.2.6.2-2.5.1" class="pilcrow">¶</a></p>
+              <li id="section-6.2.3.2-2.5">
+                <p id="section-6.2.3.2-2.5.1">When <code>may_act</code> is present but the actor's identity does not match the party identified there, the AS <span class="bcp14">MUST</span> fall back to its independent delegation-authorization policy applicable to the <code>subject_token</code> type in use.  A non-matching <code>may_act</code> is not itself grounds for rejecting the request.<a href="#section-6.2.3.2-2.5.1" class="pilcrow">¶</a></p>
 </li>
             </ol>
 </section>
@@ -3064,8 +3117,8 @@ When both <code>may_act</code> and an <code>actor_token</code> are present, the 
           <h4 id="name-jwt-access-token-output">
 <a href="#section-6.4.2" class="section-number selfRef">6.4.2. </a><a href="#name-jwt-access-token-output" class="section-name selfRef">JWT Access Token Output</a>
           </h4>
-<p id="section-6.4.2-1">The issued JWT access token <span class="bcp14">MUST</span> satisfy the structural requirements in <a href="#jwt-access-tokens-structure" class="auto internal xref">Section 5.1</a>.  This section is the common output step for Token Exchange paths in this chapter that produce a JWT access token.  It is reached after completing the credential-type-specific <code>subject_token</code> and <code>actor_token</code> processing defined above, or after Transaction Token Service processing.<a href="#section-6.4.2-1" class="pilcrow">¶</a></p>
-<p id="section-6.4.2-2">After completing the type-specific validation steps for any <code>subject_token</code> defined in this chapter (<a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 6.2.1</a>, <a href="#jwt-access-token-as-subject-token" class="auto internal xref">Section 6.2.2</a>, <a href="#id-token-as-subject-token" class="auto internal xref">Section 6.2.4.2</a>, <a href="#refresh-token-as-subject-token" class="auto internal xref">Section 6.2.5.2</a>, <a href="#txn-token-as-subject-token" class="auto internal xref">Section 6.2.3</a>) or after Transaction Token Service processing (<a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a>), the AS <span class="bcp14">MUST</span> apply the following rules when issuing a JWT access token.  These rules govern the actor chain, subject, and scope in the issued token regardless of inbound credential type.<a href="#section-6.4.2-2" class="pilcrow">¶</a></p>
+<p id="section-6.4.2-1">The issued JWT access token <span class="bcp14">MUST</span> satisfy the structural requirements in <a href="#jwt-access-tokens-structure" class="auto internal xref">Section 5.1</a>.  This section is the common output step for Token Exchange paths in this chapter that produce a JWT access token.  It is reached after completing the applicable class-level and type-specific <code>subject_token</code> processing defined above, the applicable <code>actor_token</code> processing, or Transaction Token Service processing.<a href="#section-6.4.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.4.2-2">After completing the applicable <code>subject_token</code> processing in this chapter, whether for an identity-only input (<a href="#id-token-as-subject-token" class="auto internal xref">Section 6.2.2.3</a>, <a href="#refresh-token-as-subject-token" class="auto internal xref">Section 6.2.2.6</a>) or a token-state input (<a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 6.2.1.1</a>, <a href="#jwt-access-token-as-subject-token" class="auto internal xref">Section 6.2.1.2</a>, <a href="#txn-token-as-subject-token" class="auto internal xref">Section 6.2.1.3</a>), or after Transaction Token Service processing (<a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a>), the AS <span class="bcp14">MUST</span> apply the following rules when issuing a JWT access token.  These rules govern the actor chain, subject, and scope in the issued token regardless of inbound credential type.<a href="#section-6.4.2-2" class="pilcrow">¶</a></p>
 <p id="section-6.4.2-3">When both a <code>subject_token</code> carrying an inbound <code>act</code> chain and an <code>actor_token</code> are present, the validated <code>actor_token</code> determines the new outermost actor identity in the issued token.  Any preserved inbound <code>act</code> chain from the <code>subject_token</code> is nested beneath that new outermost <code>act</code>; the validation and conflict rules are defined in the applicable <code>actor_token</code> section.<a href="#section-6.4.2-3" class="pilcrow">¶</a></p>
 <p id="section-6.4.2-4">When the issued token is sender-constrained, the issuer <span class="bcp14">MUST</span> bind the output token's top-level <code>cnf</code> according to <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>:<a href="#section-6.4.2-4" class="pilcrow">¶</a></p>
 <ul class="normal">
@@ -3422,12 +3475,13 @@ See <a href="#client-identity-delegation" class="auto internal xref">Section 12.
         <h3 id="name-supported-subject-tokens">
 <a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-supported-subject-tokens" class="section-name selfRef">Supported Subject Tokens</a>
         </h3>
+<p id="section-7.2-1">The TTS accepts only token-state <code>subject_token</code> inputs.  Identity-only inputs such as ID tokens and refresh tokens do not carry the inbound actor-chain or presenter state needed for <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a> and are therefore outside the scope of the TTS profile defined here.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
 <div id="jwt-assertion-grant">
 <section id="section-7.2.1">
           <h4 id="name-jwt-assertion-grant-2">
 <a href="#section-7.2.1" class="section-number selfRef">7.2.1. </a><a href="#name-jwt-assertion-grant-2" class="section-name selfRef">JWT Assertion Grant</a>
           </h4>
-<p id="section-7.2.1-1">When the TTS receives a JWT assertion grant as <code>subject_token</code>, it <span class="bcp14">MUST</span> apply the validation, presenter-continuity, and scope-reduction rules in <a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 6.2.1</a>.  Instead of applying <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>, the TTS uses the resulting subject identity, optional <code>sub_profile</code>, inbound <code>act</code> chain, proof-of-possession state, and effective scope ceiling as the inbound delegation state for <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a>.<a href="#section-7.2.1-1" class="pilcrow">¶</a></p>
+<p id="section-7.2.1-1">When the TTS receives a JWT assertion grant as <code>subject_token</code>, it <span class="bcp14">MUST</span> apply the validation, presenter-continuity, and scope-reduction rules in <a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 6.2.1.1</a>.  Instead of applying <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>, the TTS uses the resulting subject identity, optional <code>sub_profile</code>, inbound <code>act</code> chain, proof-of-possession state, and effective scope ceiling as the inbound delegation state for <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a>.<a href="#section-7.2.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="jwt-access-token">
@@ -3435,7 +3489,7 @@ See <a href="#client-identity-delegation" class="auto internal xref">Section 12.
           <h4 id="name-jwt-access-token-3">
 <a href="#section-7.2.2" class="section-number selfRef">7.2.2. </a><a href="#name-jwt-access-token-3" class="section-name selfRef">JWT Access Token</a>
           </h4>
-<p id="section-7.2.2-1">When the TTS receives a JWT access token as <code>subject_token</code>, it <span class="bcp14">MUST</span> apply <a href="#jwt-access-token-as-subject-token" class="auto internal xref">Section 6.2.2</a> steps 1 through 5.  Instead of applying <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>, the TTS uses the resulting inbound delegation state as input to <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a>.<a href="#section-7.2.2-1" class="pilcrow">¶</a></p>
+<p id="section-7.2.2-1">When the TTS receives a JWT access token as <code>subject_token</code>, it <span class="bcp14">MUST</span> apply <a href="#jwt-access-token-as-subject-token" class="auto internal xref">Section 6.2.1.2</a> steps 1 through 5.  Instead of applying <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>, the TTS uses the resulting inbound delegation state as input to <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a>.<a href="#section-7.2.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="transaction-token">
@@ -3443,7 +3497,7 @@ See <a href="#client-identity-delegation" class="auto internal xref">Section 12.
           <h4 id="name-transaction-token-2">
 <a href="#section-7.2.3" class="section-number selfRef">7.2.3. </a><a href="#name-transaction-token-2" class="section-name selfRef">Transaction Token</a>
           </h4>
-<p id="section-7.2.3-1">When the TTS receives a Transaction Token as <code>subject_token</code>, it <span class="bcp14">MUST</span> apply <a href="#txn-token-as-subject-token" class="auto internal xref">Section 6.2.3</a> steps 1 through 5.  Instead of applying <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>, the TTS uses the extracted <code>sub</code>, optional <code>sub_profile</code>, inbound <code>act</code> chain, <code>req_wl</code>, and presenter-binding state as input to <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a>.<a href="#section-7.2.3-1" class="pilcrow">¶</a></p>
+<p id="section-7.2.3-1">When the TTS receives a Transaction Token as <code>subject_token</code>, it <span class="bcp14">MUST</span> apply <a href="#txn-token-as-subject-token" class="auto internal xref">Section 6.2.1.3</a> steps 1 through 5.  Instead of applying <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>, the TTS uses the extracted <code>sub</code>, optional <code>sub_profile</code>, inbound <code>act</code> chain, <code>req_wl</code>, and presenter-binding state as input to <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a>.<a href="#section-7.2.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3520,7 +3574,7 @@ Interoperable processing is defined around <code>sub</code> and the outermost <c
         <h3 id="name-may_act-pre-authorization-2">
 <a href="#section-7.5" class="section-number selfRef">7.5. </a><a href="#name-may_act-pre-authorization-2" class="section-name selfRef">may_act Pre-Authorization</a>
         </h3>
-<p id="section-7.5-1">When the inbound <code>subject_token</code> presented to the TTS is a JWT carrying <code>may_act</code>, the TTS <span class="bcp14">MUST</span> apply the matching rules in <a href="#may-act-processing" class="auto internal xref">Section 6.2.6.2</a> using the newly authenticated presenter as the candidate actor identity that would become the new outermost <code>act</code> in the issued Transaction Token.  A matching <code>may_act</code> <span class="bcp14">MAY</span> satisfy the delegation-authorization requirement in <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a> step 5, but it does not replace validation of the inbound credential, presenter authentication, or the obligation to create a new outermost <code>act</code>.<a href="#section-7.5-1" class="pilcrow">¶</a></p>
+<p id="section-7.5-1">When the inbound <code>subject_token</code> presented to the TTS is a JWT carrying <code>may_act</code>, the TTS <span class="bcp14">MUST</span> apply the matching rules in <a href="#may-act-processing" class="auto internal xref">Section 6.2.3.2</a> using the newly authenticated presenter as the candidate actor identity that would become the new outermost <code>act</code> in the issued Transaction Token.  A matching <code>may_act</code> <span class="bcp14">MAY</span> satisfy the delegation-authorization requirement in <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a> step 5, but it does not replace validation of the inbound credential, presenter authentication, or the obligation to create a new outermost <code>act</code>.<a href="#section-7.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -4109,7 +4163,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
         <h3 id="name-refresh-token-issuance-cons">
 <a href="#section-11.2" class="section-number selfRef">11.2. </a><a href="#name-refresh-token-issuance-cons" class="section-name selfRef">Refresh Token Issuance Considerations</a>
         </h3>
-<p id="section-11.2-1">This document does not standardize whether an AS issues refresh tokens in response to delegated JWT assertion grant requests, how such refresh tokens are revoked, or whether later use of such refresh tokens requires re-presentation of upstream delegation artifacts.  Those decisions remain deployment-specific.  When a refresh token is later used to obtain a delegated output token, the actor-profile rules in <a href="#refresh-token-as-subject-token" class="auto internal xref">Section 6.2.5.2</a> and the output-token rules of this document apply.<a href="#section-11.2-1" class="pilcrow">¶</a></p>
+<p id="section-11.2-1">This document does not standardize whether an AS issues refresh tokens in response to delegated JWT assertion grant requests, how such refresh tokens are revoked, or whether later use of such refresh tokens requires re-presentation of upstream delegation artifacts.  Those decisions remain deployment-specific.  When a refresh token is later used to obtain a delegated output token, the actor-profile rules in <a href="#refresh-token-as-subject-token" class="auto internal xref">Section 6.2.2.6</a> and the output-token rules of this document apply.<a href="#section-11.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="act-iss-authority-guidance">
