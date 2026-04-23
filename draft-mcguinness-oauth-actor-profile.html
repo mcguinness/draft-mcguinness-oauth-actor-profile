@@ -8,7 +8,7 @@
 <meta content="Karl McGuinness" name="author">
 <meta content="
        OAuth deployments increasingly involve multi-principal scenarios where an agent or workload acts on behalf of a human user across organizational and trust-domain boundaries.  Existing specifications provide relevant building blocks but do not define a common profile for representing the delegated actor relationship across token types, classifying actor entity types, or signaling support between authorization servers and resource servers.  The result is inconsistent actor representation and interoperability gaps that force deployments to rely on proprietary conventions. 
-       This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity:  client_id  identifies the OAuth client registration,  sub  identifies the authorizing principal, and  act.sub  identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common  act  claim structure with  sub_profile  for machine-processable entity classification, applies existing top-level  cnf  sender-constraint mechanisms consistently across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  It also defines how supporting Token Exchange inputs such as ID tokens, refresh tokens, JWT actor credentials, and the  may_act  claim are processed when introducing subject or actor identity into that three-token actor-profile model.  When this profile is applied to the Identity Assertion JWT Authorization Grant (ID-JAG), it supplies the actor-delegation extension semantics that ID-JAG leaves to future profiles or extensions.  The document also registers metadata parameters for advertising actor-profile support and partial capability signals in cross-domain deployments.  This document standardizes the token representation of delegation relationships and the processing rules for issuers and consumers; it does not standardize the upstream policies and mechanisms by which systems determine whether a given actor is authorized to act for a subject, which remain deployment-specific. 
+       This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity:  client_id  identifies the OAuth client registration,  sub  identifies the authorizing principal, and  act.sub  identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common  act  claim structure with  sub_profile  for machine-processable entity classification, applies existing top-level  cnf  sender-constraint mechanisms consistently across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  It also defines how supporting Token Exchange inputs such as ID tokens, refresh tokens, and JWT actor credentials are processed when introducing subject or actor identity into that three-token actor-profile model.  When this profile is applied to the Identity Assertion JWT Authorization Grant (ID-JAG), it supplies the actor-delegation extension semantics that ID-JAG leaves to future profiles or extensions.  The document also registers metadata parameters for advertising actor-profile support and partial capability signals in cross-domain deployments.  This document standardizes the token representation of delegation relationships and the processing rules for issuers and consumers; it does not standardize the upstream policies and mechanisms by which systems determine whether a given actor is authorized to act for a subject, which remain deployment-specific. 
     " name="description">
 <meta content="xml2rfc 3.33.0" name="generator">
 <meta content="oauth" name="keyword">
@@ -1086,7 +1086,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">OAuth deployments increasingly involve multi-principal scenarios where an agent or workload acts on behalf of a human user across organizational and trust-domain boundaries.  Existing specifications provide relevant building blocks but do not define a common profile for representing the delegated actor relationship across token types, classifying actor entity types, or signaling support between authorization servers and resource servers.  The result is inconsistent actor representation and interoperability gaps that force deployments to rely on proprietary conventions.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-<p id="section-abstract-2">This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity: <code>client_id</code> identifies the OAuth client registration, <code>sub</code> identifies the authorizing principal, and <code>act.sub</code> identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common <code>act</code> claim structure with <code>sub_profile</code> for machine-processable entity classification, applies existing top-level <code>cnf</code> sender-constraint mechanisms consistently across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  It also defines how supporting Token Exchange inputs such as ID tokens, refresh tokens, JWT actor credentials, and the <code>may_act</code> claim are processed when introducing subject or actor identity into that three-token actor-profile model.  When this profile is applied to the Identity Assertion JWT Authorization Grant (ID-JAG), it supplies the actor-delegation extension semantics that ID-JAG leaves to future profiles or extensions.  The document also registers metadata parameters for advertising actor-profile support and partial capability signals in cross-domain deployments.  This document standardizes the token representation of delegation relationships and the processing rules for issuers and consumers; it does not standardize the upstream policies and mechanisms by which systems determine whether a given actor is authorized to act for a subject, which remain deployment-specific.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity: <code>client_id</code> identifies the OAuth client registration, <code>sub</code> identifies the authorizing principal, and <code>act.sub</code> identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common <code>act</code> claim structure with <code>sub_profile</code> for machine-processable entity classification, applies existing top-level <code>cnf</code> sender-constraint mechanisms consistently across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  It also defines how supporting Token Exchange inputs such as ID tokens, refresh tokens, and JWT actor credentials are processed when introducing subject or actor identity into that three-token actor-profile model.  When this profile is applied to the Identity Assertion JWT Authorization Grant (ID-JAG), it supplies the actor-delegation extension semantics that ID-JAG leaves to future profiles or extensions.  The document also registers metadata parameters for advertising actor-profile support and partial capability signals in cross-domain deployments.  This document standardizes the token representation of delegation relationships and the processing rules for issuers and consumers; it does not standardize the upstream policies and mechanisms by which systems determine whether a given actor is authorized to act for a subject, which remain deployment-specific.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1284,7 +1284,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
                     <p id="section-toc.1-1.6.2.2.2.2.1"><a href="#section-6.2.2" class="auto internal xref">6.2.2</a>.  <a href="#name-identity-only-subject-token" class="internal xref">Identity-Only Subject Tokens</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2.2.3">
-                    <p id="section-toc.1-1.6.2.2.2.3.1"><a href="#section-6.2.3" class="auto internal xref">6.2.3</a>.  <a href="#name-may_act-pre-authorization" class="internal xref">may_act Pre-Authorization</a></p>
+                    <p id="section-toc.1-1.6.2.2.2.3.1"><a href="#section-6.2.3" class="auto internal xref">6.2.3</a>.  <a href="#name-may_act" class="internal xref"><code>may_act</code></a></p>
 </li>
                 </ul>
 </li>
@@ -1347,7 +1347,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-transaction-token-output-ru" class="internal xref">Transaction Token Output Rules</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.5">
-                <p id="section-toc.1-1.7.2.5.1"><a href="#section-7.5" class="auto internal xref">7.5</a>.  <a href="#name-may_act-pre-authorization-2" class="internal xref">may_act Pre-Authorization</a></p>
+                <p id="section-toc.1-1.7.2.5.1"><a href="#section-7.5" class="auto internal xref">7.5</a>.  <a href="#name-may_act-2" class="internal xref"><code>may_act</code></a></p>
 </li>
             </ul>
 </li>
@@ -1395,7 +1395,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-discovery-and-capability-ne" class="internal xref">Discovery and Capability Negotiation</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2.2.1">
-                    <p id="section-toc.1-1.10.2.2.2.1.1"><a href="#section-10.2.1" class="auto internal xref">10.2.1</a>.  <a href="#name-overview-8" class="internal xref">Overview</a></p>
+                    <p id="section-toc.1-1.10.2.2.2.1.1"><a href="#section-10.2.1" class="auto internal xref">10.2.1</a>.  <a href="#name-overview-7" class="internal xref">Overview</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2.2.2">
                     <p id="section-toc.1-1.10.2.2.2.2.1"><a href="#section-10.2.2" class="auto internal xref">10.2.2</a>.  <a href="#name-authorization-server-metada" class="internal xref">Authorization Server Metadata</a></p>
@@ -1764,7 +1764,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-3.4-1">Conformance to this profile means that issuers and consumers represent, preserve, validate, and interpret actor claims consistently according to this document.  It does not require every deployment to enforce authorization of the (<code>sub</code>, outermost <code>act.sub</code>) pair on every request, although such enforcement is <span class="bcp14">RECOMMENDED</span> for security-sensitive delegated access.<a href="#section-3.4-1" class="pilcrow">¶</a></p>
 <p id="section-3.4-2">Same-domain deployments will often satisfy these requirements with straightforward local configuration for namespace authority and identifier mapping.  Cross-domain deployments typically require explicit trust-framework or bilateral agreement decisions and therefore have a higher interoperability burden under this profile.<a href="#section-3.4-2" class="pilcrow">¶</a></p>
 <p id="section-3.4-3">This profile defines actor-profile requirements for JWT assertion grants, JWT-formatted access tokens, and Transaction Tokens.  It does not define an equivalent interoperable profile for opaque access tokens.  Deployments using opaque access tokens, including as <code>subject_token</code> or <code>actor_token</code> inputs to Token Exchange, are out of scope for this document.  An AS <span class="bcp14">MAY</span> translate introspection results for an opaque access token into equivalent local inputs for deployment-specific use, but that behavior is not interoperable behavior defined by this document.<a href="#section-3.4-3" class="pilcrow">¶</a></p>
-<p id="section-3.4-4">The actor profile defines processing rules for the following token types as issued outputs: JWT assertion grants (<a href="#jwt-assertion-grants" class="auto internal xref">Section 4</a>), JWT-formatted access tokens (<a href="#jwt-access-tokens" class="auto internal xref">Section 5</a>), and Transaction Tokens (<a href="#transaction-tokens" class="auto internal xref">Section 7.1</a>).  It also defines Token Exchange input processing for JWT assertion grants, JWT access tokens, OpenID Connect ID tokens, refresh tokens, and Transaction Tokens as <code>subject_token</code>, and for workload identity credentials, JWT client assertions, and JWT access tokens as <code>actor_token</code>.  The <code>may_act</code> pre-authorization claim (<a href="#may-act" class="auto internal xref">Section 6.2.3</a>) applies to any JWT used as <code>subject_token</code>.<a href="#section-3.4-4" class="pilcrow">¶</a></p>
+<p id="section-3.4-4">The actor profile defines processing rules for the following token types as issued outputs: JWT assertion grants (<a href="#jwt-assertion-grants" class="auto internal xref">Section 4</a>), JWT-formatted access tokens (<a href="#jwt-access-tokens" class="auto internal xref">Section 5</a>), and Transaction Tokens (<a href="#transaction-tokens" class="auto internal xref">Section 7.1</a>).  It also defines Token Exchange input processing for JWT assertion grants, JWT access tokens, OpenID Connect ID tokens, refresh tokens, and Transaction Tokens as <code>subject_token</code>, and for workload identity credentials, JWT client assertions, and JWT access tokens as <code>actor_token</code>.  This document does not define interoperable processing for the <code>may_act</code> claim; deployments <span class="bcp14">MAY</span> use it under local policy or another specification as described in <a href="#may-act" class="auto internal xref">Section 6.2.3</a>.<a href="#section-3.4-4" class="pilcrow">¶</a></p>
 <p id="section-3.4-5">Subject to endpoint policy and the underlying token-exchange or grant mechanism, implementations <span class="bcp14">MAY</span> transform a supported input token type into a supported output token type for which this document defines the relevant issuance processing.  This document normatively defines JWT assertion grant issuance (<a href="#jwt-assertion-grant-issuance" class="auto internal xref">Section 6.4.1</a>), JWT access token issuance via <a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a> after authorization-grant processing, Token Exchange processing, or Transaction Token Service processing, and Transaction Token issuance from inbound JWT assertion grants, JWT access tokens, or Transaction Tokens under <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a>.  It does not require every implementation to support every possible cross-product of supported inputs and outputs.  When an implementation supports a path defined by this document, actor profile information <span class="bcp14">MUST</span> be preserved and validated as specified for the resulting token type.<a href="#section-3.4-5" class="pilcrow">¶</a></p>
 <p id="section-3.4-6">This document profiles token contents and the processing of those contents once present.  It does not redefine the request semantics of <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, including the syntax or baseline meaning of <code>subject_token</code>, <code>actor_token</code>, <code>resource</code>, <code>audience</code>, or <code>requested_token_type</code>.  When such inputs carry or imply actor information, this document defines only how that information is represented in issued tokens and how issuers and consumers process it.<a href="#section-3.4-6" class="pilcrow">¶</a></p>
 <p id="section-3.4-7">For worked examples showing the actor profile in use in both same-domain service delegation and cross-domain delegation, see <a href="#appendix-service-to-service" class="auto internal xref">Appendix A</a> and <a href="#appendix-cross-domain" class="auto internal xref">Appendix B</a>.<a href="#section-3.4-7" class="pilcrow">¶</a></p>
@@ -2863,72 +2863,12 @@ PreserveChain(inbound_chain):
 </div>
 <div id="may-act">
 <section id="section-6.2.3">
-          <h4 id="name-may_act-pre-authorization">
-<a href="#section-6.2.3" class="section-number selfRef">6.2.3. </a><a href="#name-may_act-pre-authorization" class="section-name selfRef">may_act Pre-Authorization</a>
+          <h4 id="name-may_act">
+<a href="#section-6.2.3" class="section-number selfRef">6.2.3. </a><a href="#name-may_act" class="section-name selfRef"><code>may_act</code></a>
           </h4>
-<div id="may-act-overview">
-<section id="section-6.2.3.1">
-            <h5 id="name-overview-4">
-<a href="#section-6.2.3.1" class="section-number selfRef">6.2.3.1. </a><a href="#name-overview-4" class="section-name selfRef">Overview</a>
-            </h5>
-<p id="section-6.2.3.1-1">The <code>may_act</code> claim (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-4.4" class="relref">Section 4.4</a></span>) is defined for JWTs and token introspection responses.  When a JWT <code>subject_token</code> carries <code>may_act</code> in a Token Exchange request, the claim is a single JSON object identifying one authorized actor for the subject identified by the containing JWT.  The object contains identity claims for that authorized actor; it is similar in purpose to <code>act</code> but is not constrained to have exactly the same member set.  For this profile's delegation-authorization shortcut, <code>sub</code> is the minimum identity member and <code>iss</code> is required for baseline interoperable matching unless the authoritative namespace for that <code>sub</code> is established unambiguously by the containing token or trusted local policy.  When present in a JWT <code>subject_token</code>, <code>may_act</code> allows the AS to satisfy its delegation-authorization requirement from information embedded in the subject token, without requiring an independent policy lookup.  The delegation-authorization check is defined by the type-specific processing section for the <code>subject_token</code> type in use (e.g., step 4 of <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a> for JWT assertion grants).<a href="#section-6.2.3.1-1" class="pilcrow">¶</a></p>
-<p id="section-6.2.3.1-2"><code>may_act</code> is an input to Token Exchange processing and <span class="bcp14">MUST NOT</span> be propagated into the issued token.<a href="#section-6.2.3.1-2" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="may-act-processing">
-<section id="section-6.2.3.2">
-            <h5 id="name-processing-3">
-<a href="#section-6.2.3.2" class="section-number selfRef">6.2.3.2. </a><a href="#name-processing-3" class="section-name selfRef">Processing</a>
-            </h5>
-<p id="section-6.2.3.2-1">When the AS processes a Token Exchange request whose JWT <code>subject_token</code> carries a <code>may_act</code> claim, the AS <span class="bcp14">MUST</span> apply the following rules.<a href="#section-6.2.3.2-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-6.2.3.2-2">
-<li id="section-6.2.3.2-2.1">
-                <p id="section-6.2.3.2-2.1.1">The AS <span class="bcp14">MUST</span> validate the <code>subject_token</code> per its type-specific rules before evaluating <code>may_act</code>.  A <code>may_act</code> claim in an invalid or untrusted token <span class="bcp14">MUST NOT</span> be used.<a href="#section-6.2.3.2-2.1.1" class="pilcrow">¶</a></p>
-</li>
-              <li id="section-6.2.3.2-2.2">
-                <p id="section-6.2.3.2-2.2.1">The AS <span class="bcp14">MUST</span> compare the actor identity it is prepared to use for the issued token against the identity claims in <code>may_act</code>.  For this profile, the candidate actor identity is the (<code>act.iss</code>, <code>act.sub</code>) pair that would appear in the issued token if the request succeeds.  When an <code>actor_token</code> is present, that candidate identity is the <code>actor_token</code>'s derived actor identity.  When no <code>actor_token</code> is present, the AS <span class="bcp14">MAY</span> derive a candidate actor identity from the authenticated client's identity only if local policy defines an explicit trusted mapping from that client identity to both the actor identifier and its authoritative namespace; absent such a mapping, the authenticated client identity <span class="bcp14">MUST NOT</span> be treated as a substitute for <code>act.sub</code>.<a href="#section-6.2.3.2-2.2.1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-6.2.3.2-2.2.2.1">
-                    <p id="section-6.2.3.2-2.2.2.1.1">If <code>may_act</code> contains both <code>sub</code> and <code>iss</code>, the AS <span class="bcp14">MUST</span> compare that pair to the candidate (<code>act.iss</code>, <code>act.sub</code>) pair using exact equality or trusted local semantic-consistency rules.<a href="#section-6.2.3.2-2.2.2.1.1" class="pilcrow">¶</a></p>
-</li>
-                  <li class="normal" id="section-6.2.3.2-2.2.2.2">
-                    <p id="section-6.2.3.2-2.2.2.2.1">If <code>may_act</code> contains <code>sub</code> but omits <code>iss</code>, the AS <span class="bcp14">MUST NOT</span> treat <code>may_act</code> as a sufficient basis for delegation authorization unless the containing token issuer or trusted local policy unambiguously establishes the authoritative namespace for that <code>sub</code>.<a href="#section-6.2.3.2-2.2.2.2.1" class="pilcrow">¶</a></p>
-</li>
-                  <li class="normal" id="section-6.2.3.2-2.2.2.3">
-                    <p id="section-6.2.3.2-2.2.2.3.1">If <code>may_act</code> omits <code>sub</code>, the AS <span class="bcp14">MUST NOT</span> use it as a sufficient basis for delegation authorization.<a href="#section-6.2.3.2-2.2.2.3.1" class="pilcrow">¶</a></p>
-</li>
-                  <li class="normal" id="section-6.2.3.2-2.2.2.4">
-                    <p id="section-6.2.3.2-2.2.2.4.1">Other members in <code>may_act</code> <span class="bcp14">MAY</span> refine local policy but do not define additional interoperable identity-matching inputs under this profile.<a href="#section-6.2.3.2-2.2.2.4.1" class="pilcrow">¶</a></p>
-</li>
-                </ul>
-<p id="section-6.2.3.2-2.2.3">
-If the resulting issuer-scoped actor identity matches the party identified by <code>may_act</code>, the AS <span class="bcp14">MAY</span> treat that match as a sufficient basis for its delegation-authorization requirement for the <code>subject_token</code> type in use, subject to local policy.<a href="#section-6.2.3.2-2.2.3" class="pilcrow">¶</a></p>
-<p id="section-6.2.3.2-2.2.4">
-When both <code>may_act</code> and an <code>actor_token</code> are present, the following rules govern their interaction:<a href="#section-6.2.3.2-2.2.4" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-6.2.3.2-2.2.5.1">
-                    <p id="section-6.2.3.2-2.2.5.1.1">A matching <code>may_act</code> <span class="bcp14">MAY</span> satisfy the delegation-authorization requirement but does not supply or override the actor identity.  The <code>actor_token</code> remains the authoritative source for <code>act.sub</code> in the issued token.<a href="#section-6.2.3.2-2.2.5.1.1" class="pilcrow">¶</a></p>
-</li>
-                  <li class="normal" id="section-6.2.3.2-2.2.5.2">
-                    <p id="section-6.2.3.2-2.2.5.2.1">The AS <span class="bcp14">MUST NOT</span> use a matching <code>may_act</code> to replace the <code>actor_token</code>'s derived identity in the issued token's <code>act.sub</code>.<a href="#section-6.2.3.2-2.2.5.2.1" class="pilcrow">¶</a></p>
-</li>
-                  <li class="normal" id="section-6.2.3.2-2.2.5.3">
-                    <p id="section-6.2.3.2-2.2.5.3.1">When <code>may_act</code> identifies a different party than the <code>actor_token</code>'s derived identity, the AS <span class="bcp14">MUST</span> use the <code>actor_token</code>'s derived identity as <code>act.sub</code> and <span class="bcp14">MUST</span> fall back to its independent delegation-authorization policy per step 5.  A non-matching <code>may_act</code> is not itself grounds for rejection.<a href="#section-6.2.3.2-2.2.5.3.1" class="pilcrow">¶</a></p>
-</li>
-                </ul>
-</li>
-              <li id="section-6.2.3.2-2.3">
-                <p id="section-6.2.3.2-2.3.1">A <code>may_act</code> match does not override other validation requirements.  The AS <span class="bcp14">MUST</span> still validate the <code>actor_token</code>, verify issuer trust, and enforce proof of possession per the applicable type-specific section.  When client identity is used under step 2 via trusted mapping, the AS <span class="bcp14">MUST</span> apply the same semantic-consistency rules described in <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a> step 7 and <a href="#client-identity-delegation" class="auto internal xref">Section 12.2</a>.<a href="#section-6.2.3.2-2.3.1" class="pilcrow">¶</a></p>
-</li>
-              <li id="section-6.2.3.2-2.4">
-                <p id="section-6.2.3.2-2.4.1">The AS <span class="bcp14">MUST NOT</span> carry <code>may_act</code> forward into the issued token.  The claim is consumed during Token Exchange processing and <span class="bcp14">MUST NOT</span> appear in any output token type defined by this profile.<a href="#section-6.2.3.2-2.4.1" class="pilcrow">¶</a></p>
-</li>
-              <li id="section-6.2.3.2-2.5">
-                <p id="section-6.2.3.2-2.5.1">When <code>may_act</code> is present but the actor's identity does not match the party identified there, the AS <span class="bcp14">MUST</span> fall back to its independent delegation-authorization policy applicable to the <code>subject_token</code> type in use.  A non-matching <code>may_act</code> is not itself grounds for rejecting the request.<a href="#section-6.2.3.2-2.5.1" class="pilcrow">¶</a></p>
-</li>
-            </ol>
-</section>
-</div>
+<p id="section-6.2.3-1">The <code>may_act</code> claim is defined by <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-4.4" class="relref">Section 4.4</a></span> for JWTs and token introspection responses.  This document does not define interoperable processing for <code>may_act</code> in Token Exchange or Transaction Token Service requests.<a href="#section-6.2.3-1" class="pilcrow">¶</a></p>
+<p id="section-6.2.3-2">An implementation conforming to this document <span class="bcp14">MUST NOT</span> rely on <code>may_act</code> to satisfy a delegation-authorization requirement unless another specification or explicit local policy defines that behavior.  Any such use is outside the scope of this document.<a href="#section-6.2.3-2" class="pilcrow">¶</a></p>
+<p id="section-6.2.3-3">When <code>may_act</code> is used under another specification or local policy, it <span class="bcp14">MUST NOT</span> replace or override actor identity derived under this document from a validated <code>actor_token</code>, inherited <code>act</code> chain processing, or another current-exchange input.  <code>may_act</code> <span class="bcp14">MUST NOT</span> be propagated into any output token type defined by this document.<a href="#section-6.2.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2945,8 +2885,8 @@ When both <code>may_act</code> and an <code>actor_token</code> are present, the 
           </h4>
 <div id="overview-1">
 <section id="section-6.3.1.1">
-            <h5 id="name-overview-5">
-<a href="#section-6.3.1.1" class="section-number selfRef">6.3.1.1. </a><a href="#name-overview-5" class="section-name selfRef">Overview</a>
+            <h5 id="name-overview-4">
+<a href="#section-6.3.1.1" class="section-number selfRef">6.3.1.1. </a><a href="#name-overview-4" class="section-name selfRef">Overview</a>
             </h5>
 <p id="section-6.3.1.1-1">A JWT client assertion (<span>[<a href="#RFC7521" class="cite xref">RFC7521</a>]</span><span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>) may be presented as <code>actor_token</code> to establish an OAuth client's own identity as the acting party.  In this usage the request uses <code>actor_token_type=urn:ietf:params:oauth:token-type:jwt</code>, and the JWT has <code>sub</code> equal to the client's own identifier, <code>iss</code> identifying that same client, <code>aud</code> set to the token endpoint, and is signed with the client's private key.  Under <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>, it is a direct presenter credential because its own top-level subject identity names the presenter to be installed by rebind mode.  Two usage patterns arise:<a href="#section-6.3.1.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
@@ -2962,8 +2902,8 @@ When both <code>may_act</code> and an <code>actor_token</code> are present, the 
 </div>
 <div id="processing">
 <section id="section-6.3.1.2">
-            <h5 id="name-processing-4">
-<a href="#section-6.3.1.2" class="section-number selfRef">6.3.1.2. </a><a href="#name-processing-4" class="section-name selfRef">Processing</a>
+            <h5 id="name-processing-3">
+<a href="#section-6.3.1.2" class="section-number selfRef">6.3.1.2. </a><a href="#name-processing-3" class="section-name selfRef">Processing</a>
             </h5>
 <p id="section-6.3.1.2-1">When a Token Exchange request includes an <code>actor_token</code> that is a JWT client assertion, the AS <span class="bcp14">MUST</span> apply the following steps.<a href="#section-6.3.1.2-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.3.1.2-2">
@@ -2997,8 +2937,8 @@ When both <code>may_act</code> and an <code>actor_token</code> are present, the 
           </h4>
 <div id="workload-identity-overview">
 <section id="section-6.3.2.1">
-            <h5 id="name-overview-6">
-<a href="#section-6.3.2.1" class="section-number selfRef">6.3.2.1. </a><a href="#name-overview-6" class="section-name selfRef">Overview</a>
+            <h5 id="name-overview-5">
+<a href="#section-6.3.2.1" class="section-number selfRef">6.3.2.1. </a><a href="#name-overview-5" class="section-name selfRef">Overview</a>
             </h5>
 <p id="section-6.3.2.1-1">A workload identity credential is a JWT that asserts the identity of a software workload (such as a microservice, AI agent, or batch job) issued by a workload identity provider.  Unlike JWT assertion grants (<a href="#jwt-assertion-grants-structure" class="auto internal xref">Section 4.1</a>), whose <code>sub</code> identifies the user or principal on whose behalf the grant is made, a workload identity credential has the workload's own identifier in <code>sub</code>, making it the natural credential type for establishing an agent or service as the acting party in a Token Exchange request.  Under <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>, it is a direct presenter credential because its own top-level subject identity names the presenter installed by rebind mode.  The WIMSE working group defines workload identity credentials in <span>[<a href="#I-D.ietf-wimse-workload-creds" class="cite xref">I-D.ietf-wimse-workload-creds</a>]</span>.  Profile disambiguation and <code>actor_token_type</code> assignment are defined in <a href="#token-exchange-processing" class="auto internal xref">Section 6</a>.  This section defines the actor-profile processing rules that apply when such a credential is presented as <code>actor_token</code>.<a href="#section-6.3.2.1-1" class="pilcrow">¶</a></p>
 <p id="section-6.3.2.1-2">The recommended pattern for agentic Token Exchange is therefore:<a href="#section-6.3.2.1-2" class="pilcrow">¶</a></p>
@@ -3018,8 +2958,8 @@ When both <code>may_act</code> and an <code>actor_token</code> are present, the 
 </div>
 <div id="workload-identity-as-actor-token">
 <section id="section-6.3.2.2">
-            <h5 id="name-processing-5">
-<a href="#section-6.3.2.2" class="section-number selfRef">6.3.2.2. </a><a href="#name-processing-5" class="section-name selfRef">Processing</a>
+            <h5 id="name-processing-4">
+<a href="#section-6.3.2.2" class="section-number selfRef">6.3.2.2. </a><a href="#name-processing-4" class="section-name selfRef">Processing</a>
             </h5>
 <p id="section-6.3.2.2-1">When a Token Exchange request (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) includes an <code>actor_token</code> that is a workload identity credential, the AS <span class="bcp14">MUST</span> apply the following steps.<a href="#section-6.3.2.2-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.3.2.2-2">
@@ -3061,16 +3001,16 @@ When both <code>may_act</code> and an <code>actor_token</code> are present, the 
           </h4>
 <div id="overview-2">
 <section id="section-6.3.3.1">
-            <h5 id="name-overview-7">
-<a href="#section-6.3.3.1" class="section-number selfRef">6.3.3.1. </a><a href="#name-overview-7" class="section-name selfRef">Overview</a>
+            <h5 id="name-overview-6">
+<a href="#section-6.3.3.1" class="section-number selfRef">6.3.3.1. </a><a href="#name-overview-6" class="section-name selfRef">Overview</a>
             </h5>
 <p id="section-6.3.3.1-1">A non-delegated JWT access token may be presented as <code>actor_token</code> to establish a service or workload as the acting party.  When such an <code>actor_token</code> carries no <code>act</code> claim, its top-level <code>sub</code> identifies the acting party directly and therefore satisfies the direct-presenter-credential requirement in <a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>.  A delegated JWT access token (one that carries <code>act</code>) does not satisfy that requirement because its top-level <code>sub</code> identifies the principal to whom the token was issued rather than the current presenter.  Deployments that need to preserve an inbound delegated chain while rebinding to a new presenter <span class="bcp14">SHOULD</span> use that delegated JWT access token as <code>subject_token</code> and supply a separate direct presenter credential as <code>actor_token</code>.<a href="#section-6.3.3.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="processing-1">
 <section id="section-6.3.3.2">
-            <h5 id="name-processing-6">
-<a href="#section-6.3.3.2" class="section-number selfRef">6.3.3.2. </a><a href="#name-processing-6" class="section-name selfRef">Processing</a>
+            <h5 id="name-processing-5">
+<a href="#section-6.3.3.2" class="section-number selfRef">6.3.3.2. </a><a href="#name-processing-5" class="section-name selfRef">Processing</a>
             </h5>
 <p id="section-6.3.3.2-1">When a Token Exchange request includes an <code>actor_token</code> that is a JWT access token (<code>actor_token_type=urn:ietf:params:oauth:token-type:access_token</code>), the AS <span class="bcp14">MUST</span> apply the following steps.  Use of an opaque access token as the <code>actor_token</code> is outside the interoperable scope of this profile; an AS <span class="bcp14">MAY</span> translate introspection results for such tokens into equivalent local inputs, but that behavior is deployment-specific and not defined here.<a href="#section-6.3.3.2-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.3.3.2-2">
@@ -3569,12 +3509,12 @@ Interoperable processing is defined around <code>sub</code> and the outermost <c
 <p id="section-7.4-3">These same preservation rules apply regardless of whether the inbound credential is a JWT assertion grant, a JWT access token, or a Transaction Token, provided that the TTS supports issuing a Transaction Token from that input.  This document does not define direct Transaction Token issuance from ID tokens or refresh tokens.<a href="#section-7.4-3" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="mayact-pre-authorization">
+<div id="mayact">
 <section id="section-7.5">
-        <h3 id="name-may_act-pre-authorization-2">
-<a href="#section-7.5" class="section-number selfRef">7.5. </a><a href="#name-may_act-pre-authorization-2" class="section-name selfRef">may_act Pre-Authorization</a>
+        <h3 id="name-may_act-2">
+<a href="#section-7.5" class="section-number selfRef">7.5. </a><a href="#name-may_act-2" class="section-name selfRef"><code>may_act</code></a>
         </h3>
-<p id="section-7.5-1">When the inbound <code>subject_token</code> presented to the TTS is a JWT carrying <code>may_act</code>, the TTS <span class="bcp14">MUST</span> apply the matching rules in <a href="#may-act-processing" class="auto internal xref">Section 6.2.3.2</a> using the newly authenticated presenter as the candidate actor identity that would become the new outermost <code>act</code> in the issued Transaction Token.  A matching <code>may_act</code> <span class="bcp14">MAY</span> satisfy the delegation-authorization requirement in <a href="#transaction-token-service-processing" class="auto internal xref">Section 7.4</a> step 5, but it does not replace validation of the inbound credential, presenter authentication, or the obligation to create a new outermost <code>act</code>.<a href="#section-7.5-1" class="pilcrow">¶</a></p>
+<p id="section-7.5-1">This document does not define TTS-specific processing for <code>may_act</code>.  A deployment <span class="bcp14">MAY</span> use <code>may_act</code> under local policy or another specification as a transaction-authorization hint, but that behavior is outside the scope of this document and <span class="bcp14">MUST NOT</span> replace validation of the inbound credential, presenter authentication, or the obligation to create a new outermost <code>act</code>.<a href="#section-7.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3963,8 +3903,8 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
         </h3>
 <div id="overview-3">
 <section id="section-10.2.1">
-          <h4 id="name-overview-8">
-<a href="#section-10.2.1" class="section-number selfRef">10.2.1. </a><a href="#name-overview-8" class="section-name selfRef">Overview</a>
+          <h4 id="name-overview-7">
+<a href="#section-10.2.1" class="section-number selfRef">10.2.1. </a><a href="#name-overview-7" class="section-name selfRef">Overview</a>
           </h4>
 <p id="section-10.2.1-1">This section defines a minimal set of metadata parameters that, together with the <code>entity_profiles_supported.actor</code> array defined in <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>, allow authorization servers and resource servers to advertise actor-profile support without out-of-band configuration.  These parameters provide partial capability signaling only; they do not provide a complete machine-readable description of every supported grant path or method by which the AS determines the acting party.  Metadata helps clients detect likely incompatibilities, but it does not guarantee successful token issuance or resource access and does not define a required client workflow.  Companion profiles <span class="bcp14">MAY</span> define additional metadata for supplementary features such as provenance, consistent with <a href="#companion-profile-extensibility" class="auto internal xref">Section 3.5</a>.<a href="#section-10.2.1-1" class="pilcrow">¶</a></p>
 <p id="section-10.2.1-2">The design principle is that <strong>capability flags go in this spec's metadata; entity type enumeration goes in <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> metadata</strong>.  When these metadata are available, clients can use <code>entity_profiles_supported.actor</code> per <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> to assess which actor entity profiles the associated AS accepts under this profile, can use <code>actor_profile_token_types_supported</code> (<a href="#authorization-server-metadata" class="auto internal xref">Section 10.2.2</a>) to assess which delegated output token types the AS advertises under this profile, and can use <code>actor_profile_actor_token_profiles_supported</code> to assess which <code>actor_token</code> credential profiles the AS advertises for Token Exchange.<a href="#section-10.2.1-2" class="pilcrow">¶</a></p>
