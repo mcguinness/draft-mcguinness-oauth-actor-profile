@@ -82,8 +82,8 @@ informative:
      -
         fullname: Brian Campbell
         organization: Ping Identity
-    date: 2026-03-02
-    target: https://www.ietf.org/archive/id/draft-ietf-oauth-identity-assertion-authz-grant-02.txt
+    date: 2026-04-22
+    target: https://www.ietf.org/archive/id/draft-ietf-oauth-identity-assertion-authz-grant-03.txt
   I-D.ietf-oauth-security-topics:
   OpenID.Core:
     title: "OpenID Connect Core 1.0"
@@ -104,7 +104,7 @@ informative:
 
 OAuth deployments increasingly involve multi-principal scenarios where an agent or workload acts on behalf of a human user across organizational and trust-domain boundaries.  Existing specifications provide relevant building blocks but do not define a common profile for representing the delegated actor relationship across token types, classifying actor entity types, or signaling support between authorization servers and resource servers.  The result is inconsistent actor representation and interoperability gaps that force deployments to rely on proprietary conventions.
 
-This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity: `client_id` identifies the OAuth client registration, `sub` identifies the authorizing principal, and `act.sub` identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common `act` claim structure with `sub_profile` for machine-processable entity classification, applies existing top-level `cnf` sender-constraint mechanisms consistently across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  It also defines how supporting Token Exchange inputs such as ID tokens, refresh tokens, JWT actor credentials, and the `may_act` claim are processed when introducing subject or actor identity into that three-token actor-profile model.  The document also registers metadata parameters for advertising actor-profile support and partial capability signals in cross-domain deployments.  This document standardizes the token representation of delegation relationships and the processing rules for issuers and consumers; it does not standardize the upstream policies and mechanisms by which systems determine whether a given actor is authorized to act for a subject, which remain deployment-specific.
+This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity: `client_id` identifies the OAuth client registration, `sub` identifies the authorizing principal, and `act.sub` identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common `act` claim structure with `sub_profile` for machine-processable entity classification, applies existing top-level `cnf` sender-constraint mechanisms consistently across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  It also defines how supporting Token Exchange inputs such as ID tokens, refresh tokens, JWT actor credentials, and the `may_act` claim are processed when introducing subject or actor identity into that three-token actor-profile model.  When this profile is applied to the Identity Assertion JWT Authorization Grant (ID-JAG), it supplies the actor-delegation extension semantics that ID-JAG leaves to future profiles or extensions.  The document also registers metadata parameters for advertising actor-profile support and partial capability signals in cross-domain deployments.  This document standardizes the token representation of delegation relationships and the processing rules for issuers and consumers; it does not standardize the upstream policies and mechanisms by which systems determine whether a given actor is authorized to act for a subject, which remain deployment-specific.
 
 
 --- middle
@@ -137,7 +137,7 @@ Alice authorizes an AI agent to book a business trip on her behalf, and the requ
 
 **Identity Chaining ({{I-D.ietf-oauth-identity-chaining}})**: Identity Chaining addresses cross-domain subject-identity propagation; this document addresses actor representation within those same tokens.  The two are complementary and designed to be used together.
 
-**Identity Assertion JWT Authorization Grant ({{I-D.ietf-oauth-identity-assertion-authz-grant}})**: An ID-JAG carrying an `act` claim is processed per {{jwt-assertion-grants-processing}} of this document.  See {{appendix-cross-domain}} for an end-to-end example.
+**Identity Assertion JWT Authorization Grant ({{I-D.ietf-oauth-identity-assertion-authz-grant}})**: ID-JAG defines how an IdP issues a JWT authorization grant via Token Exchange and how a downstream AS consumes it.  ID-JAG permits `actor_token` inputs but leaves actor-delegation validation and resulting `act` claims to future profiles or extensions.  This document defines one such profile: when an implementation uses ID-JAG with actor-profile claims, the Token Exchange and JWT assertion-grant processing rules in this document apply.  See {{appendix-cross-domain}} for an end-to-end example.
 
 **OAuth Entity Profiles ({{I-D.mora-oauth-entity-profiles}})**: Defines `sub_profile`, `client_profile`, `entity_profiles_supported`, and the entity profile registry.  This document consumes those mechanisms for actor classification and makes no independent registry requests.
 
@@ -474,7 +474,7 @@ This chapter defines the actor-profile structure and authorization-grant process
 
 ## Structure {#jwt-assertion-grants-structure}
 
-Actor-profile requirements apply to any JWT used as an authorization grant under {{RFC7521}} and {{RFC7523}}, independent of how or by which specification it was produced.  One such profile is the Identity Assertion JWT Authorization Grant (ID-JAG, {{I-D.ietf-oauth-identity-assertion-authz-grant}}), a JWT bearer grant produced by Token Exchange.
+Actor-profile requirements apply to any JWT used as an authorization grant under {{RFC7521}} and {{RFC7523}}, independent of how or by which specification it was produced.  One such profile is the Identity Assertion JWT Authorization Grant (ID-JAG, {{I-D.ietf-oauth-identity-assertion-authz-grant}}), a JWT bearer grant produced by Token Exchange.  When the grant is an ID-JAG, this document acts as an actor-delegation profile layered on the base ID-JAG specification: ID-JAG defines the token-exchange and JWT-bearer flow, while this document defines how `actor_token`-derived actor identity and any resulting `act` claim are represented and processed.
 
 Such a JWT MAY include an `act` claim conforming to the actor profile defined in {{actor-profile}}.  Use of this claim in JWT client authentication assertions is out of scope for this document because such assertions have different issuer and subject semantics.  However, implementers should note that some deployments rely on the authenticated OAuth client itself as implicit evidence of the acting party.  This specification does not prohibit that input, but when delegation is to be expressed explicitly and propagated across token transformations, the acting party is represented by `act` rather than inferred solely from client authentication.
 
@@ -497,7 +497,7 @@ The following claims are defined for a JWT assertion grant that carries actor-pr
 
 When the assertion or request context also identifies an OAuth client via `client_id`, `azp`, or an authenticated client credential, interoperable processing SHOULD use `act.sub` rather than treating that client identity as a substitute for it.  Deployments that rely on client identity as a substitute actor signal are outside the interoperable scope of this profile; see step 7 in {{jwt-assertion-grants-processing}}.
 
-Clients SHOULD use JWT assertion grants carrying actor-profile claims only when the AS's support for the actor-determination model has been confirmed via deployment documentation, prior agreement, or discovery.
+Clients SHOULD use JWT assertion grants carrying actor-profile claims only when the AS's support for the actor-determination model has been confirmed via deployment documentation, prior agreement, or discovery.  For ID-JAG specifically, that confirmation SHOULD include whether the AS supports the actor-delegation extension model defined by this document.
 
 The following example shows an AS-issued assertion grant, which is the recommended pattern.  The Enterprise IdP AS performed Token Exchange, authenticated the agent as the OAuth client, established the delegation relationship under local policy, and signed the assertion.  `act.iss` equals the token `iss` here because the enterprise AS is also the namespace authority for the agent's identifier:
 
@@ -1937,7 +1937,7 @@ Alice authenticates to the Enterprise IdP AS.  The profile-relevant claim is `su
 
 ## Step 2: Enterprise Token Exchange (ID Token to ID-JAG)
 
-The agent presents Alice's ID Token to the Enterprise IdP AS using Token Exchange.  In this example, the same JWT is used both as the RFC 7523 `client_assertion` and as the Token Exchange `actor_token`, making the authenticated client's actor identity explicit.  The Enterprise IdP AS authenticates the client as `https://agents.enterprise.example/travel-assistant`, verifies that the ID Token audience matches that client, and uses local delegation policy plus that explicit actor credential to construct the actor-profile claims in the issued ID-JAG:
+The agent presents Alice's ID Token to the Enterprise IdP AS using Token Exchange.  In this example, the same JWT is used both as the RFC 7523 `client_assertion` and as the Token Exchange `actor_token`, making the authenticated client's actor identity explicit.  This uses the actor-delegation extension model anticipated by ID-JAG: the base ID-JAG specification defines the token-exchange transaction, while this document supplies the `actor_token` validation and `act`-construction rules.  The Enterprise IdP AS authenticates the client as `https://agents.enterprise.example/travel-assistant`, verifies that the ID Token audience matches that client, and uses local delegation policy plus that explicit actor credential to construct the actor-profile claims in the issued ID-JAG:
 
 ~~~
 POST /token HTTP/1.1
