@@ -251,7 +251,7 @@ The following table summarizes the minimum implementation obligations by role.  
 | Role | Inputs | Minimum checks | Outputs / behavior | Detailed rules |
 |------|--------|----------------|--------------------|----------------|
 | Assertion-consuming AS | JWT assertion grant with `act` | Validate JWT; trust issuer; validate delegation when required by the applicable processing path or local policy; enforce chain-depth limit | Preserve actor in issued token | {{jwt-assertion-grants-processing}} |
-| Token-exchange AS (subject_token) | ID token, JWT assertion grant, JWT access token, refresh token, or Transaction Token as `subject_token` | Validate per credential type; trust issuer; validate delegation when required by local policy; enforce scope reduction and chain-depth limit | Issue token with preserved or extended `act` chain | {{id-token-as-subject-token}}, {{jwt-assertion-grant-as-subject-token}}, {{jwt-access-token-as-subject-token}}, {{refresh-token-as-subject-token}}, {{txn-token-as-subject-token}}; then {{jwt-access-token-propagation}} |
+| Token-exchange AS (subject_token) | Identity-only (`id_token`, `refresh_token`) or token-state (`jwt`, `access_token`, `txn_token`) `subject_token` input | Validate per credential type; apply class-specific subject, actor-chain, and presenter rules; trust issuer; validate delegation when required by local policy; enforce scope reduction and chain-depth limit | Issue token with preserved or extended `act` chain when inbound token-state supports it; otherwise derive any new `act` from current-exchange inputs only | {{token-exchange-presenter-model}}, {{id-token-as-subject-token}}, {{jwt-assertion-grant-as-subject-token}}, {{jwt-access-token-as-subject-token}}, {{refresh-token-as-subject-token}}, {{txn-token-as-subject-token}}; then {{jwt-access-token-propagation}} |
 | Token-exchange AS (actor_token) | Workload identity credential, JWT client assertion, or JWT access token as `actor_token` | Validate per credential type; trust issuer; verify proof of possession; derive outermost actor identity | Construct outermost `act` from validated actor identity; then apply {{jwt-access-token-propagation}} | {{workload-identity-as-actor-token}}, {{jwt-client-assertion-as-actor-token}}, {{jwt-access-token-as-actor-token}} |
 | Resource Server | Access token or Transaction Token carrying `act` | Validate token; validate presenter binding; evaluate subject; evaluate (`sub`, outermost `act.sub`) pair when required by local policy | Apply delegated-token policy; advertise `actor_authorization_required` when enforcing (`sub`, outermost `act.sub`) authorization | {{jwt-access-token-rs-processing}}, {{txn-token-rs-processing}} |
 | Transaction Token Service | JWT assertion grant, JWT access token, or Transaction Token with subject and optional `act` chain | Validate inbound actor information; preserve subject identity; enforce chain-depth limit; apply presenter authentication per Transaction Token mechanism | Preserve `sub`; treat `req_wl` as supporting context; add new outermost `act` | {{transaction-token-service-processing}} |
@@ -712,6 +712,11 @@ For PoP migration, this profile distinguishes two semantic classes of `subject_t
 *  **Identity-only subject tokens**: ID tokens and refresh tokens.  They establish subject identity and authorization state, but they do not carry interoperable presenter-continuity state under this profile.
 *  **Token-state subject tokens**: JWT assertion grants, JWT access tokens, and Transaction Tokens.  They can carry inbound `act` state and can carry top-level `cnf` for the current presenter.
 
+These two classes also determine how inbound delegation state is introduced into Token Exchange processing:
+
+*  **Identity-only subject tokens** establish `sub` and MAY establish supporting subject state such as `sub_profile` or an authorization ceiling.  They do not establish inbound `act` state, do not establish presenter continuity, and do not by themselves justify carrying `act` into the issued token.
+*  **Token-state subject tokens** establish `sub` and MAY establish `sub_profile`, inbound `act` chain state, and current-presenter binding through top-level `cnf`.  They are therefore the only `subject_token` inputs from which this document defines interoperable actor-chain preservation and presenter continuation.
+
 Token Exchange under this profile runs in exactly one of two presenter-transition modes:
 
 *  **Presenter continuation**: no validated `actor_token` establishing a new presenter is supplied.  The issued token keeps the presenter of a PoP-capable token-state `subject_token`.
@@ -729,7 +734,19 @@ JWT assertion grants are not suitable for use as `actor_token` in Token Exchange
 
 ## Subject Tokens
 
-### JWT Assertion Grant {#jwt-assertion-grant-as-subject-token}
+This section is organized by the two semantic `subject_token` classes defined in {{token-exchange-presenter-model}}.  The class-level text defines the common actor-profile consequences.  The individual token sections then define only the validation and extraction rules specific to each token type.
+
+### Token-State Subject Tokens
+
+JWT assertion grants, JWT access tokens, and Transaction Tokens are token-state `subject_token` inputs.  For these inputs, this document defines the following common model:
+
+*  the validated token establishes the inbound `sub`;
+*  `sub_profile`, if present and trusted, becomes inbound supporting subject state;
+*  `act`, if present, becomes inbound delegation-chain state for {{jwt-access-token-propagation}} or {{transaction-token-service-processing}};
+*  top-level `cnf`, if present, makes the input eligible for presenter continuation under {{delegated-pop-validation}};
+*  if top-level `cnf` is absent, the token still MAY be used in presenter-rebind mode for bearer-to-PoP upgrade.
+
+#### JWT Assertion Grant {#jwt-assertion-grant-as-subject-token}
 
 When a Token Exchange request ({{RFC8693}}) presents a JWT assertion grant as the `subject_token`, the AS MUST apply the validation rules of {{jwt-assertion-grants-processing}} (steps 1 through 7) to validate the inbound token.  Steps 8 and 9 of that section do not apply; propagation and scope reduction are governed by the rules below and by {{jwt-access-token-propagation}}.
 
@@ -737,7 +754,7 @@ A JWT assertion grant used as `subject_token` is a token-state input for {{token
 
 The AS MUST apply scope reduction per {{RFC8693, Section 4}} and MUST then apply the propagation rules in {{jwt-access-token-propagation}}.
 
-### JWT Access Token {#jwt-access-token-as-subject-token}
+#### JWT Access Token {#jwt-access-token-as-subject-token}
 
 When a Token Exchange request ({{RFC8693}}) presents a JWT access token as the `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:access_token`), the AS MUST apply the following steps.  Use of an opaque access token as the `subject_token` is outside the interoperable scope of this profile.  An AS MAY translate introspection results for an opaque access token into equivalent local inputs for deployment-specific use, but that behavior is not interoperable behavior defined by this document.
 
@@ -753,7 +770,7 @@ When a Token Exchange request ({{RFC8693}}) presents a JWT access token as the `
 
 After completing these steps, the AS MUST apply the propagation rules in {{jwt-access-token-propagation}}.
 
-### Transaction Token {#txn-token-as-subject-token}
+#### Transaction Token {#txn-token-as-subject-token}
 
 When a Token Exchange request ({{RFC8693}}) presents a Transaction Token as the `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:txn_token`) to a regular AS (not a TTS), the AS MUST apply the following steps.
 
@@ -769,7 +786,18 @@ When a Token Exchange request ({{RFC8693}}) presents a Transaction Token as the 
 
 6.  The AS MUST apply the propagation rules in {{jwt-access-token-propagation}}.  For a Transaction Token used as `subject_token`, this document defines only the actor-profile consequences of the inbound `sub`, `act`, `req_wl`, and presenter-binding state.  Transaction Token field semantics and any transaction-specific scope handling remain defined by {{I-D.ietf-oauth-transaction-tokens}}, {{RFC8693}}, and local policy.
 
-### OpenID Connect ID Token {#id-tokens}
+### Identity-Only Subject Tokens
+
+ID tokens and refresh tokens are identity-only `subject_token` inputs.  For these inputs, this document defines the following common model:
+
+*  the validated input establishes `sub`;
+*  `sub_profile`, if available from the validated input or trusted state, becomes supporting subject state;
+*  the input does not establish inbound `act` chain state for propagation;
+*  the input does not establish presenter continuity;
+*  any `act` in the issued token therefore comes from a validated `actor_token` or another independent delegation basis under local policy;
+*  any sender-constrained issued token is therefore issued in presenter-rebind mode, with the new presenter established in the current exchange.
+
+#### OpenID Connect ID Token {#id-tokens}
 
 #### Overview {#id-token-overview}
 
@@ -791,7 +819,7 @@ When a Token Exchange request ({{RFC8693}}) presents an ID token as the `subject
 
 5.  The AS MUST apply the propagation rules in {{jwt-access-token-propagation}} to determine the remaining claims in the issued token.  Because an ID token carries no inbound `act` chain and no OAuth scope ceiling, actor-chain construction and scope determination come from the `actor_token` (if any), {{RFC8693}}, and local policy rather than from the ID token itself.
 
-### Refresh Token {#refresh-tokens}
+#### Refresh Token {#refresh-tokens}
 
 #### Overview {#refresh-token-overview}
 
@@ -943,9 +971,9 @@ When `requested_token_type` in a Token Exchange request ({{RFC8693}}) designates
 
 ### JWT Access Token Output {#jwt-access-token-propagation}
 
-The issued JWT access token MUST satisfy the structural requirements in {{jwt-access-tokens-structure}}.  This section is the common output step for Token Exchange paths in this chapter that produce a JWT access token.  It is reached after completing the credential-type-specific `subject_token` and `actor_token` processing defined above, or after Transaction Token Service processing.
+The issued JWT access token MUST satisfy the structural requirements in {{jwt-access-tokens-structure}}.  This section is the common output step for Token Exchange paths in this chapter that produce a JWT access token.  It is reached after completing the applicable class-level and type-specific `subject_token` processing defined above, the applicable `actor_token` processing, or Transaction Token Service processing.
 
-After completing the type-specific validation steps for any `subject_token` defined in this chapter ({{jwt-assertion-grant-as-subject-token}}, {{jwt-access-token-as-subject-token}}, {{id-token-as-subject-token}}, {{refresh-token-as-subject-token}}, {{txn-token-as-subject-token}}) or after Transaction Token Service processing ({{transaction-token-service-processing}}), the AS MUST apply the following rules when issuing a JWT access token.  These rules govern the actor chain, subject, and scope in the issued token regardless of inbound credential type.
+After completing the applicable `subject_token` processing in this chapter, whether for an identity-only input ({{id-token-as-subject-token}}, {{refresh-token-as-subject-token}}) or a token-state input ({{jwt-assertion-grant-as-subject-token}}, {{jwt-access-token-as-subject-token}}, {{txn-token-as-subject-token}}), or after Transaction Token Service processing ({{transaction-token-service-processing}}), the AS MUST apply the following rules when issuing a JWT access token.  These rules govern the actor chain, subject, and scope in the issued token regardless of inbound credential type.
 
 When both a `subject_token` carrying an inbound `act` chain and an `actor_token` are present, the validated `actor_token` determines the new outermost actor identity in the issued token.  Any preserved inbound `act` chain from the `subject_token` is nested beneath that new outermost `act`; the validation and conflict rules are defined in the applicable `actor_token` section.
 
@@ -1105,6 +1133,8 @@ The following example shows a Transaction Token after two hops:
 In this example the booking tool is the current presenter.  It is identified by `req_wl` as the workload that requested the token and by the outermost `act.sub` in the actor profile's subject namespace, and it has its own top-level `cnf.jkt`.  The travel assistant appears as a nested `act` object, showing that it was the prior delegated actor between Alice and the booking tool.
 
 ## Supported Subject Tokens
+
+The TTS accepts only token-state `subject_token` inputs.  Identity-only inputs such as ID tokens and refresh tokens do not carry the inbound actor-chain or presenter state needed for {{transaction-token-service-processing}} and are therefore outside the scope of the TTS profile defined here.
 
 ### JWT Assertion Grant
 
