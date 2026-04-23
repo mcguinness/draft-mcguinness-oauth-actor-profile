@@ -154,7 +154,7 @@ Table of Contents
        7.2.1.  JWT Assertion Grant
        7.2.2.  JWT Access Token
        7.2.3.  Transaction Token
-     7.3.  Presenter Authentication and New Actor Establishment
+     7.3.  Presenter Authentication and Transition
      7.4.  Transaction Token Output Rules
      7.5.  may_act
    8.  Error Responses
@@ -1333,9 +1333,9 @@ AddOutermostActor(inbound_chain, new_actor):
      "act": {
        "sub": "https://agents.enterprise.example/travel-assistant",
        "iss": "https://as.enterprise.example",
-         "sub_profile": "ai_agent"
-       }
+       "sub_profile": "ai_agent"
      }
+   }
 
    Here act.iss names the enterprise AS as the namespace authority for
    the agent's identifier, which is registered in that AS's namespace
@@ -1415,14 +1415,18 @@ AddOutermostActor(inbound_chain, new_actor):
        the AS MUST reject the request with invalid_grant.  Section 11.3
        provides non-normative examples of local validation approaches.
 
-   4.  Before issuing a token, the AS SHOULD evaluate whether act.sub is
+   4.  Before issuing a token that preserves or introduces delegated
+       actor information, the AS MUST evaluate whether act.sub is
        authorized to exercise delegation on behalf of sub, using the
        AS's local policy (for example, a pre-registered delegation
        grant, an explicit consent record, or a policy rule covering the
        acting party).  When AS policy explicitly prohibits the
        identified actor from acting on behalf of the subject, the AS
-       MUST return access_denied.  The form of delegation authorization
-       is not standardized by this profile.
+       MUST return access_denied.  When the required delegation
+       relationship is absent or cannot be confirmed from the current
+       inputs and local policy, the AS MUST return actor_unauthorized.
+       The form of delegation authorization is not standardized by this
+       profile.
 
    5.  If the inbound assertion's act object contains a nested act claim
        (indicating that the asserted actor is itself a delegatee), the
@@ -2318,9 +2322,13 @@ AddOutermostActor(inbound_chain, new_actor):
    If a Token Exchange request explicitly seeks a delegated output, for
    example by supplying an actor_token or by presenting a subject_token
    that already carries act, and the AS cannot validate the actor
-   information or cannot establish the required delegation basis, it
-   MUST reject the request with invalid_grant rather than issue a non-
-   delegated JWT access token.
+   information, it MUST reject the request with invalid_grant.  If the
+   AS can validate the actor information but cannot establish or confirm
+   the required delegation basis, it MUST reject the request with
+   actor_unauthorized unless local policy explicitly denies the
+   relationship, in which case it MUST reject the request with
+   access_denied.  The AS MUST NOT issue a non-delegated JWT access
+   token in place of the requested delegated output.
 
    1.  When the issued access token represents delegation, the AS MUST
        include an act claim that preserves or extends the inbound
@@ -2687,17 +2695,34 @@ AddOutermostActor(inbound_chain, new_actor):
    inbound act chain, req_wl, and presenter-binding state as input to
    Section 7.4.
 
-7.3.  Presenter Authentication and New Actor Establishment
+7.3.  Presenter Authentication and Transition
 
-   When a delegated Transaction Token is issued in presenter-rebind
-   mode, the new presenter becomes the new outermost actor for that
-   token.  Under this document, that presenter is established by a
-   validated actor_token direct presenter credential, while the proof
-   mechanism remains governed by [I-D.ietf-oauth-transaction-tokens] and
-   the applicable deployment profile.  A bearer or identity-only inbound
-   subject_token MAY therefore be upgraded to a sender-constrained
-   Transaction Token when a validated actor_token establishes the new
-   presenter.
+   The TTS applies the same two presenter-transition modes defined in
+   Section 6.1, but only for token-state subject_token inputs:
+
+   *  *Presenter continuation*: the authenticated requester is the same
+      current presenter as the inbound token.  This mode is available
+      only when the inbound token carries a top-level presenter binding
+      and the TTS validates proof for that binding under
+      [I-D.ietf-oauth-transaction-tokens] and the applicable deployment
+      profile.  When the inbound token carries act, the authenticated
+      requester MUST correspond to the outermost (act.iss, act.sub)
+      pair.  In this mode the TTS preserves the inbound act chain
+      unchanged and MUST NOT add a new outermost act.
+
+   *  *Presenter rebind*: a validated actor_token direct presenter
+      credential establishes a different current presenter for the
+      issued Transaction Token.  In this mode the TTS creates a new
+      outermost act for that presenter and nests any inbound act chain
+      beneath it.
+
+   A bearer token-state subject_token that carries no presenter binding
+   is not eligible for presenter continuation, but it MAY still be
+   upgraded to a sender-constrained Transaction Token in presenter-
+   rebind mode when a validated actor_token establishes the new
+   presenter.  This document does not define TTS processing for
+   identity-only subject_token inputs such as ID tokens or refresh
+   tokens.
 
 7.4.  Transaction Token Output Rules
 
@@ -2725,9 +2750,10 @@ AddOutermostActor(inbound_chain, new_actor):
        profile, req_wl is supporting workload context and MUST NOT be
        treated as a substitute for the outermost act.sub.
 
-   3.  The TTS MUST verify that adding a new outermost act object would
-       not cause the chain depth to exceed the limit in Section 3.9.  If
-       it would, the TTS MUST reject the request with invalid_request.
+   3.  The TTS MUST compute the depth of the resulting act chain after
+       applying step 6.  If that resulting chain would exceed the limit
+       in Section 3.9, the TTS MUST reject the request with
+       invalid_request.
 
    4.  Before preserving or extending any inbound act chain, the TTS
        MUST validate the inbound token and trust the issuer that
@@ -2759,34 +2785,57 @@ AddOutermostActor(inbound_chain, new_actor):
        that policy, the TTS SHOULD reject the request with
        invalid_grant.
 
-   5.  Before creating a new outermost act object, the TTS MUST evaluate
-       whether the newly authenticated presenter is authorized under
-       local policy to act on behalf of sub for the requested
-       transaction.  If local policy explicitly prohibits that (sub, new
-       presenter) relationship, the TTS MUST reject the request with
-       access_denied.  If the required actor relationship is absent or
-       cannot be confirmed from the current inputs and policy, the TTS
-       MUST reject the request with actor_unauthorized.
+   5.  The TTS MUST determine whether the request is presenter
+       continuation or presenter rebind:
 
-   6.  Because the issued Transaction Token carries delegated actor
+       *  *Presenter continuation*: The TTS MUST authenticate the
+          requester as the same current presenter as the inbound token.
+          When the inbound token carries act, the authenticated
+          requester MUST correspond to the outermost (act.iss, act.sub)
+          pair or the TTS MUST reject the request with invalid_grant.
+          If local policy explicitly prohibits that (sub, current
+          presenter) relationship, the TTS MUST reject the request with
+          access_denied.  If the required actor relationship is absent
+          or cannot be confirmed from the current inputs and policy, the
+          TTS MUST reject the request with actor_unauthorized.
+
+       *  *Presenter rebind*: The TTS MUST validate a direct presenter
+          actor_token for the new presenter.  Before creating a new
+          outermost act object, the TTS MUST evaluate whether the newly
+          authenticated presenter is authorized under local policy to
+          act on behalf of sub for the requested transaction.  If local
+          policy explicitly prohibits that (sub, new presenter)
+          relationship, the TTS MUST reject the request with
+          access_denied.  If the required actor relationship is absent
+          or cannot be confirmed from the current inputs and policy, the
+          TTS MUST reject the request with actor_unauthorized.
+
+       If the current inputs satisfy neither presenter-continuation nor
+       presenter-rebind requirements, the TTS MUST reject the request
+       with invalid_grant.
+
+   6.  When the issued Transaction Token carries delegated actor
        information, the TTS MUST include a top-level iss claim
        identifying itself as the Transaction Token issuer, and it MUST
-       create a new outermost act object for the new presenter:
+       construct the act claim as follows:
 
-       *  The TTS MUST set act.sub to the new presenter's identifier.
+       *  *Presenter continuation*: Preserve the inbound act chain
+          unchanged.  The TTS MUST NOT create a new outermost act when
+          the authenticated presenter matches the inbound outermost
+          actor.
 
-       *  The TTS MUST set act.iss to the issuer namespace authoritative
-          for the new presenter's identifier.  This obligation applies
-          only to the act object the TTS creates for the current
-          presenter.  The TTS MUST NOT rewrite act.iss or any other
-          field in act objects inherited from the inbound token; those
-          entries were authored by upstream ASes and their content is
-          fixed at the point of authorship.
-
-       *  If the inbound token already carries an act chain, the TTS
-          MUST nest it beneath the new outermost act.
-
-       *  The TTS SHOULD set act.sub_profile based on its knowledge of
+       *  *Presenter rebind*: Create a new outermost act object for the
+          new presenter.  The TTS MUST set act.sub to the new
+          presenter's identifier.  The TTS MUST set act.iss to the
+          issuer namespace authoritative for the new presenter's
+          identifier.  This obligation applies only to the act object
+          the TTS creates for the current presenter.  The TTS MUST NOT
+          rewrite act.iss or any other field in act objects inherited
+          from the inbound token; those entries were authored by
+          upstream ASes and their content is fixed at the point of
+          authorship.  If the inbound token already carries an act
+          chain, the TTS MUST nest it beneath the new outermost act.
+          The TTS SHOULD set act.sub_profile based on its knowledge of
           the new presenter's entity type.
 
    7.  When the issued Transaction Token includes a top-level presenter-
@@ -2812,8 +2861,8 @@ AddOutermostActor(inbound_chain, new_actor):
    deployment MAY use may_act under local policy or another
    specification as a transaction-authorization hint, but that behavior
    is outside the scope of this document and MUST NOT replace validation
-   of the inbound credential, presenter authentication, or the
-   obligation to create a new outermost act.
+   of the inbound credential, presenter authentication, or the rules in
+   this document governing whether a new outermost act is created.
 
 8.  Error Responses
 
@@ -3043,14 +3092,20 @@ AddOutermostActor(inbound_chain, new_actor):
    expectations to clients, but the RS's enforcement decision remains
    local to the resource server.
 
-   When the resource server accepts delegated tokens, it MUST:
+   When the resource server evaluates a JWT access token as a delegated
+   token under local policy, it MUST:
 
    1.  Validate the token's signature, iss, aud, and temporal claims per
        [RFC9068].  If local policy for the request path requires actor-
-       profile conformance, including when the resource advertises
-       actor_profile_required: true (Section 10.2.3), and the token
-       carries no act claim or carries an act object missing act.iss,
-       the RS MUST reject the request with HTTP 401 invalid_token.
+       profile conformance for delegated requests, including when the
+       resource advertises actor_profile_required: true
+       (Section 10.2.3), then any token the RS evaluates as delegated
+       MUST carry act, and each act object the RS relies on under this
+       profile MUST include act.iss.  If such a delegated token carries
+       no act claim or carries an act object missing act.iss, the RS
+       MUST reject the request with HTTP 401 invalid_token.  The
+       presence of actor_profile_required: true does not by itself
+       require non-delegated tokens for the same resource to carry act.
 
    2.  If the token carries a top-level cnf.jkt, validate the
        accompanying DPoP proof per [RFC9449], Section 7.  If a DPoP
@@ -3131,8 +3186,8 @@ AddOutermostActor(inbound_chain, new_actor):
    any applicable deployment profile, and the actor-profile rules in
    this document.
 
-   When the resource server accepts delegated Transaction Tokens, it
-   MUST:
+   When the resource server evaluates a Transaction Token as a delegated
+   token under local policy, it MUST:
 
    1.  Validate the Transaction Token per
        [I-D.ietf-oauth-transaction-tokens] and local deployment profile:
@@ -3144,10 +3199,15 @@ AddOutermostActor(inbound_chain, new_actor):
        domain and issuer-identification rules of
        [I-D.ietf-oauth-transaction-tokens] and local deployment
        configuration.  If local policy for the request path requires
-       actor-profile conformance, including when the resource advertises
-       actor_profile_required: true (Section 10.2.3), and the token
-       carries no act claim or carries an act object missing act.iss,
-       the RS MUST reject the request.
+       actor-profile conformance for delegated requests, including when
+       the resource advertises actor_profile_required: true
+       (Section 10.2.3), then any Transaction Token the RS evaluates as
+       delegated MUST carry act, and each act object the RS relies on
+       under this profile MUST include act.iss.  If such a delegated
+       token carries no act claim or carries an act object missing
+       act.iss, the RS MUST reject the request.  The presence of
+       actor_profile_required: true does not by itself require non-
+       delegated Transaction Tokens for the same resource to carry act.
 
    2.  When the token carries a top-level presenter-binding claim such
        as cnf, validate the accompanying proof according to
@@ -3351,16 +3411,19 @@ AddOutermostActor(inbound_chain, new_actor):
    This section defines a minimal set of metadata parameters that,
    together with the entity_profiles_supported.actor array defined in
    [I-D.mora-oauth-entity-profiles], allow authorization servers and
-   resource servers to advertise actor-profile support without out-of-
-   band configuration.  These parameters provide partial capability
+   resource servers to advertise actor-profile support with reduced out-
+   of-band coordination.  These parameters provide partial capability
    signaling only; they do not provide a complete machine-readable
-   description of every supported grant path or method by which the AS
-   determines the acting party.  Metadata helps clients detect likely
-   incompatibilities, but it does not guarantee successful token
-   issuance or resource access and does not define a required client
-   workflow.  Companion profiles MAY define additional metadata for
-   supplementary features such as provenance, consistent with
-   Section 3.5.
+   description of every supported grant path, accepted subject_token
+   type, profile-specific JWT assertion-grant variant, or method by
+   which the AS determines the acting party.  Metadata helps clients
+   detect likely incompatibilities, but it does not guarantee successful
+   token issuance or resource access and does not define a required
+   client workflow.  Deployment documentation, prior agreement, or
+   companion profiles can still be needed for details outside the
+   parameters defined here.  Companion profiles MAY define additional
+   metadata for supplementary features such as provenance, consistent
+   with Section 3.5.
 
    The design principle is that *capability flags go in this spec's
    metadata; entity type enumeration goes in
@@ -3482,28 +3545,31 @@ AddOutermostActor(inbound_chain, new_actor):
    ([RFC9728]):
 
    actor_profile_required:  OPTIONAL.  A boolean.  When true, the RS
-      indicates that delegated requests for this resource are expected
-      to provide actor-profile information conforming to this document's
-      semantics.  For JWT access tokens and Transaction Tokens, this
-      ordinarily means a token carrying an act claim conforming to this
-      profile.  In deployments that use opaque access tokens, equivalent
-      actor-profile information MAY instead be conveyed to the RS via
+      indicates that requests intending to exercise delegated authority
+      for this resource are expected to provide actor-profile
+      information conforming to this document's semantics.  For JWT
+      access tokens and Transaction Tokens, this ordinarily means a
+      delegated token carrying an act claim conforming to this profile.
+      In deployments that use opaque access tokens, equivalent actor-
+      profile information MAY instead be conveyed to the RS via
       introspection, but such support is deployment-specific and the
       opaque token itself is not conformant to this profile.  Clients
       SHOULD treat this as a strong indication that delegated access
       will require either a conforming act claim in the token or an
       explicitly documented opaque-token/introspection path providing
       equivalent claims.  An RS that enforces this policy for a given
-      request path MUST reject delegated requests for which neither a
-      conforming act claim nor equivalent introspection-derived actor-
-      profile information is available to the RS.  When false or absent,
-      actor-profile conformance is not advertised by metadata.  This
-      parameter is resource-scoped, not path-scoped; [RFC9728] does not
-      define sub-resource granularity for Protected Resource Metadata.
-      An RS that requires actor-profile conformance only on specific
-      request paths (e.g., /payments but not /profile) MUST apply
-      enforcement at the request layer.  Such an RS MAY set this
-      parameter to true as a conservative resource-wide signal, but
+      request path MUST reject a request it determines is attempting
+      delegated access if neither a conforming act claim nor equivalent
+      introspection-derived actor-profile information is available to
+      the RS.  This parameter does not require otherwise acceptable non-
+      delegated requests for the same resource to carry act.  When false
+      or absent, actor-profile conformance is not advertised by
+      metadata.  This parameter is resource-scoped, not path-scoped;
+      [RFC9728] does not define sub-resource granularity for Protected
+      Resource Metadata.  An RS that requires actor-profile conformance
+      only on specific request paths (e.g., /payments but not /profile)
+      MUST apply enforcement at the request layer.  Such an RS MAY set
+      this parameter to true as a conservative resource-wide signal, but
       clients and deployment documentation SHOULD recognize that path-
       specific enforcement can be stricter than resource metadata alone
       expresses.
