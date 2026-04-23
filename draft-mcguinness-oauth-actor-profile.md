@@ -960,7 +960,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 1.  When the issued access token represents delegation, the AS MUST include an `act` claim that preserves or extends the inbound delegation chain per steps 3 and 4.  The AS MUST NOT silently drop actor information.  If the inbound credential carries no `act`, no validated `actor_token` is present, and no independent delegation basis exists, the AS MUST NOT include `act` in the issued access token.
 
-2.  The AS MUST preserve `sub` to refer to the same underlying subject as the inbound token.  If the AS uses a different subject-identifier namespace, it MAY change the `sub` value only to re-express that same subject in the new namespace under a trusted local mapping.  It MUST NOT replace `sub` with an identifier for a different subject.  The mechanics and assurance of subject-identifier translation are deployment-specific and are not otherwise standardized by this document.
+2.  The AS MUST preserve `sub` to refer to the same underlying subject as the inbound token.  If the AS uses a different subject-identifier namespace, it MAY change the `sub` value only to re-express that same subject in the new namespace under a trusted local mapping.  This document permits such re-expression when required by federation across trust-domain boundaries, but it does not define an interoperable mechanism for proving or conveying subject equivalence across namespaces.  A translated `sub` therefore identifies the subject only within the trust context of the issued token and MUST NOT, by itself, be treated as portable proof that the original and translated identifiers are equivalent outside that context.  The AS MUST NOT replace `sub` with an identifier for a different subject.
 
 3.  The AS MUST construct the `act` claim as follows:
 
@@ -1129,7 +1129,7 @@ When a delegated Transaction Token is issued in presenter-rebind mode, the new p
 
 When a TTS receives a token-exchange request to issue or refresh a Transaction Token from an inbound JWT assertion grant, JWT access token, or Transaction Token that carries actor-profile claims, it MUST apply the following rules:
 
-1.  The TTS MUST preserve `sub` to refer to the same underlying subject as the inbound token.  The TTS MAY change `sub` only to re-express that same subject in a different identifier namespace under a trusted local mapping.  The TTS MUST NOT replace `sub` with an identifier for a different subject.  The mechanics and assurance of subject-identifier translation are deployment-specific and are not otherwise standardized by this document.
+1.  The TTS MUST preserve `sub` to refer to the same underlying subject as the inbound token.  The TTS MAY change `sub` only to re-express that same subject in a different identifier namespace under a trusted local mapping.  This document permits such re-expression when required by federation across trust-domain boundaries, but it does not define an interoperable mechanism for proving or conveying subject equivalence across namespaces.  A translated `sub` therefore identifies the subject only within the trust context of the issued token and MUST NOT, by itself, be treated as portable proof that the original and translated identifiers are equivalent outside that context.  The TTS MUST NOT replace `sub` with an identifier for a different subject.
 
 2.  The `req_wl` field and any Transaction Token fields other than actor-profile claims remain governed by {{I-D.ietf-oauth-transaction-tokens}} and local policy.  Under this profile, `req_wl` is supporting workload context and MUST NOT be treated as a substitute for the outermost `act.sub`.
 
@@ -1658,15 +1658,15 @@ A resource server that advertises `actor_authorization_required: true` but fails
 
 ## Subject Namespace Translation
 
-Several processing rules in this document tolerate an AS re-expressing `sub` in a different identifier namespace when local deployment policy treats the identifiers as referring to the same subject (see {{jwt-access-token-propagation}} step 2 and {{transaction-token-service-processing}} step 1).  This document does not standardize subject-translation mechanisms or proof of equivalence between subject namespaces.  Such translation creates a subject-substitution risk: a malicious or misconfigured AS could map `sub` to a different entity in the new namespace, silently replacing the authorized principal with a different one.
+Federated deployments sometimes need to re-express `sub` when a token crosses a trust-domain boundary and the issuer uses a different subject-identifier namespace.  This document therefore permits an AS or TTS to translate `sub` only to re-express the same underlying subject in a different namespace, as described in {{jwt-access-token-propagation}} step 2 and {{transaction-token-service-processing}} step 1.
 
-Mitigations:
+This document does not define an interoperable mechanism for proving, conveying, or independently verifying subject equivalence across namespaces.  A translated `sub` is therefore authoritative only within the trust context of the issuer that performed the translation.  It does not, by itself, create portable proof that the original and translated identifiers are equivalent, and it does not define a general cross-token correlation mechanism across trust domains.
 
-*  Receiving ASes and RSes SHOULD NOT accept `sub` translations from ASes they do not trust to authoritatively map identifiers between the two namespaces.  Trust for namespace mapping is separate from trust for token signing and SHOULD be established explicitly in local policy.
-*  Subject-namespace translation is a high-assurance operation and SHOULD be used only when the issuer has authoritative mapping information for both the original and translated namespaces.
-*  When an AS translates `sub`, it SHOULD include both the original and translated identifiers, or otherwise provide enough context for the receiving party to verify the mapping, where local policy requires such verification.
-*  RSes that enforce access control against a specific `sub` value SHOULD verify that the issuing AS is authoritative for the subject-identifier namespace used, and SHOULD NOT accept subject identifiers from namespaces for which the issuing AS is not authoritative.
-*  If the receiving party cannot validate or otherwise trust that the translated `sub` still refers to the same underlying subject, it SHOULD reject the token rather than treat the translation as advisory.
+Subject-namespace translation is a high-assurance operation.  An issuer MUST NOT translate `sub` unless local policy establishes that the original and translated identifiers refer to the same underlying subject.  Trust to perform that mapping is separate from trust to sign tokens and SHOULD be established explicitly.
+
+A receiving AS or RS that cannot establish sufficient trust in the issuer's authority to perform the mapping SHOULD reject the token rather than treat the translated `sub` as advisory.
+
+Deployments that need portable proof of subject equivalence across namespaces, or independently verifiable subject-mapping evidence, require another specification or companion profile; such a mechanism is outside the scope of this document.
 
 ## Negative Examples
 
