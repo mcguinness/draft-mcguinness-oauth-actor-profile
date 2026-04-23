@@ -112,7 +112,8 @@ Table of Contents
      3.5.  Companion Profiles and Extension Points
      3.6.  Implementation Summary
      3.7.  Actor Object Structure
-     3.8.  Multi-Value sub_profile Policy Evaluation
+     3.8.  sub_profile Interoperability and Implementation Guidance
+       3.8.1.  Implementation Guidance
      3.9.  Delegation Chains
      3.10. Actor Chain Validation and Construction
        3.10.1.  Terminology
@@ -726,8 +727,9 @@ Table of Contents
       of [I-D.mora-oauth-entity-profiles]) or be privately defined
       collision-resistant values.  If the acting entity fits more than
       one profile, multiple values MAY be included as a space-delimited
-      string (e.g., "service ai_agent").  Policy evaluation rules for
-      multi-value strings are defined in Section 3.8.
+      string (e.g., "service ai_agent").  Interoperability requirements
+      and implementation guidance for multi-value strings are discussed
+      in Section 3.8.
 
    Per-actor key provenance within the delegation chain is outside the
    scope of this profile.  The current presenter's keying material is
@@ -754,7 +756,7 @@ Table of Contents
    SHOULD use the top-level extension pattern described in Section 3.5
    rather than relying on inherited act-object extension members.
 
-3.8.  Multi-Value sub_profile Policy Evaluation
+3.8.  sub_profile Interoperability and Implementation Guidance
 
    Value preservation and propagation for unrecognized sub_profile
    values are governed by [I-D.mora-oauth-entity-profiles].  An AS or RS
@@ -767,6 +769,11 @@ Table of Contents
    portable across deployments.  Two deployments can accept the same
    sub_profile value while applying different authorization consequences
    to it.
+
+   This document does not define interoperable authorization semantics
+   for single-valued or multi-valued sub_profile.  Whether and how
+   sub_profile affects access control, scope restriction, or other
+   authorization decisions is a local policy matter.
 
    When local policy restricts the accepted set of sub_profile values
    for an actor, that set SHOULD be advertised via
@@ -782,26 +789,27 @@ Table of Contents
    sub_profile as an unclassified actor and SHOULD apply the more
    restrictive policy applicable to unknown entity types.
 
-   When sub_profile contains multiple space-delimited values, the
-   following guidance applies to policy evaluation:
+3.8.1.  Implementation Guidance
 
-   *  As a safe default, an entity can be treated as matching a policy
+   When sub_profile contains multiple space-delimited values, the
+   following non-normative guidance may be useful for local policy
+   evaluation:
+
+   *  A simple local rule is to treat an entity as matching a policy
       rule if any of its sub_profile values satisfies that rule.  For
-      example, an entity with "service ai_agent" matches both a policy
-      rule for service and a policy rule for ai_agent.
+      example, an entity with "service ai_agent" would match both a
+      policy rule for service and a policy rule for ai_agent.
 
    *  When multiple values match different policy rules with conflicting
-      outcomes, implementations are encouraged to apply the more
-      restrictive outcome rather than the union of all matched rules'
-      privileges.  The specific conflict resolution logic is a local
-      policy decision; this document recommends least privilege across
-      the matched set as a safe default.
+      outcomes, a safer local choice is to apply the more restrictive
+      outcome rather than the union of all matched rules' privileges.
 
    *  When local policy accepts only a specific set of sub_profile
-      values (e.g., via entity_profiles_supported.actor), the entity can
-      be accepted if at least one of its values appears in the accepted
-      set.  Values not in the accepted set SHOULD be ignored for that
-      acceptance check; they do not by themselves require rejection.
+      values (for example, values advertised via
+      entity_profiles_supported.actor), one possible local rule is to
+      treat the entity as compatible when at least one of its values
+      appears in the accepted set.  Deployments can instead choose
+      stricter handling.
 
 3.9.  Delegation Chains
 

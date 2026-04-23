@@ -1191,7 +1191,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.3.2.7.1"><a href="#section-3.7" class="auto internal xref">3.7</a>.  <a href="#name-actor-object-structure" class="internal xref">Actor Object Structure</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.8">
-                <p id="section-toc.1-1.3.2.8.1"><a href="#section-3.8" class="auto internal xref">3.8</a>.  <a href="#name-multi-value-sub_profile-pol" class="internal xref">Multi-Value <code>sub_profile</code> Policy Evaluation</a></p>
+                <p id="section-toc.1-1.3.2.8.1"><a href="#section-3.8" class="auto internal xref">3.8</a>.  <a href="#name-sub_profile-interoperabilit" class="internal xref"><code>sub_profile</code> Interoperability and Implementation Guidance</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.8.2.1">
+                    <p id="section-toc.1-1.3.2.8.2.1.1"><a href="#section-3.8.1" class="auto internal xref">3.8.1</a>.  <a href="#name-implementation-guidance" class="internal xref">Implementation Guidance</a></p>
+</li>
+                </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.9">
                 <p id="section-toc.1-1.3.2.9.1"><a href="#section-3.9" class="auto internal xref">3.9</a>.  <a href="#name-delegation-chains" class="internal xref">Delegation Chains</a></p>
@@ -1912,7 +1917,7 @@ act-object = {
 <dt id="section-3.7-3.5">
 <code>sub_profile</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-3.7-3.6">
-            <p id="section-3.7-3.6.1"><span class="bcp14">RECOMMENDED</span>.  A space-delimited list of entity profile values classifying the actor identified by <code>act.sub</code>, as defined in Section 4.2 of <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>.  Values used within <code>act</code> objects <span class="bcp14">MUST</span> be registered with the "Actor Profile" usage location in the OAuth Entity Profiles registry (Section 14.1 of <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>) or be privately defined collision-resistant values.  If the acting entity fits more than one profile, multiple values <span class="bcp14">MAY</span> be included as a space-delimited string (e.g., <code>"service ai_agent"</code>).  Policy evaluation rules for multi-value strings are defined in <a href="#forward-compat-sub-profile" class="auto internal xref">Section 3.8</a>.<a href="#section-3.7-3.6.1" class="pilcrow">¶</a></p>
+            <p id="section-3.7-3.6.1"><span class="bcp14">RECOMMENDED</span>.  A space-delimited list of entity profile values classifying the actor identified by <code>act.sub</code>, as defined in Section 4.2 of <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>.  Values used within <code>act</code> objects <span class="bcp14">MUST</span> be registered with the "Actor Profile" usage location in the OAuth Entity Profiles registry (Section 14.1 of <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>) or be privately defined collision-resistant values.  If the acting entity fits more than one profile, multiple values <span class="bcp14">MAY</span> be included as a space-delimited string (e.g., <code>"service ai_agent"</code>).  Interoperability requirements and implementation guidance for multi-value strings are discussed in <a href="#forward-compat-sub-profile" class="auto internal xref">Section 3.8</a>.<a href="#section-3.7-3.6.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -1923,25 +1928,33 @@ act-object = {
 </div>
 <div id="forward-compat-sub-profile">
 <section id="section-3.8">
-        <h3 id="name-multi-value-sub_profile-pol">
-<a href="#section-3.8" class="section-number selfRef">3.8. </a><a href="#name-multi-value-sub_profile-pol" class="section-name selfRef">Multi-Value <code>sub_profile</code> Policy Evaluation</a>
+        <h3 id="name-sub_profile-interoperabilit">
+<a href="#section-3.8" class="section-number selfRef">3.8. </a><a href="#name-sub_profile-interoperabilit" class="section-name selfRef"><code>sub_profile</code> Interoperability and Implementation Guidance</a>
         </h3>
 <p id="section-3.8-1">Value preservation and propagation for unrecognized <code>sub_profile</code> values are governed by <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>.  An AS or RS <span class="bcp14">MUST NOT</span> reject a token or assertion solely because a <code>sub_profile</code> value is unrecognized; unrecognized values <span class="bcp14">MUST NOT</span> be used to infer authorization semantics.<a href="#section-3.8-1" class="pilcrow">¶</a></p>
 <p id="section-3.8-2">The <code>sub_profile</code> claim improves local policy expression and coarse compatibility signaling, but it does not make authorization outcomes portable across deployments.  Two deployments can accept the same <code>sub_profile</code> value while applying different authorization consequences to it.<a href="#section-3.8-2" class="pilcrow">¶</a></p>
-<p id="section-3.8-3">When local policy restricts the accepted set of <code>sub_profile</code> values for an actor, that set <span class="bcp14">SHOULD</span> be advertised via <code>entity_profiles_supported.actor</code> in AS metadata (<a href="#authorization-server-metadata" class="auto internal xref">Section 10.2.2</a>) so that clients can detect incompatibility before making a request.  Clients discover the accepted set for a given resource by consulting <code>entity_profiles_supported.actor</code> in the AS metadata for the AS listed in the resource's <code>authorization_servers</code> (<span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span>).<a href="#section-3.8-3" class="pilcrow">¶</a></p>
-<p id="section-3.8-4">When <code>sub_profile</code> is absent from an <code>act</code> object, implementations <span class="bcp14">MUST NOT</span> assume a specific entity type for the actor.  Resource servers that enforce entity-type-based access control <span class="bcp14">MUST</span> treat an absent <code>sub_profile</code> as an unclassified actor and <span class="bcp14">SHOULD</span> apply the more restrictive policy applicable to unknown entity types.<a href="#section-3.8-4" class="pilcrow">¶</a></p>
-<p id="section-3.8-5">When <code>sub_profile</code> contains multiple space-delimited values, the following guidance applies to policy evaluation:<a href="#section-3.8-5" class="pilcrow">¶</a></p>
+<p id="section-3.8-3">This document does not define interoperable authorization semantics for single-valued or multi-valued <code>sub_profile</code>.  Whether and how <code>sub_profile</code> affects access control, scope restriction, or other authorization decisions is a local policy matter.<a href="#section-3.8-3" class="pilcrow">¶</a></p>
+<p id="section-3.8-4">When local policy restricts the accepted set of <code>sub_profile</code> values for an actor, that set <span class="bcp14">SHOULD</span> be advertised via <code>entity_profiles_supported.actor</code> in AS metadata (<a href="#authorization-server-metadata" class="auto internal xref">Section 10.2.2</a>) so that clients can detect incompatibility before making a request.  Clients discover the accepted set for a given resource by consulting <code>entity_profiles_supported.actor</code> in the AS metadata for the AS listed in the resource's <code>authorization_servers</code> (<span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span>).<a href="#section-3.8-4" class="pilcrow">¶</a></p>
+<p id="section-3.8-5">When <code>sub_profile</code> is absent from an <code>act</code> object, implementations <span class="bcp14">MUST NOT</span> assume a specific entity type for the actor.  Resource servers that enforce entity-type-based access control <span class="bcp14">MUST</span> treat an absent <code>sub_profile</code> as an unclassified actor and <span class="bcp14">SHOULD</span> apply the more restrictive policy applicable to unknown entity types.<a href="#section-3.8-5" class="pilcrow">¶</a></p>
+<div id="implementation-guidance">
+<section id="section-3.8.1">
+          <h4 id="name-implementation-guidance">
+<a href="#section-3.8.1" class="section-number selfRef">3.8.1. </a><a href="#name-implementation-guidance" class="section-name selfRef">Implementation Guidance</a>
+          </h4>
+<p id="section-3.8.1-1">When <code>sub_profile</code> contains multiple space-delimited values, the following non-normative guidance may be useful for local policy evaluation:<a href="#section-3.8.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.8-6.1">
-            <p id="section-3.8-6.1.1">As a safe default, an entity can be treated as matching a policy rule if any of its <code>sub_profile</code> values satisfies that rule.  For example, an entity with <code>"service ai_agent"</code> matches both a policy rule for <code>service</code> and a policy rule for <code>ai_agent</code>.<a href="#section-3.8-6.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3.8.1-2.1">
+              <p id="section-3.8.1-2.1.1">A simple local rule is to treat an entity as matching a policy rule if any of its <code>sub_profile</code> values satisfies that rule.  For example, an entity with <code>"service ai_agent"</code> would match both a policy rule for <code>service</code> and a policy rule for <code>ai_agent</code>.<a href="#section-3.8.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-3.8-6.2">
-            <p id="section-3.8-6.2.1">When multiple values match different policy rules with conflicting outcomes, implementations are encouraged to apply the more restrictive outcome rather than the union of all matched rules' privileges.  The specific conflict resolution logic is a local policy decision; this document recommends least privilege across the matched set as a safe default.<a href="#section-3.8-6.2.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.8.1-2.2">
+              <p id="section-3.8.1-2.2.1">When multiple values match different policy rules with conflicting outcomes, a safer local choice is to apply the more restrictive outcome rather than the union of all matched rules' privileges.<a href="#section-3.8.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-3.8-6.3">
-            <p id="section-3.8-6.3.1">When local policy accepts only a specific set of <code>sub_profile</code> values (e.g., via <code>entity_profiles_supported.actor</code>), the entity can be accepted if at least one of its values appears in the accepted set.  Values not in the accepted set <span class="bcp14">SHOULD</span> be ignored for that acceptance check; they do not by themselves require rejection.<a href="#section-3.8-6.3.1" class="pilcrow">¶</a></p>
+            <li class="normal" id="section-3.8.1-2.3">
+              <p id="section-3.8.1-2.3.1">When local policy accepts only a specific set of <code>sub_profile</code> values (for example, values advertised via <code>entity_profiles_supported.actor</code>), one possible local rule is to treat the entity as compatible when at least one of its values appears in the accepted set.  Deployments can instead choose stricter handling.<a href="#section-3.8.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
-        </ul>
+          </ul>
+</section>
+</div>
 </section>
 </div>
 <div id="delegation-chains">
