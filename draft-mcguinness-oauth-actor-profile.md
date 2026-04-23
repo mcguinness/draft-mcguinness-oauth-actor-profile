@@ -123,6 +123,7 @@ This document addresses that gap by specifying:
 *  Processing rules for profiled token families and supporting Token Exchange inputs, including how actor-profile information is validated and preserved across supported token transformations.
 *  Resource-server guidance for evaluating delegated access using the (`sub`, outermost `act.sub`) pair.
 *  Integration with OAuth Entity Profiles and discovery metadata so actor classification and capability signaling can be used consistently across deployments.
+*  A stable extension model for companion profiles that need to carry provenance or other supplemental delegation data without changing the core meanings of `sub`, `act`, or the top-level `cnf` claim.
 
 The mechanisms are general-purpose and apply beyond AI agent scenarios.  This document is a profile and extension of existing OAuth building blocks; unless stated otherwise, the requirements of {{RFC8693}}, {{RFC9068}}, {{RFC9449}}, and {{I-D.ietf-oauth-transaction-tokens}} continue to apply.
 
@@ -195,7 +196,8 @@ The following invariants define the interoperable core of this profile:
 
 *  `sub` is the authorizing principal.
 *  The outermost `act.sub` is the immediate actor for the current token presentation.
-*  `act.iss` identifies namespace authority for `act.sub`; it is not a credential-issuer claim or hop-provenance marker.
+*  The canonical actor identifier conveyed by this profile is the (`act.iss`, `act.sub`) pair.
+*  `act.iss` identifies namespace authority for `act.sub`; implementations MUST NOT reinterpret it as the issuer of the current token, a credential-issuer claim, or a hop-provenance marker.
 *  Nested `act` objects are preserved prior-actor context unless a deployment explicitly applies additional local-policy processing to them; this profile does not standardize authorization semantics for those nested entries.
 *  `client_id` and `azp` are OAuth client identifiers, not actor identifiers.
 
@@ -206,6 +208,7 @@ This profile does not standardize the following:
 *  delegation approval, consent, or grant-management policy
 *  subject-identifier translation mechanisms or proof of subject equivalence across namespaces
 *  authorization semantics for nested `act` objects
+*  independently signed prior-hop provenance mechanisms, which MAY be defined by companion profiles layered on top of this one
 *  client discovery or preflight algorithms beyond the metadata semantics defined here
 *  cross-domain trust frameworks for establishing namespace authority for `act.iss`
 *  SAML 1.1 or SAML 2.0 assertions as Token Exchange `subject_token` inputs; while {{RFC8693}} defines token type URNs for SAML assertions, actor-profile extraction from XML-based SAML credentials is outside the scope of this document
@@ -225,6 +228,20 @@ Subject to endpoint policy and the underlying token-exchange or grant mechanism,
 This document profiles token contents and the processing of those contents once present.  It does not redefine the request semantics of {{RFC8693}}, including the syntax or baseline meaning of `subject_token`, `actor_token`, `resource`, `audience`, or `requested_token_type`.  When such inputs carry or imply actor information, this document defines only how that information is represented in issued tokens and how issuers and consumers process it.
 
 For worked examples showing the actor profile in use in both same-domain service delegation and cross-domain delegation, see {{appendix-service-to-service}} and {{appendix-cross-domain}}.
+
+## Companion Profiles and Extension Points {#companion-profile-extensibility}
+
+This profile intentionally standardizes the interoperable core for current-token delegated identity while leaving room for companion profiles to define supplementary behavior such as provenance, transparency, or deployment-specific audit material.
+
+A companion profile layered on top of this one:
+
+*  MAY define additional top-level JWT claims, OAuth metadata parameters, or introspection response parameters that apply only when a token already conforms to this profile;
+*  MUST preserve the meanings of the token's top-level `sub`, the outermost `act.sub`, the (`act.iss`, `act.sub`) actor identifier pair, the nested `act` chain ordering, and the top-level `cnf` claim for the current presenter;
+*  MUST NOT reinterpret `act.iss`, nested `act` objects, or the top-level `cnf` claim as independently trusted prior-hop provenance artifacts;
+*  SHOULD define any supplementary provenance, receipt, or chain-wide state in separate top-level claims or equivalent companion mechanisms rather than by overloading members inside inherited `act` objects;
+*  if it defines data that aligns to the visible `act` chain, MUST specify the alignment rules, the behavior when coverage is partial, and the behavior when introspection or privacy filtering suppresses part of the visible chain.
+
+An implementation that conforms only to this core profile MUST ignore unrecognized companion-profile claims, metadata parameters, and introspection response parameters unless another specification or local policy defines their meaning.  A deployment that requires support for a companion profile MUST express that requirement through the companion profile's own metadata, through out-of-band agreement, or through another explicit local-policy mechanism.
 
 ## Implementation Summary
 
@@ -254,14 +271,14 @@ act-object = {
 ~~~
 
 `sub`:
-: REQUIRED.  The subject identifier of the actor, as defined in {{RFC8693, Section 4.1}}.  This value identifies the acting party.  It is a StringOrURI as defined in {{RFC7519}}.  When the (`act.iss`, `act.sub`) pair identifies the same entity as the (`iss`, `sub`) pair of the token (that is, when the actor and subject are the same party under the same namespace authority), no delegation is expressed; including an `act` claim is typically not useful in that case.  When `act` is present but identifies the same entity as `sub`, consumers MUST NOT infer a meaningful delegation relationship from the token.  String equality of `act.sub` and `sub` alone is not a sufficient test; the namespace authority (`act.iss` vs. token `iss`) must also be considered.
+: REQUIRED.  The subject identifier of the actor, as defined in {{RFC8693, Section 4.1}}.  This value identifies the acting party.  It is a StringOrURI as defined in {{RFC7519}}.  When the canonical actor identifier pair (`act.iss`, `act.sub`) identifies the same entity as the (`iss`, `sub`) pair of the token (that is, when the actor and subject are the same party under the same namespace authority), no delegation is expressed; including an `act` claim is typically not useful in that case.  When `act` is present but identifies the same entity as `sub`, consumers MUST NOT infer a meaningful delegation relationship from the token.  String equality of `act.sub` and `sub` alone is not a sufficient test; the namespace authority (`act.iss` vs. token `iss`) must also be considered.
 
 `iss`:
 : REQUIRED.  Identifies the namespace authority for the actor identifier carried in `act.sub`, playing the same role for `act.sub` that the JWT `iss` claim plays for the token `sub`: just as `iss` + `sub` form a globally unique principal identifier in a JWT (see {{RFC9493}}), `act.iss` + `act.sub` form a globally unique actor identifier within the delegation chain.  For URI, client, workload, or other deployment-specific identifiers, the value of `act.iss` MUST identify the authority that the deployment treats as authoritative for resolving or validating that actor identifier.  See "Cross-Domain Delegation" in {{conventions}}.  The value is a StringOrURI as defined in {{RFC7519}}.
 
-  Unlike the credential issuer, which is an AS-internal concern resolved during assertion validation, `act.iss` identifies only the namespace authority and is not a credential-issuer claim or hop-provenance marker.  The namespace authority and the credential issuer may be the same entity or different entities.  In many deployments the value is an HTTPS URL, but other well-known identifier schemes (for example, a URN for workload identities) are also possible.  Preserving an inner `act` object in a newly issued token does not change the meaning of its `act.iss` value and does not cause that inner entry to become independently authenticated by the new issuer; it remains prior-actor information carried within the outer issuer's trust context.
+  The canonical actor identifier conveyed by this profile is the (`act.iss`, `act.sub`) pair.  Implementations MUST NOT interpret `act.iss` as the issuer of the current token, as a credential-issuer claim, or as a hop-provenance marker.  The namespace authority and the credential issuer may be the same entity or different entities.  In many deployments the value is an HTTPS URL, but other well-known identifier schemes (for example, a URN for workload identities) are also possible.  Preserving an inner `act` object in a newly issued token does not change the meaning of its `act.iss` value and does not cause that inner entry to become independently authenticated by the new issuer; it remains prior-actor information carried within the outer issuer's trust context.
 
-  For example, a TTS might issue a Transaction Token with top-level `iss` equal to `https://tts.travel-provider.example` while setting `act.iss` for the booking tool to `https://as.travel-provider.example`, if local policy treats that AS as authoritative for the booking tool identifier namespace.
+  For example, a TTS might issue a Transaction Token with top-level `iss` equal to `https://tts.travel-provider.example` while setting `act.iss` for the booking tool to `https://as.travel-provider.example`, if local policy treats that AS as authoritative for the booking tool identifier namespace.  This is valid and expected: the TTS is the token issuer, while `https://as.travel-provider.example` is the namespace authority for the booking tool identifier.
 
 `sub_profile`:
 : RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in Section 4.2 of {{I-D.mora-oauth-entity-profiles}}.  Values used within `act` objects MUST be registered with the "Actor Profile" usage location in the OAuth Entity Profiles registry (Section 14.1 of {{I-D.mora-oauth-entity-profiles}}) or be privately defined collision-resistant values.  If the acting entity fits more than one profile, multiple values MAY be included as a space-delimited string (e.g., `"service ai_agent"`).  Policy evaluation rules for multi-value strings are defined in {{forward-compat-sub-profile}}.
@@ -270,7 +287,7 @@ Per-actor key provenance within the delegation chain is outside the scope of thi
 
 The `client_profile` claim defined in {{I-D.mora-oauth-entity-profiles}} classifies the OAuth client and MUST NOT appear within an `act` object.  Client classification belongs at the top level of the token.  An AS or RS that encounters a `client_profile` member inside an `act` node MAY reject the token or ignore the offending member; it MUST NOT treat it as a valid actor classification.
 
-When an `act` object contains extension members beyond those defined in this document, issuers and consumers MUST ignore unrecognized members unless another specification or local policy defines their meaning.  An issuer that re-issues a validated actor chain MAY preserve unrecognized extension members in inherited `act` objects under local policy.
+When an `act` object contains extension members beyond those defined in this document, issuers and consumers MUST ignore unrecognized members unless another specification or local policy defines their meaning.  An issuer that re-issues a validated actor chain MAY preserve unrecognized extension members in inherited `act` objects under local policy.  However, companion profiles that need independently verifiable provenance, per-hop receipts, or other chain-wide state SHOULD use the top-level extension pattern described in {{companion-profile-extensibility}} rather than relying on inherited `act`-object extension members.
 
 
 ## Multi-Value `sub_profile` Policy Evaluation {#forward-compat-sub-profile}
@@ -401,7 +418,7 @@ When DPoP {{RFC9449}} is used:
 
 *  The top-level `cnf.jkt` of the token MUST identify the key of the immediate presenter, the actor identified by the outermost `act` claim.
 
-This profile does not define per-actor confirmation members within nested `act` objects.  Stronger prior-hop key provenance, if needed, would require another profile layered on top of this one.
+This profile does not define per-actor confirmation members within nested `act` objects.  Stronger prior-hop key provenance, if needed, would require another profile layered on top of this one using the companion-profile extension pattern in {{companion-profile-extensibility}}.
 
 When mTLS ({{RFC8705}}) is used instead of DPoP, the top-level `cnf.x5t#S256` identifies the current presenter's certificate.
 
@@ -1274,7 +1291,7 @@ When the resource server accepts delegated Transaction Tokens, it MUST:
 
 When token introspection ({{RFC7662}}) is used, an AS that issues delegated tokens MUST include the `act` claim and top-level `sub_profile` claim in introspection responses for active tokens that carry those claims.  The AS MUST NOT omit actor profile claims from introspection responses, as their omission would misrepresent the delegation status of the token to the introspecting RS.  When a delegated token carries a nested `act` chain (delegation depth greater than 1), the AS MUST include the complete nested `act` structure in the introspection response unless local privacy policy requires omitting specific inner chain entries.
 
-When local privacy policy requires omitting specific inner chain entries, the AS MAY return a filtered `act` chain but MUST include `"chain_complete": false` in the introspection response to signal that the chain is incomplete.  When `chain_complete` is absent from the introspection response, the RS SHOULD treat the chain as complete unless local policy or deployment context indicates otherwise (for example, a known introspection proxy that does not emit `chain_complete`).  An RS that requires a guaranteed-complete chain for its authorization policy SHOULD explicitly require `chain_complete: true` rather than relying on absence.  An introspecting RS that receives `"chain_complete": false` MUST NOT treat the partial chain as a faithful representation of the complete delegation history; it SHOULD apply more conservative policy and MAY reject the request when its local policy requires a complete delegation chain.
+When local privacy policy requires omitting specific inner chain entries, the AS MAY return a filtered `act` chain but MUST include `"chain_complete": false` in the introspection response to signal that the chain is incomplete.  When `chain_complete` is absent from the introspection response, the RS SHOULD treat the chain as complete unless local policy or deployment context indicates otherwise (for example, a known introspection proxy that does not emit `chain_complete`).  An RS that requires a guaranteed-complete chain for its authorization policy SHOULD explicitly require `chain_complete: true` rather than relying on absence.  An introspecting RS that receives `"chain_complete": false` MUST NOT treat the partial chain as a faithful representation of the complete delegation history; it SHOULD apply more conservative policy and MAY reject the request when its local policy requires a complete delegation chain.  A companion profile that defines additional introspection parameters aligned to the visible actor chain MUST define how those parameters behave when the visible `act` chain is filtered, consistent with {{companion-profile-extensibility}}.
 
 Opaque access tokens are not conformant to this profile as token formats.  When an AS issues a delegated opaque access token and supports introspection, it MAY expose equivalent actor-profile information through introspection for RS processing.  This is a deployment-specific compatibility mechanism for opaque tokens; it does not make the opaque token itself conformant to this profile, and support for this path MUST NOT be inferred solely from `actor_profile_required` or `actor_authorization_required` metadata.  When used, the following claims define the minimum equivalent introspection semantics for active delegated tokens:
 
@@ -1326,7 +1343,7 @@ This document makes no independent requests to the "OAuth Entity Profiles" regis
 
 ### Overview
 
-This section defines a minimal set of metadata parameters that, together with the `entity_profiles_supported.actor` array defined in {{I-D.mora-oauth-entity-profiles}}, allow authorization servers and resource servers to advertise actor-profile support without out-of-band configuration.  These parameters provide partial capability signaling only; they do not provide a complete machine-readable description of every supported grant path or method by which the AS determines the acting party.  Metadata helps clients detect likely incompatibilities, but it does not guarantee successful token issuance or resource access and does not define a required client workflow.
+This section defines a minimal set of metadata parameters that, together with the `entity_profiles_supported.actor` array defined in {{I-D.mora-oauth-entity-profiles}}, allow authorization servers and resource servers to advertise actor-profile support without out-of-band configuration.  These parameters provide partial capability signaling only; they do not provide a complete machine-readable description of every supported grant path or method by which the AS determines the acting party.  Metadata helps clients detect likely incompatibilities, but it does not guarantee successful token issuance or resource access and does not define a required client workflow.  Companion profiles MAY define additional metadata for supplementary features such as provenance, consistent with {{companion-profile-extensibility}}.
 
 The design principle is that **capability flags go in this spec's metadata; entity type enumeration goes in {{I-D.mora-oauth-entity-profiles}} metadata**.  When these metadata are available, clients can use `entity_profiles_supported.actor` per {{I-D.mora-oauth-entity-profiles}} to assess which actor entity profiles the associated AS accepts under this profile, can use `actor_profile_token_types_supported` ({{authorization-server-metadata}}) to assess which delegated output token types the AS advertises under this profile, and can use `actor_profile_actor_token_profiles_supported` to assess which `actor_token` credential profiles the AS advertises for Token Exchange.
 
@@ -1464,7 +1481,7 @@ This document does not standardize whether an AS issues refresh tokens in respon
 
 ## Establishing `act.iss` Namespace Authority {#act-iss-authority-guidance}
 
-This profile requires issuers and consumers to determine whether `act.iss` is authoritative for the identifier namespace of `act.sub`, but it does not define a universal validation algorithm.  That determination depends on a trusted framework or local policy.
+This profile requires issuers and consumers to determine whether `act.iss` is authoritative for the identifier namespace of `act.sub`, but it does not define a universal validation algorithm.  Actor resolution under this profile starts from the (`act.iss`, `act.sub`) pair; the token's top-level `iss` identifies the token issuer and is the actor namespace authority only when the two happen to be the same entity.  Determining whether `act.iss` is authoritative depends on a trusted framework or local policy.
 
 Examples of local validation approaches include:
 
@@ -1581,7 +1598,7 @@ Without top-level presenter proof of possession, a leaked token can be replayed 
 *  The RS SHOULD require the presenter-proof mechanism appropriate to the token type and deployment for the top-level `cnf.jkt` or other top-level confirmation information.  For example, JWT access tokens commonly use DPoP or mTLS, while Transaction Tokens can use the workload proof mechanism defined by their deployment profile.
 *  Deployments that use sender-constrained tokens for delegated access SHOULD apply that protection to the current presenter to reduce delegation-token theft risk.
 
-This document does not define per-hop actor-key provenance within the delegation chain.  Stronger assurance for prior-hop provenance would require an additional mechanism outside the scope of this document, such as signed hop receipts, transparency-log-based recording, or another future extension.
+This document does not define per-hop actor-key provenance within the delegation chain.  Deployments that need stronger assurance for prior-hop provenance MUST use an additional mechanism outside the scope of this document, such as signed hop receipts, transparency-log-based recording, or another future extension; they MUST NOT overload `act.iss` or redefine nested `act` semantics to carry that provenance.  Companion profiles that supply such mechanisms MUST follow {{companion-profile-extensibility}}.
 
 ## Delegation Depth Limits
 
