@@ -104,7 +104,7 @@ informative:
 
 OAuth deployments increasingly involve multi-principal scenarios where an agent or workload acts on behalf of a human user across organizational and trust-domain boundaries.  Existing specifications provide relevant building blocks but do not define a common profile for representing the delegated actor relationship across token types, classifying actor entity types, or signaling support between authorization servers and resource servers.  The result is inconsistent actor representation and interoperability gaps that force deployments to rely on proprietary conventions.
 
-This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity: `client_id` identifies the OAuth client registration, `sub` identifies the authorizing principal, and `act.sub` identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common `act` claim structure with `sub_profile` for machine-processable entity classification, applies existing top-level `cnf` sender-constraint mechanisms consistently across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  It also defines how supporting Token Exchange inputs such as ID tokens, refresh tokens, JWT actor credentials, and the `may_act` claim are processed when introducing subject or actor identity into that three-token actor-profile model.  When this profile is applied to the Identity Assertion JWT Authorization Grant (ID-JAG), it supplies the actor-delegation extension semantics that ID-JAG leaves to future profiles or extensions.  The document also registers metadata parameters for advertising actor-profile support and partial capability signals in cross-domain deployments.  This document standardizes the token representation of delegation relationships and the processing rules for issuers and consumers; it does not standardize the upstream policies and mechanisms by which systems determine whether a given actor is authorized to act for a subject, which remain deployment-specific.
+This document defines the OAuth Actor Profile for Delegation.  The design center is delegation clarity: `client_id` identifies the OAuth client registration, `sub` identifies the authorizing principal, and `act.sub` identifies the actor exercising that authorization.  These are distinct concepts that this profile makes explicit in the token rather than leaving them to be inferred from client registration context.  The profile defines a common `act` claim structure with `sub_profile` for machine-processable entity classification, applies existing top-level `cnf` sender-constraint mechanisms consistently across JWT assertion grants, JWT access tokens, and Transaction Tokens, and specifies processing rules for authorization servers and resource servers.  It also defines how supporting Token Exchange inputs such as ID tokens, refresh tokens, and JWT actor credentials are processed when introducing subject or actor identity into that three-token actor-profile model.  When this profile is applied to the Identity Assertion JWT Authorization Grant (ID-JAG), it supplies the actor-delegation extension semantics that ID-JAG leaves to future profiles or extensions.  The document also registers metadata parameters for advertising actor-profile support and partial capability signals in cross-domain deployments.  This document standardizes the token representation of delegation relationships and the processing rules for issuers and consumers; it does not standardize the upstream policies and mechanisms by which systems determine whether a given actor is authorized to act for a subject, which remain deployment-specific.
 
 
 --- middle
@@ -222,7 +222,7 @@ Same-domain deployments will often satisfy these requirements with straightforwa
 
 This profile defines actor-profile requirements for JWT assertion grants, JWT-formatted access tokens, and Transaction Tokens.  It does not define an equivalent interoperable profile for opaque access tokens.  Deployments using opaque access tokens, including as `subject_token` or `actor_token` inputs to Token Exchange, are out of scope for this document.  An AS MAY translate introspection results for an opaque access token into equivalent local inputs for deployment-specific use, but that behavior is not interoperable behavior defined by this document.
 
-The actor profile defines processing rules for the following token types as issued outputs: JWT assertion grants ({{jwt-assertion-grants}}), JWT-formatted access tokens ({{jwt-access-tokens}}), and Transaction Tokens ({{transaction-tokens}}).  It also defines Token Exchange input processing for JWT assertion grants, JWT access tokens, OpenID Connect ID tokens, refresh tokens, and Transaction Tokens as `subject_token`, and for workload identity credentials, JWT client assertions, and JWT access tokens as `actor_token`.  The `may_act` pre-authorization claim ({{may-act}}) applies to any JWT used as `subject_token`.
+The actor profile defines processing rules for the following token types as issued outputs: JWT assertion grants ({{jwt-assertion-grants}}), JWT-formatted access tokens ({{jwt-access-tokens}}), and Transaction Tokens ({{transaction-tokens}}).  It also defines Token Exchange input processing for JWT assertion grants, JWT access tokens, OpenID Connect ID tokens, refresh tokens, and Transaction Tokens as `subject_token`, and for workload identity credentials, JWT client assertions, and JWT access tokens as `actor_token`.  This document does not define interoperable processing for the `may_act` claim; deployments MAY use it under local policy or another specification as described in {{may-act}}.
 
 Subject to endpoint policy and the underlying token-exchange or grant mechanism, implementations MAY transform a supported input token type into a supported output token type for which this document defines the relevant issuance processing.  This document normatively defines JWT assertion grant issuance ({{jwt-assertion-grant-issuance}}), JWT access token issuance via {{jwt-access-token-propagation}} after authorization-grant processing, Token Exchange processing, or Transaction Token Service processing, and Transaction Token issuance from inbound JWT assertion grants, JWT access tokens, or Transaction Tokens under {{transaction-token-service-processing}}.  It does not require every implementation to support every possible cross-product of supported inputs and outputs.  When an implementation supports a path defined by this document, actor profile information MUST be preserved and validated as specified for the resulting token type.
 
@@ -845,40 +845,13 @@ When a Token Exchange request ({{RFC8693}}) presents a refresh token as the `sub
 
 After completing steps 1-4, the AS MUST apply the propagation rules in {{jwt-access-token-propagation}} to determine the remaining claims in the issued token.
 
-### may_act Pre-Authorization {#may-act}
+### `may_act` {#may-act}
 
-#### Overview {#may-act-overview}
+The `may_act` claim is defined by {{RFC8693, Section 4.4}} for JWTs and token introspection responses.  This document does not define interoperable processing for `may_act` in Token Exchange or Transaction Token Service requests.
 
-The `may_act` claim ({{RFC8693, Section 4.4}}) is defined for JWTs and token introspection responses.  When a JWT `subject_token` carries `may_act` in a Token Exchange request, the claim is a single JSON object identifying one authorized actor for the subject identified by the containing JWT.  The object contains identity claims for that authorized actor; it is similar in purpose to `act` but is not constrained to have exactly the same member set.  For this profile's delegation-authorization shortcut, `sub` is the minimum identity member and `iss` is required for baseline interoperable matching unless the authoritative namespace for that `sub` is established unambiguously by the containing token or trusted local policy.  When present in a JWT `subject_token`, `may_act` allows the AS to satisfy its delegation-authorization requirement from information embedded in the subject token, without requiring an independent policy lookup.  The delegation-authorization check is defined by the type-specific processing section for the `subject_token` type in use (e.g., step 4 of {{jwt-assertion-grants-processing}} for JWT assertion grants).
+An implementation conforming to this document MUST NOT rely on `may_act` to satisfy a delegation-authorization requirement unless another specification or explicit local policy defines that behavior.  Any such use is outside the scope of this document.
 
-`may_act` is an input to Token Exchange processing and MUST NOT be propagated into the issued token.
-
-#### Processing {#may-act-processing}
-
-When the AS processes a Token Exchange request whose JWT `subject_token` carries a `may_act` claim, the AS MUST apply the following rules.
-
-1.  The AS MUST validate the `subject_token` per its type-specific rules before evaluating `may_act`.  A `may_act` claim in an invalid or untrusted token MUST NOT be used.
-
-2.  The AS MUST compare the actor identity it is prepared to use for the issued token against the identity claims in `may_act`.  For this profile, the candidate actor identity is the (`act.iss`, `act.sub`) pair that would appear in the issued token if the request succeeds.  When an `actor_token` is present, that candidate identity is the `actor_token`'s derived actor identity.  When no `actor_token` is present, the AS MAY derive a candidate actor identity from the authenticated client's identity only if local policy defines an explicit trusted mapping from that client identity to both the actor identifier and its authoritative namespace; absent such a mapping, the authenticated client identity MUST NOT be treated as a substitute for `act.sub`.
-
-    *  If `may_act` contains both `sub` and `iss`, the AS MUST compare that pair to the candidate (`act.iss`, `act.sub`) pair using exact equality or trusted local semantic-consistency rules.
-    *  If `may_act` contains `sub` but omits `iss`, the AS MUST NOT treat `may_act` as a sufficient basis for delegation authorization unless the containing token issuer or trusted local policy unambiguously establishes the authoritative namespace for that `sub`.
-    *  If `may_act` omits `sub`, the AS MUST NOT use it as a sufficient basis for delegation authorization.
-    *  Other members in `may_act` MAY refine local policy but do not define additional interoperable identity-matching inputs under this profile.
-
-    If the resulting issuer-scoped actor identity matches the party identified by `may_act`, the AS MAY treat that match as a sufficient basis for its delegation-authorization requirement for the `subject_token` type in use, subject to local policy.
-
-    When both `may_act` and an `actor_token` are present, the following rules govern their interaction:
-
-    *  A matching `may_act` MAY satisfy the delegation-authorization requirement but does not supply or override the actor identity.  The `actor_token` remains the authoritative source for `act.sub` in the issued token.
-    *  The AS MUST NOT use a matching `may_act` to replace the `actor_token`'s derived identity in the issued token's `act.sub`.
-    *  When `may_act` identifies a different party than the `actor_token`'s derived identity, the AS MUST use the `actor_token`'s derived identity as `act.sub` and MUST fall back to its independent delegation-authorization policy per step 5.  A non-matching `may_act` is not itself grounds for rejection.
-
-3.  A `may_act` match does not override other validation requirements.  The AS MUST still validate the `actor_token`, verify issuer trust, and enforce proof of possession per the applicable type-specific section.  When client identity is used under step 2 via trusted mapping, the AS MUST apply the same semantic-consistency rules described in {{jwt-assertion-grants-processing}} step 7 and {{client-identity-delegation}}.
-
-4.  The AS MUST NOT carry `may_act` forward into the issued token.  The claim is consumed during Token Exchange processing and MUST NOT appear in any output token type defined by this profile.
-
-5.  When `may_act` is present but the actor's identity does not match the party identified there, the AS MUST fall back to its independent delegation-authorization policy applicable to the `subject_token` type in use.  A non-matching `may_act` is not itself grounds for rejecting the request.
+When `may_act` is used under another specification or local policy, it MUST NOT replace or override actor identity derived under this document from a validated `actor_token`, inherited `act` chain processing, or another current-exchange input.  `may_act` MUST NOT be propagated into any output token type defined by this document.
 
 ## Actor Tokens
 
@@ -1184,9 +1157,9 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
 
 These same preservation rules apply regardless of whether the inbound credential is a JWT assertion grant, a JWT access token, or a Transaction Token, provided that the TTS supports issuing a Transaction Token from that input.  This document does not define direct Transaction Token issuance from ID tokens or refresh tokens.
 
-## may_act Pre-Authorization
+## `may_act`
 
-When the inbound `subject_token` presented to the TTS is a JWT carrying `may_act`, the TTS MUST apply the matching rules in {{may-act-processing}} using the newly authenticated presenter as the candidate actor identity that would become the new outermost `act` in the issued Transaction Token.  A matching `may_act` MAY satisfy the delegation-authorization requirement in {{transaction-token-service-processing}} step 5, but it does not replace validation of the inbound credential, presenter authentication, or the obligation to create a new outermost `act`.
+This document does not define TTS-specific processing for `may_act`.  A deployment MAY use `may_act` under local policy or another specification as a transaction-authorization hint, but that behavior is outside the scope of this document and MUST NOT replace validation of the inbound credential, presenter authentication, or the obligation to create a new outermost `act`.
 
 # Error Responses
 
