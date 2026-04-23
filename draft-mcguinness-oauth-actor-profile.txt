@@ -129,7 +129,7 @@ Table of Contents
      3.13. Summary of Actor-Profile Claims
    4.  JWT Assertion Grants
      4.1.  Structure
-       4.1.1.  Self-Issued Grants
+       4.1.1.  Deployment-Specific Self-Issued Grants
      4.2.  Authorization Grant Processing
    5.  JWT Access Tokens
      5.1.  Structure
@@ -444,8 +444,7 @@ Table of Contents
 
 3.2.  Profile Invariants
 
-   The following invariants define the interoperable core of this
-   profile:
+   This document defines the following invariants:
 
    *  sub is the authorizing principal.
 
@@ -556,10 +555,9 @@ Table of Contents
 
 3.5.  Companion Profiles and Extension Points
 
-   This profile intentionally standardizes the interoperable core for
-   current-token delegated identity while leaving room for companion
-   profiles to define supplementary behavior such as provenance,
-   transparency, or deployment-specific audit material.
+   This document defines current-token delegated identity while leaving
+   room for companion profiles to define supplementary behavior such as
+   provenance, transparency, or deployment-specific audit material.
 
    A companion profile layered on top of this one:
 
@@ -1028,10 +1026,9 @@ AddOutermostActor(inbound_chain, new_actor):
       the inbound subject_token is PoP-capable and carries top-level
       cnf.
 
-   *  *Presenter rebind*: the issued token installs a new presenter.  In
-      the interoperable core of this profile, presenter rebind is
-      established only by a validated actor_token that directly
-      identifies the new presenter.
+   *  *Presenter rebind*: the issued token installs a new presenter.
+      This document defines presenter rebind only when a validated
+      actor_token directly identifies the new presenter.
 
    An inbound subject_token participates in presenter continuation only
    when it carries top-level cnf.  ID tokens and refresh tokens are
@@ -1084,17 +1081,15 @@ AddOutermostActor(inbound_chain, new_actor):
       prove possession for that binding using the mechanism applicable
       to the subject_token type and deployment.
 
-   *  If the subject_token does not carry top-level cnf, presenter
-      continuation is not available under the interoperable core of this
-      profile.
+   *  If the subject_token does not carry top-level cnf, this document
+      does not define presenter continuation for that request.
 
 3.12.3.  Token Exchange Rebind
 
    When Token Exchange runs in presenter-rebind mode, the request
-   establishes a new presenter for the issued token.  In the
-   interoperable core of this profile, the new presenter MUST be
-   established by a validated actor_token that directly identifies that
-   presenter using its own top-level subject identity.
+   establishes a new presenter for the issued token.  This document
+   defines that presenter as established only by a validated actor_token
+   that directly identifies it using its own top-level subject identity.
 
    *  The issuer MUST validate the actor_token and any accompanying
       proof required by that credential profile or deployment.
@@ -1227,10 +1222,10 @@ AddOutermostActor(inbound_chain, new_actor):
    have different issuer and subject semantics.  However, implementers
    should note that some deployments rely on the authenticated OAuth
    client itself as implicit evidence of the acting party.  This
-   specification does not prohibit that input, but when delegation is to
-   be expressed explicitly and propagated across token transformations,
-   the acting party is represented by act rather than inferred solely
-   from client authentication.
+   document does not prohibit that input, but when delegation is to be
+   expressed explicitly and propagated across token transformations, the
+   acting party is represented by act rather than inferred solely from
+   client authentication.
 
    The following claims are defined for a JWT assertion grant that
    carries actor-profile delegation.  Claims not listed here follow the
@@ -1299,31 +1294,34 @@ AddOutermostActor(inbound_chain, new_actor):
    within act classifies the actor.  The top-level cnf.jkt binds the
    assertion to the agent's DPoP key.
 
-   The AS-issued grant is the more trustworthy pattern because the
-   issuing AS independently authenticated the agent and validated the
-   delegation relationship before signing.  The receiving AS needs to
-   trust only the enterprise AS as an issuer.
+   The AS-issued grant is the pattern defined by this document because
+   the issuing AS independently authenticated the agent and validated
+   the delegation relationship before signing.  The receiving AS needs
+   to trust only the enterprise AS as an issuer.
 
    For AS-issued grants, the issuing AS MUST set act.iss to the
    namespace it is authoritative for, typically its own issuer URI.
 
-   Allowed issuer patterns are:
+   This document defines the following issuer patterns:
 
    *  an AS-issued delegated assertion where JWT iss is a trusted AS and
       act.sub identifies the actor (recommended),
 
    *  an assertion carrying a pre-existing nested act chain where the
-      current JWT iss is trusted to carry forward prior actor
-      assertions, and
+      current JWT iss is a trusted AS carrying forward prior actor
+      assertions.
 
-   *  a self-issued actor assertion (see Section 4.1.1 below).
+   A deployment MAY additionally accept a self-issued actor assertion as
+   described in Section 4.1.1, but that behavior is outside the scope of
+   this document.
 
-4.1.1.  Self-Issued Grants
+4.1.1.  Deployment-Specific Self-Issued Grants
 
-   In a self-issued assertion grant, the agent itself is iss and
-   directly asserts Alice's delegation to itself in act.sub.  No
-   upstream AS has authenticated the agent or pre-validated the
-   delegation relationship.
+   Self-issued assertion grants are deployment-specific and are outside
+   the scope of this document.  In a self-issued assertion grant, the
+   agent itself is iss and directly asserts Alice's delegation to itself
+   in act.sub.  No upstream AS has authenticated the agent or pre-
+   validated the delegation relationship.
 
    {
      "iss": "https://agents.enterprise.example/travel-assistant",
@@ -1348,10 +1346,13 @@ AddOutermostActor(inbound_chain, new_actor):
    registered; the client MUST NOT set act.iss to its own identifier
    unless it is itself the authoritative namespace owner.
 
-   ASes MUST NOT accept self-issued assertion grants unless explicitly
-   configured via local policy to do so; self-issued grant acceptance
-   MUST be off by default.  When an AS does accept self-issued grants,
-   it MUST at minimum:
+   By default, an implementation conforming to this document MUST reject
+   self-issued assertion grants.  A deployment MAY accept them only when
+   explicitly enabled by local policy or another specification; self-
+   issued grant acceptance MUST be off by default, and this document
+   defines no discovery or negotiation mechanism for it.  When an AS
+   does accept self-issued grants under such an extension, it MUST at
+   minimum:
 
    *  Validate the JWT signature using the key identified in the JWT
       header, obtained from a trusted source (e.g., a pre-registered
@@ -1365,16 +1366,21 @@ AddOutermostActor(inbound_chain, new_actor):
    *  Verify proof of possession per the token-endpoint mechanism in use
       (DPoP per [RFC9449] or mTLS per [RFC8705]).
 
-   *  Apply the actor-profile validation requirements of this
-      specification (steps 2–7 of Section 4.2).
+   *  Apply the actor-profile validation requirements of this document
+      (steps 2–7 of Section 4.2).
 
-   The AS SHOULD NOT treat the self-asserted delegation claim alone as a
-   sufficient basis under step 4 of Section 4.2; an independent
-   delegation basis such as a pre-registered grant or consent record is
-   RECOMMENDED.  Any additional verification of the claimed sub is a
-   deployment-specific subject-identity matter outside the scope of this
-   document.  This document does not define any additional self-issued-
-   proof mechanism beyond those listed above.
+   *  Establish the delegation relationship from an independent local
+      authorization basis such as a pre-registered grant, explicit
+      consent record, or equivalent deployment-specific authorization
+      artifact.
+
+   The AS MUST NOT treat the self-asserted delegation claim alone as a
+   sufficient basis under step 4 of Section 4.2.  Any additional
+   verification of the claimed sub is a deployment-specific subject-
+   identity matter outside the scope of this document.  This document
+   does not define any additional self-issued-proof mechanism,
+   interoperability guarantee, or portable negotiation mechanism beyond
+   the local-extension requirements listed above.
 
 4.2.  Authorization Grant Processing
 
@@ -1383,11 +1389,13 @@ AddOutermostActor(inbound_chain, new_actor):
    1.  The AS MUST validate the assertion per [RFC7523].
 
    2.  The AS MUST determine that the assertion issuer is trusted to
-       assert the relationship between the JWT sub and act.sub.  In the
-       typical case the JWT iss is a trusted AS, and the AS MUST verify
-       that this issuer is authorized under local policy to assert
-       delegation on behalf of the actor identified by act.sub.  For
-       self-issued grants, see Section 4.1.1.
+       assert the relationship between the JWT sub and act.sub.  Under
+       this document, the JWT iss is a trusted AS, and the AS MUST
+       verify that this issuer is authorized under local policy to
+       assert delegation on behalf of the actor identified by act.sub.
+       A deployment MAY additionally define acceptance of self-issued
+       grants per Section 4.1.1, but that behavior is outside the scope
+       of this document.
 
    3.  If act.iss is absent from the inbound act object, the AS MUST
        reject the request with invalid_request; an absent act.iss is a
@@ -1679,10 +1687,10 @@ AddOutermostActor(inbound_chain, new_actor):
       presenter for the issued token.  When the output token is sender-
       constrained, its top-level cnf is bound to that new presenter.
 
-   Interoperable presenter rebind under this profile is established only
-   by a validated actor_token.  Other ways an implementation might
-   authenticate or install a new presenter are deployment-specific and
-   outside the interoperable core of this profile.
+   This document defines presenter rebind only when a validated
+   actor_token establishes the new presenter.  Other ways an
+   implementation might authenticate or install a new presenter are
+   deployment-specific and outside the scope of this document.
 
    When the inbound subject_token is bearer or identity-only, presenter
    continuation is unavailable, but presenter rebind remains available.
@@ -2695,13 +2703,13 @@ AddOutermostActor(inbound_chain, new_actor):
 
    When a delegated Transaction Token is issued in presenter-rebind
    mode, the new presenter becomes the new outermost actor for that
-   token.  In the interoperable core of this profile, that presenter is
-   established by a validated actor_token direct presenter credential,
-   while the proof mechanism remains governed by
-   [I-D.ietf-oauth-transaction-tokens] and the applicable deployment
-   profile.  A bearer or identity-only inbound subject_token MAY
-   therefore be upgraded to a sender-constrained Transaction Token when
-   a validated actor_token establishes the new presenter.
+   token.  Under this document, that presenter is established by a
+   validated actor_token direct presenter credential, while the proof
+   mechanism remains governed by [I-D.ietf-oauth-transaction-tokens] and
+   the applicable deployment profile.  A bearer or identity-only inbound
+   subject_token MAY therefore be upgraded to a sender-constrained
+   Transaction Token when a validated actor_token establishes the new
+   presenter.
 
 7.4.  Transaction Token Output Rules
 
@@ -2966,10 +2974,10 @@ AddOutermostActor(inbound_chain, new_actor):
 
    Actor authorization at the resource server evaluates both principals
    and the relationship between them, that is, whether the outermost
-   actor is authorized to act on behalf of the subject.  This
-   specification describes subject-plus-actor evaluation as one approach
-   for resource servers; it does not require every RS to implement or
-   enforce actor authorization.
+   actor is authorized to act on behalf of the subject.  This document
+   describes subject-plus-actor evaluation as one approach for resource
+   servers; it does not require every RS to implement or enforce actor
+   authorization.
 
    For Transaction Tokens, the primary policy pair remains (sub,
    act.sub).  The req_wl claim provides workload context from the TTS
@@ -2978,12 +2986,12 @@ AddOutermostActor(inbound_chain, new_actor):
    processing; this document does not standardize their authorization
    use.
 
-   This specification defines subject-plus-actor evaluation as the
+   This document defines subject-plus-actor evaluation as the
    interoperable baseline.  Deployments MAY apply multi-principal
    authorization under local policy by considering one or more nested
    act objects as additional trust or risk inputs in addition to sub and
-   the outermost act.sub, but this specification does not standardize
-   such authorization behavior, and clients MUST NOT assume that nested
+   the outermost act.sub, but this document does not standardize such
+   authorization behavior, and clients MUST NOT assume that nested
    actors will be used for authorization unless deployment-specific
    agreements say otherwise.
 

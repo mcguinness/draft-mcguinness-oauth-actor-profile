@@ -1248,7 +1248,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-structure" class="internal xref">Structure</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1.2.1">
-                    <p id="section-toc.1-1.4.2.1.2.1.1"><a href="#section-4.1.1" class="auto internal xref">4.1.1</a>.  <a href="#name-self-issued-grants" class="internal xref">Self-Issued Grants</a></p>
+                    <p id="section-toc.1-1.4.2.1.2.1.1"><a href="#section-4.1.1" class="auto internal xref">4.1.1</a>.  <a href="#name-deployment-specific-self-is" class="internal xref">Deployment-Specific Self-Issued Grants</a></p>
 </li>
                 </ul>
 </li>
@@ -1711,7 +1711,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-profile-invariants">
 <a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-profile-invariants" class="section-name selfRef">Profile Invariants</a>
         </h3>
-<p id="section-3.2-1">The following invariants define the interoperable core of this profile:<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-1">This document defines the following invariants:<a href="#section-3.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-3.2-2.1">
             <p id="section-3.2-2.1.1"><code>sub</code> is the authorizing principal.<a href="#section-3.2-2.1.1" class="pilcrow">¶</a></p>
@@ -1784,7 +1784,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-companion-profiles-and-exte">
 <a href="#section-3.5" class="section-number selfRef">3.5. </a><a href="#name-companion-profiles-and-exte" class="section-name selfRef">Companion Profiles and Extension Points</a>
         </h3>
-<p id="section-3.5-1">This profile intentionally standardizes the interoperable core for current-token delegated identity while leaving room for companion profiles to define supplementary behavior such as provenance, transparency, or deployment-specific audit material.<a href="#section-3.5-1" class="pilcrow">¶</a></p>
+<p id="section-3.5-1">This document defines current-token delegated identity while leaving room for companion profiles to define supplementary behavior such as provenance, transparency, or deployment-specific audit material.<a href="#section-3.5-1" class="pilcrow">¶</a></p>
 <p id="section-3.5-2">A companion profile layered on top of this one:<a href="#section-3.5-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-3.5-3.1">
@@ -2110,7 +2110,7 @@ PreserveChain(inbound_chain):
             <p id="section-3.11-3.1.1"><strong>Presenter continuation</strong>: the issued token keeps the presenter of the inbound <code>subject_token</code>.  This mode is interoperable only when the inbound <code>subject_token</code> is PoP-capable and carries top-level <code>cnf</code>.<a href="#section-3.11-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-3.11-3.2">
-            <p id="section-3.11-3.2.1"><strong>Presenter rebind</strong>: the issued token installs a new presenter.  In the interoperable core of this profile, presenter rebind is established only by a validated <code>actor_token</code> that directly identifies the new presenter.<a href="#section-3.11-3.2.1" class="pilcrow">¶</a></p>
+            <p id="section-3.11-3.2.1"><strong>Presenter rebind</strong>: the issued token installs a new presenter.  This document defines presenter rebind only when a validated <code>actor_token</code> directly identifies the new presenter.<a href="#section-3.11-3.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-3.11-4">An inbound <code>subject_token</code> participates in presenter continuation only when it carries top-level <code>cnf</code>.  ID tokens and refresh tokens are identity inputs only; they do not carry interoperable presenter-continuity state under this profile.  A bearer <code>subject_token</code> or identity-only <code>subject_token</code> can still be exchanged for a sender-constrained output token in presenter-rebind mode when a validated <code>actor_token</code> establishes the new presenter.  This bearer-to-PoP upgrade path is a primary migration path enabled by this profile.<a href="#section-3.11-4" class="pilcrow">¶</a></p>
@@ -2149,7 +2149,7 @@ PreserveChain(inbound_chain):
               <p id="section-3.12.2-2.1.1">If the <code>subject_token</code> carries top-level <code>cnf</code>, the requester <span class="bcp14">MUST</span> prove possession for that binding using the mechanism applicable to the <code>subject_token</code> type and deployment.<a href="#section-3.12.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-3.12.2-2.2">
-              <p id="section-3.12.2-2.2.1">If the <code>subject_token</code> does not carry top-level <code>cnf</code>, presenter continuation is not available under the interoperable core of this profile.<a href="#section-3.12.2-2.2.1" class="pilcrow">¶</a></p>
+              <p id="section-3.12.2-2.2.1">If the <code>subject_token</code> does not carry top-level <code>cnf</code>, this document does not define presenter continuation for that request.<a href="#section-3.12.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </section>
@@ -2159,7 +2159,7 @@ PreserveChain(inbound_chain):
           <h4 id="name-token-exchange-rebind">
 <a href="#section-3.12.3" class="section-number selfRef">3.12.3. </a><a href="#name-token-exchange-rebind" class="section-name selfRef">Token Exchange Rebind</a>
           </h4>
-<p id="section-3.12.3-1">When Token Exchange runs in presenter-rebind mode, the request establishes a new presenter for the issued token.  In the interoperable core of this profile, the new presenter <span class="bcp14">MUST</span> be established by a validated <code>actor_token</code> that directly identifies that presenter using its own top-level subject identity.<a href="#section-3.12.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.12.3-1">When Token Exchange runs in presenter-rebind mode, the request establishes a new presenter for the issued token.  This document defines that presenter as established only by a validated <code>actor_token</code> that directly identifies it using its own top-level subject identity.<a href="#section-3.12.3-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-3.12.3-2.1">
               <p id="section-3.12.3-2.1.1">The issuer <span class="bcp14">MUST</span> validate the <code>actor_token</code> and any accompanying proof required by that credential profile or deployment.<a href="#section-3.12.3-2.1.1" class="pilcrow">¶</a></p>
@@ -2329,7 +2329,7 @@ PreserveChain(inbound_chain):
 <a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-structure" class="section-name selfRef">Structure</a>
         </h3>
 <p id="section-4.1-1">Actor-profile requirements apply to any JWT used as an authorization grant under <span>[<a href="#RFC7521" class="cite xref">RFC7521</a>]</span> and <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>, independent of how or by which specification it was produced.  One such profile is the Identity Assertion JWT Authorization Grant (ID-JAG, <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>), a JWT bearer grant produced by Token Exchange.  When the grant is an ID-JAG, this document acts as an actor-delegation profile layered on the base ID-JAG specification: ID-JAG defines the token-exchange and JWT-bearer flow, while this document defines how <code>actor_token</code>-derived actor identity and any resulting <code>act</code> claim are represented and processed.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
-<p id="section-4.1-2">Such a JWT <span class="bcp14">MAY</span> include an <code>act</code> claim conforming to the actor profile defined in <a href="#actor-profile" class="auto internal xref">Section 3</a>.  Use of this claim in JWT client authentication assertions is out of scope for this document because such assertions have different issuer and subject semantics.  However, implementers should note that some deployments rely on the authenticated OAuth client itself as implicit evidence of the acting party.  This specification does not prohibit that input, but when delegation is to be expressed explicitly and propagated across token transformations, the acting party is represented by <code>act</code> rather than inferred solely from client authentication.<a href="#section-4.1-2" class="pilcrow">¶</a></p>
+<p id="section-4.1-2">Such a JWT <span class="bcp14">MAY</span> include an <code>act</code> claim conforming to the actor profile defined in <a href="#actor-profile" class="auto internal xref">Section 3</a>.  Use of this claim in JWT client authentication assertions is out of scope for this document because such assertions have different issuer and subject semantics.  However, implementers should note that some deployments rely on the authenticated OAuth client itself as implicit evidence of the acting party.  This document does not prohibit that input, but when delegation is to be expressed explicitly and propagated across token transformations, the acting party is represented by <code>act</code> rather than inferred solely from client authentication.<a href="#section-4.1-2" class="pilcrow">¶</a></p>
 <p id="section-4.1-3">The following claims are defined for a JWT assertion grant that carries actor-profile delegation.  Claims not listed here follow the requirements of <span>[<a href="#RFC7521" class="cite xref">RFC7521</a>]</span> and <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>.<a href="#section-4.1-3" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-4.1-4">
           <dt id="section-4.1-4.1">
@@ -2386,26 +2386,24 @@ PreserveChain(inbound_chain):
 </pre><a href="#section-4.1-8" class="pilcrow">¶</a>
 </div>
 <p id="section-4.1-9">The top-level <code>sub_profile</code> classifies the JWT's <code>sub</code>; <code>sub_profile</code> within <code>act</code> classifies the actor.  The top-level <code>cnf.jkt</code> binds the assertion to the agent's DPoP key.<a href="#section-4.1-9" class="pilcrow">¶</a></p>
-<p id="section-4.1-10">The AS-issued grant is the more trustworthy pattern because the issuing AS independently authenticated the agent and validated the delegation relationship before signing.  The receiving AS needs to trust only the enterprise AS as an issuer.<a href="#section-4.1-10" class="pilcrow">¶</a></p>
+<p id="section-4.1-10">The AS-issued grant is the pattern defined by this document because the issuing AS independently authenticated the agent and validated the delegation relationship before signing.  The receiving AS needs to trust only the enterprise AS as an issuer.<a href="#section-4.1-10" class="pilcrow">¶</a></p>
 <p id="section-4.1-11">For AS-issued grants, the issuing AS <span class="bcp14">MUST</span> set <code>act.iss</code> to the namespace it is authoritative for, typically its own issuer URI.<a href="#section-4.1-11" class="pilcrow">¶</a></p>
-<p id="section-4.1-12">Allowed issuer patterns are:<a href="#section-4.1-12" class="pilcrow">¶</a></p>
+<p id="section-4.1-12">This document defines the following issuer patterns:<a href="#section-4.1-12" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-4.1-13.1">
             <p id="section-4.1-13.1.1">an AS-issued delegated assertion where JWT <code>iss</code> is a trusted AS and <code>act.sub</code> identifies the actor (recommended),<a href="#section-4.1-13.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-4.1-13.2">
-            <p id="section-4.1-13.2.1">an assertion carrying a pre-existing nested <code>act</code> chain where the current JWT <code>iss</code> is trusted to carry forward prior actor assertions, and<a href="#section-4.1-13.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-4.1-13.3">
-            <p id="section-4.1-13.3.1">a self-issued actor assertion (see <a href="#self-issued-grants" class="auto internal xref">Section 4.1.1</a> below).<a href="#section-4.1-13.3.1" class="pilcrow">¶</a></p>
+            <p id="section-4.1-13.2.1">an assertion carrying a pre-existing nested <code>act</code> chain where the current JWT <code>iss</code> is a trusted AS carrying forward prior actor assertions.<a href="#section-4.1-13.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
+<p id="section-4.1-14">A deployment <span class="bcp14">MAY</span> additionally accept a self-issued actor assertion as described in <a href="#self-issued-grants" class="auto internal xref">Section 4.1.1</a>, but that behavior is outside the scope of this document.<a href="#section-4.1-14" class="pilcrow">¶</a></p>
 <div id="self-issued-grants">
 <section id="section-4.1.1">
-          <h4 id="name-self-issued-grants">
-<a href="#section-4.1.1" class="section-number selfRef">4.1.1. </a><a href="#name-self-issued-grants" class="section-name selfRef">Self-Issued Grants</a>
+          <h4 id="name-deployment-specific-self-is">
+<a href="#section-4.1.1" class="section-number selfRef">4.1.1. </a><a href="#name-deployment-specific-self-is" class="section-name selfRef">Deployment-Specific Self-Issued Grants</a>
           </h4>
-<p id="section-4.1.1-1">In a self-issued assertion grant, the agent itself is <code>iss</code> and directly asserts Alice's delegation to itself in <code>act.sub</code>.  No upstream AS has authenticated the agent or pre-validated the delegation relationship.<a href="#section-4.1.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1.1-1">Self-issued assertion grants are deployment-specific and are outside the scope of this document.  In a self-issued assertion grant, the agent itself is <code>iss</code> and directly asserts Alice's delegation to itself in <code>act.sub</code>.  No upstream AS has authenticated the agent or pre-validated the delegation relationship.<a href="#section-4.1.1-1" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-4.1.1-2">
 <pre>
 {
@@ -2425,7 +2423,7 @@ PreserveChain(inbound_chain):
 </pre><a href="#section-4.1.1-2" class="pilcrow">¶</a>
 </div>
 <p id="section-4.1.1-3">Here <code>act.iss</code> names the enterprise AS as the namespace authority for the agent's identifier, which is registered in that AS's namespace rather than the agent's own identifier space.  The client <span class="bcp14">MUST</span> set <code>act.iss</code> to the issuer namespace authoritative for its own identifier, typically the AS governing the namespace in which <code>act.sub</code> is registered; the client <span class="bcp14">MUST NOT</span> set <code>act.iss</code> to its own identifier unless it is itself the authoritative namespace owner.<a href="#section-4.1.1-3" class="pilcrow">¶</a></p>
-<p id="section-4.1.1-4">ASes <span class="bcp14">MUST NOT</span> accept self-issued assertion grants unless explicitly configured via local policy to do so; self-issued grant acceptance <span class="bcp14">MUST</span> be off by default.  When an AS does accept self-issued grants, it <span class="bcp14">MUST</span> at minimum:<a href="#section-4.1.1-4" class="pilcrow">¶</a></p>
+<p id="section-4.1.1-4">By default, an implementation conforming to this document <span class="bcp14">MUST</span> reject self-issued assertion grants.  A deployment <span class="bcp14">MAY</span> accept them only when explicitly enabled by local policy or another specification; self-issued grant acceptance <span class="bcp14">MUST</span> be off by default, and this document defines no discovery or negotiation mechanism for it.  When an AS does accept self-issued grants under such an extension, it <span class="bcp14">MUST</span> at minimum:<a href="#section-4.1.1-4" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-4.1.1-5.1">
               <p id="section-4.1.1-5.1.1">Validate the JWT signature using the key identified in the JWT header, obtained from a trusted source (e.g., a pre-registered public key for the self-issuing party).<a href="#section-4.1.1-5.1.1" class="pilcrow">¶</a></p>
@@ -2440,10 +2438,13 @@ PreserveChain(inbound_chain):
               <p id="section-4.1.1-5.4.1">Verify proof of possession per the token-endpoint mechanism in use (DPoP per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> or mTLS per <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>).<a href="#section-4.1.1-5.4.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-4.1.1-5.5">
-              <p id="section-4.1.1-5.5.1">Apply the actor-profile validation requirements of this specification (steps 2–7 of <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a>).<a href="#section-4.1.1-5.5.1" class="pilcrow">¶</a></p>
+              <p id="section-4.1.1-5.5.1">Apply the actor-profile validation requirements of this document (steps 2–7 of <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a>).<a href="#section-4.1.1-5.5.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-4.1.1-5.6">
+              <p id="section-4.1.1-5.6.1">Establish the delegation relationship from an independent local authorization basis such as a pre-registered grant, explicit consent record, or equivalent deployment-specific authorization artifact.<a href="#section-4.1.1-5.6.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-4.1.1-6">The AS <span class="bcp14">SHOULD NOT</span> treat the self-asserted delegation claim alone as a sufficient basis under step 4 of <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a>; an independent delegation basis such as a pre-registered grant or consent record is <span class="bcp14">RECOMMENDED</span>.  Any additional verification of the claimed <code>sub</code> is a deployment-specific subject-identity matter outside the scope of this document.  This document does not define any additional self-issued-proof mechanism beyond those listed above.<a href="#section-4.1.1-6" class="pilcrow">¶</a></p>
+<p id="section-4.1.1-6">The AS <span class="bcp14">MUST NOT</span> treat the self-asserted delegation claim alone as a sufficient basis under step 4 of <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a>.  Any additional verification of the claimed <code>sub</code> is a deployment-specific subject-identity matter outside the scope of this document.  This document does not define any additional self-issued-proof mechanism, interoperability guarantee, or portable negotiation mechanism beyond the local-extension requirements listed above.<a href="#section-4.1.1-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2459,7 +2460,7 @@ PreserveChain(inbound_chain):
             <p id="section-4.2-2.1.1">The AS <span class="bcp14">MUST</span> validate the assertion per <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>.<a href="#section-4.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-4.2-2.2">
-            <p id="section-4.2-2.2.1">The AS <span class="bcp14">MUST</span> determine that the assertion issuer is trusted to assert the relationship between the JWT <code>sub</code> and <code>act.sub</code>.  In the typical case the JWT <code>iss</code> is a trusted AS, and the AS <span class="bcp14">MUST</span> verify that this issuer is authorized under local policy to assert delegation on behalf of the actor identified by <code>act.sub</code>.  For self-issued grants, see <a href="#self-issued-grants" class="auto internal xref">Section 4.1.1</a>.<a href="#section-4.2-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-4.2-2.2.1">The AS <span class="bcp14">MUST</span> determine that the assertion issuer is trusted to assert the relationship between the JWT <code>sub</code> and <code>act.sub</code>.  Under this document, the JWT <code>iss</code> is a trusted AS, and the AS <span class="bcp14">MUST</span> verify that this issuer is authorized under local policy to assert delegation on behalf of the actor identified by <code>act.sub</code>.  A deployment <span class="bcp14">MAY</span> additionally define acceptance of self-issued grants per <a href="#self-issued-grants" class="auto internal xref">Section 4.1.1</a>, but that behavior is outside the scope of this document.<a href="#section-4.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-4.2-2.3">
             <p id="section-4.2-2.3.1">If <code>act.iss</code> is absent from the inbound <code>act</code> object, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_request</code>; an absent <code>act.iss</code> is a structural violation, not a validation failure.  Otherwise, the AS <span class="bcp14">MUST</span> establish, under a trusted framework or local policy, that <code>act.iss</code> is authoritative for the identifier namespace of <code>act.sub</code>.  This step validates namespace authority only; it does not reinterpret <code>act.iss</code> as a credential-issuer claim or as proof that every upstream hop was independently authenticated.  This document does not define a single interoperable algorithm for making that determination.  Deployments <span class="bcp14">MAY</span> rely on federation metadata, pre-registration, bilateral agreements, deployment-specific policy, or another equivalent trust mechanism.  Cross-domain interoperability for <code>act.iss</code> validation is only well-defined when the participating parties share such a trust framework or explicit agreement.  If the AS cannot establish that <code>act.iss</code> is authoritative for the namespace containing <code>act.sub</code>, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>.  <a href="#act-iss-authority-guidance" class="auto internal xref">Section 11.3</a> provides non-normative examples of local validation approaches.<a href="#section-4.2-2.3.1" class="pilcrow">¶</a></p>
@@ -2649,7 +2650,7 @@ PreserveChain(inbound_chain):
             <p id="section-6.1-4.2.1"><strong>Presenter rebind</strong>: a validated <code>actor_token</code> establishes a new presenter for the issued token.  When the output token is sender-constrained, its top-level <code>cnf</code> is bound to that new presenter.<a href="#section-6.1-4.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-6.1-5">Interoperable presenter rebind under this profile is established only by a validated <code>actor_token</code>.  Other ways an implementation might authenticate or install a new presenter are deployment-specific and outside the interoperable core of this profile.<a href="#section-6.1-5" class="pilcrow">¶</a></p>
+<p id="section-6.1-5">This document defines presenter rebind only when a validated <code>actor_token</code> establishes the new presenter.  Other ways an implementation might authenticate or install a new presenter are deployment-specific and outside the scope of this document.<a href="#section-6.1-5" class="pilcrow">¶</a></p>
 <p id="section-6.1-6">When the inbound <code>subject_token</code> is bearer or identity-only, presenter continuation is unavailable, but presenter rebind remains available.  This bearer-to-PoP upgrade path lets a deployment exchange an existing bearer-style input for a sender-constrained output token without changing the actor semantics defined by this profile.<a href="#section-6.1-6" class="pilcrow">¶</a></p>
 <p id="section-6.1-7">A rebind-capable <code>actor_token</code> under this profile is a <strong>direct presenter credential</strong>: its own top-level subject identity names the new presenter, and the request proves possession according to that credential profile when sender-constrained output is being established.<a href="#section-6.1-7" class="pilcrow">¶</a></p>
 <p id="section-6.1-8">For legacy bearer-to-PoP migration, the recommended interoperable pattern is to present the existing bearer-style or identity-only credential as <code>subject_token</code>, present a direct presenter credential as <code>actor_token</code>, and issue a sender-constrained output token in presenter-rebind mode.  Deployments that need to preserve an inbound delegation chain while changing presenters <span class="bcp14">SHOULD</span> use the delegated credential as <code>subject_token</code> and a separate direct presenter credential as <code>actor_token</code>.<a href="#section-6.1-8" class="pilcrow">¶</a></p>
@@ -3452,7 +3453,7 @@ See <a href="#client-identity-delegation" class="auto internal xref">Section 12.
         <h3 id="name-presenter-authentication-an">
 <a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-presenter-authentication-an" class="section-name selfRef">Presenter Authentication and New Actor Establishment</a>
         </h3>
-<p id="section-7.3-1">When a delegated Transaction Token is issued in presenter-rebind mode, the new presenter becomes the new outermost actor for that token.  In the interoperable core of this profile, that presenter is established by a validated <code>actor_token</code> direct presenter credential, while the proof mechanism remains governed by <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> and the applicable deployment profile.  A bearer or identity-only inbound <code>subject_token</code> <span class="bcp14">MAY</span> therefore be upgraded to a sender-constrained Transaction Token when a validated <code>actor_token</code> establishes the new presenter.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<p id="section-7.3-1">When a delegated Transaction Token is issued in presenter-rebind mode, the new presenter becomes the new outermost actor for that token.  Under this document, that presenter is established by a validated <code>actor_token</code> direct presenter credential, while the proof mechanism remains governed by <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> and the applicable deployment profile.  A bearer or identity-only inbound <code>subject_token</code> <span class="bcp14">MAY</span> therefore be upgraded to a sender-constrained Transaction Token when a validated <code>actor_token</code> establishes the new presenter.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="transaction-token-service-processing">
@@ -3656,9 +3657,9 @@ Interoperable processing is defined around <code>sub</code> and the outermost <c
             <p id="section-9.1-2.2.1"><strong>Actor principal</strong> (<code>act.sub</code>): the party that is making the immediate request.  This principal may be in a different organizational domain and trust level from the subject.<a href="#section-9.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-9.1-3">Actor authorization at the resource server evaluates both principals and the relationship between them, that is, whether the outermost actor is authorized to act on behalf of the subject.  This specification describes subject-plus-actor evaluation as one approach for resource servers; it does not require every RS to implement or enforce actor authorization.<a href="#section-9.1-3" class="pilcrow">¶</a></p>
+<p id="section-9.1-3">Actor authorization at the resource server evaluates both principals and the relationship between them, that is, whether the outermost actor is authorized to act on behalf of the subject.  This document describes subject-plus-actor evaluation as one approach for resource servers; it does not require every RS to implement or enforce actor authorization.<a href="#section-9.1-3" class="pilcrow">¶</a></p>
 <p id="section-9.1-4">For Transaction Tokens, the primary policy pair remains (<code>sub</code>, <code>act.sub</code>).  The <code>req_wl</code> claim provides workload context from the TTS and is not a replacement for <code>act.sub</code>.  Nested <code>act</code> objects provide prior-actor context for audit or other deployment-specific processing; this document does not standardize their authorization use.<a href="#section-9.1-4" class="pilcrow">¶</a></p>
-<p id="section-9.1-5">This specification defines subject-plus-actor evaluation as the interoperable baseline.  Deployments <span class="bcp14">MAY</span> apply multi-principal authorization under local policy by considering one or more nested <code>act</code> objects as additional trust or risk inputs in addition to <code>sub</code> and the outermost <code>act.sub</code>, but this specification does not standardize such authorization behavior, and clients <span class="bcp14">MUST NOT</span> assume that nested actors will be used for authorization unless deployment-specific agreements say otherwise.<a href="#section-9.1-5" class="pilcrow">¶</a></p>
+<p id="section-9.1-5">This document defines subject-plus-actor evaluation as the interoperable baseline.  Deployments <span class="bcp14">MAY</span> apply multi-principal authorization under local policy by considering one or more nested <code>act</code> objects as additional trust or risk inputs in addition to <code>sub</code> and the outermost <code>act.sub</code>, but this document does not standardize such authorization behavior, and clients <span class="bcp14">MUST NOT</span> assume that nested actors will be used for authorization unless deployment-specific agreements say otherwise.<a href="#section-9.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="dual-principal-rs-processing">
