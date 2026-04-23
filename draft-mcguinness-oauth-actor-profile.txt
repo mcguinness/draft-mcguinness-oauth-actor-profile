@@ -37,10 +37,13 @@ Abstract
    resource servers.  It also defines how supporting Token Exchange
    inputs such as ID tokens, refresh tokens, JWT actor credentials, and
    the may_act claim are processed when introducing subject or actor
-   identity into that three-token actor-profile model.  The document
-   also registers metadata parameters for advertising actor-profile
-   support and partial capability signals in cross-domain deployments.
-   This document standardizes the token representation of delegation
+   identity into that three-token actor-profile model.  When this
+   profile is applied to the Identity Assertion JWT Authorization Grant
+   (ID-JAG), it supplies the actor-delegation extension semantics that
+   ID-JAG leaves to future profiles or extensions.  The document also
+   registers metadata parameters for advertising actor-profile support
+   and partial capability signals in cross-domain deployments.  This
+   document standardizes the token representation of delegation
    relationships and the processing rules for issuers and consumers; it
    does not standardize the upstream policies and mechanisms by which
    systems determine whether a given actor is authorized to act for a
@@ -316,9 +319,14 @@ Table of Contents
    The two are complementary and designed to be used together.
 
    *Identity Assertion JWT Authorization Grant
-   ([I-D.ietf-oauth-identity-assertion-authz-grant])*: An ID-JAG
-   carrying an act claim is processed per Section 4.2 of this document.
-   See Appendix B for an end-to-end example.
+   ([I-D.ietf-oauth-identity-assertion-authz-grant])*: ID-JAG defines
+   how an IdP issues a JWT authorization grant via Token Exchange and
+   how a downstream AS consumes it.  ID-JAG permits actor_token inputs
+   but leaves actor-delegation validation and resulting act claims to
+   future profiles or extensions.  This document defines one such
+   profile: when an implementation uses ID-JAG with actor-profile
+   claims, the Token Exchange and JWT assertion-grant processing rules
+   in this document apply.  See Appendix B for an end-to-end example.
 
    *OAuth Entity Profiles ([I-D.mora-oauth-entity-profiles])*: Defines
    sub_profile, client_profile, entity_profiles_supported, and the
@@ -1133,7 +1141,11 @@ AddOutermostActor(inbound_chain, new_actor):
    specification it was produced.  One such profile is the Identity
    Assertion JWT Authorization Grant (ID-JAG,
    [I-D.ietf-oauth-identity-assertion-authz-grant]), a JWT bearer grant
-   produced by Token Exchange.
+   produced by Token Exchange.  When the grant is an ID-JAG, this
+   document acts as an actor-delegation profile layered on the base ID-
+   JAG specification: ID-JAG defines the token-exchange and JWT-bearer
+   flow, while this document defines how actor_token-derived actor
+   identity and any resulting act claim are represented and processed.
 
    Such a JWT MAY include an act claim conforming to the actor profile
    defined in Section 3.  Use of this claim in JWT client authentication
@@ -1182,7 +1194,9 @@ AddOutermostActor(inbound_chain, new_actor):
    Clients SHOULD use JWT assertion grants carrying actor-profile claims
    only when the AS's support for the actor-determination model has been
    confirmed via deployment documentation, prior agreement, or
-   discovery.
+   discovery.  For ID-JAG specifically, that confirmation SHOULD include
+   whether the AS supports the actor-delegation extension model defined
+   by this document.
 
    The following example shows an AS-issued assertion grant, which is
    the recommended pattern.  The Enterprise IdP AS performed Token
@@ -4342,9 +4356,9 @@ AddOutermostActor(inbound_chain, new_actor):
 
    [I-D.ietf-oauth-identity-assertion-authz-grant]
               Parecki, A., McGuinness, K., and B. Campbell, "Identity
-              Assertion JWT Authorization Grant", 2 March 2026,
+              Assertion JWT Authorization Grant", 22 April 2026,
               <https://www.ietf.org/archive/id/draft-ietf-oauth-
-              identity-assertion-authz-grant-02.txt>.
+              identity-assertion-authz-grant-03.txt>.
 
    [I-D.ietf-oauth-security-topics]
               Lodderstedt, T., Bradley, J., Labunets, A., and D. Fett,
@@ -4594,10 +4608,13 @@ B.4.  Step 2: Enterprise Token Exchange (ID Token to ID-JAG)
    The agent presents Alice's ID Token to the Enterprise IdP AS using
    Token Exchange.  In this example, the same JWT is used both as the
    RFC 7523 client_assertion and as the Token Exchange actor_token,
-   making the authenticated client's actor identity explicit.  The
-   Enterprise IdP AS authenticates the client as
-   https://agents.enterprise.example/travel-assistant, verifies that the
-   ID Token audience matches that client, and uses local delegation
+   making the authenticated client's actor identity explicit.  This uses
+   the actor-delegation extension model anticipated by ID-JAG: the base
+   ID-JAG specification defines the token-exchange transaction, while
+   this document supplies the actor_token validation and act-
+   construction rules.  The Enterprise IdP AS authenticates the client
+   as https://agents.enterprise.example/travel-assistant, verifies that
+   the ID Token audience matches that client, and uses local delegation
    policy plus that explicit actor credential to construct the actor-
    profile claims in the issued ID-JAG:
 
