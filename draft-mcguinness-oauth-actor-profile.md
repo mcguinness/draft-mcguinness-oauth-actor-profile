@@ -193,7 +193,7 @@ This profile specifies an extended form of the `act` claim defined in {{RFC8693}
 
 ## Profile Invariants
 
-The following invariants define the interoperable core of this profile:
+This document defines the following invariants:
 
 *  `sub` is the authorizing principal.
 *  The outermost `act.sub` is the immediate actor for the current token presentation.
@@ -232,7 +232,7 @@ For worked examples showing the actor profile in use in both same-domain service
 
 ## Companion Profiles and Extension Points {#companion-profile-extensibility}
 
-This profile intentionally standardizes the interoperable core for current-token delegated identity while leaving room for companion profiles to define supplementary behavior such as provenance, transparency, or deployment-specific audit material.
+This document defines current-token delegated identity while leaving room for companion profiles to define supplementary behavior such as provenance, transparency, or deployment-specific audit material.
 
 A companion profile layered on top of this one:
 
@@ -416,7 +416,7 @@ When sender-constrained tokens are used with a delegated token, the top-level `c
 For Token Exchange, this profile uses exactly two presenter-transition modes:
 
 *  **Presenter continuation**: the issued token keeps the presenter of the inbound `subject_token`.  This mode is interoperable only when the inbound `subject_token` is PoP-capable and carries top-level `cnf`.
-*  **Presenter rebind**: the issued token installs a new presenter.  In the interoperable core of this profile, presenter rebind is established only by a validated `actor_token` that directly identifies the new presenter.
+*  **Presenter rebind**: the issued token installs a new presenter.  This document defines presenter rebind only when a validated `actor_token` directly identifies the new presenter.
 
 An inbound `subject_token` participates in presenter continuation only when it carries top-level `cnf`.  ID tokens and refresh tokens are identity inputs only; they do not carry interoperable presenter-continuity state under this profile.  A bearer `subject_token` or identity-only `subject_token` can still be exchanged for a sender-constrained output token in presenter-rebind mode when a validated `actor_token` establishes the new presenter.  This bearer-to-PoP upgrade path is a primary migration path enabled by this profile.
 
@@ -441,11 +441,11 @@ The top-level `cnf` claim of any token identifies the key or certificate of the 
 When Token Exchange runs in presenter-continuation mode, the `subject_token` itself supplies the current presenter's binding state.  This mode applies only to PoP-capable `subject_token` inputs that carry top-level `cnf`.
 
 *  If the `subject_token` carries top-level `cnf`, the requester MUST prove possession for that binding using the mechanism applicable to the `subject_token` type and deployment.
-*  If the `subject_token` does not carry top-level `cnf`, presenter continuation is not available under the interoperable core of this profile.
+*  If the `subject_token` does not carry top-level `cnf`, this document does not define presenter continuation for that request.
 
 ### Token Exchange Rebind
 
-When Token Exchange runs in presenter-rebind mode, the request establishes a new presenter for the issued token.  In the interoperable core of this profile, the new presenter MUST be established by a validated `actor_token` that directly identifies that presenter using its own top-level subject identity.
+When Token Exchange runs in presenter-rebind mode, the request establishes a new presenter for the issued token.  This document defines that presenter as established only by a validated `actor_token` that directly identifies it using its own top-level subject identity.
 
 *  The issuer MUST validate the `actor_token` and any accompanying proof required by that credential profile or deployment.
 *  The issuer MUST validate proof for the newly established presenter rather than requiring proof of possession for any prior `subject_token` binding solely because the inbound `subject_token` was sender-constrained.
@@ -498,7 +498,7 @@ This chapter defines the actor-profile structure and authorization-grant process
 
 Actor-profile requirements apply to any JWT used as an authorization grant under {{RFC7521}} and {{RFC7523}}, independent of how or by which specification it was produced.  One such profile is the Identity Assertion JWT Authorization Grant (ID-JAG, {{I-D.ietf-oauth-identity-assertion-authz-grant}}), a JWT bearer grant produced by Token Exchange.  When the grant is an ID-JAG, this document acts as an actor-delegation profile layered on the base ID-JAG specification: ID-JAG defines the token-exchange and JWT-bearer flow, while this document defines how `actor_token`-derived actor identity and any resulting `act` claim are represented and processed.
 
-Such a JWT MAY include an `act` claim conforming to the actor profile defined in {{actor-profile}}.  Use of this claim in JWT client authentication assertions is out of scope for this document because such assertions have different issuer and subject semantics.  However, implementers should note that some deployments rely on the authenticated OAuth client itself as implicit evidence of the acting party.  This specification does not prohibit that input, but when delegation is to be expressed explicitly and propagated across token transformations, the acting party is represented by `act` rather than inferred solely from client authentication.
+Such a JWT MAY include an `act` claim conforming to the actor profile defined in {{actor-profile}}.  Use of this claim in JWT client authentication assertions is out of scope for this document because such assertions have different issuer and subject semantics.  However, implementers should note that some deployments rely on the authenticated OAuth client itself as implicit evidence of the acting party.  This document does not prohibit that input, but when delegation is to be expressed explicitly and propagated across token transformations, the acting party is represented by `act` rather than inferred solely from client authentication.
 
 The following claims are defined for a JWT assertion grant that carries actor-profile delegation.  Claims not listed here follow the requirements of {{RFC7521}} and {{RFC7523}}.
 
@@ -543,19 +543,20 @@ The following example shows an AS-issued assertion grant, which is the recommend
 
 The top-level `sub_profile` classifies the JWT's `sub`; `sub_profile` within `act` classifies the actor.  The top-level `cnf.jkt` binds the assertion to the agent's DPoP key.
 
-The AS-issued grant is the more trustworthy pattern because the issuing AS independently authenticated the agent and validated the delegation relationship before signing.  The receiving AS needs to trust only the enterprise AS as an issuer.
+The AS-issued grant is the pattern defined by this document because the issuing AS independently authenticated the agent and validated the delegation relationship before signing.  The receiving AS needs to trust only the enterprise AS as an issuer.
 
 For AS-issued grants, the issuing AS MUST set `act.iss` to the namespace it is authoritative for, typically its own issuer URI.
 
-Allowed issuer patterns are:
+This document defines the following issuer patterns:
 
 *  an AS-issued delegated assertion where JWT `iss` is a trusted AS and `act.sub` identifies the actor (recommended),
-*  an assertion carrying a pre-existing nested `act` chain where the current JWT `iss` is trusted to carry forward prior actor assertions, and
-*  a self-issued actor assertion (see {{self-issued-grants}} below).
+*  an assertion carrying a pre-existing nested `act` chain where the current JWT `iss` is a trusted AS carrying forward prior actor assertions.
 
-### Self-Issued Grants {#self-issued-grants}
+A deployment MAY additionally accept a self-issued actor assertion as described in {{self-issued-grants}}, but that behavior is outside the scope of this document.
 
-In a self-issued assertion grant, the agent itself is `iss` and directly asserts Alice's delegation to itself in `act.sub`.  No upstream AS has authenticated the agent or pre-validated the delegation relationship.
+### Deployment-Specific Self-Issued Grants {#self-issued-grants}
+
+Self-issued assertion grants are deployment-specific and are outside the scope of this document.  In a self-issued assertion grant, the agent itself is `iss` and directly asserts Alice's delegation to itself in `act.sub`.  No upstream AS has authenticated the agent or pre-validated the delegation relationship.
 
 ~~~json
 {
@@ -576,15 +577,16 @@ In a self-issued assertion grant, the agent itself is `iss` and directly asserts
 
 Here `act.iss` names the enterprise AS as the namespace authority for the agent's identifier, which is registered in that AS's namespace rather than the agent's own identifier space.  The client MUST set `act.iss` to the issuer namespace authoritative for its own identifier, typically the AS governing the namespace in which `act.sub` is registered; the client MUST NOT set `act.iss` to its own identifier unless it is itself the authoritative namespace owner.
 
-ASes MUST NOT accept self-issued assertion grants unless explicitly configured via local policy to do so; self-issued grant acceptance MUST be off by default.  When an AS does accept self-issued grants, it MUST at minimum:
+By default, an implementation conforming to this document MUST reject self-issued assertion grants.  A deployment MAY accept them only when explicitly enabled by local policy or another specification; self-issued grant acceptance MUST be off by default, and this document defines no discovery or negotiation mechanism for it.  When an AS does accept self-issued grants under such an extension, it MUST at minimum:
 
 *  Validate the JWT signature using the key identified in the JWT header, obtained from a trusted source (e.g., a pre-registered public key for the self-issuing party).
 *  Verify the `exp`, `iat`, and `nbf` claims per {{RFC7519}}.
 *  Reject assertions whose `jti` has already been accepted within the assertion's validity window to prevent replay.
 *  Verify proof of possession per the token-endpoint mechanism in use (DPoP per {{RFC9449}} or mTLS per {{RFC8705}}).
-*  Apply the actor-profile validation requirements of this specification (steps 2–7 of {{jwt-assertion-grants-processing}}).
+*  Apply the actor-profile validation requirements of this document (steps 2–7 of {{jwt-assertion-grants-processing}}).
+*  Establish the delegation relationship from an independent local authorization basis such as a pre-registered grant, explicit consent record, or equivalent deployment-specific authorization artifact.
 
-The AS SHOULD NOT treat the self-asserted delegation claim alone as a sufficient basis under step 4 of {{jwt-assertion-grants-processing}}; an independent delegation basis such as a pre-registered grant or consent record is RECOMMENDED.  Any additional verification of the claimed `sub` is a deployment-specific subject-identity matter outside the scope of this document.  This document does not define any additional self-issued-proof mechanism beyond those listed above.
+The AS MUST NOT treat the self-asserted delegation claim alone as a sufficient basis under step 4 of {{jwt-assertion-grants-processing}}.  Any additional verification of the claimed `sub` is a deployment-specific subject-identity matter outside the scope of this document.  This document does not define any additional self-issued-proof mechanism, interoperability guarantee, or portable negotiation mechanism beyond the local-extension requirements listed above.
 
 
 ## Authorization Grant Processing {#jwt-assertion-grants-processing}
@@ -593,7 +595,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 1.  The AS MUST validate the assertion per {{RFC7523}}.
 
-2.  The AS MUST determine that the assertion issuer is trusted to assert the relationship between the JWT `sub` and `act.sub`.  In the typical case the JWT `iss` is a trusted AS, and the AS MUST verify that this issuer is authorized under local policy to assert delegation on behalf of the actor identified by `act.sub`.  For self-issued grants, see {{self-issued-grants}}.
+2.  The AS MUST determine that the assertion issuer is trusted to assert the relationship between the JWT `sub` and `act.sub`.  Under this document, the JWT `iss` is a trusted AS, and the AS MUST verify that this issuer is authorized under local policy to assert delegation on behalf of the actor identified by `act.sub`.  A deployment MAY additionally define acceptance of self-issued grants per {{self-issued-grants}}, but that behavior is outside the scope of this document.
 
 3.  If `act.iss` is absent from the inbound `act` object, the AS MUST reject the request with `invalid_request`; an absent `act.iss` is a structural violation, not a validation failure.  Otherwise, the AS MUST establish, under a trusted framework or local policy, that `act.iss` is authoritative for the identifier namespace of `act.sub`.  This step validates namespace authority only; it does not reinterpret `act.iss` as a credential-issuer claim or as proof that every upstream hop was independently authenticated.  This document does not define a single interoperable algorithm for making that determination.  Deployments MAY rely on federation metadata, pre-registration, bilateral agreements, deployment-specific policy, or another equivalent trust mechanism.  Cross-domain interoperability for `act.iss` validation is only well-defined when the participating parties share such a trust framework or explicit agreement.  If the AS cannot establish that `act.iss` is authoritative for the namespace containing `act.sub`, the AS MUST reject the request with `invalid_grant`.  {{act-iss-authority-guidance}} provides non-normative examples of local validation approaches.
 
@@ -715,7 +717,7 @@ Token Exchange under this profile runs in exactly one of two presenter-transitio
 *  **Presenter continuation**: no validated `actor_token` establishing a new presenter is supplied.  The issued token keeps the presenter of a PoP-capable token-state `subject_token`.
 *  **Presenter rebind**: a validated `actor_token` establishes a new presenter for the issued token.  When the output token is sender-constrained, its top-level `cnf` is bound to that new presenter.
 
-Interoperable presenter rebind under this profile is established only by a validated `actor_token`.  Other ways an implementation might authenticate or install a new presenter are deployment-specific and outside the interoperable core of this profile.
+This document defines presenter rebind only when a validated `actor_token` establishes the new presenter.  Other ways an implementation might authenticate or install a new presenter are deployment-specific and outside the scope of this document.
 
 When the inbound `subject_token` is bearer or identity-only, presenter continuation is unavailable, but presenter rebind remains available.  This bearer-to-PoP upgrade path lets a deployment exchange an existing bearer-style input for a sender-constrained output token without changing the actor semantics defined by this profile.
 
@@ -1118,7 +1120,7 @@ When the TTS receives a Transaction Token as `subject_token`, it MUST apply {{tx
 
 ## Presenter Authentication and New Actor Establishment
 
-When a delegated Transaction Token is issued in presenter-rebind mode, the new presenter becomes the new outermost actor for that token.  In the interoperable core of this profile, that presenter is established by a validated `actor_token` direct presenter credential, while the proof mechanism remains governed by {{I-D.ietf-oauth-transaction-tokens}} and the applicable deployment profile.  A bearer or identity-only inbound `subject_token` MAY therefore be upgraded to a sender-constrained Transaction Token when a validated `actor_token` establishes the new presenter.
+When a delegated Transaction Token is issued in presenter-rebind mode, the new presenter becomes the new outermost actor for that token.  Under this document, that presenter is established by a validated `actor_token` direct presenter credential, while the proof mechanism remains governed by {{I-D.ietf-oauth-transaction-tokens}} and the applicable deployment profile.  A bearer or identity-only inbound `subject_token` MAY therefore be upgraded to a sender-constrained Transaction Token when a validated `actor_token` establishes the new presenter.
 
 ## Transaction Token Output Rules {#transaction-token-service-processing}
 
@@ -1235,11 +1237,11 @@ When a token contains both `sub` and an `act` claim, a resource server has two i
 
 *  **Actor principal** (`act.sub`): the party that is making the immediate request.  This principal may be in a different organizational domain and trust level from the subject.
 
-Actor authorization at the resource server evaluates both principals and the relationship between them, that is, whether the outermost actor is authorized to act on behalf of the subject.  This specification describes subject-plus-actor evaluation as one approach for resource servers; it does not require every RS to implement or enforce actor authorization.
+Actor authorization at the resource server evaluates both principals and the relationship between them, that is, whether the outermost actor is authorized to act on behalf of the subject.  This document describes subject-plus-actor evaluation as one approach for resource servers; it does not require every RS to implement or enforce actor authorization.
 
 For Transaction Tokens, the primary policy pair remains (`sub`, `act.sub`).  The `req_wl` claim provides workload context from the TTS and is not a replacement for `act.sub`.  Nested `act` objects provide prior-actor context for audit or other deployment-specific processing; this document does not standardize their authorization use.
 
-This specification defines subject-plus-actor evaluation as the interoperable baseline.  Deployments MAY apply multi-principal authorization under local policy by considering one or more nested `act` objects as additional trust or risk inputs in addition to `sub` and the outermost `act.sub`, but this specification does not standardize such authorization behavior, and clients MUST NOT assume that nested actors will be used for authorization unless deployment-specific agreements say otherwise.
+This document defines subject-plus-actor evaluation as the interoperable baseline.  Deployments MAY apply multi-principal authorization under local policy by considering one or more nested `act` objects as additional trust or risk inputs in addition to `sub` and the outermost `act.sub`, but this document does not standardize such authorization behavior, and clients MUST NOT assume that nested actors will be used for authorization unless deployment-specific agreements say otherwise.
 
 ## Subject-Plus-Actor Evaluation {#dual-principal-rs-processing}
 
