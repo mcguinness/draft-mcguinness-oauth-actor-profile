@@ -387,7 +387,7 @@ The following normative algorithm governs how an AS validates an inbound actor c
 
 **V3 — Optional local validation of inner actors.**  Interoperable processing under this profile is defined around `sub` and the outermost `act.sub`.  If local policy additionally uses an inner `act` object as an input to issuance decisions, the AS SHOULD apply the same three sub-steps as V2 for that entry, including delegation-confirmation only when the current processing path or local policy requires it for that entry.  Such use of inner actors is deployment-specific.
 
-**V4 — Carry prior-actor context.** {#v4-chain-trust}  For inner `act` objects preserved solely as prior-actor context without being used for any issuance decision, the AS MAY rely on trust in the outer token issuer established in V1 rather than independently validating each hop.  The AS MUST NOT treat preserved prior-actor context as independently authenticated; an inner `act` entry carried in a token is endorsed only by the outer token issuer's signature, not by independent verification at each prior hop.
+**V4 — Carry prior-actor context.**  For inner `act` objects preserved solely as prior-actor context without being used for any issuance decision, the AS MAY rely on trust in the outer token issuer established in V1 rather than independently validating each hop.  The AS MUST NOT treat preserved prior-actor context as independently authenticated; an inner `act` entry carried in a token is endorsed only by the outer token issuer's signature, not by independent verification at each prior hop.
 
 **V5 — Enforce depth limit.**  Compute the depth of the resulting chain, including any new outermost actor added per C1.  If that depth exceeds the locally configured maximum ({{delegation-chains}}), reject with `invalid_request`.
 
@@ -1302,7 +1302,7 @@ When the resource server evaluates a JWT access token as a delegated token under
 
 6.  Optionally traverse inner `act` objects to audit the full delegation chain; inner actors are prior-actor context and MUST NOT be required to present proof of possession at the resource server.
 
-7.  If the resource server relies on inner `act` objects for audit, policy refinement, or trust decisions, it MUST do so only after validating the outer token issuer and only when local policy trusts that issuer to carry forward the asserted delegation chain.  Inner `act` objects are prior-actor context per V4 ({{v4-chain-trust}}): the RS MUST NOT treat them as independently authenticated.  Under this profile, interoperable authorization behavior is defined around `sub` and the outermost `act.sub`; use of nested actors for access control is deployment-specific.
+7.  If the resource server relies on inner `act` objects for audit, policy refinement, or trust decisions, it MUST do so only after validating the outer token issuer and only when local policy trusts that issuer to carry forward the asserted delegation chain.  Inner `act` objects are prior-actor context per V4 of {{actor-chain-algorithm}}: the RS MUST NOT treat them as independently authenticated.  Under this profile, interoperable authorization behavior is defined around `sub` and the outermost `act.sub`; use of nested actors for access control is deployment-specific.
 
 8.  If any of the above steps fail, return an appropriate error response per {{RFC6750, Section 3.1}}:
 
@@ -1325,7 +1325,7 @@ When the resource server evaluates a Transaction Token as a delegated token unde
 
 4.  Apply actor authorization per {{dual-principal-rs-processing}} when required by local policy.  Resource servers that do not require actor authorization SHOULD still evaluate the actor as part of authorization, audit, or trust decisions.
 
-5.  Optionally traverse inner `act` objects to audit the full delegation chain.  If the RS relies on inner `act` objects for audit, policy refinement, or trust decisions, it MUST do so only after validating the outer token issuer and only when local policy trusts that issuer to carry forward the asserted delegation chain.  Inner `act` objects are prior-actor context per V4 ({{v4-chain-trust}}): the RS MUST NOT treat them as independently authenticated.
+5.  Optionally traverse inner `act` objects to audit the full delegation chain.  If the RS relies on inner `act` objects for audit, policy refinement, or trust decisions, it MUST do so only after validating the outer token issuer and only when local policy trusts that issuer to carry forward the asserted delegation chain.  Inner `act` objects are prior-actor context per V4 of {{actor-chain-algorithm}}: the RS MUST NOT treat them as independently authenticated.
 
 6.  If any of the above steps fail, the RS MUST reject the request according to the Transaction Token mechanism in use and local deployment profile.  Validation or presenter-proof failures are token-validation failures; actor-policy failures required by local policy are authorization failures.  The RS MUST NOT include actor-specific rejection details in error responses exposed outside the trust domain.
 
