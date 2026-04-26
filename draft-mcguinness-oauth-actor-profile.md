@@ -614,13 +614,33 @@ The AS MUST NOT treat the self-asserted delegation claim alone as a sufficient b
 
 When an AS receives a JWT assertion grant containing an `act` claim:
 
-1.  The AS MUST validate the assertion per {{RFC7523}}.  When the assertion is not sender-constrained (that is, neither a DPoP proof per {{RFC9449}} nor an mTLS client certificate per {{RFC8705}} is required at the token endpoint for this request), the AS MUST reject any assertion whose `jti` has already been accepted within the assertion's validity window; maintaining a `jti` replay cache for this purpose is not optional for non-sender-constrained grants.  When the assertion is sender-constrained, the AS SHOULD additionally apply `jti` replay prevention as defense-in-depth, consistent with {{RFC7523}}.
+1.  The AS MUST validate the assertion per {{RFC7523}}, including signature, `iss`, `sub`, `aud`, `exp`, and `jti`.
 
-2.  The AS MUST determine that the assertion issuer is trusted to assert the relationship between the JWT `sub` and `act.sub`.  Under this document, the JWT `iss` is a trusted AS, and the AS MUST verify that this issuer is authorized under local policy to assert delegation on behalf of the actor identified by `act.sub`.  A deployment MAY additionally define acceptance of self-issued grants per {{self-issued-grants}}, but that behavior is outside the scope of this document.
+    *  **Non-sender-constrained grants**: When neither a DPoP proof ({{RFC9449}}) nor an mTLS client certificate ({{RFC8705}}) is required at the token endpoint, the AS MUST reject any assertion whose `jti` has already been accepted within the assertion's validity window.
+    *  **Sender-constrained grants**: The AS SHOULD additionally apply `jti` replay prevention as defense-in-depth, consistent with {{RFC7523}}.
 
-3.  If `act.iss` is absent from the inbound `act` object, the AS MUST reject the request with `invalid_request`; an absent `act.iss` is a structural violation, not a validation failure.  Otherwise, the AS MUST establish, under a trusted framework or local policy, that `act.iss` is authoritative for the identifier namespace of `act.sub`.  This step validates namespace authority only; it does not reinterpret `act.iss` as a credential-issuer claim or as proof that every upstream hop was independently authenticated.  This document does not define a single interoperable algorithm for making that determination.  Deployments MAY rely on federation metadata, pre-registration, bilateral agreements, deployment-specific policy, or another equivalent trust mechanism.  Cross-domain interoperability for `act.iss` validation is only well-defined when the participating parties share such a trust framework or explicit agreement.  If the AS cannot establish that `act.iss` is authoritative for the namespace containing `act.sub`, the AS MUST reject the request with `invalid_grant`.  {{act-iss-authority-guidance}} provides non-normative examples of local validation approaches.
+2.  The AS MUST verify that the JWT `iss` is trusted under local policy to assert delegation on behalf of the actor identified by `act.sub`.
 
-4.  When the request introduces a new outermost actor via C1 ({{actor-chain-algorithm}}), meaning the request supplies an `actor_token` or self-issued assertion that identifies a new `act.sub` not carried by the inbound chain, the AS MUST evaluate whether that actor is authorized to exercise delegation on behalf of `sub`, using the AS's local policy (for example, a pre-registered delegation grant, an explicit consent record, or a policy rule covering the acting party).  When the request instead preserves an existing chain from a validated, trusted upstream issuer via C2 ({{actor-chain-algorithm}}), the issuer trust established in step 2 provides the baseline delegation assurance; the AS SHOULD additionally evaluate the preserved delegation relationship under local policy when local policy requires it, but this additional evaluation is not required for baseline interoperability.  In either case, when AS policy explicitly prohibits the identified actor from acting on behalf of the subject, the AS MUST return `access_denied`.  When the required delegation relationship is absent or cannot be confirmed from the current inputs and local policy, the AS MUST return `actor_unauthorized`.  The form of delegation authorization is not standardized by this profile.
+    > Note: Under this document the JWT `iss` is expected to be a trusted AS.  Self-issued grants — where the acting entity is also the token issuer — are a deployment-specific extension outside the scope of this document; see {{self-issued-grants}}.
+
+3.  The AS MUST establish that `act.iss` is authoritative for the identifier namespace of `act.sub` under a trusted framework or local policy.
+
+    *  If `act.iss` is absent: reject with `invalid_request` (structural violation).
+    *  If `act.iss` cannot be established as authoritative for `act.sub`'s namespace: reject with `invalid_grant`.
+
+    > Note: This step validates namespace authority only — it does not interpret `act.iss` as the credential issuer or as proof that each upstream hop was independently authenticated.  No single interoperable algorithm is defined; deployments MAY rely on federation metadata, pre-registration, bilateral agreements, or equivalent trust mechanisms.  Cross-domain interoperability is only well-defined when participating parties share such a framework.  See {{act-iss-authority-guidance}} for non-normative examples.
+
+4.  The AS MUST evaluate whether the identified actor is authorized to exercise delegation on behalf of `sub`.  The required strength of that evaluation depends on how the outermost actor was introduced:
+
+    *  **New actor (C1 path)**: When the request supplies an `actor_token` or self-issued assertion that introduces a new `act.sub` not carried by the inbound chain, the AS MUST confirm the delegation relationship under local policy (for example, a pre-registered grant, explicit consent record, or policy rule).
+    *  **Preserved chain (C2 path)**: When the request preserves an existing chain from a validated, trusted upstream issuer, the issuer trust established in step 2 provides the baseline assurance; the AS SHOULD additionally evaluate under local policy but is not required to do so for baseline interoperability.
+
+    In either case:
+
+    *  If AS policy explicitly prohibits the actor: reject with `access_denied`.
+    *  If the delegation relationship cannot be confirmed: reject with `actor_unauthorized`.
+
+    > Note: The form of delegation authorization is not standardized by this profile.
 
 5.  If the inbound assertion's `act` object contains a nested `act` claim (indicating that the asserted actor is itself a delegatee), the AS MUST handle the inner chain as follows:
 
@@ -634,8 +654,18 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 6.  The AS MUST verify proof of possession according to the token-endpoint mechanism in use and the top-level `cnf` semantics in {{delegated-pop-validation}}.
 
-    *  **DPoP**: When the inbound assertion grant is DPoP-bound, it MUST carry a top-level `cnf.jkt`.  The AS MUST reject with `invalid_request` if `cnf.jkt` is absent.  To validate the proof, the AS MUST verify that the DPoP proof is a valid proof per {{RFC9449}} with `htm` equal to `"POST"` and `htu` equal to the AS token endpoint URI, and MUST verify that the `jkt` value in the DPoP proof exactly matches the `cnf.jkt` value in the assertion.  The key source is the assertion's `cnf.jkt` as set by the upstream issuer; the AS MUST NOT substitute a locally registered key.  If the DPoP proof is absent or invalid, the AS MUST reject per {{RFC9449}} using `invalid_dpop_proof` or `invalid_grant` as applicable.  The `ath` claim is not applicable at the token endpoint and MUST NOT be required.  See also {{I-D.parecki-oauth-jwt-dpop-grant}} for related work on DPoP-bound JWT grants.
-    *  **mTLS**: When the inbound assertion grant is mTLS-bound, it MUST carry a top-level `cnf.x5t#S256`.  The AS MUST validate the client certificate presented at the token endpoint against that thumbprint rather than the presenter's locally registered certificate.  In cross-domain flows the `cnf.x5t#S256` was set by the upstream issuer; the AS SHOULD treat it as the expected thumbprint and MUST reject with `invalid_request` if `cnf.x5t#S256` is absent from an mTLS-bound assertion.  If the presented certificate does not match the `cnf.x5t#S256` value, the AS MUST reject the request per {{RFC8705}}.
+    *  **DPoP**: When the inbound assertion grant is DPoP-bound, it MUST carry a top-level `cnf.jkt`; reject with `invalid_request` if absent.  The AS MUST:
+       *  Verify the DPoP proof is valid per {{RFC9449}} with `htm="POST"` and `htu` equal to the AS token endpoint URI.
+       *  Verify the `jkt` in the DPoP proof exactly matches the `cnf.jkt` in the assertion.
+       *  Use the assertion's `cnf.jkt` as set by the upstream issuer; MUST NOT substitute a locally registered key.
+       *  Reject with `invalid_dpop_proof` or `invalid_grant` if the proof is absent or invalid.
+
+       > Note: The `ath` claim is not applicable at the token endpoint and MUST NOT be required.  See also {{I-D.parecki-oauth-jwt-dpop-grant}} for related work on DPoP-bound JWT grants.
+
+    *  **mTLS**: When the inbound assertion grant is mTLS-bound, it MUST carry a top-level `cnf.x5t#S256`; reject with `invalid_request` if absent.  The AS MUST:
+       *  Validate the client certificate presented at the token endpoint against `cnf.x5t#S256`.
+       *  Use the `cnf.x5t#S256` value set by the upstream issuer; MUST NOT substitute a locally registered certificate.
+       *  Reject per {{RFC8705}} if the presented certificate does not match.
     *  When this JWT assertion grant is later used as a `subject_token` in Token Exchange, presenter continuation and presenter rebind are determined by {{token-exchange-presenter-model}} and {{delegated-pop-validation}}, not by nested `act` contents.
     > Note: The absence of confirmation members inside `act` does not affect the top-level binding obligation; current-presenter proof is always evaluated against the token's top-level confirmation information.
 
@@ -1163,18 +1193,27 @@ TTS processing follows the generic actor chain algorithm defined in {{actor-chai
 
 When a TTS receives a token-exchange request to issue or refresh a Transaction Token from an inbound JWT assertion grant, JWT access token, or Transaction Token that carries actor-profile claims, it MUST apply the following rules:
 
-1.  The TTS MUST preserve `sub` to refer to the same underlying subject as the inbound token.  The TTS MAY change `sub` only to re-express that same subject in a different identifier namespace under a trusted local mapping.  This document permits such re-expression when required by federation across trust-domain boundaries, but it does not define an interoperable mechanism for proving or conveying subject equivalence across namespaces.  A translated `sub` therefore identifies the subject only within the trust context of the issued token and MUST NOT, by itself, be treated as portable proof that the original and translated identifiers are equivalent outside that context.  The TTS MUST NOT replace `sub` with an identifier for a different subject.
+1.  The TTS MUST preserve `sub` from the inbound token to refer to the same underlying subject.
+
+    *  The TTS MAY re-express `sub` in a different identifier namespace only when a trusted local mapping establishes that both identifiers refer to the same underlying subject (for example, when crossing trust-domain boundaries in a federation scenario).
+    *  The TTS MUST NOT replace `sub` with an identifier for a different subject.
+
+    > Note: This document does not define an interoperable mechanism for proving or conveying subject equivalence across namespaces.  A translated `sub` identifies the subject only within the trust context of the issued token and MUST NOT be treated as portable proof of equivalence outside that context.
 
 2.  The `req_wl` field and any Transaction Token fields other than actor-profile claims remain governed by {{I-D.ietf-oauth-transaction-tokens}} and local policy.  Under this profile, `req_wl` is supporting workload context and MUST NOT be treated as a substitute for the outermost `act.sub`.
 
 3.  The TTS MUST compute the depth of the resulting `act` chain after applying step 6.  If that resulting chain would exceed the limit in {{delegation-chains}}, the TTS MUST reject the request with `invalid_request`.
 
-4.  Before preserving or extending any inbound `act` chain, the TTS MUST validate the inbound token and trust the issuer that conveyed the chain.  For the outermost inbound `act` object, which always represents the outermost actor the TTS is acting upon, the TTS MUST:
+4.  The TTS MUST validate the inbound token and establish issuer trust before preserving or extending any `act` chain.  For the outermost `act` object in the inbound chain, the TTS MUST:
 
-    *  verify that `act.iss` is authoritative for the identifier namespace of the corresponding `act.sub`, using local trust mechanisms equivalent in strength to those described in {{jwt-assertion-grants-processing}} step 3; and
-    *  evaluate the delegation relationship per {{jwt-assertion-grants-processing}} step 4, applying the same creation-vs-preservation distinction: MUST evaluate when the TTS is installing a new outermost actor via presenter rebind (C1); SHOULD evaluate under local policy when the TTS is preserving an existing chain from a trusted upstream issuer via presenter continuation (C2).
+    *  Verify that `act.iss` is authoritative for the namespace of `act.sub`, using local trust mechanisms equivalent to those in {{jwt-assertion-grants-processing}} step 3.
+    *  Evaluate the delegation relationship per {{jwt-assertion-grants-processing}} step 4, applying the same creation-vs-preservation distinction: MUST evaluate when installing a new outermost actor (C1/rebind); SHOULD evaluate under local policy when preserving an existing chain from a trusted upstream issuer (C2/continuation).
 
-    Interoperable processing is defined around `sub` and the outermost `act.sub`.  If local policy additionally uses inner `act` objects from the inbound chain to make access-control or scope decisions (beyond carrying them as audit history), the TTS SHOULD apply the same validation as for the outermost entry.  For inner `act` objects that the TTS preserves solely as prior-actor context (carried forward for audit purposes without driving any security decision), the TTS MAY rely on trust in the outer token issuer rather than independently validating each prior hop.  The TTS MUST NOT treat prior-context inner actors as independently authenticated merely because they appear in the re-issued token.  If local policy treats an inner actor as a security-relevant input but cannot validate it to the assurance level required by that policy, the TTS SHOULD reject the request with `invalid_grant`.
+    For inner `act` objects in the inbound chain:
+
+    *  **Security-relevant use**: If local policy uses an inner entry as an input to access control or scope decisions, the TTS SHOULD apply the same validation as for the outermost entry.  If the TTS cannot validate it to the required assurance level, it SHOULD reject with `invalid_grant`.
+    *  **Prior-actor context only**: If an inner entry is preserved solely for audit purposes without driving any security decision, the TTS MAY rely on trust in the outer token issuer rather than independently validating that entry.
+    *  The TTS MUST NOT treat any preserved inner actor as independently authenticated.
 
 5.  The TTS MUST determine whether the request is presenter continuation or presenter rebind:
 
