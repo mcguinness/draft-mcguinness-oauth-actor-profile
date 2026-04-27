@@ -94,26 +94,25 @@ Table of Contents
    3.  Actor Profile for Delegation
      3.1.  Overview
      3.2.  Profile Invariants
-     3.3.  What This Profile Does Not Standardize
-     3.4.  Conformance Scope
-       3.4.1.  Representation and Policy
-       3.4.2.  Token Format Scope
-       3.4.3.  Supported Token Types and Request Semantics
-     3.5.  Companion Profiles and Extension Points
-     3.6.  Actor Object Structure
-     3.7.  Delegation Chains
-     3.8.  Actor Chain Validation and Construction
-       3.8.1.  Terminology
-       3.8.2.  Validation Steps
-       3.8.3.  Construction Steps
-       3.8.4.  Agent-to-Agent Delegation
-     3.9.  Sender Constraint and Key Binding
-     3.10. Proof-of-Possession Validation in Delegated Requests
-       3.10.1.  Top-Level cnf Governs the Current Presenter
-       3.10.2.  Token Exchange Continuation
-       3.10.3.  Token Exchange Rebind
-       3.10.4.  Bearer-to-PoP Upgrade
-       3.10.5.  Mechanism-Specific Proof Examples
+     3.3.  Conformance Scope
+       3.3.1.  Representation and Policy
+       3.3.2.  Token Format Scope
+       3.3.3.  Supported Token Types and Request Semantics
+     3.4.  Companion Profiles and Extension Points
+     3.5.  Actor Object Structure
+     3.6.  Delegation Chains
+     3.7.  Actor Chain Validation and Construction
+       3.7.1.  Terminology
+       3.7.2.  Validation Steps
+       3.7.3.  Construction Steps
+       3.7.4.  Agent-to-Agent Delegation
+     3.8.  Sender Constraint and Key Binding
+     3.9.  Proof-of-Possession Validation in Delegated Requests
+       3.9.1.  Top-Level cnf Governs the Current Presenter
+       3.9.2.  Token Exchange Continuation
+       3.9.3.  Token Exchange Rebind
+       3.9.4.  Bearer-to-PoP Upgrade
+       3.9.5.  Mechanism-Specific Proof Examples
    4.  JWT Assertion Grants
      4.1.  Structure
      4.2.  Authorization Grant Processing
@@ -467,35 +466,9 @@ Table of Contents
       String equality of act.sub and sub alone is not a sufficient test;
       the issuer or namespace context must also be considered.
 
-3.3.  What This Profile Does Not Standardize
+3.3.  Conformance Scope
 
-   This profile does not standardize the following:
-
-   *  delegation approval, consent, or grant-management policy
-
-   *  subject-identifier translation mechanisms or proof of subject
-      equivalence across namespaces
-
-   *  authorization semantics for nested act objects
-
-   *  independently signed prior-hop provenance mechanisms, which MAY be
-      defined by companion profiles layered on top of this one
-
-   *  client discovery or preflight algorithms beyond the metadata
-      semantics defined here
-
-   *  cross-domain trust frameworks for proving actor identifier
-      authority beyond the token issuer's assertion of the (act.iss,
-      act.sub) pair
-
-   *  SAML 1.1 or SAML 2.0 assertions as Token Exchange subject_token
-      inputs; while [RFC8693] defines token type URNs for SAML
-      assertions, actor-profile extraction from XML-based SAML
-      credentials is outside the scope of this document
-
-3.4.  Conformance Scope
-
-3.4.1.  Representation and Policy
+3.3.1.  Representation and Policy
 
    The interoperability defined by this profile operates at the
    representation and propagation layer, not at the authorization policy
@@ -522,7 +495,7 @@ Table of Contents
    relationships and therefore carry a higher interoperability burden
    beyond what this profile alone provides.
 
-3.4.2.  Token Format Scope
+3.3.2.  Token Format Scope
 
    This profile defines actor-profile requirements for JWT assertion
    grants, JWT-formatted access tokens, and Transaction Tokens.  Opaque
@@ -539,7 +512,7 @@ Table of Contents
    processing behavior is not interoperable behavior defined by this
    document.
 
-3.4.3.  Supported Token Types and Request Semantics
+3.3.3.  Supported Token Types and Request Semantics
 
    The actor profile defines processing rules for the following token
    types as issued outputs: JWT assertion grants (Section 4), JWT-
@@ -579,7 +552,7 @@ Table of Contents
    domain service delegation and cross-domain delegation, see Appendix A
    and Appendix B.
 
-3.5.  Companion Profiles and Extension Points
+3.4.  Companion Profiles and Extension Points
 
    This document defines current-token delegated identity while leaving
    room for companion profiles to define supplementary behavior such as
@@ -617,7 +590,7 @@ Table of Contents
    the companion profile's own metadata, through out-of-band agreement,
    or through another explicit local-policy mechanism.
 
-3.6.  Actor Object Structure
+3.5.  Actor Object Structure
 
    An actor object conforming to this profile is a JSON object that is
    the value of the act claim.  In addition to the sub claim required by
@@ -697,7 +670,7 @@ Table of Contents
    Per-actor key provenance within the delegation chain is outside the
    scope of this profile.  The current presenter's keying material is
    conveyed only by the token's top-level cnf claim, as described in
-   Section 3.9.  Other members carried inside an act object, including
+   Section 3.8.  Other members carried inside an act object, including
    any confirmation-style members defined by another profile, do not
    have standardized proof-of-possession semantics under this document
    unless another specification explicitly defines them.
@@ -716,10 +689,10 @@ Table of Contents
    unrecognized extension members in inherited act objects under local
    policy.  However, companion profiles that need independently
    verifiable provenance, per-hop receipts, or other chain-wide state
-   SHOULD use the top-level extension pattern described in Section 3.5
+   SHOULD use the top-level extension pattern described in Section 3.4
    rather than relying on inherited act-object extension members.
 
-3.7.  Delegation Chains
+3.6.  Delegation Chains
 
    Delegation chains MUST be represented by nesting act objects as
    specified in [RFC8693], Section 4.1.  In a nested structure, the
@@ -812,14 +785,14 @@ Table of Contents
        Token-Exchange case).
 
    When a token represents delegation, the act claim MUST be present and
-   MUST conform to Section 3.6.  When none of the above conditions
+   MUST conform to Section 3.5.  When none of the above conditions
    holds, the token does not represent delegation and the act claim MUST
    be omitted.  The AS MUST NOT include act solely because sub and the
    OAuth client identifier differ; the distinction between sub and
    client_id is expected and does not by itself constitute delegation
    under this profile.
 
-3.8.  Actor Chain Validation and Construction
+3.7.  Actor Chain Validation and Construction
 
    The following normative algorithm governs how an AS validates an
    inbound actor chain and constructs the actor chain in the issued
@@ -837,7 +810,7 @@ Table of Contents
    new delegation-authorization requirements beyond those imposed by the
    invoking processing section and local policy.
 
-3.8.1.  Terminology
+3.7.1.  Terminology
 
    *  *Depth* of an actor chain: the number of nested act objects
       counted from the outermost.  A single act object with no nested
@@ -855,7 +828,7 @@ Table of Contents
       downstream authorization purposes without being used as a direct
       input to the current issuance decision.
 
-3.8.2.  Validation Steps
+3.7.2.  Validation Steps
 
    *V1 — Validate outer token.* The AS MUST validate the token carrying
    the inbound actor chain per the type-specific rules applicable to
@@ -879,7 +852,7 @@ Table of Contents
        assertion grant inputs is in Section 4.2 step 3.
 
    3.  When the applicable processing path introduces a new outermost
-       actor via C1 (Section 3.8), the AS MUST evaluate whether that
+       actor via C1 (Section 3.7), the AS MUST evaluate whether that
        actor (act.sub) is authorized to exercise delegation on behalf of
        sub under local policy (for example, a pre-registered delegation
        grant, explicit consent record, or policy rule covering the
@@ -911,10 +884,10 @@ Table of Contents
 
    *V5 — Enforce depth limit.* Compute the depth of the resulting chain,
    including any new outermost actor added per C1.  If that depth
-   exceeds the locally configured maximum (Section 3.7), reject with
+   exceeds the locally configured maximum (Section 3.6), reject with
    invalid_request.
 
-3.8.3.  Construction Steps
+3.7.3.  Construction Steps
 
    *C1 — Add new outermost actor (when a new actor is identified).*
 
@@ -957,7 +930,7 @@ AddOutermostActor(inbound_chain, new_actor):
    claim; if it cannot preserve or extend the chain, it MUST reject the
    request per Section 9.
 
-3.8.4.  Agent-to-Agent Delegation
+3.7.4.  Agent-to-Agent Delegation
 
    The following illustrates how C1 applies when one agent delegates to
    another.  When Agent A (the inbound outermost actor) triggers a
@@ -980,7 +953,7 @@ AddOutermostActor(inbound_chain, new_actor):
       MAY treat this as continuation and preserve the inbound chain
       unchanged rather than creating a redundant nested entry.
 
-3.9.  Sender Constraint and Key Binding
+3.8.  Sender Constraint and Key Binding
 
    When sender-constrained tokens are used with a delegated token, the
    top-level cnf claim identifies the key or certificate of the
@@ -1019,12 +992,12 @@ AddOutermostActor(inbound_chain, new_actor):
    This profile does not define per-actor confirmation members within
    nested act objects.  Stronger prior-hop key provenance, if needed,
    would require another profile layered on top of this one using the
-   companion-profile extension pattern in Section 3.5.
+   companion-profile extension pattern in Section 3.4.
 
    When mTLS ([RFC8705]) is used instead of DPoP, the top-level
    cnf.x5t#S256 identifies the current presenter's certificate.
 
-3.10.  Proof-of-Possession Validation in Delegated Requests
+3.9.  Proof-of-Possession Validation in Delegated Requests
 
    The following normative rules govern proof-of-possession (PoP)
    validation for all token types and credential exchanges defined in
@@ -1032,7 +1005,7 @@ AddOutermostActor(inbound_chain, new_actor):
    and MUST apply them in addition to any type-specific requirements
    stated there.
 
-3.10.1.  Top-Level cnf Governs the Current Presenter
+3.9.1.  Top-Level cnf Governs the Current Presenter
 
    The top-level cnf claim of any token identifies the key or
    certificate of the current presenter.  The AS or RS MUST validate
@@ -1041,7 +1014,7 @@ AddOutermostActor(inbound_chain, new_actor):
    do not have standardized proof-of-possession semantics under this
    document.
 
-3.10.2.  Token Exchange Continuation
+3.9.2.  Token Exchange Continuation
 
    When Token Exchange runs in presenter-continuation mode, the
    subject_token itself supplies the current presenter's binding state.
@@ -1055,7 +1028,7 @@ AddOutermostActor(inbound_chain, new_actor):
    *  If the subject_token does not carry top-level cnf, this document
       does not define presenter continuation for that request.
 
-3.10.3.  Token Exchange Rebind
+3.9.3.  Token Exchange Rebind
 
    When Token Exchange runs in presenter-rebind mode, the request
    establishes a new presenter for the issued token.  This document
@@ -1075,7 +1048,7 @@ AddOutermostActor(inbound_chain, new_actor):
       qualify as a direct presenter credential for interoperable
       presenter rebind under this profile.
 
-3.10.4.  Bearer-to-PoP Upgrade
+3.9.4.  Bearer-to-PoP Upgrade
 
    When the inbound subject_token is a bearer credential or an identity-
    only credential and the request supplies a validated actor_token
@@ -1083,7 +1056,7 @@ AddOutermostActor(inbound_chain, new_actor):
    constrained output token bound to that new presenter.  The absence of
    inbound top-level cnf creates no continuity obligation in this case.
 
-3.10.5.  Mechanism-Specific Proof Examples
+3.9.5.  Mechanism-Specific Proof Examples
 
    The rules above are mechanism-agnostic.  The following points
    illustrate how common proof mechanisms fit into those rules:
@@ -1318,7 +1291,7 @@ AddOutermostActor(inbound_chain, new_actor):
           propagate the inner chain into the issued token.  The AS
           SHOULD propagate it by preserving the nested structure,
           provided the total resulting chain depth does not exceed the
-          limit in Section 3.7.  If the AS does not accept pre-chained
+          limit in Section 3.6.  If the AS does not accept pre-chained
           assertions, it MUST reject the request.
 
        *  *Entries used by the AS for issuance decisions*: Interoperable
@@ -1348,7 +1321,7 @@ AddOutermostActor(inbound_chain, new_actor):
 
    6.  The AS MUST verify proof of possession according to the token-
        endpoint mechanism in use and the top-level cnf semantics in
-       Section 3.10.
+       Section 3.9.
 
        *  *DPoP*: When the inbound assertion grant is DPoP-bound, it
           MUST carry a top-level cnf.jkt; reject with invalid_request if
@@ -1386,7 +1359,7 @@ AddOutermostActor(inbound_chain, new_actor):
 
        *  When this JWT assertion grant is later used as a subject_token
           in Token Exchange, presenter continuation and presenter rebind
-          are determined by Section 6.1 and Section 3.10, not by nested
+          are determined by Section 6.1 and Section 3.9, not by nested
           act contents. > Note: The absence of confirmation members
           inside act does not affect the top-level binding obligation;
           current-presenter proof is always evaluated against the
@@ -1416,10 +1389,10 @@ AddOutermostActor(inbound_chain, new_actor):
        Section 6.5.2.  For Transaction Tokens, see Section 7.4.  When
        the output is another JWT assertion grant profile, the resulting
        assertion MUST preserve the validated actor information subject
-       to local policy and the chain-depth limit in Section 3.7.
+       to local policy and the chain-depth limit in Section 3.6.
 
    9.  When constructing a new outermost act object via C1
-       (Section 3.8), the AS MAY enrich that object with sub_profile
+       (Section 3.7), the AS MAY enrich that object with sub_profile
        based on its own knowledge of the actor's entity type.  The AS
        MAY also set or enrich the top-level sub_profile of the issued
        token based on its knowledge of sub.  The AS MUST NOT add,
@@ -1451,7 +1424,7 @@ AddOutermostActor(inbound_chain, new_actor):
       conform to the values defined in Section 3.
 
    act (REQUIRED when the token represents delegation per
-   Section 3.7):  The actor object identifying the entity exercising the
+   Section 3.6):  The actor object identifying the entity exercising the
       subject's delegated rights.  MUST conform to the actor object
       structure defined in Section 3.  MUST include act.sub and act.iss.
       When the token does not represent delegation, act MUST be omitted.
@@ -1510,7 +1483,7 @@ AddOutermostActor(inbound_chain, new_actor):
 5.2.  Delegated Token Issuance
 
    When an AS issues a JWT access token outside Token Exchange and the
-   token represents delegation per condition 3 of Section 3.7, it MUST
+   token represents delegation per condition 3 of Section 3.6, it MUST
    establish an independent delegation basis for the (sub, actor)
    relationship before including act.  Examples include a pre-registered
    delegation grant, an explicit consent record, or a policy rule
@@ -1679,7 +1652,10 @@ AddOutermostActor(inbound_chain, new_actor):
    defined in Section 6.1.  The class-level text defines the common
    actor-profile consequences.  The individual token sections then
    define only the validation and extraction rules specific to each
-   token type.
+   token type.  SAML 1.1 and SAML 2.0 assertions are not supported
+   subject_token inputs under this profile; while [RFC8693] defines
+   token type URNs for SAML assertions, actor-profile extraction from
+   XML-based SAML credentials is outside scope.
 
 6.2.1.  Token-State Subject Tokens
 
@@ -1696,7 +1672,7 @@ AddOutermostActor(inbound_chain, new_actor):
       Section 6.5.2 or Section 7.4;
 
    *  top-level cnf, if present, makes the input eligible for presenter
-      continuation under Section 3.10;
+      continuation under Section 3.9;
 
    *  if top-level cnf is absent, the token still MAY be used in
       presenter-rebind mode for bearer-to-PoP upgrade.
@@ -1711,7 +1687,7 @@ AddOutermostActor(inbound_chain, new_actor):
 
    A JWT assertion grant used as subject_token is a token-state input
    for Section 6.1.  If it carries top-level cnf, presenter continuation
-   requires proof for that binding per Section 3.10.  If it does not
+   requires proof for that binding per Section 3.9.  If it does not
    carry top-level cnf, it still MAY be used as a bearer subject token
    in presenter-rebind mode for bearer-to-PoP upgrade when a validated
    actor_token establishes the new presenter.
@@ -1743,7 +1719,7 @@ AddOutermostActor(inbound_chain, new_actor):
 
    3.  If the inbound token carries top-level cnf, it is a PoP-capable
        token-state input for Section 6.1, and the AS MUST apply the
-       continuation or rebind rules in Section 3.10.  If the inbound
+       continuation or rebind rules in Section 3.9.  If the inbound
        token carries no top-level cnf, it is a bearer subject_token for
        PoP purposes and MAY still be used in presenter-rebind mode for
        bearer-to-PoP upgrade.
@@ -1787,7 +1763,7 @@ AddOutermostActor(inbound_chain, new_actor):
    3.  If the inbound Transaction Token carries a top-level presenter-
        binding claim such as cnf, it is a PoP-capable token-state input
        for Section 6.1, and the AS MUST apply the continuation or rebind
-       rules in Section 3.10 using the proof mechanism defined by
+       rules in Section 3.9 using the proof mechanism defined by
        [I-D.ietf-oauth-transaction-tokens] and the applicable deployment
        profile.  If the inbound Transaction Token carries no top-level
        presenter binding, it MAY still be used in presenter-rebind mode
@@ -1990,7 +1966,7 @@ AddOutermostActor(inbound_chain, new_actor):
    This document defines limited use of may_act as a delegation-
    authorization input when actor identity is established by other
    means: when present in a validated subject_token, it MAY satisfy the
-   delegation-authorization check in V2 step 3 of Section 3.8 without a
+   delegation-authorization check in V2 step 3 of Section 3.7 without a
    separately pre-registered grant.  In no case is may_act itself the
    source of actor identity, and it MUST NOT be propagated into any
    output token.
@@ -2127,7 +2103,7 @@ AddOutermostActor(inbound_chain, new_actor):
    5.  When the request uses this client assertion to establish a
        sender-constrained output token in presenter-rebind mode, the AS
        MUST validate any proof required by the selected proof mechanism
-       for the new presenter per Section 3.10.
+       for the new presenter per Section 3.9.
 
    6.  When a subject_token is also present and carries an act chain:
        the actor_token's sub takes precedence as the new outermost actor
@@ -2144,7 +2120,7 @@ AddOutermostActor(inbound_chain, new_actor):
        automatically merged with the subject_token's chain; the AS MUST
        omit it from the issued token unless local policy defines a
        single unambiguous ordering, in which case the AS MAY preserve it
-       subject to the chain-depth limit in Section 3.7.
+       subject to the chain-depth limit in Section 3.6.
 
 6.4.2.  Workload Identity Credential
 
@@ -2232,7 +2208,7 @@ AddOutermostActor(inbound_chain, new_actor):
           automatically merged with the subject_token's chain; the AS
           MUST omit it from the issued token unless local policy defines
           a single unambiguous ordering, in which case the AS MAY
-          preserve it subject to the chain-depth limit in Section 3.7.
+          preserve it subject to the chain-depth limit in Section 3.6.
 
 6.4.3.  JWT Access Token
 
@@ -2294,7 +2270,7 @@ AddOutermostActor(inbound_chain, new_actor):
    5.  When the request uses this JWT access token to establish a
        sender-constrained output token in presenter-rebind mode and the
        token carries top-level cnf, the AS MUST validate proof for that
-       binding per Section 3.10.
+       binding per Section 3.9.
 
    6.  When a subject_token is also present and carries an act chain,
        the outermost actor identity derived from this actor_token takes
@@ -2381,7 +2357,7 @@ AddOutermostActor(inbound_chain, new_actor):
    the requested delegated output.
 
    1.  When the issued access token represents delegation per
-       Section 3.7, the AS MUST include an act claim that preserves or
+       Section 3.6, the AS MUST include an act claim that preserves or
        extends the inbound delegation chain per steps 3 and 4.  The AS
        MUST NOT silently drop actor information.  If the inbound
        credential carries no act, no validated actor_token is present,
@@ -2442,7 +2418,7 @@ AddOutermostActor(inbound_chain, new_actor):
 
    4.  If actor information that would be preserved or added to the
        issued token cannot be validated, or nesting would exceed the
-       chain-depth limit in Section 3.7, the AS MUST reject the request.
+       chain-depth limit in Section 3.6, the AS MUST reject the request.
        The AS MUST return invalid_request when the chain-depth limit
        would be exceeded and invalid_grant when actor information fails
        validation; these error codes apply equally to token exchange
@@ -2796,7 +2772,7 @@ AddOutermostActor(inbound_chain, new_actor):
 7.4.  Transaction Token Output Rules
 
    TTS processing follows the generic actor chain algorithm defined in
-   Section 3.8 and the output rules in Section 6.5.2.  The steps below
+   Section 3.7 and the output rules in Section 6.5.2.  The steps below
    apply those rules to the Transaction Token context and define the
    TTS-specific adaptations: req_wl handling, the TTS presenter-
    authentication model, Transaction Token claim set requirements, and
@@ -2835,7 +2811,7 @@ AddOutermostActor(inbound_chain, new_actor):
 
    3.  The TTS MUST compute the depth of the resulting act chain after
        applying step 6.  If that resulting chain would exceed the limit
-       in Section 3.7, the TTS MUST reject the request with
+       in Section 3.6, the TTS MUST reject the request with
        invalid_request.
 
    4.  The TTS MUST validate the inbound token and establish issuer
@@ -3112,7 +3088,7 @@ AddOutermostActor(inbound_chain, new_actor):
        validating the outer token issuer and only when local policy
        trusts that issuer to carry forward the asserted delegation
        chain.  Inner act objects are prior-actor context per V4 of
-       Section 3.8: the RS MUST NOT treat them as independently
+       Section 3.7: the RS MUST NOT treat them as independently
        authenticated.  Under this profile, interoperable authorization
        behavior is defined around sub and the outermost act.sub; use of
        nested actors for access control is deployment-specific.
@@ -3201,7 +3177,7 @@ AddOutermostActor(inbound_chain, new_actor):
        after validating the outer token issuer and only when local
        policy trusts that issuer to carry forward the asserted
        delegation chain.  Inner act objects are prior-actor context per
-       V4 of Section 3.8: the RS MUST NOT treat them as independently
+       V4 of Section 3.7: the RS MUST NOT treat them as independently
        authenticated.
 
    6.  If any of the above steps fail, the RS MUST reject the request
@@ -3266,7 +3242,7 @@ AddOutermostActor(inbound_chain, new_actor):
    representation of the complete delegation history.  A companion
    profile that defines additional introspection parameters aligned to
    the visible actor chain MUST define how those parameters behave when
-   the visible act chain is filtered, consistent with Section 3.5.
+   the visible act chain is filtered, consistent with Section 3.4.
 
    Opaque access tokens are not conformant to this profile as token
    formats.  When an AS chooses to support delegated opaque access
@@ -3283,7 +3259,7 @@ AddOutermostActor(inbound_chain, new_actor):
    *  sub: REQUIRED.  The subject of the delegated token, as defined in
       [RFC7662].
 
-   *  act: REQUIRED.  The actor object conforming to Section 3.6,
+   *  act: REQUIRED.  The actor object conforming to Section 3.5,
       including act.sub, act.iss, and any nested act chain, structured
       identically to the JWT form defined in this document.  When local
       privacy policy causes inner chain entries to be omitted,
@@ -3526,7 +3502,7 @@ AddOutermostActor(inbound_chain, new_actor):
    profiles can still be needed for details outside the parameters
    defined here.  Companion profiles MAY define additional metadata for
    supplementary features such as provenance, consistent with
-   Section 3.5.
+   Section 3.4.
 
    The design principle is that *authorization grant profile support
    uses authorization_grant_profiles_supported; Token Exchange role-
@@ -3839,7 +3815,7 @@ AddOutermostActor(inbound_chain, new_actor):
        is enabled.  Existing consumers that do not recognize act.iss
        will ignore it.
 
-   2.  Update consumers to validate act.iss per Section 3.6 once issuers
+   2.  Update consumers to validate act.iss per Section 3.5 once issuers
        have deployed step 1.
 
    3.  Once all token issuers and consumers on a given path have been
@@ -4203,13 +4179,13 @@ AddOutermostActor(inbound_chain, new_actor):
    log-based recording, or another future extension; they MUST NOT
    overload act.iss or redefine nested act semantics to carry that
    provenance.  Companion profiles that supply such mechanisms MUST
-   follow Section 3.5.
+   follow Section 3.4.
 
 12.4.  Delegation Depth Limits
 
    Unbounded delegation chains increase attack surface and complicate
    policy evaluation.  Depth support and interoperability requirements
-   are defined in Section 3.7.  Implementations that encounter chains
+   are defined in Section 3.6.  Implementations that encounter chains
    exceeding their configured local maximum MUST reject the token to
    prevent denial-of-service through chain parsing.
 
@@ -4472,7 +4448,7 @@ AddOutermostActor(inbound_chain, new_actor):
    where such checks are part of local policy, and the local policy
    applicable to the token they are issuing.  They MUST preserve
    unrecognized but syntactically valid values as required by
-   Section 3.6, and they MUST reject values that are malformed or
+   Section 3.5, and they MUST reject values that are malformed or
    disallowed by local policy.
 
 13.  Privacy Considerations
