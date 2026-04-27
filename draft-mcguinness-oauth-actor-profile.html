@@ -3387,7 +3387,7 @@ See <a href="#client-identity-delegation" class="auto internal xref">Section 12.
 </dd>
         <dd class="break"></dd>
 </dl>
-<p id="section-7.1-5">The following table summarizes the claims in a Transaction Token as profiled by this document.<a href="#section-7.1-5" class="pilcrow">¶</a></p>
+<p id="section-7.1-5">The following table summarizes the claims in a Transaction Token as profiled by this document.  <span class="bcp14">REQUIRED</span> status for claims other than <code>iss</code> and <code>act</code> follows <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>; this profile adds requirements only for <code>iss</code> (when <code>act</code> is present) and <code>act</code> (when the token is delegated).<a href="#section-7.1-5" class="pilcrow">¶</a></p>
 <table class="center" id="table-5">
           <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
 <thead>
@@ -3778,38 +3778,47 @@ The TTS <span class="bcp14">SHOULD</span> set <code>act.sub_profile</code> based
         </tbody>
       </table>
 <p id="section-8-4">The <code>error_description</code> field <span class="bcp14">SHOULD</span> be included and <span class="bcp14">SHOULD</span> describe which aspect of actor-profile processing failed, to the extent permitted by the server's security and privacy policy.<a href="#section-8-4" class="pilcrow">¶</a></p>
-<p id="section-8-5"><code>actor_unauthorized</code> is distinct from <code>access_denied</code>.  <code>access_denied</code> signals an explicit deny that is final; <code>actor_unauthorized</code> signals an input-contingent mismatch that may be recoverable.  When a client or agent orchestrator receives <code>actor_unauthorized</code>, it <span class="bcp14">SHOULD</span> attempt the following remediation steps in order:<a href="#section-8-5" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-8-6">
-<li id="section-8-6.1">
-          <p id="section-8-6.1.1">Consult <code>entity_profiles_supported.actor</code> in AS metadata (<a href="#authorization-server-metadata" class="auto internal xref">Section 10.2.2</a>) to determine whether the actor's <code>sub_profile</code> is in the accepted set.  If not, the failure is terminal for this actor type.<a href="#section-8-6.1.1" class="pilcrow">¶</a></p>
+<p id="section-8-5"><code>actor_unauthorized</code> is distinct from <code>access_denied</code>.  <code>access_denied</code> signals an explicit deny that is final; <code>actor_unauthorized</code> signals an input-contingent mismatch that may be recoverable.<a href="#section-8-5" class="pilcrow">¶</a></p>
+<p id="section-8-6">The appropriate remediation depends on which server returned the error:<a href="#section-8-6" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-8-7.1">
+          <p id="section-8-7.1.1"><strong>From a token endpoint (AS or TTS)</strong>: The token was not issued.  The client or agent orchestrator <span class="bcp14">SHOULD</span> attempt the following steps in order:<a href="#section-8-7.1.1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-8-7.1.2">
+<li id="section-8-7.1.2.1">
+              <p id="section-8-7.1.2.1.1">Consult <code>entity_profiles_supported.actor</code> in AS metadata (<a href="#authorization-server-metadata" class="auto internal xref">Section 10.2.2</a>) to determine whether the actor's <code>sub_profile</code> is in the accepted set.  If not, the failure is terminal for this actor type.<a href="#section-8-7.1.2.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li id="section-8-6.2">
-          <p id="section-8-6.2.1">If the <code>sub_profile</code> is accepted, inspect <code>error_description</code> to determine whether the failure is due to a missing or unconfirmed delegation grant.  If so, obtain or register the delegation grant before retrying.<a href="#section-8-6.2.1" class="pilcrow">¶</a></p>
+            <li id="section-8-7.1.2.2">
+              <p id="section-8-7.1.2.2.1">If the <code>sub_profile</code> is accepted, inspect <code>error_description</code> to determine whether the failure is due to a missing or unconfirmed delegation grant.  If so, obtain or register the delegation grant before retrying.<a href="#section-8-7.1.2.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li id="section-8-6.3">
-          <p id="section-8-6.3.1">If neither step resolves the failure, consult deployment documentation or contact the resource owner to determine whether any path to authorization exists for this (<code>sub</code>, <code>act.sub</code>) pair and scope.<a href="#section-8-6.3.1" class="pilcrow">¶</a></p>
+            <li id="section-8-7.1.2.3">
+              <p id="section-8-7.1.2.3.1">If neither step resolves the failure, consult deployment documentation or contact the resource owner to determine whether any path to authorization exists for this (<code>sub</code>, <code>act.sub</code>) pair and scope.<a href="#section-8-7.1.2.3.1" class="pilcrow">¶</a></p>
 </li>
-        <li id="section-8-6.4">
-          <p id="section-8-6.4.1">If no remediation path exists, treat the failure as terminal for this delegation path.<a href="#section-8-6.4.1" class="pilcrow">¶</a></p>
+            <li id="section-8-7.1.2.4">
+              <p id="section-8-7.1.2.4.1">If no remediation path exists, treat the failure as terminal for this delegation path.<a href="#section-8-7.1.2.4.1" class="pilcrow">¶</a></p>
 </li>
-      </ol>
-<p id="section-8-7">Example of a definitive prohibition:<a href="#section-8-7" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-8-8">
+          </ol>
+</li>
+        <li class="normal" id="section-8-7.2">
+          <p id="section-8-7.2.1"><strong>From a resource server</strong>: The token was already issued but failed actor authorization at the RS.  Steps 1 and 2 above do not apply because the problem is at the RS, not at token issuance.  The client <span class="bcp14">SHOULD</span> obtain a new token using a different actor credential or a different grant path, or consult deployment documentation to determine whether any remediation path exists for this RS.<a href="#section-8-7.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-8-8">Example of a definitive prohibition:<a href="#section-8-8" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-8-9">
 <pre>
 {
   "error": "access_denied",
   "error_description": "actor is explicitly denied access for this subject"
 }
-</pre><a href="#section-8-8" class="pilcrow">¶</a>
+</pre><a href="#section-8-9" class="pilcrow">¶</a>
 </div>
-<p id="section-8-9">Example of an actor not authorized for the requested scope:<a href="#section-8-9" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-8-10">
+<p id="section-8-10">Example of an actor not authorized for the requested scope:<a href="#section-8-10" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-8-11">
 <pre>
 {
   "error": "actor_unauthorized",
   "error_description": "act.sub_profile not accepted for payments:create"
 }
-</pre><a href="#section-8-10" class="pilcrow">¶</a>
+</pre><a href="#section-8-11" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
@@ -3982,7 +3991,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
             <p id="section-9.5-4.4.1"><code>chain_complete</code>: <span class="bcp14">OPTIONAL</span>.  A boolean.  When <code>false</code>, one or more inner <code>act</code> chain entries have been omitted from the response for privacy reasons.  When absent, the chain <span class="bcp14">SHOULD</span> be treated as complete unless local policy or deployment context indicates otherwise.<a href="#section-9.5-4.4.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-9.5-4.5">
-            <p id="section-9.5-4.5.1"><code>sub_profile</code>: <span class="bcp14">REQUIRED</span> when the AS can authoritatively classify the subject entity type.<a href="#section-9.5-4.5.1" class="pilcrow">¶</a></p>
+            <p id="section-9.5-4.5.1"><code>sub_profile</code>: <span class="bcp14">SHOULD</span> be included when the AS can authoritatively classify the subject entity type; consistent with the <span class="bcp14">SHOULD</span>-level requirement for <code>sub_profile</code> in token issuance.<a href="#section-9.5-4.5.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-9.5-4.6">
             <p id="section-9.5-4.6.1"><code>scope</code>: <span class="bcp14">REQUIRED</span>.  The effective scope of the token.<a href="#section-9.5-4.6.1" class="pilcrow">¶</a></p>
@@ -5293,7 +5302,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer
 }
 </pre><a href="#appendix-B.5-4" class="pilcrow">¶</a>
 </div>
-<p id="appendix-B.5-5">Alice's <code>sub</code> and <code>sub_profile</code> are preserved verbatim from the ID-JAG (<a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>).  The Travel Provider AS does not translate or substitute the enterprise subject identifier.  The <code>client_id</code> and <code>azp</code> values continue to identify the OAuth client, but they do not replace <code>act.sub</code> as the authoritative delegated-actor identifier.<a href="#appendix-B.5-5" class="pilcrow">¶</a></p>
+<p id="appendix-B.5-5">Alice's <code>sub</code> and <code>sub_profile</code> are preserved verbatim from the ID-JAG (<a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4.2</a>).  The Travel Provider AS does not translate or substitute the enterprise subject identifier.  The <code>client_id</code> and <code>azp</code> values reflect the OAuth client identity from the request context (the same agent URI appears in both the inbound ID-JAG and the outbound access token because the agent is both the asserting client and the actor in this flow), but they do not replace <code>act.sub</code> as the authoritative delegated-actor identifier.<a href="#appendix-B.5-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="step-4-agent-calls-booking-tool-api">
@@ -5393,7 +5402,7 @@ Workload-Identity-Token: &lt;booking-tool-wit&gt;
 Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
 </pre><a href="#appendix-B.8-1" class="pilcrow">¶</a>
 </div>
-<p id="appendix-B.8-2">The Inventory Service validates the WIT and WPT according to the WIMSE specifications: the WPT proves possession of the key identified by the WIT, <code>wth</code> binds the proof to the presented WIT, and <code>tth</code> binds it to the presented Transaction Token.  The Inventory Service then applies authorization of the (<code>sub</code>, outermost <code>act.sub</code>) pair (<a href="#dual-principal-authorization" class="auto internal xref">Section 9</a>): Alice (<code>sub</code>) governs data access policy (e.g., travel tier), and the Booking Tool (<code>act.sub</code>) is the authorized internal workload for that request.  The <code>req_wl</code> claim provides consistent TTS workload context for the same service in this example.  The nested <code>act.act.sub</code> (Travel Assistant) is carried as prior delegation context and is not evaluated for access control at this internal tier, consistent with the guidance on inner actors in <a href="#dual-principal-rs-processing" class="auto internal xref">Section 9.2</a>.<a href="#appendix-B.8-2" class="pilcrow">¶</a></p>
+<p id="appendix-B.8-2">The Inventory Service validates the WIT and WPT according to the WIMSE specifications: the WPT proves possession of the key identified by the WIT, <code>wth</code> binds the proof to the presented WIT, and <code>tth</code> binds it to the presented Transaction Token.  The Inventory Service then applies authorization of the (<code>sub</code>, outermost <code>act.sub</code>) pair (<a href="#dual-principal-authorization" class="auto internal xref">Section 9</a>): Alice (<code>sub</code>) governs data access policy (e.g., travel tier), and the Booking Tool (<code>act.sub</code>) is the authorized internal workload for that request.  The <code>req_wl</code> claim provides consistent TTS workload context for the same service in this example.  The nested <code>act.act.sub</code> (dot-path notation for the <code>sub</code> of the inner <code>act</code> object nested within the outer <code>act</code>; the Travel Assistant) is carried as prior delegation context and is not evaluated for access control at this internal tier, consistent with the guidance on inner actors in <a href="#dual-principal-rs-processing" class="auto internal xref">Section 9.2</a>.<a href="#appendix-B.8-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="summary-of-token-transformations">
