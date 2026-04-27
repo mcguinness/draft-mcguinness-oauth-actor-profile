@@ -4,7 +4,7 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                           27 April 2026
+Intended status: Experimental                              27 April 2026
 Expires: 29 October 2026
 
 
@@ -110,7 +110,8 @@ Table of Contents
      11.2.  Trust in Receipt Issuers
      11.3.  Receipt-to-Token Binding Limits
      11.4.  Compromised Outer Issuer
-     11.5.  Historical cnf Disclosure
+     11.5.  Receipt Signing Key Compromise
+     11.6.  Historical cnf Disclosure
    12. Privacy Considerations
    13. IANA Considerations
      13.1.  Media Type Registration
@@ -313,6 +314,17 @@ Table of Contents
    If a token carries actor_receipts, it MUST also carry an act claim
    conforming to the core actor profile.
 
+   actor_receipts_complete:  OPTIONAL.  A boolean JWT claim in the outer
+      token.  When true, the issuer attests that actor_receipts covers
+      every visible hop in the token's act chain.  Because this claim is
+      covered by the outer token's signature, consumers can detect if it
+      has been tampered with.  When actor_receipts_complete is true in
+      the outer token, the consumer MUST verify that the receipt count
+      equals the visible actor-chain depth; if it does not, the consumer
+      MUST reject the token.  Issuers SHOULD set
+      actor_receipts_complete: true when they emit complete coverage, to
+      enable consumers to detect chain truncation.
+
    This document does not require every delegated token to carry
    actor_receipts.  A deployment that requires provenance receipts uses
    local policy or the metadata defined in Section 10 to express that
@@ -371,10 +383,14 @@ Table of Contents
 
       *  MUST NOT contain a nested act.
 
-      Although the core actor profile can permit additional members
-      inside an act object, receipts defined by this document use the
-      receipt's top-level cnf claim, if any, as the only standardized
-      location for historical presenter-binding information.  A receipt
+      The prohibition on act.cnf exists because a cnf claim inside an
+      act object would create ambiguity about whether it represents a
+      historical key binding or a current proof-of-possession
+      requirement for the actor.  Historical presenter binding belongs
+      at the receipt's top level in the cnf claim, where its role as
+      provenance-only information is unambiguous.  Additional claims
+      permitted by the core actor profile in act objects MAY appear in
+      receipt act objects unless explicitly prohibited here.  A receipt
       that carries act.cnf is invalid under this profile.
 
    cnf:  OPTIONAL.  A confirmation claim as defined in [RFC7800].  When
@@ -382,7 +398,10 @@ Table of Contents
       at this hop.  This value records historical presenter-binding
       information for the hop represented by the receipt.  It does not
       create a current proof-of-possession obligation for the current
-      request.
+      request.  Issuers SHOULD NOT include cnf in a receipt unless the
+      relying parties that will receive the token have been evaluated
+      for the associated disclosure risk; omitting cnf does not
+      invalidate the receipt.
 
    prh:  OPTIONAL.  Previous receipt hash.  When present, prh MUST be
       the base64url-encoded SHA-256 hash of the complete compact
@@ -392,14 +411,24 @@ Table of Contents
    iat:  REQUIRED.  The time at which the receipt was created, as
       defined in [RFC7519].
 
-   exp:  RECOMMENDED.  Expiration time for the receipt, as defined in
-      [RFC7519].  When present, exp SHOULD be set to a value that covers
-      the expected maximum token lifetime of any token that will carry
-      or inherit this receipt, so that consumer validation of older
-      receipts in a valid chain is not prematurely rejected.
+   exp:  REQUIRED.  Expiration time for the receipt, as defined in
+      [RFC7519].  exp MUST be set to a value that covers the expected
+      maximum token lifetime of any token that will carry or inherit
+      this receipt, so that consumer validation of older receipts in a
+      valid chain is not prematurely rejected.  Short exp values on
+      receipts limit the window during which a compromised receipt
+      signing key can be exploited.
 
    jti:  REQUIRED.  A unique identifier for the receipt, as defined in
       [RFC7519].
+
+   token_id:  RECOMMENDED.  The jti value of the specific outer token
+      that this receipt was created for.  When present, token_id binds
+      the receipt to the specific token instance issued at this hop,
+      enabling consumers to detect receipts transplanted from a
+      different token whose visible act structure happens to match.
+      Issuers SHOULD include token_id whenever the token they are
+      issuing carries a jti claim.
 
    A receipt MAY contain additional claims defined by another
    specification or by deployment policy.  Consumers MUST ignore
@@ -420,7 +449,11 @@ Table of Contents
 
    No JSON canonicalization is applied.  prh hashes the exact compact-
    serialized JWS string of the next older receipt as carried in the
-   array.
+   array.  Systems that carry, store, or forward actor_receipts arrays
+   MUST preserve each compact JWT string byte-for-byte without parsing,
+   re-serializing, normalizing whitespace, or re-encoding base64url
+   segments.  Any modification to a receipt string — even a semantically
+   equivalent one — invalidates prh for any receipt that references it.
 
 8.  Issuer Processing
 
@@ -442,7 +475,11 @@ Table of Contents
    *  MUST set act.sub and act.iss to the new outermost actor;
 
    *  MUST copy the issued token's top-level cnf, if any, into the
-      receipt cnf;
+      receipt cnf, subject to the disclosure considerations in
+      Section 7.2;
+
+   *  SHOULD set token_id to the issued token's jti, if the issued token
+      carries a jti;
 
    *  MUST omit prh.
 
@@ -527,7 +564,8 @@ Table of Contents
       actor;
 
    *  it copies the issued Transaction Token's top-level cnf, if any,
-      into the new receipt.
+      into the new receipt, subject to the disclosure considerations in
+      Section 7.2.
 
    This profile does not define additional receipt claims specific to
    Transaction Tokens.  Any transaction-specific semantics remain
@@ -549,14 +587,18 @@ Table of Contents
         array of strings.
 
    4.   Verify that the number of receipts does not exceed the visible
-        actor-chain depth of the outer token.
+        actor-chain depth of the outer token.  If the outer token
+        carries actor_receipts_complete: true, verify that the receipt
+        count exactly equals the visible actor-chain depth; if it does
+        not, reject the token.
 
    5.   For each receipt, in array order:
 
         *  parse the string as a compact JWT;
 
-        *  verify that the receipt issuer is trusted for receipt
-           validation;
+        *  verify that the receipt issuer is within the recipient's pre-
+           configured trusted-issuer set before performing any network
+           retrieval for that issuer's metadata or keys;
 
         *  resolve the signing key from the trusted issuer's jwks_uri
            metadata [RFC8414] or from local configuration;
@@ -568,11 +610,17 @@ Table of Contents
         *  verify that the receipt act object is single-hop, contains no
            nested act, and contains no cnf;
 
-        *  enforce exp, iat, and other JWT validity rules.  For receipts
-           at index 1 or greater (older hops), local policy MAY relax
-           exp enforcement when the outer token itself remains valid,
-           since older receipts may predate the outer token's own
-           lifetime.
+        *  enforce exp, iat, and other JWT validity rules.  Because exp
+           is REQUIRED on receipts and MUST cover the expected outer
+           token lifetime, an expired receipt SHOULD be treated as
+           invalid even for older hops.  Local policy MAY permit
+           continued use of a receipt that is expired by a small clock-
+           skew margin, but MUST NOT relax exp enforcement broadly as a
+           workaround for issuers that failed to set adequate exp
+           values.
+
+        *  if token_id is present in the receipt, verify that it equals
+           the jti of the outer token at the corresponding hop position.
 
    6.   Verify receipt-chain linkage:
 
@@ -639,6 +687,18 @@ Table of Contents
       older sub values MUST do so under explicit trusted local mapping
       rules.
 
+   Recipients MUST be aware that permitting differing sub values across
+   receipts creates a cross-subject insertion risk: a receipt from an
+   unrelated subject chain that happens to share the same actor identity
+   could satisfy the structural hop-alignment check.  Deployments where
+   subject continuity is a security requirement SHOULD require
+   consistent sub values across all receipts in the chain, or enforce
+   explicit trusted subject-mapping rules that can positively confirm
+   each distinct sub value refers to the same underlying entity.  When
+   neither condition is met, the recipient MUST treat the differing sub
+   values as unverified subject continuity and MUST NOT rely on those
+   older receipts for authorization decisions.
+
 9.2.  Complete Receipt Coverage
 
    A recipient determines complete receipt coverage by comparing receipt
@@ -680,6 +740,21 @@ Table of Contents
    privacy or policy reasons and still returns actor_receipts SHOULD
    return actor_receipts_complete with the value false.
 
+   The core actor profile [I-D.mcguinness-oauth-actor-profile] defines a
+   separate chain_complete introspection member that indicates whether
+   the visible act chain itself has been filtered.  These two
+   completeness signals are distinct: chain_complete: false means the
+   introspection server has suppressed inner act hops from the chain
+   representation, while actor_receipts_complete: false means receipt
+   coverage is partial or filtered.  A token can have chain_complete:
+   true (full act chain visible) and actor_receipts_complete: false
+   (some receipts suppressed), or vice versa.  Consumers that rely on
+   both signals MUST evaluate them independently.  A response with
+   chain_complete: false means the receipt array may cover only part of
+   the true delegation chain even when actor_receipts_complete: true; in
+   that case the receipt coverage is complete only for the visible
+   filtered chain, not the full chain.
+
 10.  Discovery and Capability Signaling
 
    This section defines metadata for advertising support for actor
@@ -704,17 +779,26 @@ Table of Contents
 
 10.2.  Protected Resource Metadata
 
-   The following parameter is defined for use in Protected Resource
+   The following parameters are defined for use in Protected Resource
    Metadata [RFC9728]:
 
    actor_receipts_required:  OPTIONAL.  A boolean.  When true, the
       resource server indicates that delegated requests are expected to
-      carry valid actor receipts.  This boolean signals a requirement
-      for receipt-based provenance but cannot fully express whether the
-      resource requires complete coverage for every visible hop or only
-      a covered outermost prefix; those details remain deployment-
-      specific.  When false or absent, the resource server makes no
-      metadata declaration about receipt-based provenance requirements.
+      carry valid actor receipts covering at minimum the outermost
+      visible actor hop.  When false or absent, the resource server
+      makes no metadata declaration about receipt-based provenance
+      requirements.
+
+   actor_receipts_complete_required:  OPTIONAL.  A boolean.  When true,
+      the resource server indicates that it requires complete receipt
+      coverage — the receipt count must equal the visible actor-chain
+      depth and actor_receipts_complete must be true in the outer token
+      or the introspection response.  This parameter refines
+      actor_receipts_required; a resource server SHOULD NOT set
+      actor_receipts_complete_required: true without also setting
+      actor_receipts_required: true.  When false or absent, partial
+      receipt coverage is acceptable to the resource server, subject to
+      any further local policy.
 
 10.3.  Introspection Response Members
 
@@ -754,19 +838,25 @@ Table of Contents
    Receipt validation is meaningful only if the recipient trusts the
    issuers that signed the receipts.  A recipient MUST establish which
    issuers it trusts for receipt validation before relying on
-   actor_receipts.
-
-   In cross-domain deployments, that trusted-issuer set is normally
-   configured by bilateral agreement, federation policy, or another
+   actor_receipts.  Trust MUST be established through explicit pre-
+   configuration, bilateral agreement, federation policy, or another
    explicit trust framework.  A recipient MUST NOT treat the presence of
    a syntactically valid signed receipt as sufficient grounds to trust
    its issuer.
 
-   To avoid attacker-controlled key resolution, a recipient SHOULD
-   determine whether a receipt iss is trusted before performing network
-   retrieval for that issuer's metadata or keys.  A recipient that uses
-   dynamic discovery for receipt validation MUST do so only within an
-   existing trust framework or equivalent local policy.
+   Authorization servers that support this document SHOULD advertise
+   actor_receipts_supported: true in their AS metadata [RFC8414].
+   Consumers SHOULD use this metadata signal as one input to trust
+   establishment, but MUST NOT treat metadata advertisement alone as
+   sufficient grounds to trust a receipt issuer; the issuer must also be
+   within the recipient's configured trust boundary.
+
+   To avoid attacker-controlled key resolution, a recipient MUST
+   determine whether a receipt iss is within its trusted-issuer set
+   before performing any network retrieval for that issuer's metadata or
+   keys.  A recipient that uses dynamic discovery for receipt validation
+   MUST do so only within an existing trust framework or equivalent
+   local policy that defines which issuers are permitted.
 
 11.3.  Receipt-to-Token Binding Limits
 
@@ -795,13 +885,34 @@ Table of Contents
    additional transparency, transaction binding, or replay-detection
    mechanisms outside the scope of this document.
 
-11.5.  Historical cnf Disclosure
+11.5.  Receipt Signing Key Compromise
+
+   If a receipt issuer's signing key is compromised, previously issued
+   receipts signed with that key cannot be individually revoked.  The
+   primary remediation is to remove the compromised issuer from the
+   trusted-issuer set; once removed, consumers will reject all receipts
+   signed by that issuer regardless of their content.
+
+   Deployments SHOULD set short exp values on receipts, consistent with
+   the REQUIRED exp defined in Section 7.2, to limit the window during
+   which receipts signed with a compromised key remain valid.  When a
+   key compromise is detected, deployments SHOULD treat all tokens
+   carrying receipts from the affected issuer as lacking trusted
+   provenance for those hops and SHOULD require re-issuance through a
+   trusted issuer.
+
+11.6.  Historical cnf Disclosure
 
    Receipt cnf values can reveal prior-hop public-key identifiers or
-   certificate thumbprints.  Deployments SHOULD include historical cnf
-   in receipts only when that disclosure risk is understood and
-   acceptable for the relying parties that will receive the token or
-   introspection response.
+   certificate thumbprints to any party that receives the token or
+   introspection response.  These are stable identifiers that can enable
+   cross-request and cross-service correlation of actors and services
+   over time.  Issuers SHOULD NOT include cnf in receipts unless the
+   relying parties that will receive the token have been evaluated for
+   that disclosure risk and the risk is acceptable.  Omitting cnf from a
+   receipt does not invalidate the receipt; it means that hop lacks
+   independently attested historical presenter binding, which is
+   acceptable for many deployments.
 
 12.  Privacy Considerations
 
@@ -810,7 +921,8 @@ Table of Contents
 
    *  they expose which issuers created visible actor hops;
 
-   *  they can reveal historical presenter-key identifiers;
+   *  they can reveal historical presenter-key identifiers across
+      requests, enabling cross-session correlation;
 
    *  they can reveal internal service identities that a deployment
       might otherwise have kept visible only to intermediate issuers.
@@ -826,7 +938,11 @@ Table of Contents
 
    *  resource servers SHOULD request or require actor receipts only
       when they materially improve authorization, audit, or risk
-      controls.
+      controls;
+
+   *  issuers SHOULD omit cnf from receipts by default when the relying
+      parties that will receive the token have not been evaluated for
+      historical presenter-key disclosure risk.
 
 13.  IANA Considerations
 
@@ -898,10 +1014,28 @@ Table of Contents
 
    *  Specification Document(s): This document
 
+   *  Claim Name: actor_receipts_complete
+
+   *  Claim Description: Boolean indicating whether actor_receipts
+      covers every visible hop in the token's act chain
+
+   *  Change Controller: IESG
+
+   *  Specification Document(s): This document
+
    *  Claim Name: prh
 
    *  Claim Description: Base64url-encoded SHA-256 hash of the
       immediately preceding (older) receipt in the actor_receipts chain
+
+   *  Change Controller: IESG
+
+   *  Specification Document(s): This document
+
+   *  Claim Name: token_id
+
+   *  Claim Description: The jti of the specific token instance that
+      this actor receipt was created for
 
    *  Change Controller: IESG
 
@@ -923,13 +1057,23 @@ Table of Contents
 
 13.4.  OAuth Protected Resource Metadata Registration
 
-   This document requests registration of the following metadata name in
-   the "OAuth Protected Resource Metadata" registry [RFC9728]:
+   This document requests registration of the following metadata names
+   in the "OAuth Protected Resource Metadata" registry [RFC9728]:
 
    *  Metadata Name: actor_receipts_required
 
    *  Metadata Description: Indicates that the resource expects
-      delegated requests to carry valid actor receipts
+      delegated requests to carry valid actor receipts covering at
+      minimum the outermost visible actor hop
+
+   *  Change Controller: IESG
+
+   *  Specification Document(s): This document
+
+   *  Metadata Name: actor_receipts_complete_required
+
+   *  Metadata Description: Indicates that the resource requires
+      complete receipt coverage for all visible actor hops
 
    *  Change Controller: IESG
 
@@ -986,7 +1130,8 @@ Table of Contents
      "actor_receipts": [
        "<receipt-0>",
        "<receipt-1>"
-     ]
+     ],
+     "actor_receipts_complete": true
    }
 
    actor_receipts[0] is the newest receipt, created by the travel-
@@ -1006,7 +1151,9 @@ Table of Contents
      },
      "prh": "0QvKZr5A4XW7N9LQW0u4e7z8k2Kqz6I7xL4V4Vh2nRc",
      "iat": 1776745200,
-     "jti": "c8e29c11-0c3a-4e6f-a0a6-30a52c4a8149"
+     "exp": 1776832000,
+     "jti": "c8e29c11-0c3a-4e6f-a0a6-30a52c4a8149",
+     "token_id": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd"
    }
 
    actor_receipts[1] is the older receipt, created by the enterprise AS
@@ -1024,7 +1171,9 @@ Table of Contents
        "jkt": "AgentJKT"
      },
      "iat": 1776741600,
-     "jti": "1d4c4d30-fb6d-4172-b7eb-775b6b9c2b85"
+     "exp": 1776832000,
+     "jti": "1d4c4d30-fb6d-4172-b7eb-775b6b9c2b85",
+     "token_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
    }
 
    This example shows the key provenance property of this profile: the
@@ -1064,7 +1213,8 @@ Table of Contents
        "<receipt-tts>",
        "<receipt-0>",
        "<receipt-1>"
-     ]
+     ],
+     "actor_receipts_complete": true
    }
 
    The new leading receipt created by the TTS is:
@@ -1082,7 +1232,9 @@ Table of Contents
      },
      "prh": "C4zv2FK0kPjxzJz8F7G3mslmbb0TQmVQvls0gA1lV3Q",
      "iat": 1776747000,
-     "jti": "8b1ab6d1-c345-4bd3-8af2-f302d54444b7"
+     "exp": 1776832000,
+     "jti": "8b1ab6d1-c345-4bd3-8af2-f302d54444b7",
+     "token_id": "f0e1d2c3-b4a5-6789-cdef-012345678901"
    }
 
    The inherited receipts for the booking tool and the AI agent are

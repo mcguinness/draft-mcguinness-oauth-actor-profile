@@ -1070,7 +1070,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <time datetime="2026-04-27" class="published">27 April 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
-<dd class="intended-status">Standards Track</dd>
+<dd class="intended-status">Experimental</dd>
 <dt class="label-expires">Expires:</dt>
 <dd class="expires"><time datetime="2026-10-29">29 October 2026</time></dd>
 <dt class="label-authors">Author:</dt>
@@ -1251,7 +1251,10 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.11.2.4.1"><a href="#section-11.4" class="auto internal xref">11.4</a>.  <a href="#name-compromised-outer-issuer" class="internal xref">Compromised Outer Issuer</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.5">
-                <p id="section-toc.1-1.11.2.5.1"><a href="#section-11.5" class="auto internal xref">11.5</a>.  <a href="#name-historical-cnf-disclosure" class="internal xref">Historical <code>cnf</code> Disclosure</a></p>
+                <p id="section-toc.1-1.11.2.5.1"><a href="#section-11.5" class="auto internal xref">11.5</a>.  <a href="#name-receipt-signing-key-comprom" class="internal xref">Receipt Signing Key Compromise</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.6">
+                <p id="section-toc.1-1.11.2.6.1"><a href="#section-11.6" class="auto internal xref">11.6</a>.  <a href="#name-historical-cnf-disclosure" class="internal xref">Historical <code>cnf</code> Disclosure</a></p>
 </li>
             </ul>
 </li>
@@ -1500,7 +1503,15 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
       <dd class="break"></dd>
 </dl>
 <p id="section-6-3">If a token carries <code>actor_receipts</code>, it <span class="bcp14">MUST</span> also carry an <code>act</code> claim conforming to the core actor profile.<a href="#section-6-3" class="pilcrow">¶</a></p>
-<p id="section-6-4">This document does not require every delegated token to carry <code>actor_receipts</code>.  A deployment that requires provenance receipts uses local policy or the metadata defined in <a href="#discovery-capability-signaling" class="auto internal xref">Section 10</a> to express that requirement.<a href="#section-6-4" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-6-4">
+        <dt id="section-6-4.1">
+<code>actor_receipts_complete</code>:</dt>
+        <dd style="margin-left: 1.5em" id="section-6-4.2">
+          <p id="section-6-4.2.1"><span class="bcp14">OPTIONAL</span>.  A boolean JWT claim in the outer token.  When <code>true</code>, the issuer attests that <code>actor_receipts</code> covers every visible hop in the token's <code>act</code> chain.  Because this claim is covered by the outer token's signature, consumers can detect if it has been tampered with.  When <code>actor_receipts_complete</code> is <code>true</code> in the outer token, the consumer <span class="bcp14">MUST</span> verify that the receipt count equals the visible actor-chain depth; if it does not, the consumer <span class="bcp14">MUST</span> reject the token.  Issuers <span class="bcp14">SHOULD</span> set <code>actor_receipts_complete: true</code> when they emit complete coverage, to enable consumers to detect chain truncation.<a href="#section-6-4.2.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+<p id="section-6-5">This document does not require every delegated token to carry <code>actor_receipts</code>.  A deployment that requires provenance receipts uses local policy or the metadata defined in <a href="#discovery-capability-signaling" class="auto internal xref">Section 10</a> to express that requirement.<a href="#section-6-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="actor-receipt-jwt-format">
@@ -1578,13 +1589,13 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
                 <p id="section-7.2-2.8.2.5.1"><span class="bcp14">MUST NOT</span> contain a nested <code>act</code>.<a href="#section-7.2-2.8.2.5.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
-<p id="section-7.2-2.8.3">Although the core actor profile can permit additional members inside an <code>act</code> object, receipts defined by this document use the receipt's top-level <code>cnf</code> claim, if any, as the only standardized location for historical presenter-binding information.  A receipt that carries <code>act.cnf</code> is invalid under this profile.<a href="#section-7.2-2.8.3" class="pilcrow">¶</a></p>
+<p id="section-7.2-2.8.3">The prohibition on <code>act.cnf</code> exists because a <code>cnf</code> claim inside an <code>act</code> object would create ambiguity about whether it represents a historical key binding or a current proof-of-possession requirement for the actor.  Historical presenter binding belongs at the receipt's top level in the <code>cnf</code> claim, where its role as provenance-only information is unambiguous.  Additional claims permitted by the core actor profile in <code>act</code> objects <span class="bcp14">MAY</span> appear in receipt <code>act</code> objects unless explicitly prohibited here.  A receipt that carries <code>act.cnf</code> is invalid under this profile.<a href="#section-7.2-2.8.3" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.9">
 <code>cnf</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.10">
-            <p id="section-7.2-2.10.1"><span class="bcp14">OPTIONAL</span>.  A confirmation claim as defined in <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>.  When present, it <span class="bcp14">MUST</span> equal the top-level <code>cnf</code> claim of the token issued at this hop.  This value records historical presenter-binding information for the hop represented by the receipt.  It does not create a current proof-of-possession obligation for the current request.<a href="#section-7.2-2.10.1" class="pilcrow">¶</a></p>
+            <p id="section-7.2-2.10.1"><span class="bcp14">OPTIONAL</span>.  A confirmation claim as defined in <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>.  When present, it <span class="bcp14">MUST</span> equal the top-level <code>cnf</code> claim of the token issued at this hop.  This value records historical presenter-binding information for the hop represented by the receipt.  It does not create a current proof-of-possession obligation for the current request.  Issuers <span class="bcp14">SHOULD NOT</span> include <code>cnf</code> in a receipt unless the relying parties that will receive the token have been evaluated for the associated disclosure risk; omitting <code>cnf</code> does not invalidate the receipt.<a href="#section-7.2-2.10.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.11">
@@ -1602,13 +1613,19 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <dt id="section-7.2-2.15">
 <code>exp</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.16">
-            <p id="section-7.2-2.16.1"><span class="bcp14">RECOMMENDED</span>.  Expiration time for the receipt, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.  When present, <code>exp</code> <span class="bcp14">SHOULD</span> be set to a value that covers the expected maximum token lifetime of any token that will carry or inherit this receipt, so that consumer validation of older receipts in a valid chain is not prematurely rejected.<a href="#section-7.2-2.16.1" class="pilcrow">¶</a></p>
+            <p id="section-7.2-2.16.1"><span class="bcp14">REQUIRED</span>.  Expiration time for the receipt, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.  <code>exp</code> <span class="bcp14">MUST</span> be set to a value that covers the expected maximum token lifetime of any token that will carry or inherit this receipt, so that consumer validation of older receipts in a valid chain is not prematurely rejected.  Short <code>exp</code> values on receipts limit the window during which a compromised receipt signing key can be exploited.<a href="#section-7.2-2.16.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.17">
 <code>jti</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.18">
             <p id="section-7.2-2.18.1"><span class="bcp14">REQUIRED</span>.  A unique identifier for the receipt, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-7.2-2.18.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-7.2-2.19">
+<code>token_id</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-7.2-2.20">
+            <p id="section-7.2-2.20.1"><span class="bcp14">RECOMMENDED</span>.  The <code>jti</code> value of the specific outer token that this receipt was created for.  When present, <code>token_id</code> binds the receipt to the specific token instance issued at this hop, enabling consumers to detect receipts transplanted from a different token whose visible <code>act</code> structure happens to match.  Issuers <span class="bcp14">SHOULD</span> include <code>token_id</code> whenever the token they are issuing carries a <code>jti</code> claim.<a href="#section-7.2-2.20.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -1629,7 +1646,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-7.3-2.2.1">if the new receipt is the only receipt in the array, it <span class="bcp14">MUST</span> omit <code>prh</code>.<a href="#section-7.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-7.3-3">No JSON canonicalization is applied.  <code>prh</code> hashes the exact compact-serialized JWS string of the next older receipt as carried in the array.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
+<p id="section-7.3-3">No JSON canonicalization is applied.  <code>prh</code> hashes the exact compact-serialized JWS string of the next older receipt as carried in the array.  Systems that carry, store, or forward <code>actor_receipts</code> arrays <span class="bcp14">MUST</span> preserve each compact JWT string byte-for-byte without parsing, re-serializing, normalizing whitespace, or re-encoding base64url segments.  Any modification to a receipt string — even a semantically equivalent one — invalidates <code>prh</code> for any receipt that references it.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1658,10 +1675,13 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-8.1-3.3.1"><span class="bcp14">MUST</span> set <code>act.sub</code> and <code>act.iss</code> to the new outermost actor;<a href="#section-8.1-3.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.1-3.4">
-            <p id="section-8.1-3.4.1"><span class="bcp14">MUST</span> copy the issued token's top-level <code>cnf</code>, if any, into the receipt <code>cnf</code>;<a href="#section-8.1-3.4.1" class="pilcrow">¶</a></p>
+            <p id="section-8.1-3.4.1"><span class="bcp14">MUST</span> copy the issued token's top-level <code>cnf</code>, if any, into the receipt <code>cnf</code>, subject to the disclosure considerations in <a href="#receipt-claims" class="auto internal xref">Section 7.2</a>;<a href="#section-8.1-3.4.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.1-3.5">
-            <p id="section-8.1-3.5.1"><span class="bcp14">MUST</span> omit <code>prh</code>.<a href="#section-8.1-3.5.1" class="pilcrow">¶</a></p>
+            <p id="section-8.1-3.5.1"><span class="bcp14">SHOULD</span> set <code>token_id</code> to the issued token's <code>jti</code>, if the issued token carries a <code>jti</code>;<a href="#section-8.1-3.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.1-3.6">
+            <p id="section-8.1-3.6.1"><span class="bcp14">MUST</span> omit <code>prh</code>.<a href="#section-8.1-3.6.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1748,7 +1768,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-8.5-2.2.1">it creates one new receipt for the newly established outermost actor;<a href="#section-8.5-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.5-2.3">
-            <p id="section-8.5-2.3.1">it copies the issued Transaction Token's top-level <code>cnf</code>, if any, into the new receipt.<a href="#section-8.5-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-8.5-2.3.1">it copies the issued Transaction Token's top-level <code>cnf</code>, if any, into the new receipt, subject to the disclosure considerations in <a href="#receipt-claims" class="auto internal xref">Section 7.2</a>.<a href="#section-8.5-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-8.5-3">This profile does not define additional receipt claims specific to Transaction Tokens.  Any transaction-specific semantics remain governed by the Transaction Token itself and its deployment profile.<a href="#section-8.5-3" class="pilcrow">¶</a></p>
@@ -1773,7 +1793,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="section-9-2.3.1">Verify that <code>actor_receipts</code>, if present, is a non-empty JSON array of strings.<a href="#section-9-2.3.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-9-2.4">
-          <p id="section-9-2.4.1">Verify that the number of receipts does not exceed the visible actor-chain depth of the outer token.<a href="#section-9-2.4.1" class="pilcrow">¶</a></p>
+          <p id="section-9-2.4.1">Verify that the number of receipts does not exceed the visible actor-chain depth of the outer token.  If the outer token carries <code>actor_receipts_complete: true</code>, verify that the receipt count exactly equals the visible actor-chain depth; if it does not, reject the token.<a href="#section-9-2.4.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-9-2.5">
           <p id="section-9-2.5.1">For each receipt, in array order:<a href="#section-9-2.5.1" class="pilcrow">¶</a></p>
@@ -1782,7 +1802,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-9-2.5.2.1.1">parse the string as a compact JWT;<a href="#section-9-2.5.2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.5.2.2">
-              <p id="section-9-2.5.2.2.1">verify that the receipt issuer is trusted for receipt validation;<a href="#section-9-2.5.2.2.1" class="pilcrow">¶</a></p>
+              <p id="section-9-2.5.2.2.1">verify that the receipt issuer is within the recipient's pre-configured trusted-issuer set before performing any network retrieval for that issuer's metadata or keys;<a href="#section-9-2.5.2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.5.2.3">
               <p id="section-9-2.5.2.3.1">resolve the signing key from the trusted issuer's <code>jwks_uri</code> metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> or from local configuration;<a href="#section-9-2.5.2.3.1" class="pilcrow">¶</a></p>
@@ -1797,7 +1817,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-9-2.5.2.6.1">verify that the receipt <code>act</code> object is single-hop, contains no nested <code>act</code>, and contains no <code>cnf</code>;<a href="#section-9-2.5.2.6.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.5.2.7">
-              <p id="section-9-2.5.2.7.1">enforce <code>exp</code>, <code>iat</code>, and other JWT validity rules.  For receipts at index 1 or greater (older hops), local policy <span class="bcp14">MAY</span> relax <code>exp</code> enforcement when the outer token itself remains valid, since older receipts may predate the outer token's own lifetime.<a href="#section-9-2.5.2.7.1" class="pilcrow">¶</a></p>
+              <p id="section-9-2.5.2.7.1">enforce <code>exp</code>, <code>iat</code>, and other JWT validity rules.  Because <code>exp</code> is <span class="bcp14">REQUIRED</span> on receipts and <span class="bcp14">MUST</span> cover the expected outer token lifetime, an expired receipt <span class="bcp14">SHOULD</span> be treated as invalid even for older hops.  Local policy <span class="bcp14">MAY</span> permit continued use of a receipt that is expired by a small clock-skew margin, but <span class="bcp14">MUST NOT</span> relax <code>exp</code> enforcement broadly as a workaround for issuers that failed to set adequate <code>exp</code> values.<a href="#section-9-2.5.2.7.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-9-2.5.2.8">
+              <p id="section-9-2.5.2.8.1">if <code>token_id</code> is present in the receipt, verify that it equals the <code>jti</code> of the outer token at the corresponding hop position.<a href="#section-9-2.5.2.8.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </li>
@@ -1864,6 +1887,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-9.1-3.3.1">a recipient that applies stronger continuity requirements across older <code>sub</code> values <span class="bcp14">MUST</span> do so under explicit trusted local mapping rules.<a href="#section-9.1-3.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
+<p id="section-9.1-4">Recipients <span class="bcp14">MUST</span> be aware that permitting differing <code>sub</code> values across receipts creates a cross-subject insertion risk: a receipt from an unrelated subject chain that happens to share the same actor identity could satisfy the structural hop-alignment check.  Deployments where subject continuity is a security requirement <span class="bcp14">SHOULD</span> require consistent <code>sub</code> values across all receipts in the chain, or enforce explicit trusted subject-mapping rules that can positively confirm each distinct <code>sub</code> value refers to the same underlying entity.  When neither condition is met, the recipient <span class="bcp14">MUST</span> treat the differing <code>sub</code> values as unverified subject continuity and <span class="bcp14">MUST NOT</span> rely on those older receipts for authorization decisions.<a href="#section-9.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="complete-receipt-coverage">
@@ -1909,6 +1933,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         </ul>
 <p id="section-9.4-3">An introspection server that suppresses one or more receipts for privacy or policy reasons and still returns <code>actor_receipts</code> <span class="bcp14">SHOULD</span> return <code>actor_receipts_complete</code> with the value <code>false</code>.<a href="#section-9.4-3" class="pilcrow">¶</a></p>
+<p id="section-9.4-4">The core actor profile <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span> defines a separate <code>chain_complete</code> introspection member that indicates whether the visible <code>act</code> chain itself has been filtered.  These two completeness signals are distinct: <code>chain_complete: false</code> means the introspection server has suppressed inner <code>act</code> hops from the chain representation, while <code>actor_receipts_complete: false</code> means receipt coverage is partial or filtered.  A token can have <code>chain_complete: true</code> (full act chain visible) and <code>actor_receipts_complete: false</code> (some receipts suppressed), or vice versa.  Consumers that rely on both signals <span class="bcp14">MUST</span> evaluate them independently.  A response with <code>chain_complete: false</code> means the receipt array may cover only part of the true delegation chain even when <code>actor_receipts_complete: true</code>; in that case the receipt coverage is complete only for the visible filtered chain, not the full chain.<a href="#section-9.4-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1941,12 +1966,18 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-protected-resource-metadata">
 <a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-protected-resource-metadata" class="section-name selfRef">Protected Resource Metadata</a>
         </h3>
-<p id="section-10.2-1">The following parameter is defined for use in Protected Resource Metadata <span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span>:<a href="#section-10.2-1" class="pilcrow">¶</a></p>
+<p id="section-10.2-1">The following parameters are defined for use in Protected Resource Metadata <span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span>:<a href="#section-10.2-1" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-10.2-2">
           <dt id="section-10.2-2.1">
 <code>actor_receipts_required</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-10.2-2.2">
-            <p id="section-10.2-2.2.1"><span class="bcp14">OPTIONAL</span>.  A boolean.  When <code>true</code>, the resource server indicates that delegated requests are expected to carry valid actor receipts.  This boolean signals a requirement for receipt-based provenance but cannot fully express whether the resource requires complete coverage for every visible hop or only a covered outermost prefix; those details remain deployment-specific.  When <code>false</code> or absent, the resource server makes no metadata declaration about receipt-based provenance requirements.<a href="#section-10.2-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-10.2-2.2.1"><span class="bcp14">OPTIONAL</span>.  A boolean.  When <code>true</code>, the resource server indicates that delegated requests are expected to carry valid actor receipts covering at minimum the outermost visible actor hop.  When <code>false</code> or absent, the resource server makes no metadata declaration about receipt-based provenance requirements.<a href="#section-10.2-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-10.2-2.3">
+<code>actor_receipts_complete_required</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-10.2-2.4">
+            <p id="section-10.2-2.4.1"><span class="bcp14">OPTIONAL</span>.  A boolean.  When <code>true</code>, the resource server indicates that it requires complete receipt coverage — the receipt count must equal the visible actor-chain depth and <code>actor_receipts_complete</code> must be <code>true</code> in the outer token or the introspection response.  This parameter refines <code>actor_receipts_required</code>; a resource server <span class="bcp14">SHOULD NOT</span> set <code>actor_receipts_complete_required: true</code> without also setting <code>actor_receipts_required: true</code>.  When <code>false</code> or absent, partial receipt coverage is acceptable to the resource server, subject to any further local policy.<a href="#section-10.2-2.4.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -1996,9 +2027,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-trust-in-receipt-issuers">
 <a href="#section-11.2" class="section-number selfRef">11.2. </a><a href="#name-trust-in-receipt-issuers" class="section-name selfRef">Trust in Receipt Issuers</a>
         </h3>
-<p id="section-11.2-1">Receipt validation is meaningful only if the recipient trusts the issuers that signed the receipts.  A recipient <span class="bcp14">MUST</span> establish which issuers it trusts for receipt validation before relying on <code>actor_receipts</code>.<a href="#section-11.2-1" class="pilcrow">¶</a></p>
-<p id="section-11.2-2">In cross-domain deployments, that trusted-issuer set is normally configured by bilateral agreement, federation policy, or another explicit trust framework.  A recipient <span class="bcp14">MUST NOT</span> treat the presence of a syntactically valid signed receipt as sufficient grounds to trust its issuer.<a href="#section-11.2-2" class="pilcrow">¶</a></p>
-<p id="section-11.2-3">To avoid attacker-controlled key resolution, a recipient <span class="bcp14">SHOULD</span> determine whether a receipt <code>iss</code> is trusted before performing network retrieval for that issuer's metadata or keys.  A recipient that uses dynamic discovery for receipt validation <span class="bcp14">MUST</span> do so only within an existing trust framework or equivalent local policy.<a href="#section-11.2-3" class="pilcrow">¶</a></p>
+<p id="section-11.2-1">Receipt validation is meaningful only if the recipient trusts the issuers that signed the receipts.  A recipient <span class="bcp14">MUST</span> establish which issuers it trusts for receipt validation before relying on <code>actor_receipts</code>.  Trust <span class="bcp14">MUST</span> be established through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.  A recipient <span class="bcp14">MUST NOT</span> treat the presence of a syntactically valid signed receipt as sufficient grounds to trust its issuer.<a href="#section-11.2-1" class="pilcrow">¶</a></p>
+<p id="section-11.2-2">Authorization servers that support this document <span class="bcp14">SHOULD</span> advertise <code>actor_receipts_supported: true</code> in their AS metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>.  Consumers <span class="bcp14">SHOULD</span> use this metadata signal as one input to trust establishment, but <span class="bcp14">MUST NOT</span> treat metadata advertisement alone as sufficient grounds to trust a receipt issuer; the issuer must also be within the recipient's configured trust boundary.<a href="#section-11.2-2" class="pilcrow">¶</a></p>
+<p id="section-11.2-3">To avoid attacker-controlled key resolution, a recipient <span class="bcp14">MUST</span> determine whether a receipt <code>iss</code> is within its trusted-issuer set before performing any network retrieval for that issuer's metadata or keys.  A recipient that uses dynamic discovery for receipt validation <span class="bcp14">MUST</span> do so only within an existing trust framework or equivalent local policy that defines which issuers are permitted.<a href="#section-11.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="receipt-to-token-binding-limits">
@@ -2019,12 +2050,21 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-11.4-2">However, if the current outer token issuer is compromised, that issuer can still assemble a new outer token around previously harvested valid receipts for the same visible chain prefix.  This document does not attempt to solve that class of attack.  Deployments that need stronger guarantees can combine this profile with additional transparency, transaction binding, or replay-detection mechanisms outside the scope of this document.<a href="#section-11.4-2" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="historical-cnf-disclosure">
+<div id="receipt-signing-key-compromise">
 <section id="section-11.5">
-        <h3 id="name-historical-cnf-disclosure">
-<a href="#section-11.5" class="section-number selfRef">11.5. </a><a href="#name-historical-cnf-disclosure" class="section-name selfRef">Historical <code>cnf</code> Disclosure</a>
+        <h3 id="name-receipt-signing-key-comprom">
+<a href="#section-11.5" class="section-number selfRef">11.5. </a><a href="#name-receipt-signing-key-comprom" class="section-name selfRef">Receipt Signing Key Compromise</a>
         </h3>
-<p id="section-11.5-1">Receipt <code>cnf</code> values can reveal prior-hop public-key identifiers or certificate thumbprints.  Deployments <span class="bcp14">SHOULD</span> include historical <code>cnf</code> in receipts only when that disclosure risk is understood and acceptable for the relying parties that will receive the token or introspection response.<a href="#section-11.5-1" class="pilcrow">¶</a></p>
+<p id="section-11.5-1">If a receipt issuer's signing key is compromised, previously issued receipts signed with that key cannot be individually revoked.  The primary remediation is to remove the compromised issuer from the trusted-issuer set; once removed, consumers will reject all receipts signed by that issuer regardless of their content.<a href="#section-11.5-1" class="pilcrow">¶</a></p>
+<p id="section-11.5-2">Deployments <span class="bcp14">SHOULD</span> set short <code>exp</code> values on receipts, consistent with the <span class="bcp14">REQUIRED</span> <code>exp</code> defined in <a href="#receipt-claims" class="auto internal xref">Section 7.2</a>, to limit the window during which receipts signed with a compromised key remain valid.  When a key compromise is detected, deployments <span class="bcp14">SHOULD</span> treat all tokens carrying receipts from the affected issuer as lacking trusted provenance for those hops and <span class="bcp14">SHOULD</span> require re-issuance through a trusted issuer.<a href="#section-11.5-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="historical-cnf-disclosure">
+<section id="section-11.6">
+        <h3 id="name-historical-cnf-disclosure">
+<a href="#section-11.6" class="section-number selfRef">11.6. </a><a href="#name-historical-cnf-disclosure" class="section-name selfRef">Historical <code>cnf</code> Disclosure</a>
+        </h3>
+<p id="section-11.6-1">Receipt <code>cnf</code> values can reveal prior-hop public-key identifiers or certificate thumbprints to any party that receives the token or introspection response.  These are stable identifiers that can enable cross-request and cross-service correlation of actors and services over time.  Issuers <span class="bcp14">SHOULD NOT</span> include <code>cnf</code> in receipts unless the relying parties that will receive the token have been evaluated for that disclosure risk and the risk is acceptable.  Omitting <code>cnf</code> from a receipt does not invalidate the receipt; it means that hop lacks independently attested historical presenter binding, which is acceptable for many deployments.<a href="#section-11.6-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2040,7 +2080,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="section-12-2.1.1">they expose which issuers created visible actor hops;<a href="#section-12-2.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-12-2.2">
-          <p id="section-12-2.2.1">they can reveal historical presenter-key identifiers;<a href="#section-12-2.2.1" class="pilcrow">¶</a></p>
+          <p id="section-12-2.2.1">they can reveal historical presenter-key identifiers across requests, enabling cross-session correlation;<a href="#section-12-2.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-12-2.3">
           <p id="section-12-2.3.1">they can reveal internal service identities that a deployment might otherwise have kept visible only to intermediate issuers.<a href="#section-12-2.3.1" class="pilcrow">¶</a></p>
@@ -2055,7 +2095,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="section-12-4.2.1">an introspection server that returns only partial receipt information <span class="bcp14">SHOULD</span> set <code>actor_receipts_complete</code> to <code>false</code>;<a href="#section-12-4.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-12-4.3">
-          <p id="section-12-4.3.1">resource servers <span class="bcp14">SHOULD</span> request or require actor receipts only when they materially improve authorization, audit, or risk controls.<a href="#section-12-4.3.1" class="pilcrow">¶</a></p>
+          <p id="section-12-4.3.1">resource servers <span class="bcp14">SHOULD</span> request or require actor receipts only when they materially improve authorization, audit, or risk controls;<a href="#section-12-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-12-4.4">
+          <p id="section-12-4.4.1">issuers <span class="bcp14">SHOULD</span> omit <code>cnf</code> from receipts by default when the relying parties that will receive the token have not been evaluated for historical presenter-key disclosure risk.<a href="#section-12-4.4.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 </section>
@@ -2158,16 +2201,40 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-13.2-2.4.1">Specification Document(s): This document<a href="#section-13.2-2.4.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-13.2-2.5">
-            <p id="section-13.2-2.5.1">Claim Name: <code>prh</code><a href="#section-13.2-2.5.1" class="pilcrow">¶</a></p>
+            <p id="section-13.2-2.5.1">Claim Name: <code>actor_receipts_complete</code><a href="#section-13.2-2.5.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-13.2-2.6">
-            <p id="section-13.2-2.6.1">Claim Description: Base64url-encoded SHA-256 hash of the immediately preceding (older) receipt in the actor_receipts chain<a href="#section-13.2-2.6.1" class="pilcrow">¶</a></p>
+            <p id="section-13.2-2.6.1">Claim Description: Boolean indicating whether actor_receipts covers every visible hop in the token's act chain<a href="#section-13.2-2.6.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-13.2-2.7">
             <p id="section-13.2-2.7.1">Change Controller: IESG<a href="#section-13.2-2.7.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-13.2-2.8">
             <p id="section-13.2-2.8.1">Specification Document(s): This document<a href="#section-13.2-2.8.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.9">
+            <p id="section-13.2-2.9.1">Claim Name: <code>prh</code><a href="#section-13.2-2.9.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.10">
+            <p id="section-13.2-2.10.1">Claim Description: Base64url-encoded SHA-256 hash of the immediately preceding (older) receipt in the actor_receipts chain<a href="#section-13.2-2.10.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.11">
+            <p id="section-13.2-2.11.1">Change Controller: IESG<a href="#section-13.2-2.11.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.12">
+            <p id="section-13.2-2.12.1">Specification Document(s): This document<a href="#section-13.2-2.12.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.13">
+            <p id="section-13.2-2.13.1">Claim Name: <code>token_id</code><a href="#section-13.2-2.13.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.14">
+            <p id="section-13.2-2.14.1">Claim Description: The jti of the specific token instance that this actor receipt was created for<a href="#section-13.2-2.14.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.15">
+            <p id="section-13.2-2.15.1">Change Controller: IESG<a href="#section-13.2-2.15.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.16">
+            <p id="section-13.2-2.16.1">Specification Document(s): This document<a href="#section-13.2-2.16.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2199,19 +2266,31 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-oauth-protected-resource-me">
 <a href="#section-13.4" class="section-number selfRef">13.4. </a><a href="#name-oauth-protected-resource-me" class="section-name selfRef">OAuth Protected Resource Metadata Registration</a>
         </h3>
-<p id="section-13.4-1">This document requests registration of the following metadata name in the "OAuth Protected Resource Metadata" registry <span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span>:<a href="#section-13.4-1" class="pilcrow">¶</a></p>
+<p id="section-13.4-1">This document requests registration of the following metadata names in the "OAuth Protected Resource Metadata" registry <span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span>:<a href="#section-13.4-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-13.4-2.1">
             <p id="section-13.4-2.1.1">Metadata Name: <code>actor_receipts_required</code><a href="#section-13.4-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-13.4-2.2">
-            <p id="section-13.4-2.2.1">Metadata Description: Indicates that the resource expects delegated requests to carry valid actor receipts<a href="#section-13.4-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-13.4-2.2.1">Metadata Description: Indicates that the resource expects delegated requests to carry valid actor receipts covering at minimum the outermost visible actor hop<a href="#section-13.4-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-13.4-2.3">
             <p id="section-13.4-2.3.1">Change Controller: IESG<a href="#section-13.4-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-13.4-2.4">
             <p id="section-13.4-2.4.1">Specification Document(s): This document<a href="#section-13.4-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.4-2.5">
+            <p id="section-13.4-2.5.1">Metadata Name: <code>actor_receipts_complete_required</code><a href="#section-13.4-2.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.4-2.6">
+            <p id="section-13.4-2.6.1">Metadata Description: Indicates that the resource requires complete receipt coverage for all visible actor hops<a href="#section-13.4-2.6.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.4-2.7">
+            <p id="section-13.4-2.7.1">Change Controller: IESG<a href="#section-13.4-2.7.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.4-2.8">
+            <p id="section-13.4-2.8.1">Specification Document(s): This document<a href="#section-13.4-2.8.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2284,7 +2363,8 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
   "actor_receipts": [
     "&lt;receipt-0&gt;",
     "&lt;receipt-1&gt;"
-  ]
+  ],
+  "actor_receipts_complete": true
 }
 </pre><a href="#section-14.1-2" class="pilcrow">¶</a>
 </div>
@@ -2304,7 +2384,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
   },
   "prh": "0QvKZr5A4XW7N9LQW0u4e7z8k2Kqz6I7xL4V4Vh2nRc",
   "iat": 1776745200,
-  "jti": "c8e29c11-0c3a-4e6f-a0a6-30a52c4a8149"
+  "exp": 1776832000,
+  "jti": "c8e29c11-0c3a-4e6f-a0a6-30a52c4a8149",
+  "token_id": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd"
 }
 </pre><a href="#section-14.1-4" class="pilcrow">¶</a>
 </div>
@@ -2323,7 +2405,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
     "jkt": "AgentJKT"
   },
   "iat": 1776741600,
-  "jti": "1d4c4d30-fb6d-4172-b7eb-775b6b9c2b85"
+  "exp": 1776832000,
+  "jti": "1d4c4d30-fb6d-4172-b7eb-775b6b9c2b85",
+  "token_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 }
 </pre><a href="#section-14.1-6" class="pilcrow">¶</a>
 </div>
@@ -2363,7 +2447,8 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
     "&lt;receipt-tts&gt;",
     "&lt;receipt-0&gt;",
     "&lt;receipt-1&gt;"
-  ]
+  ],
+  "actor_receipts_complete": true
 }
 </pre><a href="#section-14.2-3" class="pilcrow">¶</a>
 </div>
@@ -2383,7 +2468,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
   },
   "prh": "C4zv2FK0kPjxzJz8F7G3mslmbb0TQmVQvls0gA1lV3Q",
   "iat": 1776747000,
-  "jti": "8b1ab6d1-c345-4bd3-8af2-f302d54444b7"
+  "exp": 1776832000,
+  "jti": "8b1ab6d1-c345-4bd3-8af2-f302d54444b7",
+  "token_id": "f0e1d2c3-b4a5-6789-cdef-012345678901"
 }
 </pre><a href="#section-14.2-5" class="pilcrow">¶</a>
 </div>
