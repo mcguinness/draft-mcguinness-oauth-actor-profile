@@ -1054,7 +1054,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </tr></thead>
 <tfoot><tr>
 <td class="left">McGuinness</td>
-<td class="center">Expires 19 October 2026</td>
+<td class="center">Expires 29 October 2026</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1067,12 +1067,12 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <dd class="internet-draft">draft-mcguinness-oauth-actor-profile-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-04-17" class="published">17 April 2026</time>
+<time datetime="2026-04-27" class="published">27 April 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2026-10-19">19 October 2026</time></dd>
+<dd class="expires"><time datetime="2026-10-29">29 October 2026</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1123,7 +1123,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 19 October 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 29 October 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -2079,7 +2079,7 @@ act-object = {
               <p id="section-3.11.2-3.2.1">Verify that <code>act.iss</code> is authoritative for the identifier namespace of <code>act.sub</code> under a trusted framework or local policy.  This step validates namespace authority only; it does not interpret <code>act.iss</code> as the token issuer or as proof that prior hops were independently authenticated.  If <code>act.iss</code> cannot be established as authoritative for the namespace containing <code>act.sub</code>, reject with <code>invalid_grant</code>.  Non-normative examples of local validation approaches are in <a href="#act-iss-authority-guidance" class="auto internal xref">Section 11.3</a>; elaboration specific to JWT assertion grant inputs is in <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a> step 3.<a href="#section-3.11.2-3.2.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-3.11.2-3.3">
-              <p id="section-3.11.2-3.3.1">When the applicable processing path introduces a new outermost actor via C1 (<a href="#actor-chain-algorithm" class="auto internal xref">Section 3.11</a>), the AS <span class="bcp14">MUST</span> evaluate whether that actor (<code>act.sub</code>) is authorized to exercise delegation on behalf of <code>sub</code> under local policy (for example, a pre-registered delegation grant, explicit consent record, or policy rule covering the acting party).  When the processing path preserves an existing chain from a validated, trusted upstream issuer via C2, delegation was evaluated upstream; the AS <span class="bcp14">SHOULD</span> evaluate the preserved relationship under local policy but is not required to do so for baseline interoperability.  In either case, if AS policy explicitly prohibits the actor, reject with <code>access_denied</code>; if the required delegation relationship cannot be confirmed, reject with <code>actor_unauthorized</code>.  Elaboration specific to JWT assertion grant inputs is in <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a> step 4.<a href="#section-3.11.2-3.3.1" class="pilcrow">¶</a></p>
+              <p id="section-3.11.2-3.3.1">When the applicable processing path introduces a new outermost actor via C1 (<a href="#actor-chain-algorithm" class="auto internal xref">Section 3.11</a>), the AS <span class="bcp14">MUST</span> evaluate whether that actor (<code>act.sub</code>) is authorized to exercise delegation on behalf of <code>sub</code> under local policy (for example, a pre-registered delegation grant, explicit consent record, or policy rule covering the acting party).  When the processing path preserves an existing chain from a validated, trusted upstream issuer via C2, delegation was evaluated upstream; the AS <span class="bcp14">SHOULD</span> evaluate the preserved relationship under local policy but is not required to do so for baseline interoperability.  If the required delegation relationship is prohibited by policy or cannot be confirmed, reject with <code>actor_unauthorized</code>.  Elaboration specific to JWT assertion grant inputs is in <a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a> step 4.<a href="#section-3.11.2-3.3.1" class="pilcrow">¶</a></p>
 </li>
           </ol>
 <p id="section-3.11.2-4"><strong>V3 — Optional local validation of inner actors.</strong>  Interoperable processing under this profile is defined around <code>sub</code> and the outermost <code>act.sub</code>.  If local policy additionally uses an inner <code>act</code> object as an input to issuance decisions, the AS <span class="bcp14">SHOULD</span> apply the same three sub-steps as V2 for that entry, including delegation-confirmation only when the current processing path or local policy requires it for that entry.  Such use of inner actors is deployment-specific.<a href="#section-3.11.2-4" class="pilcrow">¶</a></p>
@@ -2547,10 +2547,7 @@ PreserveChain(inbound_chain):
 In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-4.2-2.4.4.1">
-                <p id="section-4.2-2.4.4.1.1">If AS policy explicitly prohibits the actor: reject with <code>access_denied</code>.<a href="#section-4.2-2.4.4.1.1" class="pilcrow">¶</a></p>
-</li>
-              <li class="normal" id="section-4.2-2.4.4.2">
-                <p id="section-4.2-2.4.4.2.1">If the delegation relationship cannot be confirmed: reject with <code>actor_unauthorized</code>.<a href="#section-4.2-2.4.4.2.1" class="pilcrow">¶</a></p>
+                <p id="section-4.2-2.4.4.1.1">If the delegation relationship is prohibited by AS policy or cannot be confirmed: reject with <code>actor_unauthorized</code>.<a href="#section-4.2-2.4.4.1.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 <ul class="normal ulEmpty">
@@ -3232,7 +3229,7 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
               <p id="section-6.4.2-5.3.1">Bearer-to-PoP upgrade is therefore performed by issuing a sender-constrained output token in presenter-rebind mode even when the inbound <code>subject_token</code> carried no top-level <code>cnf</code>.<a href="#section-6.4.2-5.3.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
-<p id="section-6.4.2-6">If a Token Exchange request explicitly seeks a delegated output, for example by supplying an <code>actor_token</code> or by presenting a <code>subject_token</code> that already carries <code>act</code>, and the AS cannot validate the actor information, it <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>.  If the AS can validate the actor information but cannot establish or confirm the required delegation basis, it <span class="bcp14">MUST</span> reject the request with <code>actor_unauthorized</code> unless local policy explicitly denies the relationship, in which case it <span class="bcp14">MUST</span> reject the request with <code>access_denied</code>.  The AS <span class="bcp14">MUST NOT</span> issue a non-delegated JWT access token in place of the requested delegated output.<a href="#section-6.4.2-6" class="pilcrow">¶</a></p>
+<p id="section-6.4.2-6">If a Token Exchange request explicitly seeks a delegated output, for example by supplying an <code>actor_token</code> or by presenting a <code>subject_token</code> that already carries <code>act</code>, and the AS cannot validate the actor information, it <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>.  If the AS can validate the actor information but cannot establish or confirm the required delegation basis, or if local policy prohibits the relationship, it <span class="bcp14">MUST</span> reject the request with <code>actor_unauthorized</code>.  The AS <span class="bcp14">MUST NOT</span> issue a non-delegated JWT access token in place of the requested delegated output.<a href="#section-6.4.2-6" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.4.2-7">
 <li id="section-6.4.2-7.1">
               <p id="section-6.4.2-7.1.1">When the issued access token represents delegation per <a href="#token-represents-delegation" class="auto internal xref">Section 3.10</a>, the AS <span class="bcp14">MUST</span> include an <code>act</code> claim that preserves or extends the inbound delegation chain per steps 3 and 4.  The AS <span class="bcp14">MUST NOT</span> silently drop actor information.  If the inbound credential carries no <code>act</code>, no validated <code>actor_token</code> is present, and no independent delegation basis exists, the AS <span class="bcp14">MUST NOT</span> include <code>act</code> in the issued access token.<a href="#section-6.4.2-7.1.1" class="pilcrow">¶</a></p>
@@ -3677,10 +3674,10 @@ For inner <code>act</code> objects in the inbound chain:<a href="#section-7.4-3.
             <p id="section-7.4-3.5.1">The TTS <span class="bcp14">MUST</span> determine whether the request is presenter continuation or presenter rebind:<a href="#section-7.4-3.5.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-7.4-3.5.2.1">
-                <p id="section-7.4-3.5.2.1.1"><strong>Presenter continuation</strong>: The TTS <span class="bcp14">MUST</span> authenticate the requester as the same current presenter as the inbound token.  When the inbound token carries <code>act</code>, the authenticated requester <span class="bcp14">MUST</span> correspond to the outermost (<code>act.iss</code>, <code>act.sub</code>) pair or the TTS <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>.  If local policy explicitly prohibits that (<code>sub</code>, current presenter) relationship, the TTS <span class="bcp14">MUST</span> reject the request with <code>access_denied</code>.  If the required actor relationship is absent or cannot be confirmed from the current inputs and policy, the TTS <span class="bcp14">MUST</span> reject the request with <code>actor_unauthorized</code>.<a href="#section-7.4-3.5.2.1.1" class="pilcrow">¶</a></p>
+                <p id="section-7.4-3.5.2.1.1"><strong>Presenter continuation</strong>: The TTS <span class="bcp14">MUST</span> authenticate the requester as the same current presenter as the inbound token.  When the inbound token carries <code>act</code>, the authenticated requester <span class="bcp14">MUST</span> correspond to the outermost (<code>act.iss</code>, <code>act.sub</code>) pair or the TTS <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>.  If the required actor relationship is prohibited by local policy, absent, or cannot be confirmed from the current inputs and policy, the TTS <span class="bcp14">MUST</span> reject the request with <code>actor_unauthorized</code>.<a href="#section-7.4-3.5.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-7.4-3.5.2.2">
-                <p id="section-7.4-3.5.2.2.1"><strong>Presenter rebind</strong>: The TTS <span class="bcp14">MUST</span> validate a direct presenter <code>actor_token</code> for the new presenter.  Before creating a new outermost <code>act</code> object, the TTS <span class="bcp14">MUST</span> evaluate whether the newly authenticated presenter is authorized under local policy to act on behalf of <code>sub</code> for the requested transaction.  If local policy explicitly prohibits that (<code>sub</code>, new presenter) relationship, the TTS <span class="bcp14">MUST</span> reject the request with <code>access_denied</code>.  If the required actor relationship is absent or cannot be confirmed from the current inputs and policy, the TTS <span class="bcp14">MUST</span> reject the request with <code>actor_unauthorized</code>.<a href="#section-7.4-3.5.2.2.1" class="pilcrow">¶</a></p>
+                <p id="section-7.4-3.5.2.2.1"><strong>Presenter rebind</strong>: The TTS <span class="bcp14">MUST</span> validate a direct presenter <code>actor_token</code> for the new presenter.  Before creating a new outermost <code>act</code> object, the TTS <span class="bcp14">MUST</span> evaluate whether the newly authenticated presenter is authorized under local policy to act on behalf of <code>sub</code> for the requested transaction.  If the required actor relationship is prohibited by local policy, absent, or cannot be confirmed from the current inputs and policy, the TTS <span class="bcp14">MUST</span> reject the request with <code>actor_unauthorized</code>.<a href="#section-7.4-3.5.2.2.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 <p id="section-7.4-3.5.3">
@@ -3761,24 +3758,24 @@ The TTS <span class="bcp14">SHOULD</span> set <code>act.sub_profile</code> based
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">
-              <code>access_denied</code>
+              <code>invalid_scope</code>
 </td>
-            <td class="text-left" rowspan="1" colspan="1">Definitive policy prohibition: the actor (<code>act.sub</code>) is explicitly denied the right to act for the subject (<code>sub</code>) for the requested resource or scope</td>
-            <td class="text-left" rowspan="1" colspan="1">—</td>
-            <td class="text-left" rowspan="1" colspan="1">Local TTS policy explicitly prohibits the requesting workload from acting in the delegation chain for the identified subject</td>
+            <td class="text-left" rowspan="1" colspan="1">Scope reduction under <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> or local policy leaves no effective scope for reasons unrelated to actor authorization</td>
+            <td class="text-left" rowspan="1" colspan="1">Requested scope is not available after ordinary Token Exchange scope reduction</td>
+            <td class="text-left" rowspan="1" colspan="1">Requested transaction scope is not available under TTS policy</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">
               <code>actor_unauthorized</code>
 </td>
-            <td class="text-left" rowspan="1" colspan="1">Remediable actor-policy mismatch: the (<code>sub</code>, <code>act.sub</code>) pair fails a policy check that is not a definitive prohibition — for example, the actor's <code>sub_profile</code> is not in the accepted set, or the required delegation relationship cannot be confirmed from current inputs</td>
-            <td class="text-left" rowspan="1" colspan="1">—</td>
+            <td class="text-left" rowspan="1" colspan="1">Actor-policy failure: the (<code>sub</code>, <code>act.sub</code>) pair fails a policy check, the actor's <code>sub_profile</code> is not in the accepted set, the required delegation relationship cannot be confirmed from current inputs, or local policy prohibits the actor relationship</td>
+            <td class="text-left" rowspan="1" colspan="1">Includes policy failures for a newly introduced actor or a preserved actor chain evaluated by the AS</td>
             <td class="text-left" rowspan="1" colspan="1">Includes the newly authenticated presenter the TTS would install as the new outermost actor</td>
           </tr>
         </tbody>
       </table>
 <p id="section-8-4">The <code>error_description</code> field <span class="bcp14">SHOULD</span> be included and <span class="bcp14">SHOULD</span> describe which aspect of actor-profile processing failed, to the extent permitted by the server's security and privacy policy.<a href="#section-8-4" class="pilcrow">¶</a></p>
-<p id="section-8-5"><code>actor_unauthorized</code> is distinct from <code>access_denied</code>.  <code>access_denied</code> signals an explicit deny that is final; <code>actor_unauthorized</code> signals an input-contingent mismatch that may be recoverable.<a href="#section-8-5" class="pilcrow">¶</a></p>
+<p id="section-8-5"><code>actor_unauthorized</code> is distinct from <code>invalid_scope</code>.  <code>invalid_scope</code> signals that the requested scope is unavailable independent of actor identity, while <code>actor_unauthorized</code> signals that actor identity, actor type, or the subject-actor relationship caused the authorization failure.  Some <code>actor_unauthorized</code> failures are recoverable by using a different actor credential, actor type, or delegation grant; others are definitive local-policy prohibitions.<a href="#section-8-5" class="pilcrow">¶</a></p>
 <p id="section-8-6">The appropriate remediation depends on which server returned the error:<a href="#section-8-6" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8-7.1">
@@ -3802,11 +3799,11 @@ The TTS <span class="bcp14">SHOULD</span> set <code>act.sub_profile</code> based
           <p id="section-8-7.2.1"><strong>From a resource server</strong>: The token was already issued but failed actor authorization at the RS.  Steps 1 and 2 above do not apply because the problem is at the RS, not at token issuance.  The client <span class="bcp14">SHOULD</span> obtain a new token using a different actor credential or a different grant path, or consult deployment documentation to determine whether any remediation path exists for this RS.<a href="#section-8-7.2.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-8-8">Example of a definitive prohibition:<a href="#section-8-8" class="pilcrow">¶</a></p>
+<p id="section-8-8">Example of a definitive actor-policy prohibition:<a href="#section-8-8" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-8-9">
 <pre>
 {
-  "error": "access_denied",
+  "error": "actor_unauthorized",
   "error_description": "actor is explicitly denied access for this subject"
 }
 </pre><a href="#section-8-9" class="pilcrow">¶</a>
@@ -4189,7 +4186,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
           <h4 id="name-transaction-token-capabilit">
 <a href="#section-10.2.4" class="section-number selfRef">10.2.4. </a><a href="#name-transaction-token-capabilit" class="section-name selfRef">Transaction Token Capability Signaling</a>
           </h4>
-<p id="section-10.2.4-1">Transaction Token support is advertised using the <code>transaction_token_supported</code> AS metadata parameter and the <code>transaction_token_required</code> Protected Resource Metadata parameter, both defined in <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-08#section-8" class="relref">Section 8</a></span>.  This document does not redefine those parameters.  When an AS or TTS can issue Transaction Tokens as delegated outputs under this profile, it <span class="bcp14">MUST</span> list <code>urn:ietf:params:oauth:token-type:txn_token</code> in <code>actor_profile_token_types_supported</code>.<a href="#section-10.2.4-1" class="pilcrow">¶</a></p>
+<p id="section-10.2.4-1">Transaction Token support under this profile is advertised through <code>actor_profile_token_types_supported</code>.  When an AS or TTS can issue Transaction Tokens as delegated outputs under this profile, it <span class="bcp14">MUST</span> list <code>urn:ietf:params:oauth:token-type:txn_token</code> in <code>actor_profile_token_types_supported</code>.  This document does not define any separate Transaction Token discovery parameter.<a href="#section-10.2.4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="capability-signaling-usage">
@@ -4391,7 +4388,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <p id="section-11.5-1">Delegated tokens carry the combined exposure surface of all principals in the delegation chain.  A single issued token may authorize actions by an actor whose delegation grant has since been revoked; the token remains valid until its <code>exp</code> time.  Because revocation cannot retroactively invalidate already-issued tokens, lifetime is the primary control.<a href="#section-11.5-1" class="pilcrow">¶</a></p>
 <p id="section-11.5-2">Deployments <span class="bcp14">SHOULD</span> use shorter token lifetimes for delegated tokens than for non-delegated tokens of equivalent scope.  In cross-domain flows, the upstream delegation artifact (e.g., an ID-JAG or delegated access token) limits how long the downstream actor can continue to request tokens without re-authenticating the delegation chain.  Transaction Tokens are already expected to be short-lived; JWT access tokens and JWT assertion grants in multi-hop chains <span class="bcp14">SHOULD</span> be issued with lifetimes no longer than necessary to complete the task they authorize.<a href="#section-11.5-2" class="pilcrow">¶</a></p>
 <p id="section-11.5-3">Deployments with deep chains (three or more nested <code>act</code> objects) <span class="bcp14">SHOULD</span> account for the fact that any revocation event at any hop in the chain cannot propagate to already-issued downstream tokens.  In environments with significant revocation risk — for example, AI agent delegation chains where user consent can be withdrawn at any time — deployments <span class="bcp14">SHOULD</span> combine short-lived tokens with active introspection at sensitive resource servers rather than relying solely on <code>exp</code>.<a href="#section-11.5-3" class="pilcrow">¶</a></p>
-<p id="section-11.5-4">General guidance on access token lifetime and security tradeoffs is provided in <span>[<a href="#I-D.ietf-oauth-security-topics" class="cite xref">I-D.ietf-oauth-security-topics</a>]</span>.<a href="#section-11.5-4" class="pilcrow">¶</a></p>
+<p id="section-11.5-4">General guidance on access token lifetime and security tradeoffs is provided in <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span>.<a href="#section-11.5-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -4487,7 +4484,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <a href="#section-12.7" class="section-number selfRef">12.7. </a><a href="#name-delegation-revocation" class="section-name selfRef">Delegation Revocation</a>
         </h3>
 <p id="section-12.7-1">The revocation-related requirements in this section are limited to how this profile interacts with already-issued tokens and refresh behavior.<a href="#section-12.7-1" class="pilcrow">¶</a></p>
-<p id="section-12.7-2">Token revocation (<span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span>) applies to individual tokens but does not revoke an underlying delegation relationship or invalidate already-issued downstream tokens in a delegation chain.  When Alice revokes her delegation to an agent, access tokens already issued to downstream actors remain valid until their <code>exp</code> time.  Short token lifetimes are the primary mitigation; see <span>[<a href="#I-D.ietf-oauth-security-topics" class="cite xref">I-D.ietf-oauth-security-topics</a>]</span> for general access token lifetime guidance.<a href="#section-12.7-2" class="pilcrow">¶</a></p>
+<p id="section-12.7-2">Token revocation (<span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span>) applies to individual tokens but does not revoke an underlying delegation relationship or invalidate already-issued downstream tokens in a delegation chain.  When Alice revokes her delegation to an agent, access tokens already issued to downstream actors remain valid until their <code>exp</code> time.  Short token lifetimes are the primary mitigation; see <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> for general access token lifetime guidance.<a href="#section-12.7-2" class="pilcrow">¶</a></p>
 <p id="section-12.7-3">The AS <span class="bcp14">SHOULD</span> refuse to issue new tokens for a (subject, actor) pair when it has authoritative knowledge that the delegation relationship has been revoked.  Implementations <span class="bcp14">MUST NOT</span> use delegation chain depth as a rationale for skipping revocation checks.<a href="#section-12.7-3" class="pilcrow">¶</a></p>
 <p id="section-12.7-4">When a deployment uses long-lived delegated refresh behavior, revocation of the delegation relationship may take effect later than it would in a model that requires re-presentation of a current upstream delegation artifact at each token request.  This document does not standardize refresh-token revocation or revalidation policy; deployments should account for that tradeoff explicitly.<a href="#section-12.7-4" class="pilcrow">¶</a></p>
 <p id="section-12.7-5">The internal mechanism by which an AS tracks delegation state (whether a formal registry, a consent store, a policy engine, or another form) is a deployment and product decision outside the scope of this document.  Resource servers in security-sensitive deployments may use token introspection (<span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>, <a href="#token-introspection" class="auto internal xref">Section 9.5</a>) when request-time revocation state is needed, or may rely on short token lifetimes; the choice of revocation strategy is deployment-specific.<a href="#section-12.7-5" class="pilcrow">¶</a></p>
@@ -4896,10 +4893,6 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <dt id="I-D.ietf-oauth-identity-assertion-authz-grant">[I-D.ietf-oauth-identity-assertion-authz-grant]</dt>
         <dd>
 <span class="refAuthor">Parecki, A.</span>, <span class="refAuthor">McGuinness, K.</span>, and <span class="refAuthor">B. Campbell</span>, <span class="refTitle">"Identity Assertion JWT Authorization Grant"</span>, <time datetime="2026-04-22" class="refDate">22 April 2026</time>, <span>&lt;<a href="https://www.ietf.org/archive/id/draft-ietf-oauth-identity-assertion-authz-grant-03.txt">https://www.ietf.org/archive/id/draft-ietf-oauth-identity-assertion-authz-grant-03.txt</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="I-D.ietf-oauth-security-topics">[I-D.ietf-oauth-security-topics]</dt>
-        <dd>
-<span class="refAuthor">Lodderstedt, T.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Labunets, A.</span>, and <span class="refAuthor">D. Fett</span>, <span class="refTitle">"OAuth 2.0 Security Best Current Practice"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-security-topics-29</span>, <time datetime="2024-06-03" class="refDate">3 June 2024</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics-29">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics-29</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="OpenID.Core">[OpenID.Core]</dt>
         <dd>

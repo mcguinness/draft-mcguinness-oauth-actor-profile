@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                           17 April 2026
-Expires: 19 October 2026
+Intended status: Standards Track                           27 April 2026
+Expires: 29 October 2026
 
 
                    OAuth Actor Profile for Delegation
@@ -68,7 +68,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 19 October 2026.
+   This Internet-Draft will expire on 29 October 2026.
 
 Copyright Notice
 
@@ -965,9 +965,8 @@ Table of Contents
        chain from a validated, trusted upstream issuer via C2,
        delegation was evaluated upstream; the AS SHOULD evaluate the
        preserved relationship under local policy but is not required to
-       do so for baseline interoperability.  In either case, if AS
-       policy explicitly prohibits the actor, reject with access_denied;
-       if the required delegation relationship cannot be confirmed,
+       do so for baseline interoperability.  If the required delegation
+       relationship is prohibited by policy or cannot be confirmed,
        reject with actor_unauthorized.  Elaboration specific to JWT
        assertion grant inputs is in Section 4.2 step 4.
 
@@ -1500,11 +1499,8 @@ AddOutermostActor(inbound_chain, new_actor):
 
        In either case:
 
-       *  If AS policy explicitly prohibits the actor: reject with
-          access_denied.
-
-       *  If the delegation relationship cannot be confirmed: reject
-          with actor_unauthorized.
+       *  If the delegation relationship is prohibited by AS policy or
+          cannot be confirmed: reject with actor_unauthorized.
 
           Note: The form of delegation authorization is not standardized
           by this profile.
@@ -2484,11 +2480,10 @@ AddOutermostActor(inbound_chain, new_actor):
    that already carries act, and the AS cannot validate the actor
    information, it MUST reject the request with invalid_grant.  If the
    AS can validate the actor information but cannot establish or confirm
-   the required delegation basis, it MUST reject the request with
-   actor_unauthorized unless local policy explicitly denies the
-   relationship, in which case it MUST reject the request with
-   access_denied.  The AS MUST NOT issue a non-delegated JWT access
-   token in place of the requested delegated output.
+   the required delegation basis, or if local policy prohibits the
+   relationship, it MUST reject the request with actor_unauthorized.
+   The AS MUST NOT issue a non-delegated JWT access token in place of
+   the requested delegated output.
 
    1.  When the issued access token represents delegation per
        Section 3.10, the AS MUST include an act claim that preserves or
@@ -2976,22 +2971,20 @@ AddOutermostActor(inbound_chain, new_actor):
           When the inbound token carries act, the authenticated
           requester MUST correspond to the outermost (act.iss, act.sub)
           pair or the TTS MUST reject the request with invalid_grant.
-          If local policy explicitly prohibits that (sub, current
-          presenter) relationship, the TTS MUST reject the request with
-          access_denied.  If the required actor relationship is absent
-          or cannot be confirmed from the current inputs and policy, the
-          TTS MUST reject the request with actor_unauthorized.
+          If the required actor relationship is prohibited by local
+          policy, absent, or cannot be confirmed from the current inputs
+          and policy, the TTS MUST reject the request with
+          actor_unauthorized.
 
        *  *Presenter rebind*: The TTS MUST validate a direct presenter
           actor_token for the new presenter.  Before creating a new
           outermost act object, the TTS MUST evaluate whether the newly
           authenticated presenter is authorized under local policy to
-          act on behalf of sub for the requested transaction.  If local
-          policy explicitly prohibits that (sub, new presenter)
-          relationship, the TTS MUST reject the request with
-          access_denied.  If the required actor relationship is absent
-          or cannot be confirmed from the current inputs and policy, the
-          TTS MUST reject the request with actor_unauthorized.
+          act on behalf of sub for the requested transaction.  If the
+          required actor relationship is prohibited by local policy,
+          absent, or cannot be confirmed from the current inputs and
+          policy, the TTS MUST reject the request with
+          actor_unauthorized.
 
        If the current inputs satisfy neither presenter-continuation nor
        presenter-rebind requirements, the TTS MUST reject the request
@@ -3091,44 +3084,40 @@ AddOutermostActor(inbound_chain, new_actor):
    |                  |delegation    |                   |per step 4   |
    |                  |relationship  |                   |             |
    +------------------+--------------+-------------------+-------------+
-   |access_denied     |Definitive    |—                  |Local TTS    |
-   |                  |policy        |                   |policy       |
-   |                  |prohibition:  |                   |explicitly   |
-   |                  |the actor     |                   |prohibits the|
-   |                  |(act.sub) is  |                   |requesting   |
-   |                  |explicitly    |                   |workload from|
-   |                  |denied the    |                   |acting in the|
-   |                  |right to act  |                   |delegation   |
-   |                  |for the       |                   |chain for the|
-   |                  |subject (sub) |                   |identified   |
-   |                  |for the       |                   |subject      |
-   |                  |requested     |                   |             |
-   |                  |resource or   |                   |             |
-   |                  |scope         |                   |             |
+   |invalid_scope     |Scope         |Requested scope is |Requested    |
+   |                  |reduction     |not available after|transaction  |
+   |                  |under         |ordinary Token     |scope is not |
+   |                  |[RFC8693] or  |Exchange scope     |available    |
+   |                  |local policy  |reduction          |under TTS    |
+   |                  |leaves no     |                   |policy       |
+   |                  |effective     |                   |             |
+   |                  |scope for     |                   |             |
+   |                  |reasons       |                   |             |
+   |                  |unrelated to  |                   |             |
+   |                  |actor         |                   |             |
+   |                  |authorization |                   |             |
    +------------------+--------------+-------------------+-------------+
-   |actor_unauthorized|Remediable    |—                  |Includes the |
-   |                  |actor-policy  |                   |newly        |
-   |                  |mismatch: the |                   |authenticated|
-   |                  |(sub,         |                   |presenter the|
-   |                  |act.sub) pair |                   |TTS would    |
-   |                  |fails a       |                   |install as   |
-   |                  |policy check  |                   |the new      |
-   |                  |that is not a |                   |outermost    |
-   |                  |definitive    |                   |actor        |
-   |                  |prohibition — |                   |             |
-   |                  |for example,  |                   |             |
-   |                  |the actor's   |                   |             |
-   |                  |sub_profile   |                   |             |
-   |                  |is not in the |                   |             |
+   |actor_unauthorized|Actor-policy  |Includes policy    |Includes the |
+   |                  |failure: the  |failures for a     |newly        |
+   |                  |(sub,         |newly introduced   |authenticated|
+   |                  |act.sub) pair |actor or a         |presenter the|
+   |                  |fails a       |preserved actor    |TTS would    |
+   |                  |policy check, |chain evaluated by |install as   |
+   |                  |the actor's   |the AS             |the new      |
+   |                  |sub_profile   |                   |outermost    |
+   |                  |is not in the |                   |actor        |
    |                  |accepted set, |                   |             |
-   |                  |or the        |                   |             |
-   |                  |required      |                   |             |
+   |                  |the required  |                   |             |
    |                  |delegation    |                   |             |
    |                  |relationship  |                   |             |
    |                  |cannot be     |                   |             |
    |                  |confirmed     |                   |             |
    |                  |from current  |                   |             |
-   |                  |inputs        |                   |             |
+   |                  |inputs, or    |                   |             |
+   |                  |local policy  |                   |             |
+   |                  |prohibits the |                   |             |
+   |                  |actor         |                   |             |
+   |                  |relationship  |                   |             |
    +------------------+--------------+-------------------+-------------+
 
                                   Table 6
@@ -3137,9 +3126,13 @@ AddOutermostActor(inbound_chain, new_actor):
    which aspect of actor-profile processing failed, to the extent
    permitted by the server's security and privacy policy.
 
-   actor_unauthorized is distinct from access_denied.  access_denied
-   signals an explicit deny that is final; actor_unauthorized signals an
-   input-contingent mismatch that may be recoverable.
+   actor_unauthorized is distinct from invalid_scope.  invalid_scope
+   signals that the requested scope is unavailable independent of actor
+   identity, while actor_unauthorized signals that actor identity, actor
+   type, or the subject-actor relationship caused the authorization
+   failure.  Some actor_unauthorized failures are recoverable by using a
+   different actor credential, actor type, or delegation grant; others
+   are definitive local-policy prohibitions.
 
    The appropriate remediation depends on which server returned the
    error:
@@ -3174,10 +3167,10 @@ AddOutermostActor(inbound_chain, new_actor):
       documentation to determine whether any remediation path exists for
       this RS.
 
-   Example of a definitive prohibition:
+   Example of a definitive actor-policy prohibition:
 
    {
-     "error": "access_denied",
+     "error": "actor_unauthorized",
      "error_description": "actor is explicitly denied access for this subject"
    }
 
@@ -3767,14 +3760,12 @@ AddOutermostActor(inbound_chain, new_actor):
 
 10.2.4.  Transaction Token Capability Signaling
 
-   Transaction Token support is advertised using the
-   transaction_token_supported AS metadata parameter and the
-   transaction_token_required Protected Resource Metadata parameter,
-   both defined in [I-D.ietf-oauth-transaction-tokens], Section 8.  This
-   document does not redefine those parameters.  When an AS or TTS can
-   issue Transaction Tokens as delegated outputs under this profile, it
-   MUST list urn:ietf:params:oauth:token-type:txn_token in
-   actor_profile_token_types_supported.
+   Transaction Token support under this profile is advertised through
+   actor_profile_token_types_supported.  When an AS or TTS can issue
+   Transaction Tokens as delegated outputs under this profile, it MUST
+   list urn:ietf:params:oauth:token-type:txn_token in
+   actor_profile_token_types_supported.  This document does not define
+   any separate Transaction Token discovery parameter.
 
 10.2.5.  Capability Signaling Usage
 
@@ -4115,7 +4106,7 @@ AddOutermostActor(inbound_chain, new_actor):
    solely on exp.
 
    General guidance on access token lifetime and security tradeoffs is
-   provided in [I-D.ietf-oauth-security-topics].
+   provided in [RFC9700].
 
 12.  Security Considerations
 
@@ -4275,9 +4266,8 @@ AddOutermostActor(inbound_chain, new_actor):
    already-issued downstream tokens in a delegation chain.  When Alice
    revokes her delegation to an agent, access tokens already issued to
    downstream actors remain valid until their exp time.  Short token
-   lifetimes are the primary mitigation; see
-   [I-D.ietf-oauth-security-topics] for general access token lifetime
-   guidance.
+   lifetimes are the primary mitigation; see [RFC9700] for general
+   access token lifetime guidance.
 
    The AS SHOULD refuse to issue new tokens for a (subject, actor) pair
    when it has authoritative knowledge that the delegation relationship
@@ -4772,14 +4762,6 @@ AddOutermostActor(inbound_chain, new_actor):
               Assertion JWT Authorization Grant", 22 April 2026,
               <https://www.ietf.org/archive/id/draft-ietf-oauth-
               identity-assertion-authz-grant-03.txt>.
-
-   [I-D.ietf-oauth-security-topics]
-              Lodderstedt, T., Bradley, J., Labunets, A., and D. Fett,
-              "OAuth 2.0 Security Best Current Practice", Work in
-              Progress, Internet-Draft, draft-ietf-oauth-security-
-              topics-29, 3 June 2024,
-              <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
-              security-topics-29>.
 
    [OpenID.Core]
               OpenID Foundation, "OpenID Connect Core 1.0", 8 November
