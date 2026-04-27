@@ -21,8 +21,9 @@ Abstract
    assertion grants (RFC 7523), JWT access tokens (RFC 9068), and
    Transaction Tokens, nor for classifying actor entity types or
    signaling support between authorization servers and resource servers.
-   The result is inconsistent actor representation and interoperability
-   gaps that force deployments to rely on proprietary conventions.
+   The result is inconsistent actor representation and actor-
+   representation interoperability gaps that force deployments to rely
+   on proprietary conventions.
 
    This document defines the OAuth Actor Profile for Delegation.  It
    specifies a common act claim structure extended with sub_profile for
@@ -2122,52 +2123,60 @@ AddOutermostActor(inbound_chain, new_actor):
 
 6.2.3.  may_act
 
-   The may_act claim is defined by [RFC8693], Section 4.4 for JWTs and
-   token introspection responses.  It carries a JSON object with at
-   least a sub member identifying a party that is preauthorized to use
-   the token as a subject_token in Token Exchange and to become the
-   actor in the resulting token.  This document does not define may_act
-   as an actor-identity source, but it does define may_act as an
-   interoperable delegation-authorization input for Token Exchange
-   requests that also supply a validated actor_token.
+   The may_act claim ([RFC8693], Section 4.4) pre-authorizes a specific
+   party to act on behalf of the subject in a subsequent Token Exchange.
+   This document defines may_act as an interoperable delegation-
+   authorization input: when present in a validated subject_token, it
+   MAY satisfy the delegation-authorization check in V2 step 3 of
+   Section 3.11 without a separately pre-registered grant.  In no case
+   is may_act itself the source of actor identity, and it MUST NOT be
+   propagated into any output token.
 
-   When a validated subject_token carries a may_act claim, an AS
-   performing Token Exchange MAY treat it as satisfying the delegation-
-   authorization check in V2 step 3 of Section 3.11 — without requiring
-   a separately pre-registered grant — when all of the following hold:
+   Two pre-conditions apply regardless of how the Token Exchange request
+   is structured:
 
    1.  The subject_token issuer is trusted under local policy to assert
        may_act on behalf of the subject.
 
-   2.  A validated actor_token is present in the same request, and actor
-       identity has been derived from it per the applicable type-
-       specific rules in this document.
+   2.  The canonical may_act identifier matches the derived actor
+       identity under Identifier Reconciliation (Section 2).
 
-   3.  The canonical actor identifier derived from the actor_token — the
-       (act.iss, act.sub) pair the AS would set in the outermost act —
-       refers to the same entity as the may_act.sub value in the
-       subject_token, under a trusted local namespace mapping rule
-       applicable to the two identifier values.  String equality of
-       may_act.sub with the derived act.sub is necessary but not
-       sufficient when the two values use different identifier
-       namespaces; the AS MUST apply configured mapping rules and MUST
-       NOT infer equivalence from naming similarity alone.
+   Because [RFC8693] Section 4.4 defines may_act with only a sub member
+   and no iss, the namespace authority for may_act.sub is taken to be
+   subject_token.iss; the canonical may_act identifier is therefore
+   (subject_token.iss, may_act.sub).  The AS MUST apply configured
+   mapping rules and MUST NOT infer equivalence from naming similarity
+   alone.
 
-   may_act MUST NOT be used as the source of actor identity.  Actor
-   identity MUST be derived from the actor_token or from an inbound act
-   chain in the subject_token, not from may_act.  may_act MUST NOT
-   replace or override actor identity derived under this document from a
-   validated actor_token, inherited act chain processing, or another
-   current-exchange input.  may_act MUST NOT be propagated into any
-   output token type defined by this document.
+   How actor identity is derived and how condition 2 is evaluated
+   depends on what the request supplies:
 
-   When may_act is absent or does not match the derived actor identity,
-   the AS MUST fall back to the delegation-authorization check in V2
-   step 3 and satisfy it through another recognized delegation basis
-   (pre-registered grant, consent record, or applicable policy rule).
-   The AS MUST NOT treat the mere presence of may_act in the
-   subject_token as authorization for any actor other than the one whose
-   canonical identity matches it.
+   *  actor_token present: actor identity is derived from the
+      actor_token per the applicable type-specific rules in this
+      document, yielding the (act.iss, act.sub) pair.  The AS applies
+      Identifier Reconciliation to determine whether (subject_token.iss,
+      may_act.sub) refers to the same entity as (act.iss, act.sub).
+      may_act MUST NOT override the actor identity derived from the
+      actor_token.
+
+   *  No actor_token present: the requesting client MUST be a
+      confidential client that has authenticated in the request; public
+      clients MUST NOT use this path.  Actor identity is derived from
+      the authenticated client credential.  The AS applies Identifier
+      Reconciliation to determine whether (subject_token.iss,
+      may_act.sub) refers to the same entity as the authenticated
+      client, and sets the outermost act using the canonical identifier
+      of the authenticated client.  This path enables the pre-
+      authorization use case of [RFC8693], where the subject token pre-
+      authorizes a specific client and that client presents it directly
+      without a separate actor_token.
+
+   When may_act is absent or the conditions above are not met, the AS
+   MUST satisfy the delegation-authorization check through another
+   recognized basis (pre-registered grant, consent record, or applicable
+   policy rule).  The AS MUST NOT treat the mere presence of may_act as
+   authorization for any actor other than the one whose canonical
+   identity matches it.
 
 6.3.  Actor Tokens
 
