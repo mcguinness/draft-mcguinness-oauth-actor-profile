@@ -1095,7 +1095,7 @@ A Transaction Token contains the following claims.  Claims marked REQUIRED are d
 `rctx` (OPTIONAL):
 : Request context information.  Defined sub-claims are `req_ip` (originating IP address) and `authn` (authentication method used).
 
-The following table summarizes the claims in a Transaction Token as profiled by this document.
+The following table summarizes the claims in a Transaction Token as profiled by this document.  REQUIRED status for claims other than `iss` and `act` follows {{I-D.ietf-oauth-transaction-tokens}}; this profile adds requirements only for `iss` (when `act` is present) and `act` (when the token is delegated).
 
 | Claim | Status | Actor-profile relevance |
 |-------|--------|------------------------|
@@ -1256,12 +1256,18 @@ The following table defines the four actor-profile error codes and their trigger
 
 The `error_description` field SHOULD be included and SHOULD describe which aspect of actor-profile processing failed, to the extent permitted by the server's security and privacy policy.
 
-`actor_unauthorized` is distinct from `access_denied`.  `access_denied` signals an explicit deny that is final; `actor_unauthorized` signals an input-contingent mismatch that may be recoverable.  When a client or agent orchestrator receives `actor_unauthorized`, it SHOULD attempt the following remediation steps in order:
+`actor_unauthorized` is distinct from `access_denied`.  `access_denied` signals an explicit deny that is final; `actor_unauthorized` signals an input-contingent mismatch that may be recoverable.
 
-1.  Consult `entity_profiles_supported.actor` in AS metadata ({{authorization-server-metadata}}) to determine whether the actor's `sub_profile` is in the accepted set.  If not, the failure is terminal for this actor type.
-2.  If the `sub_profile` is accepted, inspect `error_description` to determine whether the failure is due to a missing or unconfirmed delegation grant.  If so, obtain or register the delegation grant before retrying.
-3.  If neither step resolves the failure, consult deployment documentation or contact the resource owner to determine whether any path to authorization exists for this (`sub`, `act.sub`) pair and scope.
-4.  If no remediation path exists, treat the failure as terminal for this delegation path.
+The appropriate remediation depends on which server returned the error:
+
+*  **From a token endpoint (AS or TTS)**: The token was not issued.  The client or agent orchestrator SHOULD attempt the following steps in order:
+
+   1.  Consult `entity_profiles_supported.actor` in AS metadata ({{authorization-server-metadata}}) to determine whether the actor's `sub_profile` is in the accepted set.  If not, the failure is terminal for this actor type.
+   2.  If the `sub_profile` is accepted, inspect `error_description` to determine whether the failure is due to a missing or unconfirmed delegation grant.  If so, obtain or register the delegation grant before retrying.
+   3.  If neither step resolves the failure, consult deployment documentation or contact the resource owner to determine whether any path to authorization exists for this (`sub`, `act.sub`) pair and scope.
+   4.  If no remediation path exists, treat the failure as terminal for this delegation path.
+
+*  **From a resource server**: The token was already issued but failed actor authorization at the RS.  Steps 1 and 2 above do not apply because the problem is at the RS, not at token issuance.  The client SHOULD obtain a new token using a different actor credential or a different grant path, or consult deployment documentation to determine whether any remediation path exists for this RS.
 
 Example of a definitive prohibition:
 
@@ -1380,7 +1386,7 @@ Opaque access tokens are not conformant to this profile as token formats.  When 
 *  `sub`: REQUIRED.  The subject of the delegated token, as defined in {{RFC7662}}.
 *  `act`: REQUIRED.  The actor object conforming to {{actor-object-structure}}, including `act.sub`, `act.iss`, and any nested `act` chain, structured identically to the JWT form defined in this document.  When local privacy policy causes inner chain entries to be omitted, `chain_complete` MUST be set to `false`.
 *  `chain_complete`: OPTIONAL.  A boolean.  When `false`, one or more inner `act` chain entries have been omitted from the response for privacy reasons.  When absent, the chain SHOULD be treated as complete unless local policy or deployment context indicates otherwise.
-*  `sub_profile`: REQUIRED when the AS can authoritatively classify the subject entity type.
+*  `sub_profile`: SHOULD be included when the AS can authoritatively classify the subject entity type; consistent with the SHOULD-level requirement for `sub_profile` in token issuance.
 *  `scope`: REQUIRED.  The effective scope of the token.
 *  `iss`: REQUIRED when the AS has a stable issuer identifier.
 
@@ -2116,7 +2122,7 @@ The Travel Provider AS performs actor-profile processing per {{jwt-assertion-gra
 }
 ~~~
 
-Alice's `sub` and `sub_profile` are preserved verbatim from the ID-JAG ({{jwt-access-token-propagation}}).  The Travel Provider AS does not translate or substitute the enterprise subject identifier.  The `client_id` and `azp` values continue to identify the OAuth client, but they do not replace `act.sub` as the authoritative delegated-actor identifier.
+Alice's `sub` and `sub_profile` are preserved verbatim from the ID-JAG ({{jwt-access-token-propagation}}).  The Travel Provider AS does not translate or substitute the enterprise subject identifier.  The `client_id` and `azp` values reflect the OAuth client identity from the request context (the same agent URI appears in both the inbound ID-JAG and the outbound access token because the agent is both the asserting client and the actor in this flow), but they do not replace `act.sub` as the authoritative delegated-actor identifier.
 
 
 ## Step 4: Agent Calls Booking Tool API
@@ -2207,7 +2213,7 @@ Workload-Identity-Token: <booking-tool-wit>
 Workload-Proof-Token: <tool-wpt-with-wth-and-tth>
 ~~~
 
-The Inventory Service validates the WIT and WPT according to the WIMSE specifications: the WPT proves possession of the key identified by the WIT, `wth` binds the proof to the presented WIT, and `tth` binds it to the presented Transaction Token.  The Inventory Service then applies authorization of the (`sub`, outermost `act.sub`) pair ({{dual-principal-authorization}}): Alice (`sub`) governs data access policy (e.g., travel tier), and the Booking Tool (`act.sub`) is the authorized internal workload for that request.  The `req_wl` claim provides consistent TTS workload context for the same service in this example.  The nested `act.act.sub` (Travel Assistant) is carried as prior delegation context and is not evaluated for access control at this internal tier, consistent with the guidance on inner actors in {{dual-principal-rs-processing}}.
+The Inventory Service validates the WIT and WPT according to the WIMSE specifications: the WPT proves possession of the key identified by the WIT, `wth` binds the proof to the presented WIT, and `tth` binds it to the presented Transaction Token.  The Inventory Service then applies authorization of the (`sub`, outermost `act.sub`) pair ({{dual-principal-authorization}}): Alice (`sub`) governs data access policy (e.g., travel tier), and the Booking Tool (`act.sub`) is the authorized internal workload for that request.  The `req_wl` claim provides consistent TTS workload context for the same service in this example.  The nested `act.act.sub` (dot-path notation for the `sub` of the inner `act` object nested within the outer `act`; the Travel Assistant) is carried as prior delegation context and is not evaluated for access control at this internal tier, consistent with the guidance on inner actors in {{dual-principal-rs-processing}}.
 
 
 ## Summary of Token Transformations
