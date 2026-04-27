@@ -5,7 +5,7 @@ category: std
 docname: draft-mcguinness-oauth-actor-receipts-latest
 submissiontype: IETF
 number:
-date: 2026-04-21
+date: 2026-04-27
 ipr: "trust200902"
 area: "Security"
 workgroup: "Web Authorization Protocol"
@@ -30,6 +30,7 @@ author:
     email: public@karlmcguinness.com
 
 normative:
+  RFC6838:
   RFC7515:
   RFC7519:
   RFC7662:
@@ -45,7 +46,7 @@ normative:
      -
         fullname: Karl McGuinness
         organization: Independent
-    date: 2026-04-21
+    date: 2026-04-27
     target: https://mcguinness.github.io/draft-mcguinness-oauth-actor-profile/draft-mcguinness-oauth-actor-profile.html
 
 informative:
@@ -442,14 +443,32 @@ Deployments SHOULD minimize receipt disclosure when full provenance is not requi
 
 # IANA Considerations
 
-## JSON Web Token Type Registration
+## Media Type Registration
 
-This document requests registration of the following value in the "JSON Web Token Types" sub-registry of the "JSON Web Signature and Encryption Header Parameters" registry {{RFC7515}}:
+This document requests registration of the following media type in the "Media Types" registry {{RFC6838}}:
 
-*  Type: `actor-receipt+jwt`
-*  Description: Actor Receipt JWT conveying one signed actor-hop provenance record
-*  Change Controller: IESG
-*  Specification Document(s): This document
+*  Type name: `application`
+*  Subtype name: `actor-receipt+jwt`
+*  Required parameters: N/A
+*  Optional parameters: N/A
+*  Encoding considerations: 8bit; an actor receipt is a JWS compact-serialized JWT consisting of base64url-encoded segments separated by period (`.`) characters.
+*  Security considerations: See {{security-considerations}} of this document and {{RFC8725}}.
+*  Interoperability considerations: N/A
+*  Published specification: This document
+*  Applications that use this media type: Applications that issue, exchange, or validate OAuth Actor Receipts.
+*  Fragment identifier considerations: N/A
+*  Additional information:
+   *  Deprecated alias names for this type: N/A
+   *  Magic number(s): N/A
+   *  File extension(s): N/A
+   *  Macintosh file type code(s): N/A
+*  Person & email address to contact for further information: Karl McGuinness, public@karlmcguinness.com
+*  Intended usage: COMMON
+*  Restrictions on usage: None
+*  Author: IETF
+*  Change controller: IETF
+
+The JOSE `typ` value `actor-receipt+jwt` used by this document is the media type subtype name without the `application/` prefix, following common JWT typing practice.
 
 ## JSON Web Token Claims Registration
 

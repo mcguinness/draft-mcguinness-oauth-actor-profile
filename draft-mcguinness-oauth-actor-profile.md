@@ -5,7 +5,7 @@ category: std
 docname: draft-mcguinness-oauth-actor-profile-latest
 submissiontype: IETF
 number:
-date: 2026-04-17
+date: 2026-04-27
 ipr: "trust200902"
 area: "Security"
 workgroup: "Web Authorization Protocol"
@@ -92,7 +92,6 @@ informative:
         organization: Ping Identity
     date: 2026-04-22
     target: https://www.ietf.org/archive/id/draft-ietf-oauth-identity-assertion-authz-grant-03.txt
-  I-D.ietf-oauth-security-topics:
   OpenID.Core:
     title: "OpenID Connect Core 1.0"
     author:
@@ -383,7 +382,7 @@ The following normative algorithm governs how an AS validates an inbound actor c
 
 1.  Verify that both `act.sub` and `act.iss` are present.  If either is absent, reject with `invalid_request`.
 2.  Verify that `act.iss` is authoritative for the identifier namespace of `act.sub` under a trusted framework or local policy.  This step validates namespace authority only; it does not interpret `act.iss` as the token issuer or as proof that prior hops were independently authenticated.  If `act.iss` cannot be established as authoritative for the namespace containing `act.sub`, reject with `invalid_grant`.  Non-normative examples of local validation approaches are in {{act-iss-authority-guidance}}; elaboration specific to JWT assertion grant inputs is in {{jwt-assertion-grants-processing}} step 3.
-3.  When the applicable processing path introduces a new outermost actor via C1 ({{actor-chain-algorithm}}), the AS MUST evaluate whether that actor (`act.sub`) is authorized to exercise delegation on behalf of `sub` under local policy (for example, a pre-registered delegation grant, explicit consent record, or policy rule covering the acting party).  When the processing path preserves an existing chain from a validated, trusted upstream issuer via C2, delegation was evaluated upstream; the AS SHOULD evaluate the preserved relationship under local policy but is not required to do so for baseline interoperability.  In either case, if AS policy explicitly prohibits the actor, reject with `access_denied`; if the required delegation relationship cannot be confirmed, reject with `actor_unauthorized`.  Elaboration specific to JWT assertion grant inputs is in {{jwt-assertion-grants-processing}} step 4.
+3.  When the applicable processing path introduces a new outermost actor via C1 ({{actor-chain-algorithm}}), the AS MUST evaluate whether that actor (`act.sub`) is authorized to exercise delegation on behalf of `sub` under local policy (for example, a pre-registered delegation grant, explicit consent record, or policy rule covering the acting party).  When the processing path preserves an existing chain from a validated, trusted upstream issuer via C2, delegation was evaluated upstream; the AS SHOULD evaluate the preserved relationship under local policy but is not required to do so for baseline interoperability.  If the required delegation relationship is prohibited by policy or cannot be confirmed, reject with `actor_unauthorized`.  Elaboration specific to JWT assertion grant inputs is in {{jwt-assertion-grants-processing}} step 4.
 
 **V3 — Optional local validation of inner actors.**  Interoperable processing under this profile is defined around `sub` and the outermost `act.sub`.  If local policy additionally uses an inner `act` object as an input to issuance decisions, the AS SHOULD apply the same three sub-steps as V2 for that entry, including delegation-confirmation only when the current processing path or local policy requires it for that entry.  Such use of inner actors is deployment-specific.
 
@@ -637,8 +636,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
     In either case:
 
-    *  If AS policy explicitly prohibits the actor: reject with `access_denied`.
-    *  If the delegation relationship cannot be confirmed: reject with `actor_unauthorized`.
+    *  If the delegation relationship is prohibited by AS policy or cannot be confirmed: reject with `actor_unauthorized`.
 
     > Note: The form of delegation authorization is not standardized by this profile.
 
@@ -1013,7 +1011,7 @@ When the issued token is sender-constrained, the issuer MUST bind the output tok
 *  In presenter-rebind mode, the output token is bound to the new presenter established by the validated `actor_token`.
 *  Bearer-to-PoP upgrade is therefore performed by issuing a sender-constrained output token in presenter-rebind mode even when the inbound `subject_token` carried no top-level `cnf`.
 
-If a Token Exchange request explicitly seeks a delegated output, for example by supplying an `actor_token` or by presenting a `subject_token` that already carries `act`, and the AS cannot validate the actor information, it MUST reject the request with `invalid_grant`.  If the AS can validate the actor information but cannot establish or confirm the required delegation basis, it MUST reject the request with `actor_unauthorized` unless local policy explicitly denies the relationship, in which case it MUST reject the request with `access_denied`.  The AS MUST NOT issue a non-delegated JWT access token in place of the requested delegated output.
+If a Token Exchange request explicitly seeks a delegated output, for example by supplying an `actor_token` or by presenting a `subject_token` that already carries `act`, and the AS cannot validate the actor information, it MUST reject the request with `invalid_grant`.  If the AS can validate the actor information but cannot establish or confirm the required delegation basis, or if local policy prohibits the relationship, it MUST reject the request with `actor_unauthorized`.  The AS MUST NOT issue a non-delegated JWT access token in place of the requested delegated output.
 
 1.  When the issued access token represents delegation per {{token-represents-delegation}}, the AS MUST include an `act` claim that preserves or extends the inbound delegation chain per steps 3 and 4.  The AS MUST NOT silently drop actor information.  If the inbound credential carries no `act`, no validated `actor_token` is present, and no independent delegation basis exists, the AS MUST NOT include `act` in the issued access token.
 
@@ -1217,8 +1215,8 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
 
 5.  The TTS MUST determine whether the request is presenter continuation or presenter rebind:
 
-    *  **Presenter continuation**: The TTS MUST authenticate the requester as the same current presenter as the inbound token.  When the inbound token carries `act`, the authenticated requester MUST correspond to the outermost (`act.iss`, `act.sub`) pair or the TTS MUST reject the request with `invalid_grant`.  If local policy explicitly prohibits that (`sub`, current presenter) relationship, the TTS MUST reject the request with `access_denied`.  If the required actor relationship is absent or cannot be confirmed from the current inputs and policy, the TTS MUST reject the request with `actor_unauthorized`.
-    *  **Presenter rebind**: The TTS MUST validate a direct presenter `actor_token` for the new presenter.  Before creating a new outermost `act` object, the TTS MUST evaluate whether the newly authenticated presenter is authorized under local policy to act on behalf of `sub` for the requested transaction.  If local policy explicitly prohibits that (`sub`, new presenter) relationship, the TTS MUST reject the request with `access_denied`.  If the required actor relationship is absent or cannot be confirmed from the current inputs and policy, the TTS MUST reject the request with `actor_unauthorized`.
+    *  **Presenter continuation**: The TTS MUST authenticate the requester as the same current presenter as the inbound token.  When the inbound token carries `act`, the authenticated requester MUST correspond to the outermost (`act.iss`, `act.sub`) pair or the TTS MUST reject the request with `invalid_grant`.  If the required actor relationship is prohibited by local policy, absent, or cannot be confirmed from the current inputs and policy, the TTS MUST reject the request with `actor_unauthorized`.
+    *  **Presenter rebind**: The TTS MUST validate a direct presenter `actor_token` for the new presenter.  Before creating a new outermost `act` object, the TTS MUST evaluate whether the newly authenticated presenter is authorized under local policy to act on behalf of `sub` for the requested transaction.  If the required actor relationship is prohibited by local policy, absent, or cannot be confirmed from the current inputs and policy, the TTS MUST reject the request with `actor_unauthorized`.
 
     If the current inputs satisfy neither presenter-continuation nor presenter-rebind requirements, the TTS MUST reject the request with `invalid_grant`.
 
@@ -1251,12 +1249,12 @@ The following table summarizes actor-profile error handling by using three exist
 |------------|----------------|-------------------|---------------------|
 | `invalid_request` | `act` claim structure syntactically invalid; delegation chain depth exceeds limit; required claim (`act.sub` or `act.iss`) absent | DPoP-bound JWT assertion grant omits required top-level `cnf.jkt`; delegated Transaction Token used as `subject_token` omits required top-level `iss` | Delegated inbound Transaction Token omits required top-level `iss` |
 | `invalid_grant` | Inbound token or assertion fails signature or claims validation; issuer not trusted to assert the delegation relationship | Proof-of-possession check cannot be confirmed | `sub` identity cannot be preserved per step 1 of {{transaction-token-service-processing}}; inbound actor information fails validation per step 4 |
-| `access_denied` | Definitive policy prohibition: the actor (`act.sub`) is explicitly denied the right to act for the subject (`sub`) for the requested resource or scope | — | Local TTS policy explicitly prohibits the requesting workload from acting in the delegation chain for the identified subject |
-| `actor_unauthorized` | Remediable actor-policy mismatch: the (`sub`, `act.sub`) pair fails a policy check that is not a definitive prohibition — for example, the actor's `sub_profile` is not in the accepted set, or the required delegation relationship cannot be confirmed from current inputs | — | Includes the newly authenticated presenter the TTS would install as the new outermost actor |
+| `invalid_scope` | Scope reduction under {{RFC8693}} or local policy leaves no effective scope for reasons unrelated to actor authorization | Requested scope is not available after ordinary Token Exchange scope reduction | Requested transaction scope is not available under TTS policy |
+| `actor_unauthorized` | Actor-policy failure: the (`sub`, `act.sub`) pair fails a policy check, the actor's `sub_profile` is not in the accepted set, the required delegation relationship cannot be confirmed from current inputs, or local policy prohibits the actor relationship | Includes policy failures for a newly introduced actor or a preserved actor chain evaluated by the AS | Includes the newly authenticated presenter the TTS would install as the new outermost actor |
 
 The `error_description` field SHOULD be included and SHOULD describe which aspect of actor-profile processing failed, to the extent permitted by the server's security and privacy policy.
 
-`actor_unauthorized` is distinct from `access_denied`.  `access_denied` signals an explicit deny that is final; `actor_unauthorized` signals an input-contingent mismatch that may be recoverable.
+`actor_unauthorized` is distinct from `invalid_scope`.  `invalid_scope` signals that the requested scope is unavailable independent of actor identity, while `actor_unauthorized` signals that actor identity, actor type, or the subject-actor relationship caused the authorization failure.  Some `actor_unauthorized` failures are recoverable by using a different actor credential, actor type, or delegation grant; others are definitive local-policy prohibitions.
 
 The appropriate remediation depends on which server returned the error:
 
@@ -1269,11 +1267,11 @@ The appropriate remediation depends on which server returned the error:
 
 *  **From a resource server**: The token was already issued but failed actor authorization at the RS.  Steps 1 and 2 above do not apply because the problem is at the RS, not at token issuance.  The client SHOULD obtain a new token using a different actor credential or a different grant path, or consult deployment documentation to determine whether any remediation path exists for this RS.
 
-Example of a definitive prohibition:
+Example of a definitive actor-policy prohibition:
 
 ~~~json
 {
-  "error": "access_denied",
+  "error": "actor_unauthorized",
   "error_description": "actor is explicitly denied access for this subject"
 }
 ~~~
@@ -1499,7 +1497,7 @@ Example Protected Resource Metadata fragment:
 
 ### Transaction Token Capability Signaling {#transaction-token-capability-signaling}
 
-Transaction Token support is advertised using the `transaction_token_supported` AS metadata parameter and the `transaction_token_required` Protected Resource Metadata parameter, both defined in {{I-D.ietf-oauth-transaction-tokens, Section 8}}.  This document does not redefine those parameters.  When an AS or TTS can issue Transaction Tokens as delegated outputs under this profile, it MUST list `urn:ietf:params:oauth:token-type:txn_token` in `actor_profile_token_types_supported`.
+Transaction Token support under this profile is advertised through `actor_profile_token_types_supported`.  When an AS or TTS can issue Transaction Tokens as delegated outputs under this profile, it MUST list `urn:ietf:params:oauth:token-type:txn_token` in `actor_profile_token_types_supported`.  This document does not define any separate Transaction Token discovery parameter.
 
 ### Capability Signaling Usage
 
@@ -1646,7 +1644,7 @@ Deployments SHOULD use shorter token lifetimes for delegated tokens than for non
 
 Deployments with deep chains (three or more nested `act` objects) SHOULD account for the fact that any revocation event at any hop in the chain cannot propagate to already-issued downstream tokens.  In environments with significant revocation risk — for example, AI agent delegation chains where user consent can be withdrawn at any time — deployments SHOULD combine short-lived tokens with active introspection at sensitive resource servers rather than relying solely on `exp`.
 
-General guidance on access token lifetime and security tradeoffs is provided in {{I-D.ietf-oauth-security-topics}}.
+General guidance on access token lifetime and security tradeoffs is provided in {{RFC9700}}.
 
 # Security Considerations
 
@@ -1701,7 +1699,7 @@ When `act.sub` itself must change (for example, because an agent instance is rep
 
 The revocation-related requirements in this section are limited to how this profile interacts with already-issued tokens and refresh behavior.
 
-Token revocation ({{RFC7009}}) applies to individual tokens but does not revoke an underlying delegation relationship or invalidate already-issued downstream tokens in a delegation chain.  When Alice revokes her delegation to an agent, access tokens already issued to downstream actors remain valid until their `exp` time.  Short token lifetimes are the primary mitigation; see {{I-D.ietf-oauth-security-topics}} for general access token lifetime guidance.
+Token revocation ({{RFC7009}}) applies to individual tokens but does not revoke an underlying delegation relationship or invalidate already-issued downstream tokens in a delegation chain.  When Alice revokes her delegation to an agent, access tokens already issued to downstream actors remain valid until their `exp` time.  Short token lifetimes are the primary mitigation; see {{RFC9700}} for general access token lifetime guidance.
 
 The AS SHOULD refuse to issue new tokens for a (subject, actor) pair when it has authoritative knowledge that the delegation relationship has been revoked.  Implementations MUST NOT use delegation chain depth as a rationale for skipping revocation checks.
 
