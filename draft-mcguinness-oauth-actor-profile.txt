@@ -100,7 +100,7 @@ Table of Contents
        3.3.3.  Supported Token Types and Request Semantics
      3.4.  Actor Object Structure
      3.5.  Delegation Chains
-     3.6.  Actor Chain Validation and Construction
+     3.6.  Delegation Chain Validation and Construction
        3.6.1.  Terminology
        3.6.2.  Validation Steps
        3.6.3.  Construction Steps
@@ -139,7 +139,6 @@ Table of Contents
        7.2.3.  Transaction Token
      7.3.  Presenter Authentication and Transition
      7.4.  Transaction Token Output Rules
-     7.5.  may_act
    8.  Resource Server Processing
      8.1.  Actor Authorization Model
      8.2.  Actor Authorization
@@ -378,6 +377,12 @@ Table of Contents
       evaluation that considers both the subject and the actor, and the
       relationship between them, as policy inputs.  Under this profile,
       the relevant actor is ordinarily the outermost actor.
+
+   Delegation Chain:  The sequence of actors representing how
+      authorization has flowed from the original delegating party (sub
+      and innermost act) through any intermediate parties to the
+      immediate actor (outermost act.sub).  The chain is conveyed
+      structurally as the nested act claim.
 
    Outermost Actor:  The act object at the top level of the delegation
       chain (the one not nested inside any other act object).  When a
@@ -648,7 +653,7 @@ Table of Contents
    When an act object contains extension members beyond those defined in
    this document, issuers and consumers MUST ignore unrecognized members
    unless another specification or local policy defines their meaning.
-   An issuer that re-issues a validated actor chain MAY preserve
+   An issuer that re-issues a validated delegation chain MAY preserve
    unrecognized extension members in inherited act objects under local
    policy.  However, companion profiles that need independently
    verifiable provenance, per-hop receipts, or other chain-wide state
@@ -671,12 +676,12 @@ Table of Contents
    *  A *single-hop actor object* is an act object with no nested act;
       it represents delegation depth 1.
 
-   *  An *inbound actor chain* is the complete act structure received in
-      an inbound token, whether depth 1 or greater.
+   *  An *inbound delegation chain* is the complete act structure
+      received in an inbound token, whether depth 1 or greater.
 
-   *  A *preserved actor chain* is an inbound actor chain that an issuer
-      has validated and copied into a newly issued token without
-      rewriting inherited actor entries.
+   *  A *preserved delegation chain* is an inbound delegation chain that
+      an issuer has validated and copied into a newly issued token
+      without rewriting inherited actor entries.
 
    *  A *new outermost actor* is the actor object created by the current
       issuer to represent the newly identified outermost actor for the
@@ -755,13 +760,13 @@ Table of Contents
    client_id is expected and does not by itself constitute delegation
    under this profile.
 
-3.6.  Actor Chain Validation and Construction
+3.6.  Delegation Chain Validation and Construction
 
    The following normative algorithm governs how an AS validates an
-   inbound actor chain and constructs the actor chain in the issued
-   token.  It applies to all token types defined in this profile, on
-   request paths where actor-profile conformance is required or claimed
-   — either because one of the type-specific processing sections
+   inbound delegation chain and constructs the delegation chain in the
+   issued token.  It applies to all token types defined in this profile,
+   on request paths where actor-profile conformance is required or
+   claimed — either because one of the type-specific processing sections
    (Section 4.2, Section 6, or Section 7.4) mandates it or because local
    policy or advertised metadata requires profile conformance for the
    request path.  Actor objects that do not conform to this profile (for
@@ -775,7 +780,7 @@ Table of Contents
 
 3.6.1.  Terminology
 
-   *  *Depth* of an actor chain: the number of nested act objects
+   *  *Depth* of an delegation chain: the number of nested act objects
       counted from the outermost.  A single act object with no nested
       act has depth 1; each additional nesting level adds 1.  Depth is
       measured on the chain as it appears in the issued token, after any
@@ -794,8 +799,8 @@ Table of Contents
 3.6.2.  Validation Steps
 
    *V1 — Validate outer token.* The AS MUST validate the token carrying
-   the inbound actor chain per the type-specific rules applicable to
-   that token before extracting actor claims.
+   the inbound delegation chain per the type-specific rules applicable
+   to that token before extracting actor claims.
 
    *V2 — Validate outermost actor.* For the outermost act object the AS
    MUST:
@@ -1544,8 +1549,8 @@ AddOutermostActor(inbound_chain, new_actor):
    Transaction Tokens) establish sub and MAY establish sub_profile,
    inbound act chain state, and current-presenter binding through top-
    level cnf.  They are the only subject_token inputs from which this
-   document defines interoperable actor-chain preservation and presenter
-   continuation.
+   document defines interoperable delegation-chain preservation and
+   presenter continuation.
 
    Token Exchange under this profile runs in exactly one of two
    presenter-transition modes:
@@ -1807,8 +1812,8 @@ AddOutermostActor(inbound_chain, new_actor):
    5.  The AS MUST apply the propagation rules in Section 6.5.2 to
        determine the remaining claims in the issued token.  Because an
        ID token carries no inbound act chain and no OAuth scope ceiling,
-       actor-chain construction and scope determination come from the
-       actor_token (if any), [RFC8693], and local policy rather than
+       delegation-chain construction and scope determination come from
+       the actor_token (if any), [RFC8693], and local policy rather than
        from the ID token itself.
 
 6.2.2.2.  Refresh Token
@@ -2243,13 +2248,13 @@ AddOutermostActor(inbound_chain, new_actor):
    [I-D.ietf-oauth-identity-assertion-authz-grant] is one such
    compatible type.  This section defines the actor-profile requirements
    for the resulting JWT assertion grant regardless of which compatible
-   JWT assertion-grant output token type was requested.  The actor chain
-   MUST be constructed per Section 6.5.2.  The aud MUST be set to the
-   downstream token endpoint (from the resource parameter or deployment
-   configuration), and the assertion MUST be signed by the issuing AS.
-   The AS MUST NOT issue a JWT assertion grant as Token Exchange output
-   unless it is configured to do so and can establish the delegation
-   relationship under local policy.
+   JWT assertion-grant output token type was requested.  The delegation
+   chain MUST be constructed per Section 6.5.2.  The aud MUST be set to
+   the downstream token endpoint (from the resource parameter or
+   deployment configuration), and the assertion MUST be signed by the
+   issuing AS.  The AS MUST NOT issue a JWT assertion grant as Token
+   Exchange output unless it is configured to do so and can establish
+   the delegation relationship under local policy.
 
 6.5.2.  JWT Access Token Output
 
@@ -2265,7 +2270,7 @@ AddOutermostActor(inbound_chain, new_actor):
    Section 6.2.2.2.2) or a token-state input (Section 6.2.1.1,
    Section 6.2.1.2, Section 6.2.1.3), or after Transaction Token Service
    processing (Section 7.4), the AS MUST apply the following rules when
-   issuing a JWT access token.  These rules govern the actor chain,
+   issuing a JWT access token.  These rules govern the delegation chain,
    subject, and scope in the issued token regardless of inbound
    credential type.
 
@@ -2337,7 +2342,7 @@ AddOutermostActor(inbound_chain, new_actor):
           include act.sub and act.iss for that actor.
 
        *  *Inbound token carries act, no new actor*: The AS MUST
-          preserve the inbound actor chain unchanged.
+          preserve the inbound delegation chain unchanged.
 
        *  *Inbound token carries no act, new actor identified*: The AS
           MUST create a single-hop outermost act for the newly
@@ -2569,7 +2574,7 @@ AddOutermostActor(inbound_chain, new_actor):
 
    The TTS accepts only token-state subject_token inputs.  Identity-only
    inputs such as ID tokens and refresh tokens do not carry the inbound
-   actor-chain or presenter state needed for Section 7.4 and are
+   delegation-chain or presenter state needed for Section 7.4 and are
    therefore outside the scope of the TTS profile defined here.
 
 7.2.1.  JWT Assertion Grant
@@ -2627,10 +2632,10 @@ AddOutermostActor(inbound_chain, new_actor):
 
 7.4.  Transaction Token Output Rules
 
-   TTS processing follows the generic actor chain algorithm defined in
-   Section 3.6 and the output rules in Section 6.5.2.  The steps below
-   apply those rules to the Transaction Token context and define the
-   TTS-specific adaptations: req_wl handling, the TTS presenter-
+   TTS processing follows the generic delegation chain algorithm defined
+   in Section 3.6 and the output rules in Section 6.5.2.  The steps
+   below apply those rules to the Transaction Token context and define
+   the TTS-specific adaptations: req_wl handling, the TTS presenter-
    authentication model, Transaction Token claim set requirements, and
    the treatment of iss in Transaction Tokens.  Where a step below is
    parallel to JWT access token processing, the TTS-specific detail is
@@ -2768,8 +2773,6 @@ AddOutermostActor(inbound_chain, new_actor):
    Transaction Token, provided that the TTS supports issuing a
    Transaction Token from that input.  This document does not define
    direct Transaction Token issuance from ID tokens or refresh tokens.
-
-7.5.  may_act
 
    This document does not define TTS-specific processing for may_act.  A
    deployment MAY use may_act under local policy or another
@@ -2934,22 +2937,19 @@ AddOutermostActor(inbound_chain, new_actor):
        do not require actor authorization SHOULD still evaluate the
        actor as part of authorization, audit, or trust decisions.
 
-   6.  Optionally traverse inner act objects to audit the full
-       delegation chain; inner actors are prior-actor context and MUST
-       NOT be required to present proof of possession at the resource
-       server.
+   6.  The RS MAY traverse inner act objects for audit, policy
+       refinement, or trust decisions; such use is deployment-specific
+       and inner actors MUST NOT be required to present proof of
+       possession at the resource server.  Inner act objects are prior-
+       actor context per V4 of Section 3.6: when the RS relies on them
+       for any decision, it MUST do so only after validating the outer
+       token issuer and only when local policy trusts that issuer to
+       carry forward the asserted delegation chain, and the RS MUST NOT
+       treat inner act objects as independently authenticated.  Under
+       this profile, interoperable authorization behavior is defined
+       around sub and the outermost act.sub.
 
-   7.  If the resource server relies on inner act objects for audit,
-       policy refinement, or trust decisions, it MUST do so only after
-       validating the outer token issuer and only when local policy
-       trusts that issuer to carry forward the asserted delegation
-       chain.  Inner act objects are prior-actor context per V4 of
-       Section 3.6: the RS MUST NOT treat them as independently
-       authenticated.  Under this profile, interoperable authorization
-       behavior is defined around sub and the outermost act.sub; use of
-       nested actors for access control is deployment-specific.
-
-   8.  If any of the above steps fail, return an appropriate error
+   7.  If any of the above steps fail, return an appropriate error
        response per [RFC6750], Section 3.1:
 
        *  If signature, iss, aud, or temporal validation fails: HTTP 401
@@ -3097,8 +3097,8 @@ AddOutermostActor(inbound_chain, new_actor):
    In either case, the RS MUST NOT treat the partial chain as a faithful
    representation of the complete delegation history.  A companion
    profile that defines additional introspection parameters aligned to
-   the visible actor chain MUST define how those parameters behave when
-   the visible act chain is filtered, consistent with Section 11.
+   the visible delegation chain MUST define how those parameters behave
+   when the visible act chain is filtered, consistent with Section 11.
 
    Opaque access tokens are not conformant to this profile as token
    formats.  When an AS chooses to support delegated opaque access
@@ -3222,9 +3222,9 @@ AddOutermostActor(inbound_chain, new_actor):
    |                  |failure: the  |failures for a     |newly        |
    |                  |(sub,         |newly introduced   |authenticated|
    |                  |act.sub) pair |actor or a         |presenter the|
-   |                  |fails a       |preserved actor    |TTS would    |
-   |                  |policy check, |chain evaluated by |install as   |
-   |                  |the actor's   |the AS             |the new      |
+   |                  |fails a       |preserved          |TTS would    |
+   |                  |policy check, |delegation chain   |install as   |
+   |                  |the actor's   |evaluated by the AS|the new      |
    |                  |sub_profile   |                   |outermost    |
    |                  |is not in the |                   |actor        |
    |                  |accepted set, |                   |             |
@@ -4300,11 +4300,11 @@ AddOutermostActor(inbound_chain, new_actor):
 13.14.  Token Substitution
 
    An attacker who can present a token with a crafted sub_profile or
-   actor chain could attempt to escalate privileges.  ASes MUST validate
-   inbound sub_profile values against the syntax requirements of this
-   document, the applicable registry or deployment-specific allowed set
-   where such checks are part of local policy, and the local policy
-   applicable to the token they are issuing.  They MUST preserve
+   delegation chain could attempt to escalate privileges.  ASes MUST
+   validate inbound sub_profile values against the syntax requirements
+   of this document, the applicable registry or deployment-specific
+   allowed set where such checks are part of local policy, and the local
+   policy applicable to the token they are issuing.  They MUST preserve
    unrecognized but syntactically valid values as required by
    Section 3.4, and they MUST reject values that are malformed or
    disallowed by local policy.
@@ -4710,8 +4710,8 @@ A.3.  Transaction Token
    After processing the payroll request, the Payroll API exchanges the
    inbound access token at the Audit TTS to call the internal Audit
    Service.  The Payroll API is the requesting workload (req_wl).  The
-   TTS validates the inbound actor chain, preserves it as an inner act,
-   and adds a new outermost actor for the Payroll API:
+   TTS validates the inbound delegation chain, preserves it as an inner
+   act, and adds a new outermost actor for the Payroll API:
 
    {
      "iss": "https://tts.example.com",
@@ -4739,7 +4739,7 @@ A.3.  Transaction Token
    request), and the preserved inner actor is the payroll batch
    processor.  This example demonstrates that the profile applies
    equally to non-AI service delegation and to transformations from a
-   single-hop actor object into a multi-hop actor chain.
+   single-hop actor object into a multi-hop delegation chain.
 
 Appendix B.  Cross-Domain AI Agent Flow: ID Token to Transaction Token
 
@@ -4931,8 +4931,8 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
    authentication and actor_token rules for RFC 7523 client assertions,
    determines from local policy that the authenticated client is the
    delegated actor for Alice in this flow, and issues the ID-JAG as a
-   JWT output of token exchange with the actor chain established per
-   Section 3:
+   JWT output of token exchange with the delegation chain established
+   per Section 3:
 
    {
      "iss": "https://as.enterprise.example",
@@ -4983,7 +4983,8 @@ B.5.  Step 3: Agent Exchanges ID-JAG for Access Token at Travel Provider
    Section 4.2: it verifies the request's DPoP proof against the top-
    level cnf.jkt in the inbound ID-JAG and checks that act.sub_profile
    (ai_agent) is permitted as an actor for the requested scope under
-   local policy.  It issues an access token preserving the actor chain:
+   local policy.  It issues an access token preserving the delegation
+   chain:
 
    {
      "iss": "https://as.travel-provider.example",
@@ -5104,9 +5105,9 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
    }
 
    The presenter binding rotates at this step: cnf.jkt is now ToolJKT
-   because the Booking Tool is the current presenter.  The nested actor
-   chain records that the Booking Tool is now the current actor and that
-   the Travel Assistant was the prior delegated actor.
+   because the Booking Tool is the current presenter.  The nested
+   delegation chain records that the Booking Tool is now the current
+   actor and that the Travel Assistant was the prior delegated actor.
 
 B.8.  Step 6: Booking Tool Calls Inventory Service
 
@@ -5173,7 +5174,7 @@ Acknowledgments
    DPoP (RFC 9449), and Transaction Tokens, upon which this document
    builds.  The motivating use cases for this work emerged from the
    deployment of AI agent systems that require cross-domain delegation
-   with explicit actor chains and carried-forward delegation state
+   with explicit delegation chains and carried-forward delegation state
    within the trust model of the issuing domains.
 
 Author's Address
