@@ -1278,7 +1278,7 @@ When a token contains both `sub` and an `act` claim, a resource server has two i
 
 *  **Actor principal** (`act.sub`): the party that is making the immediate request.  This principal may be in a different organizational domain and trust level from the subject.
 
-Actor authorization at the resource server evaluates both principals and the relationship between them, that is, whether the outermost actor is authorized to act on behalf of the subject.  This document describes subject-plus-actor evaluation as one approach for resource servers; it does not require every RS to implement or enforce actor authorization.
+Actor authorization at the resource server evaluates both principals and the relationship between them, that is, whether the outermost actor is authorized to act on behalf of the subject.  This document does not require every RS to implement actor authorization for every token that carries `act`.  When an RS accepts a token as satisfying a delegated-access requirement for a request path, however, it MUST NOT authorize the request solely as if the token were non-delegated.  The RS SHOULD evaluate the subject and outermost actor according to local policy.
 
 For Transaction Tokens, the primary policy pair remains (`sub`, `act.sub`).  The `req_wl` claim provides workload context from the TTS and is not a replacement for `act.sub`.  Nested `act` objects provide prior-actor context for audit or other deployment-specific processing; this document does not standardize their authorization use.
 
@@ -1286,7 +1286,7 @@ This document defines subject-plus-actor evaluation as the interoperable baselin
 
 ## Subject-Plus-Actor Evaluation {#dual-principal-rs-processing}
 
-Actor authorization is OPTIONAL for delegated tokens under this profile.  Resource servers that receive delegated tokens SHOULD define and document their actor authorization policy.  The following steps describe one approach for resource servers that choose to enforce subject-plus-actor policy:
+Actor authorization is conditional under this profile.  When an RS accepts a token as satisfying a delegated-access requirement for the request path, it MUST NOT ignore the `act` claim and authorize solely as if the token were non-delegated.  The RS SHOULD evaluate the subject and outermost actor according to local policy.  Resource servers that receive delegated tokens SHOULD define and document their actor authorization policy.  The following steps describe one approach for resource servers that choose to enforce subject-plus-actor policy:
 
 1.  **Advertise delegated-token requirements**: An RS that wants to signal that delegated requests are expected to carry actor-profile information SHOULD set `actor_profile_required: true` ({{protected-resource-metadata}}).  An RS MAY still apply subject-plus-actor evaluation without advertising it, but clients MUST NOT rely on that behavior.
 
@@ -1322,7 +1322,7 @@ When the resource server evaluates a JWT access token as a delegated token under
 
 4.  If the token carries `client_id`, `azp`, or both, treat those as client-identity inputs only.  In interoperable processing, the RS SHOULD use `act.sub` rather than `client_id` or `azp` as the actor identifier when `act` is present.  Deployments that rely on client identity as a substitute actor signal are outside the interoperable scope of this profile.  When local policy expects both to identify the same acting party, the RS SHOULD perform identifier reconciliation; if reconciliation cannot be established, the RS MUST either treat them as distinct identifiers or reject the request according to local policy.  See {{client-identity-delegation}}.
 
-5.  Apply actor authorization per {{dual-principal-rs-processing}} when required by local policy.  Resource servers that do not require actor authorization SHOULD still evaluate the actor as part of authorization, audit, or trust decisions.
+5.  Apply actor authorization per {{dual-principal-rs-processing}} when required by local policy or when the token is accepted as satisfying a delegated-access requirement for the request path.  Resource servers that do not require actor authorization SHOULD still evaluate the actor as part of authorization, audit, or trust decisions.
 
 6.  Optionally traverse inner `act` objects to audit the full delegation chain; inner actors are prior-actor context and MUST NOT be required to present proof of possession at the resource server.
 
@@ -1347,7 +1347,7 @@ When the resource server evaluates a Transaction Token as a delegated token unde
 
 3.  Extract `sub` and the outermost `act.sub` as the two principals relevant for authorization policy.  If `req_wl` is present, treat it as supporting workload context only.  The RS MUST NOT treat `req_wl` as a substitute for `act.sub`.  When local policy expects `req_wl` and the outermost `act.sub` to identify the same party, the RS SHOULD perform identifier reconciliation; if reconciliation cannot be established, the RS MUST either treat them as distinct identifiers or reject the request according to local policy.
 
-4.  Apply actor authorization per {{dual-principal-rs-processing}} when required by local policy.  Resource servers that do not require actor authorization SHOULD still evaluate the actor as part of authorization, audit, or trust decisions.
+4.  Apply actor authorization per {{dual-principal-rs-processing}} when required by local policy or when the token is accepted as satisfying a delegated-access requirement for the request path.  Resource servers that do not require actor authorization SHOULD still evaluate the actor as part of authorization, audit, or trust decisions.
 
 5.  Optionally traverse inner `act` objects to audit the full delegation chain.  If the RS relies on inner `act` objects for audit, policy refinement, or trust decisions, it MUST do so only after validating the outer token issuer and only when local policy trusts that issuer to carry forward the asserted delegation chain.  Inner `act` objects are prior-actor context per V4 of {{actor-chain-algorithm}}: the RS MUST NOT treat them as independently authenticated.
 
