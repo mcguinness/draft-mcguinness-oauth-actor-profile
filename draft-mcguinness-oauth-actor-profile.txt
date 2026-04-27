@@ -192,13 +192,14 @@ Table of Contents
      12.14. Token Substitution
    13. Privacy Considerations
    14. IANA Considerations
-     14.1.  OAuth Authorization Server Metadata Registry
-     14.2.  OAuth Protected Resource Metadata Registry
-     14.3.  OAuth Error Registry
-     14.4.  OAuth Token Introspection Response Registry
-     14.5.  JWT Claims Registry
-     14.6.  OAuth Token Type Registry
-     14.7.  OAuth Entity Profiles Registry
+     14.1.  OAuth URI Registration
+     14.2.  OAuth Authorization Server Metadata Registry
+     14.3.  OAuth Protected Resource Metadata Registry
+     14.4.  OAuth Error Registry
+     14.5.  OAuth Token Introspection Response Registry
+     14.6.  JWT Claims Registry
+     14.7.  OAuth Token Type Registry
+     14.8.  OAuth Entity Profiles Registry
    15. References
      15.1.  Normative References
      15.2.  Informative References
@@ -513,14 +514,19 @@ Table of Contents
    beyond what this profile alone provides.
 
    This profile defines actor-profile requirements for JWT assertion
-   grants, JWT-formatted access tokens, and Transaction Tokens.  It does
-   not define an equivalent interoperable profile for opaque access
-   tokens.  Deployments using opaque access tokens, including as
-   subject_token or actor_token inputs to Token Exchange, are out of
-   scope for this document.  An AS MAY translate introspection results
-   for an opaque access token into equivalent local inputs for
-   deployment-specific use, but that behavior is not interoperable
-   behavior defined by this document.
+   grants, JWT-formatted access tokens, and Transaction Tokens.  Opaque
+   access tokens are not conformant token formats under this profile.
+   However, when an AS supports introspection, this document defines
+   optional equivalent introspection response semantics for delegated
+   opaque access tokens in Section 9.5.  Such support is an
+   introspection-based compatibility path; it does not make the opaque
+   token itself conformant to this profile.  Use of opaque access tokens
+   as subject_token or actor_token inputs to Token Exchange remains
+   outside the interoperable scope of this document.  An AS MAY
+   translate introspection results for an opaque access token into
+   equivalent local inputs for deployment-specific use, but that input-
+   processing behavior is not interoperable behavior defined by this
+   document.
 
    The actor profile defines processing rules for the following token
    types as issued outputs: JWT assertion grants (Section 4), JWT-
@@ -529,9 +535,10 @@ Table of Contents
    JWT assertion grants, JWT access tokens, OpenID Connect ID tokens,
    refresh tokens, and Transaction Tokens as subject_token, and for
    workload identity credentials, JWT client assertions, and JWT access
-   tokens as actor_token.  This document does not define interoperable
-   processing for the may_act claim; deployments MAY use it under local
-   policy or another specification as described in Section 6.2.3.
+   tokens as actor_token.  This document defines limited processing for
+   the may_act claim as an optional delegation-authorization input, as
+   described in Section 6.2.3; may_act is not itself a source of actor
+   identity and is never propagated.
 
    Subject to endpoint policy and the underlying token-exchange or grant
    mechanism, implementations MAY transform a supported input token type
@@ -605,63 +612,62 @@ Table of Contents
    defined; readers using this table as a quick-reference checklist may
    follow those links directly.
 
-   +===============+==============+===================================+======================+==========+
-   |Role           |Inputs        |Required checks                    |Outputs / behavior    |Detailed  |
-   |               |              |                                   |                      |rules     |
-   +===============+==============+===================================+======================+==========+
-   |Assertion-     |JWT assertion |Validate JWT; trust issuer;        |Preserve actor in     |Section   |
-   |consuming AS   |grant with act|validate delegation when required  |issued token          |4.2       |
-   |               |              |by the applicable processing path  |                      |          |
-   |               |              |or local policy; enforce chain-    |                      |          |
-   |               |              |depth limit                        |                      |          |
-   +---------------+--------------+-----------------------------------+----------------------+----------+
-   |Token-exchange |Identity-only |Validate per credential type; apply|Issue token with      |Section   |
-   |AS             |(id_token,    |class-specific subject, actor-     |preserved or extended |6.1,      |
-   |(subject_token)|refresh_token)|chain, and presenter rules; trust  |act chain when inbound|Section   |
-   |               |or token-state|issuer; validate delegation when   |token-state supports  |6.2.2.1.2,|
-   |               |(jwt,         |required by local policy; enforce  |it; otherwise derive  |Section   |
-   |               |access_token, |scope reduction and chain-depth    |any new act from      |6.2.1.1,  |
-   |               |txn_token)    |limit                              |current-exchange      |Section   |
-   |               |subject_token |                                   |inputs only           |6.2.1.2,  |
-   |               |input         |                                   |                      |Section   |
-   |               |              |                                   |                      |6.2.2.2.2,|
-   |               |              |                                   |                      |Section   |
-   |               |              |                                   |                      |6.2.1.3;  |
-   |               |              |                                   |                      |then      |
-   |               |              |                                   |                      |Section   |
-   |               |              |                                   |                      |6.4.2     |
-   +---------------+--------------+-----------------------------------+----------------------+----------+
-   |Token-exchange |Workload      |Validate per credential type; trust|Construct outermost   |Section   |
-   |AS             |identity      |issuer; verify proof of possession;|act from validated    |6.3.2.2,  |
-   |(actor_token)  |credential,   |derive outermost actor identity    |actor identity; then  |Section   |
-   |               |JWT client    |                                   |apply Section 6.4.2   |6.3.1,    |
-   |               |assertion, or |                                   |                      |Section   |
-   |               |JWT access    |                                   |                      |6.3.3     |
-   |               |token as      |                                   |                      |          |
-   |               |actor_token   |                                   |                      |          |
-   +---------------+--------------+-----------------------------------+----------------------+----------+
-   |Resource Server|Access token  |Validate token; validate presenter |Apply delegated-token |Section   |
-   |               |or Transaction|binding; evaluate subject; evaluate|policy; advertise     |9.3,      |
-   |               |Token carrying|(sub, outermost act.sub) pair when |actor_profile_required|Section   |
-   |               |act           |required by local policy           |when delegated        |9.4       |
-   |               |              |                                   |requests are expected |          |
-   |               |              |                                   |to carry actor-profile|          |
-   |               |              |                                   |information           |          |
-   +---------------+--------------+-----------------------------------+----------------------+----------+
-   |Transaction    |JWT assertion |Validate inbound actor information;|Preserve sub; treat   |Section   |
-   |Token Service  |grant, JWT    |preserve subject identity; enforce |req_wl as supporting  |7.4       |
-   |               |access token, |chain-depth limit; apply presenter |context; add new      |          |
-   |               |or Transaction|authentication per Transaction     |outermost act         |          |
-   |               |Token with    |Token mechanism                    |                      |          |
-   |               |subject and   |                                   |                      |          |
-   |               |optional act  |                                   |                      |          |
-   |               |chain         |                                   |                      |          |
-   +---------------+--------------+-----------------------------------+----------------------+----------+
-   |Client or Agent|AS and RS     |Check                              |Detect likely         |Section   |
-   |               |metadata      |entity_profiles_supported.actor and|capability mismatch   |10.2      |
-   |               |              |actor_profile_token_types_supported|                      |          |
-   |               |              |when available                     |                      |          |
-   +---------------+--------------+-----------------------------------+----------------------+----------+
+   +===============+==============+=======================================+======================+==========+
+   |Role           |Inputs        |Required checks                        |Outputs / behavior    |Detailed  |
+   |               |              |                                       |                      |rules     |
+   +===============+==============+=======================================+======================+==========+
+   |Assertion-     |JWT assertion |Validate JWT; trust issuer; validate   |Preserve actor in     |Section   |
+   |consuming AS   |grant with act|delegation when required by the        |issued token          |4.2       |
+   |               |              |applicable processing path or local    |                      |          |
+   |               |              |policy; enforce chain-depth limit      |                      |          |
+   +---------------+--------------+---------------------------------------+----------------------+----------+
+   |Token-exchange |Identity-only |Validate per credential type; apply    |Issue token with      |Section   |
+   |AS             |(id_token,    |class-specific subject, actor-chain,   |preserved or extended |6.1,      |
+   |(subject_token)|refresh_token)|and presenter rules; trust issuer;     |act chain when inbound|Section   |
+   |               |or token-state|validate delegation when required by   |token-state supports  |6.2.2.1.2,|
+   |               |(jwt,         |local policy; enforce scope reduction  |it; otherwise derive  |Section   |
+   |               |access_token, |and chain-depth limit                  |any new act from      |6.2.1.1,  |
+   |               |txn_token)    |                                       |current-exchange      |Section   |
+   |               |subject_token |                                       |inputs only           |6.2.1.2,  |
+   |               |input         |                                       |                      |Section   |
+   |               |              |                                       |                      |6.2.2.2.2,|
+   |               |              |                                       |                      |Section   |
+   |               |              |                                       |                      |6.2.1.3;  |
+   |               |              |                                       |                      |then      |
+   |               |              |                                       |                      |Section   |
+   |               |              |                                       |                      |6.4.2     |
+   +---------------+--------------+---------------------------------------+----------------------+----------+
+   |Token-exchange |Workload      |Validate per credential type; trust    |Construct outermost   |Section   |
+   |AS             |identity      |issuer; verify proof of possession;    |act from validated    |6.3.2.2,  |
+   |(actor_token)  |credential,   |derive outermost actor identity        |actor identity; then  |Section   |
+   |               |JWT client    |                                       |apply Section 6.4.2   |6.3.1,    |
+   |               |assertion, or |                                       |                      |Section   |
+   |               |JWT access    |                                       |                      |6.3.3     |
+   |               |token as      |                                       |                      |          |
+   |               |actor_token   |                                       |                      |          |
+   +---------------+--------------+---------------------------------------+----------------------+----------+
+   |Resource Server|Access token  |Validate token; validate presenter     |Apply delegated-token |Section   |
+   |               |or Transaction|binding; evaluate subject; evaluate    |policy; advertise     |9.3,      |
+   |               |Token carrying|(sub, outermost act.sub) pair when     |actor_profile_required|Section   |
+   |               |act           |required by local policy               |when delegated        |9.4       |
+   |               |              |                                       |requests are expected |          |
+   |               |              |                                       |to carry actor-profile|          |
+   |               |              |                                       |information           |          |
+   +---------------+--------------+---------------------------------------+----------------------+----------+
+   |Transaction    |JWT assertion |Validate inbound actor information;    |Preserve sub; treat   |Section   |
+   |Token Service  |grant, JWT    |preserve subject identity; enforce     |req_wl as supporting  |7.4       |
+   |               |access token, |chain-depth limit; apply presenter     |context; add new      |          |
+   |               |or Transaction|authentication per Transaction Token   |outermost act         |          |
+   |               |Token with    |mechanism                              |                      |          |
+   |               |subject and   |                                       |                      |          |
+   |               |optional act  |                                       |                      |          |
+   |               |chain         |                                       |                      |          |
+   +---------------+--------------+---------------------------------------+----------------------+----------+
+   |Client or Agent|AS and RS     |Check entity_profiles_supported.actor, |Detect likely         |Section   |
+   |               |metadata      |authorization_grant_profiles_supported,|capability mismatch   |10.2      |
+   |               |              |and actor_profile_token_exchange when  |                      |          |
+   |               |              |available                              |                      |          |
+   +---------------+--------------+---------------------------------------+----------------------+----------+
 
                                   Table 1
 
@@ -2125,12 +2131,13 @@ AddOutermostActor(inbound_chain, new_actor):
 
    The may_act claim ([RFC8693], Section 4.4) pre-authorizes a specific
    party to act on behalf of the subject in a subsequent Token Exchange.
-   This document defines may_act as an interoperable delegation-
-   authorization input: when present in a validated subject_token, it
-   MAY satisfy the delegation-authorization check in V2 step 3 of
-   Section 3.11 without a separately pre-registered grant.  In no case
-   is may_act itself the source of actor identity, and it MUST NOT be
-   propagated into any output token.
+   This document defines limited use of may_act as a delegation-
+   authorization input when actor identity is established by other
+   means: when present in a validated subject_token, it MAY satisfy the
+   delegation-authorization check in V2 step 3 of Section 3.11 without a
+   separately pre-registered grant.  In no case is may_act itself the
+   source of actor identity, and it MUST NOT be propagated into any
+   output token.
 
    Two pre-conditions apply regardless of how the Token Exchange request
    is structured:
@@ -3377,7 +3384,7 @@ AddOutermostActor(inbound_chain, new_actor):
           per [RFC6750], Section 3.1.  The error attribute in the WWW-
           Authenticate header supports extension values registered in
           the OAuth Extensions Error Registry; actor_unauthorized is
-          registered by this document (Section 14.3) and MAY appear
+          registered by this document (Section 14.4) and MAY appear
           there.  The RS MUST NOT use error="insufficient_scope" to
           signal actor authorization failures; that error code indicates
           the token's scope is insufficient for the operation and
@@ -3512,15 +3519,14 @@ AddOutermostActor(inbound_chain, new_actor):
    the visible act chain is filtered, consistent with Section 3.5.
 
    Opaque access tokens are not conformant to this profile as token
-   formats.  When an AS issues a delegated opaque access token and
-   supports introspection, it MAY expose equivalent actor-profile
-   information through introspection for RS processing.  This is a
-   deployment-specific compatibility mechanism for opaque tokens; it
-   does not make the opaque token itself conformant to this profile, and
-   support for this path MUST NOT be inferred solely from
-   actor_profile_required metadata.  When used, the following claims
-   define the minimum equivalent introspection semantics for active
-   delegated tokens:
+   formats.  When an AS chooses to support delegated opaque access
+   tokens under the introspection compatibility path defined by this
+   section, it MUST expose equivalent actor-profile information through
+   introspection for RS processing.  This path does not make the opaque
+   token itself conformant to this profile, and support for this path
+   MUST NOT be inferred solely from actor_profile_required metadata.
+   When used, the following claims define the minimum equivalent
+   introspection semantics for active delegated tokens:
 
    *  active: REQUIRED.  MUST be true for an active token.
 
@@ -3646,75 +3652,123 @@ AddOutermostActor(inbound_chain, new_actor):
 
    This section defines a minimal set of metadata parameters that,
    together with the entity_profiles_supported.actor array defined in
-   [I-D.mora-oauth-entity-profiles], allow authorization servers and
-   resource servers to advertise actor-profile support with reduced out-
-   of-band coordination.  These parameters provide partial capability
-   signaling only; they do not provide a complete machine-readable
-   description of every supported grant path, accepted subject_token
-   type, profile-specific JWT assertion-grant variant, or method by
-   which the AS determines the acting party.  Metadata helps clients
-   detect likely incompatibilities, but it does not guarantee successful
-   token issuance or resource access and does not define a required
-   client workflow.  Deployment documentation, prior agreement, or
-   companion profiles can still be needed for details outside the
-   parameters defined here.  Companion profiles MAY define additional
-   metadata for supplementary features such as provenance, consistent
-   with Section 3.5.
+   [I-D.mora-oauth-entity-profiles] and the
+   authorization_grant_profiles_supported parameter defined by
+   [I-D.ietf-oauth-identity-assertion-authz-grant], allow authorization
+   servers and resource servers to advertise actor-profile support with
+   reduced out-of-band coordination.  These parameters provide coarse-
+   grained capability signaling only; they do not provide a complete
+   machine-readable description of every supported grant path, profile-
+   specific JWT assertion-grant variant, presenter-binding mechanism,
+   subject-token-to-actor-token combination, or method by which the AS
+   determines the acting party.  Metadata helps clients detect likely
+   incompatibilities, but it does not guarantee successful token
+   issuance or resource access and does not define a required client
+   workflow.  Deployment documentation, prior agreement, or companion
+   profiles can still be needed for details outside the parameters
+   defined here.  Companion profiles MAY define additional metadata for
+   supplementary features such as provenance, consistent with
+   Section 3.5.
 
-   The design principle is that *capability flags go in this document's
-   metadata; entity type enumeration goes in
-   [I-D.mora-oauth-entity-profiles] metadata*.  When these metadata are
-   available, clients can use entity_profiles_supported.actor per
-   [I-D.mora-oauth-entity-profiles] to assess which actor entity
-   profiles the associated AS accepts under this profile and can use
-   actor_profile_token_types_supported (Section 10.2.2) to assess which
-   delegated output token types the AS advertises under this profile.
+   The design principle is that *authorization grant profile support
+   uses authorization_grant_profiles_supported; Token Exchange role-
+   specific capabilities are grouped under actor_profile_token_exchange;
+   and entity type enumeration uses [I-D.mora-oauth-entity-profiles]
+   metadata*.  When these metadata are available, clients can use
+   authorization_grant_profiles_supported to assess whether an AS
+   advertises support for actor-profile JWT authorization grants,
+   actor_profile_token_exchange to assess coarse Token Exchange input
+   and requested-output compatibility, and
+   entity_profiles_supported.actor per [I-D.mora-oauth-entity-profiles]
+   to assess which actor entity profiles the associated AS accepts under
+   this profile.
 
 10.2.2.  Authorization Server Metadata
 
    The following parameters are defined for use in the AS metadata
    document ([RFC8414]):
 
-   actor_profile_token_types_supported:  OPTIONAL.  A JSON array of
-      token-type URI strings indicating the delegated output token types
-      that the AS can issue while applying actor-profile processing as
-      defined in this document.  When a token type appears in this
-      array, the AS can produce that token type as an output with actor-
-      profile claims preserved or created according to this document.
-      This parameter does not by itself indicate every accepted input
-      token type, presenter-binding mechanism, or transformation path;
-      clients SHOULD combine it with grant_types_supported,
-      entity_profiles_supported.actor, deployment documentation, and the
-      processing rules of the relevant token type before assuming that a
-      particular exchange path is supported.  In particular,
-      urn:ietf:params:oauth:token-type:jwt here advertises support for
-      issuing delegated JWT assertion grants under that token type.  It
-      does not by itself advertise support for more specific JWT
-      assertion-grant token types defined by other specifications (for
-      example, an ID-JAG token type), nor does it advertise accepted
-      subject_token or actor_token inputs.  Defined values are:
+   authorization_grant_profiles_supported:  OPTIONAL.  A JSON array of
+      authorization grant profile identifiers, as defined by
+      [I-D.ietf-oauth-identity-assertion-authz-grant].  An AS that
+      supports processing JWT authorization grants carrying actor-
+      profile claims under this document SHOULD include
+      urn:ietf:params:oauth:grant-profile:actor-profile in this array.
+      Inclusion of this value indicates only that the AS implements the
+      JWT authorization-grant processing rules for this actor profile.
+      It does not indicate that any particular issuer, subject, actor,
+      client, audience, resource, scope, or authorization request will
+      be accepted.  An AS that includes urn:ietf:params:oauth:grant-
+      profile:actor-profile in authorization_grant_profiles_supported
+      MUST also include urn:ietf:params:oauth:grant-type:jwt-bearer in
+      grant_types_supported.
 
-      *  urn:ietf:params:oauth:token-type:access_token — JWT access
-         tokens (Section 5)
+   actor_profile_token_exchange:  OPTIONAL.  A JSON object advertising
+      coarse Token Exchange capabilities for requests in which actor-
+      profile processing can apply.  This parameter applies only to
+      Token Exchange; it does not describe authorization code grants or
+      JWT bearer authorization grants.  The object members defined by
+      this document are:
 
-      *  urn:ietf:params:oauth:token-type:jwt — JWT assertion grants
-         (Section 4)
+      *  subject_token_types_supported: OPTIONAL.  A JSON array of
+         token-type URI strings indicating the subject_token_type values
+         the AS accepts for Token Exchange requests in which actor-
+         profile processing can apply.  Values defined by this document
+         are:
 
-      *  urn:ietf:params:oauth:token-type:txn_token — Transaction Tokens
-         (Section 7.1)
+         -  urn:ietf:params:oauth:token-type:jwt — JWT assertion grants
+            (Section 4)
 
-      When absent, the AS makes no claim about delegated output token
-      types under this profile.
+         -  urn:ietf:params:oauth:token-type:access_token — JWT access
+            tokens (Section 5)
 
-      When urn:ietf:params:oauth:token-type:jwt appears in
-      actor_profile_token_types_supported and
-      urn:ietf:params:oauth:grant-type:jwt-bearer appears in
-      grant_types_supported, clients MAY infer that the AS can produce
-      actor-profile-compliant JWT assertion grants in the ID-JAG profile
-      ([I-D.ietf-oauth-identity-assertion-authz-grant]) when the
-      conditions of that specification are also met.  Definitive ID-JAG
-      support signaling is defined by
-      [I-D.ietf-oauth-identity-assertion-authz-grant].
+         -  urn:ietf:params:oauth:token-type:id_token — OpenID Connect
+            ID tokens (Section 6.2.2.1)
+
+         -  urn:ietf:params:oauth:token-type:refresh_token — refresh
+            tokens (Section 6.2.2.2)
+
+         -  urn:ietf:params:oauth:token-type:txn_token — Transaction
+            Tokens (Section 7.1)
+
+      *  actor_token_types_supported: OPTIONAL.  A JSON array of token-
+         type URI strings indicating the actor_token_type values the AS
+         accepts for Token Exchange requests in which actor-profile
+         processing can apply.  Values defined by this document are:
+
+         -  urn:ietf:params:oauth:token-type:jwt — JWT client assertions
+            (Section 6.3.1) and workload identity credentials
+            (Section 6.3.2.2)
+
+         -  urn:ietf:params:oauth:token-type:access_token — JWT access
+            tokens (Section 6.3.3)
+
+      *  requested_token_types_supported: OPTIONAL.  A JSON array of
+         token-type URI strings indicating the requested_token_type
+         values the AS accepts for Token Exchange requests in which
+         actor-profile processing can apply.  Values defined by this
+         document are:
+
+         -  urn:ietf:params:oauth:token-type:access_token — JWT access
+            tokens (Section 5)
+
+         -  urn:ietf:params:oauth:token-type:jwt — JWT assertion grants
+            (Section 4)
+
+         -  urn:ietf:params:oauth:token-type:txn_token — Transaction
+            Tokens (Section 7.1)
+
+      Each member of actor_profile_token_exchange is a coarse capability
+      signal only.  The presence of a token type in one member does not
+      guarantee that it can be combined with every token type in another
+      member, every resource, every scope, every presenter-binding
+      mechanism, or every profile-specific JWT variant.  For example,
+      this document uses urn:ietf:params:oauth:token-type:jwt for both
+      RFC 7523 client assertions and workload identity credentials as
+      actor_token inputs, with profile disambiguation performed during
+      request processing (Section 6).  When actor_profile_token_exchange
+      is absent, the AS makes no claim about Token Exchange support for
+      this actor profile.
 
    The entity profile types the AS accepts for actors are advertised via
    the entity_profiles_supported.actor array defined in
@@ -3732,11 +3786,26 @@ AddOutermostActor(inbound_chain, new_actor):
        "urn:ietf:params:oauth:grant-type:jwt-bearer"
      ],
      "dpop_signing_alg_values_supported": ["ES256", "RS256"],
-     "actor_profile_token_types_supported": [
-       "urn:ietf:params:oauth:token-type:access_token",
-       "urn:ietf:params:oauth:token-type:jwt",
-       "urn:ietf:params:oauth:token-type:txn_token"
+     "authorization_grant_profiles_supported": [
+       "urn:ietf:params:oauth:grant-profile:actor-profile"
      ],
+     "actor_profile_token_exchange": {
+       "subject_token_types_supported": [
+         "urn:ietf:params:oauth:token-type:id_token",
+         "urn:ietf:params:oauth:token-type:jwt",
+         "urn:ietf:params:oauth:token-type:access_token",
+         "urn:ietf:params:oauth:token-type:txn_token"
+       ],
+       "actor_token_types_supported": [
+         "urn:ietf:params:oauth:token-type:jwt",
+         "urn:ietf:params:oauth:token-type:access_token"
+       ],
+       "requested_token_types_supported": [
+         "urn:ietf:params:oauth:token-type:access_token",
+         "urn:ietf:params:oauth:token-type:jwt",
+         "urn:ietf:params:oauth:token-type:txn_token"
+       ]
+     },
      "entity_profiles_supported": {
        "client": ["service", "ai_agent"],
        "subject": ["user", "service", "ai_agent"],
@@ -3756,17 +3825,19 @@ AddOutermostActor(inbound_chain, new_actor):
       access tokens and Transaction Tokens, this ordinarily means a
       delegated token carrying an act claim conforming to this profile.
       In deployments that use opaque access tokens, equivalent actor-
-      profile information MAY instead be conveyed to the RS via
-      introspection, but such support is deployment-specific and the
-      opaque token itself is not conformant to this profile.  Clients
-      SHOULD treat this as a strong indication that delegated access
-      will require either a conforming act claim in the token or an
+      profile information MAY instead be conveyed to the RS via the
+      introspection compatibility path in Section 9.5, but the opaque
+      token itself is not conformant to this profile.  Clients SHOULD
+      treat this as a strong indication that delegated access will
+      require either a conforming act claim in the token or an
       explicitly documented opaque-token/introspection path providing
       equivalent claims.  When an AS has obtained and processed
       Protected Resource Metadata for the target RS and that metadata
       includes actor_profile_required: true, the AS MUST reject any
       token request that would produce a token non-conformant with this
-      profile for use at that resource.  An RS that enforces this policy
+      profile for use at that resource unless an explicitly supported
+      introspection compatibility path will provide equivalent actor-
+      profile information to the RS.  An RS that enforces this policy
       for a given request path MUST reject a request it determines is
       attempting delegated access if neither a conforming act claim nor
       equivalent introspection-derived actor-profile information is
@@ -3803,29 +3874,34 @@ AddOutermostActor(inbound_chain, new_actor):
 
 10.2.4.  Transaction Token Capability Signaling
 
-   Transaction Token support under this profile is advertised through
-   actor_profile_token_types_supported.  When an AS or TTS can issue
-   Transaction Tokens as delegated outputs under this profile, it MUST
-   list urn:ietf:params:oauth:token-type:txn_token in
-   actor_profile_token_types_supported.  This document does not define
-   any separate Transaction Token discovery parameter.
+   Transaction Token support under this profile for Token Exchange paths
+   is advertised through
+   actor_profile_token_exchange.requested_token_types_supported.  When
+   an AS or TTS can issue Transaction Tokens as delegated Token Exchange
+   outputs under this profile, it MUST list urn:ietf:params:oauth:token-
+   type:txn_token in
+   actor_profile_token_exchange.requested_token_types_supported.  This
+   document does not define any separate Transaction Token discovery
+   parameter.
 
 10.2.5.  Capability Signaling Usage
 
    Clients can use Protected Resource Metadata ([RFC9728]) to determine
    whether a resource advertises actor-profile conformance for delegated
    requests (actor_profile_required).  Clients can use the associated AS
-   metadata ([RFC8414]) to determine whether the AS advertises
-   compatible delegated output token types
-   (actor_profile_token_types_supported) and accepted actor entity
-   profiles (entity_profiles_supported.actor).  For Transaction Token
-   paths, clients SHOULD additionally consult the transaction-token
-   metadata described in Section 10.2.4.
+   metadata ([RFC8414]) to determine whether the AS advertises actor-
+   profile JWT authorization-grant processing
+   (authorization_grant_profiles_supported), coarse Token Exchange
+   compatibility (actor_profile_token_exchange), and accepted actor
+   entity profiles (entity_profiles_supported.actor).  For Transaction
+   Token paths, clients SHOULD additionally consult the transaction-
+   token metadata described in Section 10.2.4.
 
    These signals are advisory capability indicators, not a complete
    machine-readable description of every supported grant path.  A client
-   that detects an obvious mismatch, such as an unsupported delegated
-   output token type or an actor entity profile outside the advertised
+   that detects an obvious mismatch, such as a missing authorization
+   grant profile, unsupported Token Exchange input or requested output
+   token type, or an actor entity profile outside the advertised
    accepted set, will ordinarily avoid that path or rely on deployment-
    specific configuration.  As a safe default, a client that intends to
    make a request on behalf of another principal should treat
@@ -4586,22 +4662,35 @@ AddOutermostActor(inbound_chain, new_actor):
 
 14.  IANA Considerations
 
-14.1.  OAuth Authorization Server Metadata Registry
+14.1.  OAuth URI Registration
 
-   This document requests IANA to register the following values in the
-   "OAuth Authorization Server Metadata" registry ([RFC8414]):
+   This document requests IANA to register the following value in the
+   "OAuth URI" registry:
 
-   *  Metadata Name: actor_profile_token_types_supported
+   *  URN: urn:ietf:params:oauth:grant-profile:actor-profile
 
-   *  Metadata Description: JSON array of delegated output token-type
-      URIs that the AS can issue while applying actor-profile processing
-      per this document
+   *  Common Name: OAuth Actor Profile for Delegation
 
    *  Change Controller: IETF
 
    *  Reference: Section 10.2.2 of this document
 
-14.2.  OAuth Protected Resource Metadata Registry
+14.2.  OAuth Authorization Server Metadata Registry
+
+   This document requests IANA to register the following values in the
+   "OAuth Authorization Server Metadata" registry ([RFC8414]):
+
+   *  Metadata Name: actor_profile_token_exchange
+
+   *  Metadata Description: JSON object advertising coarse Token
+      Exchange capabilities for requests in which actor-profile
+      processing can apply
+
+   *  Change Controller: IETF
+
+   *  Reference: Section 10.2.2 of this document
+
+14.3.  OAuth Protected Resource Metadata Registry
 
    This document requests IANA to register the following values in the
    "OAuth Protected Resource Metadata" registry ([RFC9728]):
@@ -4616,7 +4705,7 @@ AddOutermostActor(inbound_chain, new_actor):
 
    *  Reference: Section 10.2.3 of this document
 
-14.3.  OAuth Error Registry
+14.4.  OAuth Error Registry
 
    This document requests IANA to register the following value in the
    "OAuth Extensions Error Registry" ([RFC6749], Section 11.4):
@@ -4632,7 +4721,7 @@ AddOutermostActor(inbound_chain, new_actor):
 
    *  Reference: Section 8 of this document
 
-14.4.  OAuth Token Introspection Response Registry
+14.5.  OAuth Token Introspection Response Registry
 
    This document requests IANA to register the following value in the
    "OAuth Token Introspection Response" registry ([RFC7662],
@@ -4651,7 +4740,7 @@ AddOutermostActor(inbound_chain, new_actor):
 
    *  Reference: Section 9.5 of this document
 
-14.5.  JWT Claims Registry
+14.6.  JWT Claims Registry
 
    This document does not request independent JWT Claims Registry
    entries for the act object sub-claims (iss, sub_profile, and any
@@ -4661,16 +4750,17 @@ AddOutermostActor(inbound_chain, new_actor):
    within a registered claim are scoped to that claim's JSON object and
    do not require separate top-level registry entries.
 
-14.6.  OAuth Token Type Registry
+14.7.  OAuth Token Type Registry
 
    This document makes no independent requests to the "OAuth Token Type"
    registry for urn:ietf:params:oauth:token-type:txn_token.  That URI is
    defined and registered by [I-D.ietf-oauth-transaction-tokens].  Its
-   inclusion as a defined value for actor_profile_token_types_supported
-   in Section 10.2.2 is contingent on the progression of
+   inclusion as a defined value for
+   actor_profile_token_exchange.requested_token_types_supported in
+   Section 10.2.2 is contingent on the progression of
    [I-D.ietf-oauth-transaction-tokens].
 
-14.7.  OAuth Entity Profiles Registry
+14.8.  OAuth Entity Profiles Registry
 
    This document makes no independent requests to the "OAuth Entity
    Profiles" registry.  It normatively depends on the "Actor Profile"
@@ -5034,11 +5124,26 @@ B.2.  Discovery and Capability Negotiation
 
    {
      "issuer": "https://as.travel-provider.example",
-     "actor_profile_token_types_supported": [
-       "urn:ietf:params:oauth:token-type:jwt",
-       "urn:ietf:params:oauth:token-type:access_token",
-       "urn:ietf:params:oauth:token-type:txn_token"
+     "grant_types_supported": [
+       "urn:ietf:params:oauth:grant-type:jwt-bearer",
+       "urn:ietf:params:oauth:grant-type:token-exchange"
      ],
+     "authorization_grant_profiles_supported": [
+       "urn:ietf:params:oauth:grant-profile:id-jag",
+       "urn:ietf:params:oauth:grant-profile:actor-profile"
+     ],
+     "actor_profile_token_exchange": {
+       "subject_token_types_supported": [
+         "urn:ietf:params:oauth:token-type:jwt"
+       ],
+       "actor_token_types_supported": [
+         "urn:ietf:params:oauth:token-type:jwt"
+       ],
+       "requested_token_types_supported": [
+         "urn:ietf:params:oauth:token-type:access_token",
+         "urn:ietf:params:oauth:token-type:txn_token"
+       ]
+     },
      "entity_profiles_supported": {
        "subject": ["user", "ai_agent"],
        "actor":   ["user", "ai_agent", "service"]
@@ -5046,16 +5151,17 @@ B.2.  Discovery and Capability Negotiation
    }
 
    The agent observes that its sub_profile (ai_agent) is listed in
-   entity_profiles_supported.actor and that delegated JWT assertion
-   grants and delegated access tokens are advertised as output types in
-   actor_profile_token_types_supported.  These metadata do not by
-   themselves advertise acceptance of JWT subject_token or JWT
-   actor_token inputs, and they do not by themselves advertise support
-   for the more specific ID-JAG token type used later in this flow.
-   Together with grant_types_supported, the ID-JAG specification, and
-   deployment documentation, they indicate that the delegated-token path
-   is plausibly compatible with the Booking Tool RS's advertised
-   requirements.
+   entity_profiles_supported.actor, that ID-JAG and actor-profile JWT
+   authorization grants are advertised in
+   authorization_grant_profiles_supported, and that JWT subject_token,
+   JWT actor_token, access-token output, and Transaction Token output
+   are advertised as coarse Token Exchange capabilities in
+   actor_profile_token_exchange.  These metadata do not by themselves
+   advertise every valid combination of subject token, actor token,
+   requested token type, resource, and proof mechanism.  Together with
+   the ID-JAG specification and deployment documentation, they indicate
+   that the delegated-token path is plausibly compatible with the
+   Booking Tool RS's advertised requirements.
 
 B.3.  Step 1: User Authentication (ID Token)
 
