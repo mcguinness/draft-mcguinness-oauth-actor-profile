@@ -212,18 +212,6 @@ This document defines the following invariants:
 *  `client_id` and `azp` are OAuth client identifiers, not actor identifiers.
 *  When the (`act.iss`, `act.sub`) pair identifies the same entity as the (`iss`, `sub`) pair of the token, no delegation is expressed and consumers MUST NOT infer a meaningful delegation relationship.  String equality of `act.sub` and `sub` alone is not a sufficient test; the issuer or namespace context must also be considered.
 
-## What This Profile Does Not Standardize
-
-This profile does not standardize the following:
-
-*  delegation approval, consent, or grant-management policy
-*  subject-identifier translation mechanisms or proof of subject equivalence across namespaces
-*  authorization semantics for nested `act` objects
-*  independently signed prior-hop provenance mechanisms, which MAY be defined by companion profiles layered on top of this one
-*  client discovery or preflight algorithms beyond the metadata semantics defined here
-*  cross-domain trust frameworks for proving actor identifier authority beyond the token issuer's assertion of the (`act.iss`, `act.sub`) pair
-*  SAML 1.1 or SAML 2.0 assertions as Token Exchange `subject_token` inputs; while {{RFC8693}} defines token type URNs for SAML assertions, actor-profile extraction from XML-based SAML credentials is outside the scope of this document
-
 ## Conformance Scope
 
 ### Representation and Policy
@@ -705,7 +693,7 @@ JWT assertion grants are not suitable for use as `actor_token` in Token Exchange
 
 ## Subject Tokens
 
-This section is organized by the two semantic `subject_token` classes defined in {{token-exchange-presenter-model}}.  The class-level text defines the common actor-profile consequences.  The individual token sections then define only the validation and extraction rules specific to each token type.
+This section is organized by the two semantic `subject_token` classes defined in {{token-exchange-presenter-model}}.  The class-level text defines the common actor-profile consequences.  The individual token sections then define only the validation and extraction rules specific to each token type.  SAML 1.1 and SAML 2.0 assertions are not supported `subject_token` inputs under this profile; while {{RFC8693}} defines token type URNs for SAML assertions, actor-profile extraction from XML-based SAML credentials is outside scope.
 
 ### Token-State Subject Tokens
 
