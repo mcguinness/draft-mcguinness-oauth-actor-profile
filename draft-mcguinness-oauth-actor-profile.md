@@ -1245,7 +1245,7 @@ This document does not define TTS-specific processing for `may_act`.  A deployme
 
 When an AS or TTS rejects a request under this profile for reasons related to actor-profile processing, it MUST return an OAuth error response per {{RFC6749, Section 5.2}} and {{RFC8693, Section 2.2}}.  These error codes do not override `invalid_client` when a request fails client authentication per {{RFC6749}} or {{RFC7523}}.
 
-The following table defines the four actor-profile error codes and their trigger conditions.  The "AS" and "TTS" columns note context-specific triggers where the two server types differ; otherwise the trigger condition applies to both.
+The following table summarizes actor-profile error handling by using three existing OAuth error codes and defining one new error code, `actor_unauthorized`.  The "AS" and "TTS" columns note context-specific triggers where the two server types differ; otherwise the trigger condition applies to both.
 
 | Error Code | General Trigger | AS-specific detail | TTS-specific detail |
 |------------|----------------|-------------------|---------------------|

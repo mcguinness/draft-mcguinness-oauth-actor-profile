@@ -190,7 +190,7 @@ Receipt issuers and consumers MUST apply the JWT best practices in {{RFC8725}}.
 The JWT payload of an actor receipt uses the following claims:
 
 `iss`:
-: REQUIRED.  The issuer that created the receipt and added the corresponding actor hop.  In the normal case, this value is the same entity as `act.iss` in the receipt.  When the two values differ, `iss` identifies the signing party and `act.iss` identifies the issuer that certified the actor identity.  Deployments SHOULD treat a mismatch as a configuration anomaly and MAY reject such receipts under local policy.
+: REQUIRED.  The issuer that created and signed the receipt for the corresponding actor hop.  This value identifies the receipt signer.  The `act.iss` value inside the receipt identifies the namespace authority for `act.sub`, using the meaning defined by the core actor profile.  These values MAY be the same entity or different entities.  When they differ, consumers MUST validate trust in the receipt signer and namespace authority according to their respective roles under local policy; the difference alone does not make the receipt invalid under this profile.
 
 `sub`:
 : REQUIRED.  The top-level `sub` value that was present in the token issued at this hop.
@@ -321,7 +321,8 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  `receipt[0].act.sub` MUST equal the outer token's `act.sub`, and `receipt[0].act.iss` MUST equal the outer token's `act.iss`;
     *  `receipt[1].act.sub` MUST equal the outer token's `act.act.sub`, and `receipt[1].act.iss` MUST equal the outer token's `act.act.iss`;
     *  and so on for the number of receipts present;
-    *  when `act.sub_profile` is present in both a visible `act` object and the corresponding receipt `act` object, the two values MUST be identical.
+    *  when `act.sub_profile` is present in the receipt `act` object, the corresponding visible `act` object MUST contain `act.sub_profile` with the same value;
+    *  when `act.sub_profile` is present only in the visible `act` object, the receipt remains aligned for this profile.  The visible value is not independently attested by that receipt, and recipients that require receipt coverage for actor classification MUST reject the receipt chain or apply explicit local mapping rules.
 8.  Verify that `receipt[0].sub` equals the outer token's top-level `sub`.
 9.  Treat each receipt `cnf` value, if present, only as historical provenance for that hop.  A mismatch between the current outer token's top-level `cnf` and the outermost receipt `cnf` MUST NOT by itself invalidate the receipt chain under this profile.
 10.  Receipt `cnf` values MUST NOT replace validation of the current request against the outer token's top-level `cnf`.
