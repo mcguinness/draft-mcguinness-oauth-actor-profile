@@ -3055,10 +3055,11 @@ AddOutermostActor(inbound_chain, new_actor):
    These error codes do not override invalid_client when a request fails
    client authentication per [RFC6749] or [RFC7523].
 
-   The following table defines the four actor-profile error codes and
-   their trigger conditions.  The "AS" and "TTS" columns note context-
-   specific triggers where the two server types differ; otherwise the
-   trigger condition applies to both.
+   The following table summarizes actor-profile error handling by using
+   three existing OAuth error codes and defining one new error code,
+   actor_unauthorized.  The "AS" and "TTS" columns note context-specific
+   triggers where the two server types differ; otherwise the trigger
+   condition applies to both.
 
    +==================+==============+===================+=============+
    |Error Code        |General       |AS-specific detail |TTS-specific |

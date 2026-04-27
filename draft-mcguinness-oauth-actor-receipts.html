@@ -1542,7 +1542,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <dt id="section-7.2-2.1">
 <code>iss</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.2">
-            <p id="section-7.2-2.2.1"><span class="bcp14">REQUIRED</span>.  The issuer that created the receipt and added the corresponding actor hop.  In the normal case, this value is the same entity as <code>act.iss</code> in the receipt.  When the two values differ, <code>iss</code> identifies the signing party and <code>act.iss</code> identifies the issuer that certified the actor identity.  Deployments <span class="bcp14">SHOULD</span> treat a mismatch as a configuration anomaly and <span class="bcp14">MAY</span> reject such receipts under local policy.<a href="#section-7.2-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-7.2-2.2.1"><span class="bcp14">REQUIRED</span>.  The issuer that created and signed the receipt for the corresponding actor hop.  This value identifies the receipt signer.  The <code>act.iss</code> value inside the receipt identifies the namespace authority for <code>act.sub</code>, using the meaning defined by the core actor profile.  These values <span class="bcp14">MAY</span> be the same entity or different entities.  When they differ, consumers <span class="bcp14">MUST</span> validate trust in the receipt signer and namespace authority according to their respective roles under local policy; the difference alone does not make the receipt invalid under this profile.<a href="#section-7.2-2.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.3">
@@ -1828,7 +1828,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-9-2.7.2.3.1">and so on for the number of receipts present;<a href="#section-9-2.7.2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.7.2.4">
-              <p id="section-9-2.7.2.4.1">when <code>act.sub_profile</code> is present in both a visible <code>act</code> object and the corresponding receipt <code>act</code> object, the two values <span class="bcp14">MUST</span> be identical.<a href="#section-9-2.7.2.4.1" class="pilcrow">¶</a></p>
+              <p id="section-9-2.7.2.4.1">when <code>act.sub_profile</code> is present in the receipt <code>act</code> object, the corresponding visible <code>act</code> object <span class="bcp14">MUST</span> contain <code>act.sub_profile</code> with the same value;<a href="#section-9-2.7.2.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-9-2.7.2.5">
+              <p id="section-9-2.7.2.5.1">when <code>act.sub_profile</code> is present only in the visible <code>act</code> object, the receipt remains aligned for this profile.  The visible value is not independently attested by that receipt, and recipients that require receipt coverage for actor classification <span class="bcp14">MUST</span> reject the receipt chain or apply explicit local mapping rules.<a href="#section-9-2.7.2.5.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </li>
