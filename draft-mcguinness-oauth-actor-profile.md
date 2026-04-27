@@ -173,7 +173,7 @@ Delegation:
 : The act by which a principal authorizes another party (the actor) to exercise a subset of the principal's rights.
 
 Cross-Domain Delegation:
-: A delegation scenario in which the subject and actor are governed by different trust domains or different identifier-namespace authorities under deployment policy.  This document does not define a universal interoperable algorithm for classifying a particular token instance as cross-domain.  Deployments typically make that determination from issuer context, identifier-namespace authority, and the applicable trust framework or bilateral agreement.  The token's top-level `iss` alone is not sufficient to make that determination in all deployments.
+: A delegation scenario in which the subject and actor are governed by different trust domains or different identifier namespaces under deployment policy.  This document does not define a universal interoperable algorithm for classifying a particular token instance as cross-domain.  Deployments typically make that determination from issuer context, actor identifier context, and the applicable trust framework or bilateral agreement.  The token's top-level `iss` alone is not sufficient to make that determination in all deployments.
 
 Actor Authorization at the Resource Server:
 : An authorization policy evaluation that considers both the subject and the actor, and the relationship between them, as policy inputs.  Under this profile, the relevant actor is ordinarily the outermost actor.
@@ -205,7 +205,7 @@ This document defines the following invariants:
 *  `sub` is the authorizing principal.
 *  The outermost `act.sub` is the immediate actor for the current token presentation.
 *  The canonical actor identifier conveyed by this profile is the (`act.iss`, `act.sub`) pair.
-*  `act.iss` identifies namespace authority for `act.sub`; implementations MUST NOT reinterpret it as the issuer of the current token, a credential-issuer claim, or a hop-provenance marker.
+*  `act.iss` identifies the issuer or namespace context in which `act.sub` is to be interpreted; implementations MUST NOT reinterpret it as the issuer of the current token, a credential-issuer claim, or a hop-provenance marker.
 *  Nested `act` objects are preserved prior-actor context unless a deployment explicitly applies additional local-policy processing to them; this profile does not standardize authorization semantics for those nested entries.
 *  `client_id` and `azp` are OAuth client identifiers, not actor identifiers.
 
@@ -218,14 +218,14 @@ This profile does not standardize the following:
 *  authorization semantics for nested `act` objects
 *  independently signed prior-hop provenance mechanisms, which MAY be defined by companion profiles layered on top of this one
 *  client discovery or preflight algorithms beyond the metadata semantics defined here
-*  cross-domain trust frameworks for establishing namespace authority for `act.iss`
+*  cross-domain trust frameworks for proving actor identifier authority beyond the token issuer's assertion of the (`act.iss`, `act.sub`) pair
 *  SAML 1.1 or SAML 2.0 assertions as Token Exchange `subject_token` inputs; while {{RFC8693}} defines token type URNs for SAML assertions, actor-profile extraction from XML-based SAML credentials is outside the scope of this document
 
 ## Conformance Scope
 
 The interoperability defined by this profile operates at the representation and propagation layer, not at the authorization policy layer.  Conformance means that issuers and consumers represent, preserve, validate, and interpret actor claims consistently: using the same claim structure, the same processing rules across token types, and the same discovery metadata.  What this profile does not standardize is whether a specific actor is permitted to act on behalf of a specific subject for a specific scope; that authorization policy decision requires bilateral agreement, a trust framework, or deployment-specific configuration outside this document.  This document does not close that policy gap; it makes the actor explicit and consistently represented in the token so that such agreements can be applied deterministically.
 
-This document does not require every deployment to enforce authorization of the (`sub`, outermost `act.sub`) pair on every request, although such enforcement is RECOMMENDED for security-sensitive delegated access.  Same-domain deployments will often satisfy the representation and propagation requirements with straightforward local configuration for namespace authority and identifier mapping.  Cross-domain deployments require explicit trust-framework or bilateral agreement decisions covering the permitted delegation relationships and therefore carry a higher interoperability burden beyond what this profile alone provides.
+This document does not require every deployment to enforce authorization of the (`sub`, outermost `act.sub`) pair on every request, although such enforcement is RECOMMENDED for security-sensitive delegated access.  Same-domain deployments will often satisfy the representation and propagation requirements with straightforward local configuration for actor identifier context and identifier mapping.  Cross-domain deployments require explicit trust-framework or bilateral agreement decisions covering the permitted delegation relationships and therefore carry a higher interoperability burden beyond what this profile alone provides.
 
 This profile defines actor-profile requirements for JWT assertion grants, JWT-formatted access tokens, and Transaction Tokens.  Opaque access tokens are not conformant token formats under this profile.  However, when an AS supports introspection, this document defines optional equivalent introspection response semantics for delegated opaque access tokens in {{token-introspection}}.  Such support is an introspection-based compatibility path; it does not make the opaque token itself conformant to this profile.  Use of opaque access tokens as `subject_token` or `actor_token` inputs to Token Exchange remains outside the interoperable scope of this document.  An AS MAY translate introspection results for an opaque access token into equivalent local inputs for deployment-specific use, but that input-processing behavior is not interoperable behavior defined by this document.
 
@@ -279,14 +279,14 @@ act-object = {
 ~~~
 
 `sub`:
-: REQUIRED.  The subject identifier of the actor, as defined in {{RFC8693, Section 4.1}}.  This value identifies the acting party.  It is a StringOrURI as defined in {{RFC7519}}.  When the canonical actor identifier pair (`act.iss`, `act.sub`) identifies the same entity as the (`iss`, `sub`) pair of the token (that is, when the actor and subject are the same party under the same namespace authority), no delegation is expressed; including an `act` claim is typically not useful in that case.  When `act` is present but identifies the same entity as `sub`, consumers MUST NOT infer a meaningful delegation relationship from the token.  String equality of `act.sub` and `sub` alone is not a sufficient test; the namespace authority (`act.iss` vs. token `iss`) must also be considered.
+: REQUIRED.  The subject identifier of the actor, as defined in {{RFC8693, Section 4.1}}.  This value identifies the acting party.  It is a StringOrURI as defined in {{RFC7519}}.  When the canonical actor identifier pair (`act.iss`, `act.sub`) identifies the same entity as the (`iss`, `sub`) pair of the token (that is, when the actor and subject are the same party under the same issuer or namespace context), no delegation is expressed; including an `act` claim is typically not useful in that case.  When `act` is present but identifies the same entity as `sub`, consumers MUST NOT infer a meaningful delegation relationship from the token.  String equality of `act.sub` and `sub` alone is not a sufficient test; the issuer or namespace context (`act.iss` vs. token `iss`) must also be considered.
 
 `iss`:
-: REQUIRED.  Identifies the namespace authority for the actor identifier carried in `act.sub`, playing the same role for `act.sub` that the JWT `iss` claim plays for the token `sub`: just as `iss` + `sub` form a globally unique principal identifier in a JWT (see {{RFC9493}}), `act.iss` + `act.sub` form a canonical actor identifier within the delegation chain.  For URI, client, workload, or other deployment-specific identifiers, the value of `act.iss` MUST identify the authority that the deployment treats as authoritative for resolving or validating that actor identifier.  See "Cross-Domain Delegation" in {{conventions}}.  The value is a StringOrURI as defined in {{RFC7519}}.
+: REQUIRED.  Identifies the issuer or namespace context in which the actor identifier carried in `act.sub` is to be interpreted, playing the same role for `act.sub` that the JWT `iss` claim plays for the token `sub`: just as `iss` + `sub` form a globally unique principal identifier in a JWT (see {{RFC9493}}), `act.iss` + `act.sub` form a canonical actor identifier within the delegation chain.  For URI, client, workload, or other deployment-specific identifiers, the value of `act.iss` MUST identify the context the issuer used when assigning or asserting that actor identifier.  See "Cross-Domain Delegation" in {{conventions}}.  The value is a StringOrURI as defined in {{RFC7519}}.
 
-  The canonical actor identifier conveyed by this profile is the (`act.iss`, `act.sub`) pair.  Implementations MUST NOT interpret `act.iss` as the issuer of the current token, as a credential-issuer claim, or as a hop-provenance marker.  The namespace authority and the credential issuer may be the same entity or different entities.  In many deployments the value is an HTTPS URL, but other well-known identifier schemes (for example, a URN for workload identities) are also possible.  Preserving an inner `act` object in a newly issued token does not change the meaning of its `act.iss` value and does not cause that inner entry to become independently authenticated by the new issuer; it remains prior-actor information carried within the outer issuer's trust context.
+  The canonical actor identifier conveyed by this profile is the (`act.iss`, `act.sub`) pair.  Implementations MUST NOT interpret `act.iss` as the issuer of the current token, as a credential-issuer claim, or as a hop-provenance marker.  The actor identifier context, the token issuer, and the credential issuer may be the same entity or different entities.  In many deployments the value is an HTTPS URL, but other well-known identifier schemes (for example, a URN for workload identities) are also possible.  Preserving an inner `act` object in a newly issued token does not change the meaning of its `act.iss` value and does not cause that inner entry to become independently authenticated by the new issuer; it remains prior-actor information carried within the outer issuer's trust context.
 
-  For example, a TTS might issue a Transaction Token with top-level `iss` equal to `https://tts.travel-provider.example` while setting `act.iss` for the booking tool to `https://as.travel-provider.example`, if local policy treats that AS as authoritative for the booking tool identifier namespace.  This is valid and expected: the TTS is the token issuer, while `https://as.travel-provider.example` is the namespace authority for the booking tool identifier.
+  For example, a TTS might issue a Transaction Token with top-level `iss` equal to `https://tts.travel-provider.example` while setting `act.iss` for the booking tool to `https://as.travel-provider.example`, if local policy uses that AS's identifier namespace for booking tool identifiers.  This is valid and expected: the TTS is the token issuer, while `https://as.travel-provider.example` is the actor identifier context for the booking tool identifier.
 
 `sub_profile`:
 : RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in Section 4.2 of {{I-D.mora-oauth-entity-profiles}}.  Values used within `act` objects MUST be registered with the "Actor Profile" usage location in the OAuth Entity Profiles registry (Section 14.1 of {{I-D.mora-oauth-entity-profiles}}) or be privately defined collision-resistant values.  If the acting entity fits more than one profile, multiple values MAY be included as a space-delimited string (e.g., `"service ai_agent"`).  Interoperability requirements and implementation guidance for multi-value strings are discussed in {{forward-compat-sub-profile}}.
@@ -379,7 +379,7 @@ The following normative algorithm governs how an AS validates an inbound actor c
 **V2 — Validate outermost actor.**  For the outermost `act` object the AS MUST:
 
 1.  Verify that both `act.sub` and `act.iss` are present.  If either is absent, reject with `invalid_request`.
-2.  Verify that `act.iss` is authoritative for the identifier namespace of `act.sub` under a trusted framework or local policy.  This step validates namespace authority only; it does not interpret `act.iss` as the token issuer or as proof that prior hops were independently authenticated.  If `act.iss` cannot be established as authoritative for the namespace containing `act.sub`, reject with `invalid_grant`.  Non-normative examples of local validation approaches are in {{act-iss-authority-guidance}}; elaboration specific to JWT assertion grant inputs is in {{jwt-assertion-grants-processing}} step 3.
+2.  Verify that the token issuer is trusted under local policy to assert the (`act.iss`, `act.sub`) actor identifier pair.  This step validates trust in the assertion of the pair; it does not interpret `act.iss` as the token issuer, as proof that `act.iss` is globally authoritative for `act.sub`, or as proof that prior hops were independently authenticated.  If the token issuer is not trusted to assert the actor identifier pair, reject with `invalid_grant`.  Non-normative examples of local validation approaches are in {{act-iss-authority-guidance}}; elaboration specific to JWT assertion grant inputs is in {{jwt-assertion-grants-processing}} step 3.
 3.  When the applicable processing path introduces a new outermost actor via C1 ({{actor-chain-algorithm}}), the AS MUST evaluate whether that actor (`act.sub`) is authorized to exercise delegation on behalf of `sub` under local policy (for example, a pre-registered delegation grant, explicit consent record, or policy rule covering the acting party).  When the processing path preserves an existing chain from a validated, trusted upstream issuer via C2, delegation was evaluated upstream; the AS SHOULD evaluate the preserved relationship under local policy but is not required to do so for baseline interoperability.  If the required delegation relationship is prohibited by policy or cannot be confirmed, reject with `actor_unauthorized`.  Elaboration specific to JWT assertion grant inputs is in {{jwt-assertion-grants-processing}} step 4.
 
 **V3 — Optional local validation of inner actors.**  Interoperable processing under this profile is defined around `sub` and the outermost `act.sub`.  If local policy additionally uses an inner `act` object as an input to issuance decisions, the AS SHOULD apply the same three sub-steps as V2 for that entry, including delegation-confirmation only when the current processing path or local policy requires it for that entry.  Such use of inner actors is deployment-specific.
@@ -395,7 +395,7 @@ The following normative algorithm governs how an AS validates an inbound actor c
 ~~~
 AddOutermostActor(inbound_chain, new_actor):
   outermost.sub         = new_actor.sub      // REQUIRED
-  outermost.iss         = new_actor.iss      // REQUIRED: namespace authority for new_actor.sub
+  outermost.iss         = new_actor.iss      // REQUIRED: issuer or namespace context for new_actor.sub
   outermost.sub_profile = new_actor.sub_profile  // RECOMMENDED when known
 
   if inbound_chain is present:
@@ -424,7 +424,7 @@ The following illustrates how C1 applies when one agent delegates to another.  W
 
 *  Apply C1: Agent B becomes the new outermost actor; the entire inbound chain — including Agent A — is nested beneath Agent B.
 *  The result is `sub=U, act={B.sub, B.iss, act={A.sub, A.iss}}`, not `sub=U, act={B.sub, B.iss}` (which would silently drop Agent A from the chain).
-*  If Agent B and Agent A have the same identifier under the same namespace authority (that is, they are the same party), the AS MAY apply C2 — preserving the existing chain unchanged — rather than adding a redundant nesting.  This rule also applies in Token Exchange: when an `actor_token` identifies the same party as the inbound outermost `act.sub` of the `subject_token` (same `act.sub` and `act.iss` under the same namespace authority), the AS MAY treat this as continuation and preserve the inbound chain unchanged rather than creating a redundant nested entry.
+*  If Agent B and Agent A have the same identifier under the same issuer or namespace context (that is, they are the same party), the AS MAY apply C2 — preserving the existing chain unchanged — rather than adding a redundant nesting.  This rule also applies in Token Exchange: when an `actor_token` identifies the same party as the inbound outermost `act.sub` of the `subject_token` (same `act.sub` and `act.iss` under the same issuer or namespace context), the AS MAY treat this as continuation and preserve the inbound chain unchanged rather than creating a redundant nested entry.
 
 
 ## Sender Constraint and Key Binding {#sender-constraint}
@@ -539,7 +539,7 @@ When the assertion or request context also identifies an OAuth client via `clien
 
 Clients SHOULD use JWT assertion grants carrying actor-profile claims only when the AS's support for the actor-determination model has been confirmed via deployment documentation, prior agreement, or discovery.  For ID-JAG specifically, that confirmation SHOULD include whether the AS supports the actor-delegation extension model defined by this document.
 
-The following example shows an AS-issued assertion grant, which is the recommended pattern.  The Enterprise IdP AS performed Token Exchange, authenticated the agent as the OAuth client, established the delegation relationship under local policy, and signed the assertion.  `act.iss` equals the token `iss` here because the enterprise AS is also the namespace authority for the agent's identifier:
+The following example shows an AS-issued assertion grant, which is the recommended pattern.  The Enterprise IdP AS performed Token Exchange, authenticated the agent as the OAuth client, established the delegation relationship under local policy, and signed the assertion.  `act.iss` equals the token `iss` here because the enterprise AS's issuer identifier is also the actor identifier context for the agent:
 
 ~~~json
 {
@@ -561,9 +561,9 @@ The following example shows an AS-issued assertion grant, which is the recommend
 
 The top-level `sub_profile` classifies the JWT's `sub`; `sub_profile` within `act` classifies the actor.  The top-level `cnf.jkt` binds the assertion to the agent's DPoP key.
 
-The AS-issued grant is the pattern defined by this document because the issuing AS independently authenticated the agent and validated the delegation relationship before signing.  The receiving AS needs to trust only the enterprise AS as an issuer.
+The AS-issued grant is the pattern defined by this document because the issuing AS independently authenticated the agent and validated the delegation relationship before signing.  The receiving AS needs to trust the enterprise AS as an issuer and as an authority for asserting the actor identifier pair carried in the grant.
 
-For AS-issued grants, the issuing AS MUST set `act.iss` to the namespace authority for `act.sub`; for actors registered in the issuing AS's own namespace, this is the AS's own issuer URI.
+For AS-issued grants, the issuing AS MUST set `act.iss` to the issuer or namespace context in which `act.sub` is to be interpreted; for actors registered in the issuing AS's own namespace, this is often the AS's own issuer URI.
 
 This document defines the following issuer patterns:
 
@@ -590,12 +590,12 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
     > Note: Under this document the JWT `iss` is expected to be a trusted AS.  Self-issued grants, where the acting entity is also the token issuer, are a deployment-specific extension outside the scope of this document; see {{security-self-issued-grants}}.
 
-3.  The AS MUST establish that `act.iss` is authoritative for the identifier namespace of `act.sub` under a trusted framework or local policy.
+3.  The AS MUST verify that the JWT `iss` is trusted under local policy to assert the (`act.iss`, `act.sub`) actor identifier pair.
 
     *  If `act.iss` is absent: reject with `invalid_request` (structural violation).
-    *  If `act.iss` cannot be established as authoritative for `act.sub`'s namespace: reject with `invalid_grant`.
+    *  If the JWT `iss` is not trusted to assert the actor identifier pair: reject with `invalid_grant`.
 
-    > Note: This step validates namespace authority only — it does not interpret `act.iss` as the credential issuer or as proof that each upstream hop was independently authenticated.  No single interoperable algorithm is defined; deployments MAY rely on federation metadata, pre-registration, bilateral agreements, or equivalent trust mechanisms.  Cross-domain interoperability is only well-defined when participating parties share such a framework.  See {{act-iss-authority-guidance}} for non-normative examples.
+    > Note: This step validates trust in the assertion of the actor identifier pair.  It does not interpret `act.iss` as the credential issuer, does not prove that `act.iss` is globally authoritative for `act.sub`, and does not prove that each upstream hop was independently authenticated.  No single interoperable algorithm is defined; deployments MAY rely on federation metadata, pre-registration, bilateral agreements, or equivalent trust mechanisms.  Cross-domain interoperability is only well-defined when participating parties share such a framework.  See {{act-iss-authority-guidance}} for non-normative examples.
 
 4.  The AS MUST evaluate whether the identified actor is authorized to exercise delegation on behalf of `sub`.  The required strength of that evaluation depends on how the outermost actor was introduced:
 
@@ -877,7 +877,7 @@ Two pre-conditions apply regardless of how the Token Exchange request is structu
 1.  The `subject_token` issuer is trusted under local policy to assert `may_act` on behalf of the subject.
 2.  The canonical `may_act` identifier matches the derived actor identity under Identifier Reconciliation ({{conventions}}).
 
-Because {{RFC8693}} Section 4.4 defines `may_act` with only a `sub` member and no `iss`, the namespace authority for `may_act.sub` is taken to be `subject_token.iss`; the canonical `may_act` identifier is therefore (`subject_token.iss`, `may_act.sub`).  The AS MUST apply configured mapping rules and MUST NOT infer equivalence from naming similarity alone.
+Because {{RFC8693}} Section 4.4 defines `may_act` with only a `sub` member and no `iss`, the issuer or namespace context for `may_act.sub` is taken to be `subject_token.iss`; the canonical `may_act` identifier is therefore (`subject_token.iss`, `may_act.sub`).  The AS MUST apply configured mapping rules and MUST NOT infer equivalence from naming similarity alone.
 
 How actor identity is derived and how condition 2 is evaluated depends on what the request supplies:
 
@@ -908,13 +908,13 @@ When a Token Exchange request includes an `actor_token` that is a JWT client ass
 
 2.  The AS MUST verify that the `actor_token`'s `iss` is a client registered with the AS, that `sub` equals that client's `client_id`, and that local policy permits that client's assertion to be used as an actor credential.  If not, the AS MUST reject the request with `invalid_grant`.
 
-3.  The `actor_token`'s `sub` identifies the immediate acting party.  The AS MUST use it as `act.sub` in the outermost `act` of the issued token and MUST set `act.iss` to the value authoritative for the namespace containing `act.sub`.
+3.  The `actor_token`'s `sub` identifies the immediate acting party.  The AS MUST use it as `act.sub` in the outermost `act` of the issued token and MUST set `act.iss` to the issuer or namespace context in which that actor identifier is to be interpreted.
 
 4.  When the `actor_token` is the same JWT presented as `client_assertion` for client authentication in the same request, the AS MAY derive the actor identity from the already-authenticated client context rather than re-validating the `actor_token` separately, provided the result is an identical `act.sub` value.  Actor-profile-specific policy failures that occur after successful client authentication are still `invalid_grant`, not `invalid_client`.
 
 5.  When the request uses this client assertion to establish a sender-constrained output token in presenter-rebind mode, the AS MUST validate any proof required by the selected proof mechanism for the new presenter per {{delegated-pop-validation}}.
 
-6.  When a `subject_token` is also present and carries an `act` chain: the `actor_token`'s `sub` takes precedence as the new outermost actor identity.  Divergence (the `actor_token`'s identified principal and the inbound outermost `act.sub` refer to different entities under their respective namespace authorities, with no trusted local mapping establishing equivalence) is the normal case in presenter-rebind flows and is permitted by default.  Local policy MAY restrict divergence for specific request paths where the `actor_token` is expected only to confirm an existing actor rather than introduce a new one; when such a restriction applies and the identities diverge, the AS MUST reject with `invalid_grant`.  Any prior `act` chain in the `actor_token` itself MUST NOT be automatically merged with the `subject_token`'s chain; the AS MUST omit it from the issued token unless local policy defines a single unambiguous ordering, in which case the AS MAY preserve it subject to the chain-depth limit in {{delegation-chains}}.
+6.  When a `subject_token` is also present and carries an `act` chain: the `actor_token`'s `sub` takes precedence as the new outermost actor identity.  Divergence (the `actor_token`'s identified principal and the inbound outermost `act.sub` refer to different entities under their respective issuer or namespace contexts, with no trusted local mapping establishing equivalence) is the normal case in presenter-rebind flows and is permitted by default.  Local policy MAY restrict divergence for specific request paths where the `actor_token` is expected only to confirm an existing actor rather than introduce a new one; when such a restriction applies and the identities diverge, the AS MUST reject with `invalid_grant`.  Any prior `act` chain in the `actor_token` itself MUST NOT be automatically merged with the `subject_token`'s chain; the AS MUST omit it from the issued token unless local policy defines a single unambiguous ordering, in which case the AS MAY preserve it subject to the chain-depth limit in {{delegation-chains}}.
 
 ### Workload Identity Credential {#workload-identity}
 
@@ -938,14 +938,14 @@ When a Token Exchange request ({{RFC8693}}) includes an `actor_token` that is a 
 
 2.  The AS MUST verify that the workload credential's issuer (`iss`) is trusted under local policy to assert the workload's identity.  If not, the AS MUST reject the request with `invalid_grant`.
 
-3.  The workload credential's `sub` identifies the immediate acting party.  The AS MUST use it as `act.sub` in the outermost `act` of the issued token and MUST set `act.iss` to the value authoritative for the namespace containing `act.sub`.
+3.  The workload credential's `sub` identifies the immediate acting party.  The AS MUST use it as `act.sub` in the outermost `act` of the issued token and MUST set `act.iss` to the issuer or namespace context in which that actor identifier is to be interpreted.
 
 4.  When the request uses this workload credential to establish a sender-constrained output token in presenter-rebind mode, the AS MUST validate the proof required by the workload-credential profile.  When accompanied by a WIMSE Workload Proof Token (WPT, {{I-D.ietf-wimse-wpt}}), the WPT MUST be conveyed per the HTTP binding defined in {{I-D.ietf-wimse-wpt}}, and the AS MUST validate the WPT per that specification.  When the credential instead carries `cnf.jkt` and a DPoP proof ({{RFC9449}}) is provided over the token endpoint URI, the AS MUST validate it against that thumbprint.  If the required proof is absent or invalid, the AS MUST reject the request with `invalid_grant`.
 
 5.  When a `subject_token` is also present and carries an `act` chain:
 
     *  The workload credential's `sub` takes precedence as the new outermost actor identity.
-    *  Divergence from the inbound outermost `act.sub` (the two identities refer to different entities under their respective namespace authorities, with no trusted local mapping establishing equivalence) is permitted by default, as this is the normal case in presenter-rebind flows.  Local policy MAY restrict divergence for paths where the `actor_token` is expected only to confirm an existing actor; when such a restriction applies and the identities diverge, the AS MUST reject with `invalid_grant`.
+    *  Divergence from the inbound outermost `act.sub` (the two identities refer to different entities under their respective issuer or namespace contexts, with no trusted local mapping establishing equivalence) is permitted by default, as this is the normal case in presenter-rebind flows.  Local policy MAY restrict divergence for paths where the `actor_token` is expected only to confirm an existing actor; when such a restriction applies and the identities diverge, the AS MUST reject with `invalid_grant`.
     *  Any prior `act` chain in the `actor_token` itself MUST NOT be automatically merged with the `subject_token`'s chain; the AS MUST omit it from the issued token unless local policy defines a single unambiguous ordering, in which case the AS MAY preserve it subject to the chain-depth limit in {{delegation-chains}}.
 
 ### JWT Access Token {#jwt-access-token-as-actor-token}
@@ -964,11 +964,11 @@ When a Token Exchange request includes an `actor_token` that is a JWT access tok
 
 3.  If the `actor_token` carries `act`, the AS MUST reject the request with `invalid_grant`.  A delegated JWT access token cannot serve as a direct presenter credential because its top-level `sub` identifies the principal the token was issued to (for example, Alice) rather than the current acting party (for example, Agent-A, whose identity is buried in `act.sub`).  Using `sub` from such a token as the actor identity would silently produce the wrong actor in the issued chain.  Using `act.sub` from it instead would require the AS to deviate from the uniform identity-extraction rule that all `actor_token` types follow, creating an ambiguous and non-interoperable processing path.  The correct pattern when an agent holding a delegated JWT AT needs to sub-delegate to another party is to present that delegated JWT AT as `subject_token` (which preserves its chain) and supply a separate direct presenter credential as `actor_token` (which establishes the new outermost actor).
 
-4.  The `actor_token`'s top-level `sub` identifies the immediate acting party.  The AS MUST use it as `act.sub` in the outermost `act` of the issued token and MUST set `act.iss` to the value authoritative for the namespace containing `act.sub`.
+4.  The `actor_token`'s top-level `sub` identifies the immediate acting party.  The AS MUST use it as `act.sub` in the outermost `act` of the issued token and MUST set `act.iss` to the issuer or namespace context in which that actor identifier is to be interpreted.
 
 5.  When the request uses this JWT access token to establish a sender-constrained output token in presenter-rebind mode and the token carries top-level `cnf`, the AS MUST validate proof for that binding per {{delegated-pop-validation}}.
 
-6.  When a `subject_token` is also present and carries an `act` chain, the outermost actor identity derived from this `actor_token` takes precedence as the new outermost actor.  Divergence from the inbound outermost `act.sub` (the two identities refer to different entities under their respective namespace authorities, with no trusted local mapping establishing equivalence) is permitted by default.  Local policy MAY restrict divergence for paths where the `actor_token` is expected only to confirm an existing actor; when such a restriction applies and the identities diverge, the AS MUST reject with `invalid_grant`.
+6.  When a `subject_token` is also present and carries an `act` chain, the outermost actor identity derived from this `actor_token` takes precedence as the new outermost actor.  Divergence from the inbound outermost `act.sub` (the two identities refer to different entities under their respective issuer or namespace contexts, with no trusted local mapping establishing equivalence) is permitted by default.  Local policy MAY restrict divergence for paths where the `actor_token` is expected only to confirm an existing actor; when such a restriction applies and the identities diverge, the AS MUST reject with `invalid_grant`.
 
 ## Output Token Rules
 
@@ -996,13 +996,15 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 2.  The AS MUST preserve `sub` to refer to the same underlying subject as the inbound token.  If the AS uses a different subject-identifier namespace, it MAY change the `sub` value only to re-express that same subject in the new namespace under a trusted local mapping.  This document permits such re-expression when required by federation across trust-domain boundaries, but it does not define an interoperable mechanism for proving or conveying subject equivalence across namespaces.  A translated `sub` therefore identifies the subject only within the trust context of the issued token and MUST NOT, by itself, be treated as portable proof that the original and translated identifiers are equivalent outside that context.  The AS MUST NOT replace `sub` with an identifier for a different subject.
 
+    A resource server that relies only on the issued token MAY evaluate the translated `sub` as the subject in the issuer's namespace.  A resource server that needs proof that this subject is equivalent to an upstream subject requires additional evidence outside this profile, such as another specification, an identity-chain mechanism, or an explicit trust agreement.
+
 3.  The AS MUST construct the `act` claim as follows:
 
     *  **Inbound token carries `act`, new actor identified**: The AS MUST nest the existing inbound chain within a new outermost `act` for the newly identified actor.  The new outermost `act` MUST include `act.sub` and `act.iss` for that actor.
     *  **Inbound token carries `act`, no new actor**: The AS MUST preserve the inbound actor chain unchanged.
     *  **Inbound token carries no `act`, new actor identified**: The AS MUST create a single-hop outermost `act` for the newly identified actor.  The new `act` MUST include `act.sub` and `act.iss` for that actor.
     *  **Inbound token carries no `act`, no new actor**: The AS MUST omit `act` from the issued token.
-    *  **Namespace authority**: The `act.iss` obligation applies only to the `act` object the AS creates for the current actor.  The AS MUST NOT rewrite `act.iss` or any other field in inherited `act` objects; those entries were authored by upstream issuers and are fixed at the point of authorship.
+    *  **Actor identifier context**: The `act.iss` obligation applies only to the `act` object the AS creates for the current actor.  The AS MUST NOT rewrite `act.iss` or any other field in inherited `act` objects; those entries were authored by upstream issuers and are fixed at the point of authorship.
 
     When the actor identity was derived from an `actor_token` parameter rather than from an `act` claim in the `subject_token`, the outermost `act` in the issued token is AS-asserted based on the validated `actor_token`; it is not chain-propagated from the subject token.  Consumers MUST NOT infer that the `actor_token`-derived `act` was present in or endorsed by the subject token issuer.
 
@@ -1043,7 +1045,7 @@ The Transaction Token claim structure in this section reflects {{I-D.ietf-oauth-
 A Transaction Token contains the following claims.  Claims marked REQUIRED are defined as such by {{I-D.ietf-oauth-transaction-tokens}}; claims marked OPTIONAL may be omitted at the issuer's discretion.
 
 `iss` (OPTIONAL in {{I-D.ietf-oauth-transaction-tokens}}; REQUIRED by this profile when carrying `act`):
-: Issuer of the Transaction Token.  MUST be present when the Transaction Token carries an `act` claim, because `act.iss` values in the chain are evaluated relative to the token issuer for cross-domain detection and recipients cannot establish namespace authority for `act.sub` without it.  SHOULD be present when the Transaction Token crosses trust-domain boundaries, even in non-delegated cases, as recipients can require it to validate issuer identity or chain-of-trust per local policy.  MAY be omitted only when no delegation (`act`) is present, all tokens are scoped to a single Trust Domain, and all recipients have out-of-band knowledge of the issuer.  When `iss` is omitted, recipients MUST rely on the trust-domain and issuer-identification rules of {{I-D.ietf-oauth-transaction-tokens}} and local deployment configuration rather than the generic outer-token `iss` processing rules in this document.
+: Issuer of the Transaction Token.  MUST be present when the Transaction Token carries an `act` claim, because recipients need to identify the token issuer before deciding whether to trust the actor identifier pairs carried in the chain.  SHOULD be present when the Transaction Token crosses trust-domain boundaries, even in non-delegated cases, as recipients can require it to validate issuer identity or chain-of-trust per local policy.  MAY be omitted only when no delegation (`act`) is present, all tokens are scoped to a single Trust Domain, and all recipients have out-of-band knowledge of the issuer.  When `iss` is omitted, recipients MUST rely on the trust-domain and issuer-identification rules of {{I-D.ietf-oauth-transaction-tokens}} and local deployment configuration rather than the generic outer-token `iss` processing rules in this document.
 
 `aud` (REQUIRED):
 : Identifies the Trust Domain in which the Transaction Token is valid.
@@ -1183,7 +1185,7 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
 
 4.  The TTS MUST validate the inbound token and establish issuer trust before preserving or extending any `act` chain.  For the outermost `act` object in the inbound chain, the TTS MUST:
 
-    *  Verify that `act.iss` is authoritative for the namespace of `act.sub`, using local trust mechanisms equivalent to those in {{jwt-assertion-grants-processing}} step 3.
+    *  Verify that the inbound token issuer is trusted under local policy to assert the (`act.iss`, `act.sub`) actor identifier pair, using local trust mechanisms equivalent to those in {{jwt-assertion-grants-processing}} step 3.
     *  Evaluate the delegation relationship per {{jwt-assertion-grants-processing}} step 4, applying the same creation-vs-preservation distinction: MUST evaluate when installing a new outermost actor (C1/rebind); SHOULD evaluate under local policy when preserving an existing chain from a trusted upstream issuer (C2/continuation).
 
     For inner `act` objects in the inbound chain:
@@ -1204,7 +1206,7 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
     *  **Presenter continuation**: Preserve the inbound `act` chain unchanged.  The TTS MUST NOT create a new outermost `act` when the authenticated presenter matches the inbound outermost actor.
     *  **Presenter rebind**: Create a new outermost `act` object for the new presenter.
        The TTS MUST set `act.sub` to the new presenter's identifier.
-       The TTS MUST set `act.iss` to the issuer namespace authoritative for the new presenter's identifier.  This obligation applies only to the `act` object the TTS creates for the current presenter.  The TTS MUST NOT rewrite `act.iss` or any other field in `act` objects inherited from the inbound token; those entries were authored by upstream ASes and their content is fixed at the point of authorship.
+       The TTS MUST set `act.iss` to the issuer or namespace context in which the new presenter's identifier is to be interpreted.  This obligation applies only to the `act` object the TTS creates for the current presenter.  The TTS MUST NOT rewrite `act.iss` or any other field in `act` objects inherited from the inbound token; those entries were authored by upstream ASes and their content is fixed at the point of authorship.
        If the inbound token already carries an `act` chain, the TTS MUST nest it beneath the new outermost `act`.
        The TTS SHOULD set `act.sub_profile` based on its knowledge of the new presenter's entity type.
 
@@ -1563,22 +1565,22 @@ Implementations that previously treated confirmation members inside `act` as act
 
 This document does not standardize whether an AS issues refresh tokens in response to delegated JWT assertion grant requests, how such refresh tokens are revoked, or whether later use of such refresh tokens requires re-presentation of upstream delegation artifacts.  Those decisions remain deployment-specific.  When a refresh token is later used to obtain a delegated output token, the actor-profile rules in {{refresh-token-as-subject-token}} and the output-token rules of this document apply.
 
-## Establishing `act.iss` Namespace Authority {#act-iss-authority-guidance}
+## Trusting Actor Identifier Pairs {#act-iss-authority-guidance}
 
-This profile requires issuers and consumers to determine whether `act.iss` is authoritative for the identifier namespace of `act.sub`, but it does not define a universal validation algorithm.  Actor resolution under this profile starts from the (`act.iss`, `act.sub`) pair; the token's top-level `iss` identifies the token issuer and is the actor namespace authority only when the two happen to be the same entity.  Determining whether `act.iss` is authoritative depends on a trusted framework or local policy.
+This profile requires issuers and consumers to determine whether the token issuer is trusted to assert the (`act.iss`, `act.sub`) actor identifier pair, but it does not define a universal validation algorithm for that trust decision.  Actor resolution under this profile starts from the (`act.iss`, `act.sub`) pair; the token's top-level `iss` identifies the token issuer and is the actor identifier context only when the two happen to be the same entity.  This document does not define a general-purpose algorithm for proving that `act.iss` is authoritative for `act.sub`.  Deployments that require such proof need a federation framework, bilateral agreement, or companion profile outside this core profile.
 
 Examples of local validation approaches include:
 
-*  federation metadata that lists `act.iss` as authoritative for the namespace containing `act.sub` (for example, {{OpenID.Federation}});
-*  pre-registration entries that explicitly authorize `act.iss` to assert identifiers of the form used in `act.sub`; and
-*  bilateral or deployment-local policy rules that authorize `act.iss` to assert the specific class of identifier used in `act.sub`.
+*  federation metadata or trust-framework configuration that authorizes the token issuer to assert actor identifiers in the `act.iss` context (for example, {{OpenID.Federation}});
+*  pre-registration entries that explicitly authorize the token issuer to assert a specific (`act.iss`, `act.sub`) pair or identifiers of that form; and
+*  bilateral or deployment-local policy rules that authorize the token issuer to carry the specific class of actor identifier used in `act.sub`.
 
-For HTTPS URI identifiers, one common local rule is URL namespace containment.  Under that style of rule, deployments often treat `act.iss` as authoritative when the scheme, host, and port of `act.iss` and `act.sub` match, or when `act.sub` falls within a path prefix of `act.iss` that has been explicitly configured as authoritative.  In those deployments, scheme and host comparison typically follows the case-insensitive rules in {{RFC3986, Section 3.2.2}}, while path-prefix matching is usually case-sensitive and boundary-aware.  Subdomain relationships alone are often insufficient to establish authority without explicit configuration.
+For HTTPS URI identifiers, one possible local rule is URL namespace containment.  Under that style of rule, deployments might accept a token issuer's assertion of an actor identifier pair when the scheme, host, and port of `act.iss` and `act.sub` match, or when `act.sub` falls within a path prefix of `act.iss` that has been explicitly configured for that issuer.  In those deployments, scheme and host comparison typically follows the case-insensitive rules in {{RFC3986, Section 3.2.2}}, while path-prefix matching is usually case-sensitive and boundary-aware.  Subdomain relationships alone are often insufficient to establish trust without explicit configuration.
 
 Examples:
 
-*  `act.iss = https://as.enterprise.example` and `act.sub = https://as.enterprise.example/agents/travel-assistant` would commonly be treated as authoritative under a same-host local rule.
-*  `act.iss = https://as.enterprise.example` and `act.sub = https://idp.enterprise.example/users/alice` would not ordinarily be treated as authoritative by URL containment alone, because the host differs.
+*  A token issued by `https://as.enterprise.example` with `act.iss = https://as.enterprise.example` and `act.sub = https://as.enterprise.example/agents/travel-assistant` would commonly satisfy a same-host local trust rule.
+*  A token issued by `https://as.enterprise.example` with `act.iss = https://as.enterprise.example` and `act.sub = https://idp.enterprise.example/users/alice` would not ordinarily satisfy URL containment alone, because the host differs.
 *  For non-HTTPS identifier schemes such as workload-identity URNs, deployments typically rely on registry, federation, or other explicit local trust configuration rather than URL-based rules.
 
 ### Migrating from Implicit to Explicit Delegation {#migration-implicit-explicit}
@@ -1667,7 +1669,7 @@ General guidance on access token lifetime and security tradeoffs is provided in 
 
 # Security Considerations
 
-This document does not define a trust framework for establishing namespace authority, proving delegation approval, or validating subject-identifier translation.  Security for those decisions depends on deployment-specific policy and external agreements.
+This document does not define a trust framework for proving that an actor identifier context is authoritative for an actor identifier, proving delegation approval, or validating subject-identifier translation.  Security for those decisions depends on deployment-specific policy and external agreements.
 
 ## Delegation Chain Integrity and Trust {#delegation-chain-integrity}
 
@@ -1675,7 +1677,7 @@ An attacker who can inject or forge `act` claims can impersonate an arbitrary ac
 
 Because inner `act` objects are set by upstream ASes and not re-signed at each hop, the integrity of the entire delegation chain rests on the outermost token's signature.  Implementations SHOULD use short token lifetimes and MUST reject tokens whose `exp` has passed, regardless of chain depth.
 
-The `act.iss` values in inner `act` objects are assertion-based prior-actor context set by whoever constructed those objects at an earlier hop, not by the issuer of the current token.  Implementations MUST NOT treat an inner `act.iss` as independently authenticated merely because it appears in the token; the trust basis is the outer token issuer's endorsement.  Consequently: an RS that relies on inner `act.iss` for audit or policy MUST do so only when it trusts the outer issuer to have validated and faithfully propagated that chain; ASes that propagate inner chains SHOULD validate inner `act.sub` and `act.iss` entries only when local policy chooses to use those entries as additional inputs to issuance decisions per {{jwt-assertion-grants-processing}} step 5; and security policies relying on inner actor identities for access control SHOULD be treated as lower-assurance and deployment-specific relative to policies based on the outermost `act.sub`.
+The `act.iss` values in inner `act` objects are assertion-based prior-actor context set by whoever constructed those objects at an earlier hop, not by the issuer of the current token.  Implementations MUST NOT treat an inner `act.iss` as independently authenticated merely because it appears in the token; the trust basis is the outer token issuer's endorsement.  Consequently: an RS that relies on inner `act.iss` for audit or policy MUST do so only when it trusts the outer issuer to have validated and faithfully propagated that chain; ASes that propagate inner chains SHOULD validate inner (`act.iss`, `act.sub`) pairs only when local policy chooses to use those entries as additional inputs to issuance decisions per {{jwt-assertion-grants-processing}} step 5; and security policies relying on inner actor identities for access control SHOULD be treated as lower-assurance and deployment-specific relative to policies based on the outermost `act.sub`.
 
 When a token crosses organizational boundaries, the receiving AS or RS MUST apply appropriate trust evaluation.  ASes performing token exchange MUST evaluate cross-domain delegation grants explicitly and SHOULD NOT grant cross-domain actors the same rights as same-domain actors absent an explicit trust decision that makes them equivalent.
 
@@ -1712,7 +1714,7 @@ The `sub_profile` claim is asserted by the token issuer and is only as trustwort
 
 The canonical actor identifier under this profile is the (`act.iss`, `act.sub`) pair.  Deployments SHOULD choose `act.sub` to be a durable, stable identifier independent of ephemeral key material.  In particular, deployments SHOULD NOT use a JWK thumbprint or other key-derived value as `act.sub`; doing so silently changes the actor identity on every key rotation, which can break delegation grants and policy bindings that reference the prior identifier.  Key rotation (replacing the DPoP key or mTLS certificate bound to an actor) does not require changing `act.sub` when the identifier is key-independent.
 
-When `act.sub` itself must change (for example, because an agent instance is replaced, a workload is renamed, or a namespace authority migrates), existing delegation grants and issued tokens continue to reference the old identifier.  Deployments MUST explicitly re-establish delegation grants for the new identity; the old grants do not automatically transfer.  Outstanding tokens issued under the old identity remain valid until their `exp` time; short token lifetimes bound the exposure window during the transition.
+When `act.sub` itself must change (for example, because an agent instance is replaced, a workload is renamed, or an actor identifier namespace migrates), existing delegation grants and issued tokens continue to reference the old identifier.  Deployments MUST explicitly re-establish delegation grants for the new identity; the old grants do not automatically transfer.  Outstanding tokens issued under the old identity remain valid until their `exp` time; short token lifetimes bound the exposure window during the transition.
 
 ## Delegation Revocation
 
@@ -1761,7 +1763,7 @@ This document does not define an interoperable mechanism for proving, conveying,
 
 Subject-namespace translation is a high-assurance operation.  An issuer MUST NOT translate `sub` unless local policy establishes that the original and translated identifiers refer to the same underlying subject.  Trust to perform that mapping is separate from trust to sign tokens and SHOULD be established explicitly.
 
-A receiving AS or RS that cannot establish sufficient trust in the issuer's authority to perform the mapping SHOULD reject the token rather than treat the translated `sub` as advisory.
+A receiving AS or RS that relies only on the issued token MAY evaluate the translated `sub` as the subject in the issuer's namespace.  A receiving AS or RS that needs proof that the translated subject is equivalent to an upstream subject MUST obtain additional evidence outside this profile, such as another specification, an identity-chain mechanism, or an explicit trust agreement.  If such proof is required and cannot be established, the AS or RS SHOULD reject the token rather than treat the translated `sub` as advisory.
 
 Deployments that need portable proof of subject equivalence across namespaces, or independently verifiable subject-mapping evidence, require another specification or companion profile; such a mechanism is outside the scope of this document.
 
@@ -1769,7 +1771,7 @@ Deployments that need portable proof of subject equivalence across namespaces, o
 
 The following abbreviated examples illustrate rejection cases that implementations are expected to handle:
 
-### Invalid `act.iss` authority
+### Untrusted Actor Identifier Pair
 
 ~~~json
 {
@@ -1782,7 +1784,7 @@ The following abbreviated examples illustrate rejection cases that implementatio
 }
 ~~~
 
-If local policy has no rule establishing `https://unrelated.example` as authoritative for the `urn:workload:` namespace, an issuer or consumer MUST reject this actor information.
+If local policy has no rule allowing `https://as.resource-domain.example` to assert the actor identifier pair (`https://unrelated.example`, `urn:workload:booking-tool`), an issuer or consumer MUST reject this actor information.
 
 ### Missing required `act.iss` where actor profile is enforced
 
