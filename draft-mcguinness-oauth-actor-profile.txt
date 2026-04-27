@@ -1726,15 +1726,15 @@ AddOutermostActor(inbound_chain, new_actor):
    The actor identity MUST be derived from that delegation basis.  If no
    such basis exists, the AS MUST NOT include act in the access token.
 
-   This document does not define an authorization-code request
-   parameter, authorization endpoint interaction, or token endpoint
-   parameter for selecting or proving the actor in the authorization
-   code flow.  When actor-profile claims are included in access tokens
-   issued from an authorization code grant, the AS determines the actor
-   from local state established during authorization, client
-   registration, consent, enterprise policy, or another deployment-
-   specific mechanism.  Such issuance is interoperable only at the
-   issued-token representation and resource-server processing layer.
+   This document does not define an authorization request parameter,
+   authorization endpoint interaction, or token request parameter for
+   selecting or proving the actor in the authorization code flow.  When
+   actor-profile claims are included in access tokens issued from an
+   authorization code grant, the AS determines the actor from local
+   state established during authorization, client registration, consent,
+   enterprise policy, or another deployment-specific mechanism.  Such
+   issuance is interoperable only at the issued-token representation and
+   resource-server processing layer.
 
 6.  Token Exchange Processing
 
@@ -2089,14 +2089,14 @@ AddOutermostActor(inbound_chain, new_actor):
 
    Refresh tokens MAY be presented as subject_token in a Token Exchange
    request to introduce a user's existing authorization into a
-   delegation chain; for example, when an agent that holds a user's
-   refresh token needs a delegated access token for a specific resource.
-   This use is intended for same-AS deployments or deployments with a
-   trusted back-channel to the issuing AS.  A refresh token MUST NOT be
-   treated as a portable cross-domain delegation artifact.  Because
-   refresh tokens carry no identity claims directly, the actor MUST be
-   established by an actor_token in the same request or by an
-   independent delegation basis under local policy.
+   delegation chain; for example, when a client authorized to use a
+   user's refresh token needs a delegated access token for a specific
+   resource.  This use is intended for same-AS deployments or
+   deployments with a trusted back-channel to the issuing AS.  A refresh
+   token MUST NOT be treated as a portable cross-domain delegation
+   artifact.  Because refresh tokens carry no identity claims directly,
+   the actor MUST be established by an actor_token in the same request
+   or by an independent delegation basis under local policy.
 
    Refresh tokens MUST NOT be used as actor_token.  They carry no actor
    identity, are opaque credentials bound to a user authorization grant
@@ -2130,8 +2130,8 @@ AddOutermostActor(inbound_chain, new_actor):
 
    2.  The AS MUST verify that the requesting client or authenticated
        presenter is authorized to use the refresh token under the
-       refresh token's client-binding, sender-constraining, rotation,
-       and cross-client presentation policy.  If the requester is not
+       refresh token's client-binding, sender-constraint, rotation, and
+       cross-client presentation policy.  If the requester is not
        authorized to use the refresh token, the AS MUST reject the
        request with invalid_grant.
 
@@ -3270,11 +3270,11 @@ AddOutermostActor(inbound_chain, new_actor):
    and the relationship between them, that is, whether the outermost
    actor is authorized to act on behalf of the subject.  This document
    does not require every RS to implement actor authorization for every
-   token that carries act.  When an RS accepts a token as satisfying a
-   delegated-access requirement for a request path, however, it MUST NOT
-   authorize the request solely as if the token were non-delegated.  The
-   RS SHOULD evaluate the subject and outermost actor according to local
-   policy.
+   token that carries act.  However, when an RS accepts a token as
+   satisfying a delegated-access requirement for a request path, it MUST
+   NOT authorize the request solely as if the token were non-delegated.
+   The RS SHOULD evaluate the subject and outermost actor according to
+   local policy.
 
    For Transaction Tokens, the primary policy pair remains (sub,
    act.sub).  The req_wl claim provides workload context from the TTS
@@ -3294,15 +3294,14 @@ AddOutermostActor(inbound_chain, new_actor):
 
 9.2.  Subject-Plus-Actor Evaluation
 
-   Actor authorization is conditional under this profile.  When an RS
-   accepts a token as satisfying a delegated-access requirement for the
-   request path, it MUST NOT ignore the act claim and authorize solely
-   as if the token were non-delegated.  The RS SHOULD evaluate the
-   subject and outermost actor according to local policy.  Resource
-   servers that receive delegated tokens SHOULD define and document
-   their actor authorization policy.  The following steps describe one
-   approach for resource servers that choose to enforce subject-plus-
-   actor policy:
+   Actor authorization is conditional under this profile.  When the
+   condition described above applies, the RS MUST NOT ignore the act
+   claim and authorize solely as if the token were non-delegated.  The
+   RS SHOULD evaluate the subject and outermost actor according to local
+   policy.  Resource servers that receive delegated tokens SHOULD define
+   and document their actor authorization policy.  The following steps
+   describe one approach for resource servers that choose to enforce
+   subject-plus-actor policy:
 
    1.  *Advertise delegated-token requirements*: An RS that wants to
        signal that delegated requests are expected to carry actor-
@@ -3729,7 +3728,7 @@ AddOutermostActor(inbound_chain, new_actor):
    authorization_grant_profiles_supported to assess whether an AS
    advertises support for actor-profile JWT authorization grants,
    actor_profile_token_exchange to assess coarse Token Exchange input
-   and requested-output compatibility, and
+   and requested output compatibility, and
    entity_profiles_supported.actor per [I-D.mora-oauth-entity-profiles]
    to assess which actor entity profiles the associated AS accepts under
    this profile.
