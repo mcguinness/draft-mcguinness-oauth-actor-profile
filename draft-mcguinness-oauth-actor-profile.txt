@@ -1726,6 +1726,16 @@ AddOutermostActor(inbound_chain, new_actor):
    The actor identity MUST be derived from that delegation basis.  If no
    such basis exists, the AS MUST NOT include act in the access token.
 
+   This document does not define an authorization-code request
+   parameter, authorization endpoint interaction, or token endpoint
+   parameter for selecting or proving the actor in the authorization
+   code flow.  When actor-profile claims are included in access tokens
+   issued from an authorization code grant, the AS determines the actor
+   from local state established during authorization, client
+   registration, consent, enterprise policy, or another deployment-
+   specific mechanism.  Such issuance is interoperable only at the
+   issued-token representation and resource-server processing layer.
+
 6.  Token Exchange Processing
 
    Each credential type presented as subject_token or actor_token in a
@@ -2081,8 +2091,11 @@ AddOutermostActor(inbound_chain, new_actor):
    request to introduce a user's existing authorization into a
    delegation chain; for example, when an agent that holds a user's
    refresh token needs a delegated access token for a specific resource.
-   Because refresh tokens carry no identity claims directly, the actor
-   MUST be established by an actor_token in the same request or by an
+   This use is intended for same-AS deployments or deployments with a
+   trusted back-channel to the issuing AS.  A refresh token MUST NOT be
+   treated as a portable cross-domain delegation artifact.  Because
+   refresh tokens carry no identity claims directly, the actor MUST be
+   established by an actor_token in the same request or by an
    independent delegation basis under local policy.
 
    Refresh tokens MUST NOT be used as actor_token.  They carry no actor
@@ -2093,7 +2106,11 @@ AddOutermostActor(inbound_chain, new_actor):
    This document does not standardize client-binding policy, cross-
    client presentation policy, or cross-AS acceptance policy for refresh
    tokens used as subject_token.  Those behaviors remain deployment-
-   specific.
+   specific.  This document defines refresh-token subject_token
+   processing only for deployments where the AS can validate the refresh
+   token's authorization state directly or through a trusted back-
+   channel.  Cross-AS refresh-token presentation without such validation
+   is outside the interoperable scope of this profile.
 
 6.2.2.2.2.  Processing
 
@@ -2103,20 +2120,32 @@ AddOutermostActor(inbound_chain, new_actor):
 
    1.  The AS MUST validate the refresh token through its own token
        store or a trusted back-channel with the issuing AS.  Signature-
-       based validation does not apply.  If the token is expired,
-       revoked, or otherwise invalid, the AS MUST reject the request
-       with invalid_grant.
+       based validation does not apply.  If the AS did not issue the
+       refresh token, it MUST NOT accept the token unless it validates
+       the token and obtains the associated subject, client binding,
+       authorized scope, and revocation state through a trusted back-
+       channel with the issuing AS.  If the token is expired, revoked,
+       or otherwise invalid, the AS MUST reject the request with
+       invalid_grant.
 
-   2.  The AS MUST extract the subject identity and authorized scope
+   2.  The AS MUST verify that the requesting client or authenticated
+       presenter is authorized to use the refresh token under the
+       refresh token's client-binding, sender-constraining, rotation,
+       and cross-client presentation policy.  If the requester is not
+       authorized to use the refresh token, the AS MUST reject the
+       request with invalid_grant.
+
+   3.  The AS MUST extract the subject identity and authorized scope
        associated with the refresh token from its token store or other
        trusted refresh-token state.  The sub of the user associated with
        the refresh token becomes sub in the issued token.  The AS SHOULD
        set sub_profile in the issued token if it can authoritatively
        classify the subject entity type.
 
-   3.  Refresh tokens are identity-only subject_token inputs for
-       Section 6.1; they do not establish presenter continuity.  The
-       acting party MUST be established by an actor_token or an
+   4.  Refresh tokens are identity-only subject_token inputs for
+       Section 6.1; they do not establish presenter continuity or actor
+       identity.  A refresh token alone does not establish delegation.
+       The acting party MUST be established by an actor_token or an
        independent delegation basis under local policy.  If neither is
        present, the AS MUST NOT include act in the issued token.  If an
        actor_token is present, the AS MUST process it per its type-
@@ -2125,11 +2154,11 @@ AddOutermostActor(inbound_chain, new_actor):
        token is sender-constrained, that actor_token also establishes
        the new presenter for presenter-rebind mode.
 
-   4.  The effective scope of the issued token MUST be a subset of the
+   5.  The effective scope of the issued token MUST be a subset of the
        scope authorized by the refresh token.  The AS MUST apply scope
        reduction per [RFC8693], Section 4 against that ceiling.
 
-   After completing steps 1-4, the AS MUST apply the propagation rules
+   After completing steps 1-5, the AS MUST apply the propagation rules
    in Section 6.4.2 to determine the remaining claims in the issued
    token.
 
@@ -3931,6 +3960,11 @@ AddOutermostActor(inbound_chain, new_actor):
    explicit act-carrying token for that resource, unless deployment
    documentation explicitly defines a delegated opaque-token path in
    which introspection supplies equivalent actor-profile claims.
+
+   The metadata in this document does not advertise authorization-code
+   actor-selection mechanisms.  Deployments that support actor-profile
+   issuance from authorization code grants need deployment documentation
+   or another profile for that behavior.
 
    When a delegated request explicitly carries actor-profile claims and
    act.sub_profile is included, its value SHOULD be drawn from the
