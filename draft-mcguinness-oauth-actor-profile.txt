@@ -146,15 +146,12 @@ Table of Contents
      8.3.  JWT Access Token Processing
      8.4.  Transaction Token Processing
      8.5.  Token Introspection
-     8.6.  Policy Claims Summary
    9.  Error Responses
    10. Metadata and Discovery
-     10.1.  Discovery and Capability Negotiation
-       10.1.1.  Overview
-       10.1.2.  Authorization Server Metadata
-       10.1.3.  Protected Resource Metadata
-       10.1.4.  Transaction Token Capability Signaling
-       10.1.5.  Capability Signaling Usage
+     10.1.  Authorization Server Metadata
+     10.2.  Protected Resource Metadata
+     10.3.  Transaction Token Capability Signaling
+     10.4.  Capability Signaling Usage
    11. Companion Profiles and Extension Points
    12. Deployment Considerations
      12.1.  Migration and Adoption
@@ -203,7 +200,7 @@ Table of Contents
    Appendix B.  Cross-Domain AI Agent Flow: ID Token to Transaction
            Token
      B.1.  Scenario and Parties
-     B.2.  Discovery and Capability Negotiation
+     B.2.  Capability Discovery (Preflight)
      B.3.  Step 1: User Authentication (ID Token)
      B.4.  Step 2: Enterprise Token Exchange (ID Token to ID-JAG)
      B.5.  Step 3: Agent Exchanges ID-JAG for Access Token at Travel
@@ -2784,9 +2781,9 @@ AddOutermostActor(inbound_chain, new_actor):
 8.  Resource Server Processing
 
    This section brings together the normative rules for delegated-token
-   consumers at the resource server and the subject-plus-actor
-   authorization model they apply, whether the RS evaluates a JWT
-   directly or relies on introspection.
+   consumers at the resource server and the actor authorization model
+   they apply, whether the RS evaluates a JWT directly or relies on
+   introspection.
 
 8.1.  Actor Authorization Model
 
@@ -2818,14 +2815,14 @@ AddOutermostActor(inbound_chain, new_actor):
    processing; this document does not standardize their authorization
    use.
 
-   This document defines subject-plus-actor evaluation as the
-   interoperable baseline.  Deployments MAY apply multi-principal
-   authorization under local policy by considering one or more nested
-   act objects as additional trust or risk inputs in addition to sub and
-   the outermost act.sub, but this document does not standardize such
-   authorization behavior, and clients MUST NOT assume that nested
-   actors will be used for authorization unless deployment-specific
-   agreements say otherwise.
+   This document defines actor authorization as the interoperable
+   baseline.  Deployments MAY apply multi-principal authorization under
+   local policy by considering one or more nested act objects as
+   additional trust or risk inputs in addition to sub and the outermost
+   act.sub, but this document does not standardize such authorization
+   behavior, and clients MUST NOT assume that nested actors will be used
+   for authorization unless deployment-specific agreements say
+   otherwise.
 
 8.2.  Actor Authorization
 
@@ -2836,14 +2833,14 @@ AddOutermostActor(inbound_chain, new_actor):
    policy.  Resource servers that receive delegated tokens SHOULD define
    and document their actor authorization policy.  The following steps
    describe one approach for resource servers that choose to enforce
-   subject-plus-actor policy:
+   actor authorization policy:
 
    1.  *Advertise delegated-token requirements*: An RS that wants to
        signal that delegated requests are expected to carry actor-
        profile information SHOULD set actor_profile_required: true
-       (Section 10.1.3).  An RS MAY still apply subject-plus-actor
-       evaluation without advertising it, but clients MUST NOT rely on
-       that behavior.
+       (Section 10.2).  An RS MAY still apply actor authorization
+       without advertising it, but clients MUST NOT rely on that
+       behavior.
 
    2.  *Evaluate subject authorization*: Determine whether sub has been
        granted the requested scope or permission, using the same
@@ -2865,9 +2862,9 @@ AddOutermostActor(inbound_chain, new_actor):
        to identify the current presenter and cannot reconcile them under
        local policy, it MUST reject the request.
 
-   4.  *Evaluate combined policy*: Apply resource-specific subject-plus-
-       actor policies (e.g., requiring both principals to have agreed to
-       terms of service).
+   4.  *Evaluate combined policy*: Apply resource-specific actor
+       authorization policies (e.g., requiring both principals to have
+       agreed to terms of service).
 
    5.  If the RS requires actor authorization but cannot complete it, it
        MUST reject the request.
@@ -2897,14 +2894,14 @@ AddOutermostActor(inbound_chain, new_actor):
    1.  Validate the token's signature, iss, aud, and temporal claims per
        [RFC9068].  If local policy for the request path requires actor-
        profile conformance for delegated requests, including when the
-       resource advertises actor_profile_required: true
-       (Section 10.1.3), then any token the RS evaluates as delegated
-       MUST carry act, and each act object the RS relies on under this
-       profile MUST include act.iss.  If such a delegated token carries
-       no act claim or carries an act object missing act.iss, the RS
-       MUST reject the request with HTTP 401 invalid_token.  The
-       presence of actor_profile_required: true does not by itself
-       require non-delegated tokens for the same resource to carry act.
+       resource advertises actor_profile_required: true (Section 10.2),
+       then any token the RS evaluates as delegated MUST carry act, and
+       each act object the RS relies on under this profile MUST include
+       act.iss.  If such a delegated token carries no act claim or
+       carries an act object missing act.iss, the RS MUST reject the
+       request with HTTP 401 invalid_token.  The presence of
+       actor_profile_required: true does not by itself require non-
+       delegated tokens for the same resource to carry act.
 
    2.  If the token carries a top-level cnf.jkt, validate the
        accompanying DPoP proof per [RFC9449], Section 7.  If a DPoP
@@ -3001,7 +2998,7 @@ AddOutermostActor(inbound_chain, new_actor):
        configuration.  If local policy for the request path requires
        actor-profile conformance for delegated requests, including when
        the resource advertises actor_profile_required: true
-       (Section 10.1.3), then any Transaction Token the RS evaluates as
+       (Section 10.2), then any Transaction Token the RS evaluates as
        delegated MUST carry act, and each act object the RS relies on
        under this profile MUST include act.iss.  If such a delegated
        token carries no act claim or carries an act object missing
@@ -3065,7 +3062,7 @@ AddOutermostActor(inbound_chain, new_actor):
    "chain_complete": false in the introspection response to signal that
    the chain is incomplete.  The AS SHOULD NOT filter inner chain
    entries when it has knowledge — for example, from
-   actor_profile_required metadata (Section 10.1.3), deployment
+   actor_profile_required metadata (Section 10.2), deployment
    configuration, or bilateral agreement — that the RS uses one or more
    inner chain entries as inputs to authorization, scope, or other
    security decisions.  In those cases the AS SHOULD either return the
@@ -3164,34 +3161,6 @@ AddOutermostActor(inbound_chain, new_actor):
    revoked delegated token MUST return "active": false and MUST NOT
    include act or sub_profile claims.
 
-8.6.  Policy Claims Summary
-
-   The following claims are available as subject-plus-actor policy
-   inputs:
-
-     +=================+===========+=================================+
-     | Claim           | Principal | Description                     |
-     +=================+===========+=================================+
-     | sub             | Subject   | Original authorized principal   |
-     +-----------------+-----------+---------------------------------+
-     | sub_profile     | Subject   | Entity type of the subject      |
-     +-----------------+-----------+---------------------------------+
-     | act.sub         | Actor     | Immediate acting principal      |
-     +-----------------+-----------+---------------------------------+
-     | act.sub_profile | Actor     | Entity type of the actor        |
-     |                 |           | identified by act.sub           |
-     +-----------------+-----------+---------------------------------+
-     | scope           | Both      | Authorized scope                |
-     +-----------------+-----------+---------------------------------+
-     | req_wl          | Actor     | Workload that requested the     |
-     | (Transaction    |           | Transaction Token from the TTS; |
-     | Token)          |           | supporting context alongside,   |
-     |                 |           | but not a substitute for, the   |
-     |                 |           | outermost act.sub               |
-     +-----------------+-----------+---------------------------------+
-
-                                  Table 3
-
 9.  Error Responses
 
    When an AS or TTS rejects a request under this profile for reasons
@@ -3272,7 +3241,7 @@ AddOutermostActor(inbound_chain, new_actor):
    |                  |relationship  |                   |             |
    +------------------+--------------+-------------------+-------------+
 
-                                  Table 4
+                                  Table 3
 
    The error_description field SHOULD be included and SHOULD describe
    which aspect of actor-profile processing failed, to the extent
@@ -3294,9 +3263,9 @@ AddOutermostActor(inbound_chain, new_actor):
       steps in order:
 
       1.  Consult entity_profiles_supported.actor in AS metadata
-          (Section 10.1.2) to determine whether the actor's sub_profile
-          is in the accepted set.  If not, the failure is terminal for
-          this actor type.
+          (Section 10.1) to determine whether the actor's sub_profile is
+          in the accepted set.  If not, the failure is terminal for this
+          actor type.
 
       2.  If the sub_profile is accepted, inspect error_description to
           determine whether the failure is due to a missing or
@@ -3335,14 +3304,6 @@ AddOutermostActor(inbound_chain, new_actor):
 
 10.  Metadata and Discovery
 
-   This section covers how the actor profile integrates with adjacent
-   protocol mechanisms for actor classification and capability
-   discovery.
-
-10.1.  Discovery and Capability Negotiation
-
-10.1.1.  Overview
-
    This section defines a minimal set of metadata parameters that,
    together with the entity_profiles_supported.actor array defined in
    [I-D.mora-oauth-entity-profiles] and the
@@ -3376,7 +3337,7 @@ AddOutermostActor(inbound_chain, new_actor):
    to assess which actor entity profiles the associated AS accepts under
    this profile.
 
-10.1.2.  Authorization Server Metadata
+10.1.  Authorization Server Metadata
 
    The following parameters are defined for use in the AS metadata
    document ([RFC8414]):
@@ -3507,7 +3468,7 @@ AddOutermostActor(inbound_chain, new_actor):
      }
    }
 
-10.1.3.  Protected Resource Metadata
+10.2.  Protected Resource Metadata
 
    One new parameter is defined for use in Protected Resource Metadata
    ([RFC9728]):
@@ -3541,8 +3502,8 @@ AddOutermostActor(inbound_chain, new_actor):
       equivalent introspection-derived actor-profile information is
       available to the RS.  This parameter does not require otherwise
       acceptable non-delegated requests for the same resource to carry
-      act, and it does not by itself describe the RS's full subject-
-      plus-actor authorization logic.
+      act, and it does not by itself describe the RS's full actor
+      authorization logic.
 
       This parameter is resource-scoped, not path-scoped; [RFC9728] does
       not define sub-resource granularity for Protected Resource
@@ -3571,7 +3532,7 @@ AddOutermostActor(inbound_chain, new_actor):
      "actor_profile_required": true
    }
 
-10.1.4.  Transaction Token Capability Signaling
+10.3.  Transaction Token Capability Signaling
 
    Transaction Token support under this profile for Token Exchange paths
    is advertised through
@@ -3583,7 +3544,7 @@ AddOutermostActor(inbound_chain, new_actor):
    document does not define any separate Transaction Token discovery
    parameter.
 
-10.1.5.  Capability Signaling Usage
+10.4.  Capability Signaling Usage
 
    Clients can use Protected Resource Metadata ([RFC9728]) to determine
    whether a resource advertises actor-profile conformance for delegated
@@ -3594,7 +3555,7 @@ AddOutermostActor(inbound_chain, new_actor):
    compatibility (actor_profile_token_exchange), and accepted actor
    entity profiles (entity_profiles_supported.actor).  For Transaction
    Token paths, clients SHOULD additionally consult the transaction-
-   token metadata described in Section 10.1.4.
+   token metadata described in Section 10.3.
 
    These signals are advisory capability indicators, not a complete
    machine-readable description of every supported grant path.  A client
@@ -4165,14 +4126,14 @@ AddOutermostActor(inbound_chain, new_actor):
    A resource server that accepts delegated tokens but fails to enforce
    the (sub, outermost act.sub) relationship required by its local
    policy allows an attacker to bypass that policy by exploiting gaps in
-   enforcement logic.  Resource servers that require subject-plus-actor
-   authorization SHOULD apply that evaluation on every request path
-   where delegated access is accepted, including introspection-based
-   validation paths when used.  Deployments that signal delegated-token
-   requirements with actor_profile_required: true SHOULD ensure that the
-   documented request paths requiring delegated access are aligned with
-   their actual enforcement behavior so that clients do not over-read
-   the signal.
+   enforcement logic.  Resource servers that require actor authorization
+   SHOULD apply that evaluation on every request path where delegated
+   access is accepted, including introspection-based validation paths
+   when used.  Deployments that signal delegated-token requirements with
+   actor_profile_required: true SHOULD ensure that the documented
+   request paths requiring delegated access are aligned with their
+   actual enforcement behavior so that clients do not over-read the
+   signal.
 
 13.10.  Self-Issued Grants
 
@@ -4329,8 +4290,8 @@ AddOutermostActor(inbound_chain, new_actor):
    If the token is otherwise valid but the resource server's local
    policy does not permit the (sub, outermost act.sub) pair for
    payments:create, the RS MUST reject the request with HTTP 403 and
-   error="actor_unauthorized" when it applies subject-plus-actor
-   authorization for that operation:
+   error="actor_unauthorized" when it applies actor authorization for
+   that operation:
 
    HTTP/1.1 403 Forbidden
    WWW-Authenticate: Bearer error="actor_unauthorized",
@@ -4423,7 +4384,7 @@ AddOutermostActor(inbound_chain, new_actor):
 
    *  Change Controller: IETF
 
-   *  Reference: Section 10.1.2 of this document
+   *  Reference: Section 10.1 of this document
 
 15.2.  OAuth Authorization Server Metadata Registry
 
@@ -4438,7 +4399,7 @@ AddOutermostActor(inbound_chain, new_actor):
 
    *  Change Controller: IETF
 
-   *  Reference: Section 10.1.2 of this document
+   *  Reference: Section 10.1 of this document
 
 15.3.  OAuth Protected Resource Metadata Registry
 
@@ -4453,7 +4414,7 @@ AddOutermostActor(inbound_chain, new_actor):
 
    *  Change Controller: IETF
 
-   *  Reference: Section 10.1.3 of this document
+   *  Reference: Section 10.2 of this document
 
 15.4.  OAuth Error Registry
 
@@ -4507,7 +4468,7 @@ AddOutermostActor(inbound_chain, new_actor):
    defined and registered by [I-D.ietf-oauth-transaction-tokens].  Its
    inclusion as a defined value for
    actor_profile_token_exchange.requested_token_types_supported in
-   Section 10.1.2 is contingent on the progression of
+   Section 10.1 is contingent on the progression of
    [I-D.ietf-oauth-transaction-tokens].
 
 15.8.  OAuth Entity Profiles Registry
@@ -4715,7 +4676,7 @@ A.1.  Scenario
       |                         | audit                             |
       +-------------------------+-----------------------------------+
 
-                                  Table 5
+                                  Table 4
 
    The batch processor is an OAuth client and also the acting service.
    The client registration remains identified by client_id; the acting
@@ -4853,7 +4814,7 @@ Enterprise IdP AS ─► ID-JAG
    | Service      | provider.example/inventory            | Provider   |
    +--------------+---------------------------------------+------------+
 
-                                  Table 6
+                                  Table 5
 
    Presenter key bindings:
 
@@ -4865,12 +4826,12 @@ Enterprise IdP AS ─► ID-JAG
              | Booking Tool     | ToolJKT-0ZcOCORZNYy9ZhHi  |
              +------------------+---------------------------+
 
-                                 Table 7
+                                 Table 6
 
-B.2.  Discovery and Capability Negotiation
+B.2.  Capability Discovery (Preflight)
 
-   The agent consults the Travel Provider AS metadata (Section 10.1) as
-   an advisory compatibility check before initiating the flow:
+   The agent consults the Travel Provider AS metadata (Section 10) as an
+   advisory compatibility check before initiating the flow:
 
    {
      "issuer": "https://as.travel-provider.example",
@@ -5070,7 +5031,7 @@ B.6.  Step 4: Agent Calls Booking Tool API
    ai_agent) for the requested operation.  The (sub, outermost act.sub)
    relationship MUST satisfy local policy for this operation.  The
    act.sub_profile value is checked against
-   entity_profiles_supported.actor per Section 10.1.2.
+   entity_profiles_supported.actor per Section 10.1.
 
 B.7.  Step 5: Booking Tool Exchanges Access Token for Transaction Token
 
@@ -5192,7 +5153,7 @@ B.9.  Summary of Token Transformations
     |    |call)      |     |Tool   |Tool       | Assistant   |        |
     +----+-----------+-----+-------+-----------+-------------+--------+
 
-                                  Table 8
+                                  Table 7
 
    Key observations:
 
