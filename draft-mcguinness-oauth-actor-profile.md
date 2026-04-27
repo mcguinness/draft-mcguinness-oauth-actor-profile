@@ -260,19 +260,6 @@ A companion profile layered on top of this one:
 
 An implementation that conforms only to this core profile MUST ignore unrecognized companion-profile claims, metadata parameters, and introspection response parameters unless another specification or local policy defines their meaning.  A deployment that requires support for a companion profile MUST express that requirement through the companion profile's own metadata, through out-of-band agreement, or through another explicit local-policy mechanism.
 
-## Implementation Summary
-
-The following table summarizes the minimum implementation obligations by role.  The "Detailed rules" column contains forward references to the normative sections where each role's requirements are fully defined; readers using this table as a quick-reference checklist may follow those links directly.
-
-| Role | Inputs | Required checks | Outputs / behavior | Detailed rules |
-|------|--------|----------------|--------------------|----------------|
-| Assertion-consuming AS | JWT assertion grant with `act` | Validate JWT; trust issuer; validate delegation when required by the applicable processing path or local policy; enforce chain-depth limit | Preserve actor in issued token | {{jwt-assertion-grants-processing}} |
-| Token-exchange AS (subject_token) | Identity-only (`id_token`, `refresh_token`) or token-state (`jwt`, `access_token`, `txn_token`) `subject_token` input | Validate per credential type; apply class-specific subject, actor-chain, and presenter rules; trust issuer; validate delegation when required by local policy; enforce scope reduction and chain-depth limit | Issue token with preserved or extended `act` chain when inbound token-state supports it; otherwise derive any new `act` from current-exchange inputs only | {{token-exchange-presenter-model}}, {{id-token-as-subject-token}}, {{jwt-assertion-grant-as-subject-token}}, {{jwt-access-token-as-subject-token}}, {{refresh-token-as-subject-token}}, {{txn-token-as-subject-token}}; then {{jwt-access-token-propagation}} |
-| Token-exchange AS (actor_token) | Workload identity credential, JWT client assertion, or JWT access token as `actor_token` | Validate per credential type; trust issuer; verify proof of possession; derive outermost actor identity | Construct outermost `act` from validated actor identity; then apply {{jwt-access-token-propagation}} | {{workload-identity-as-actor-token}}, {{jwt-client-assertion-as-actor-token}}, {{jwt-access-token-as-actor-token}} |
-| Resource Server | Access token or Transaction Token carrying `act` | Validate token; validate presenter binding; evaluate subject; evaluate (`sub`, outermost `act.sub`) pair when required by local policy | Apply delegated-token policy; advertise `actor_profile_required` when delegated requests are expected to carry actor-profile information | {{jwt-access-token-rs-processing}}, {{txn-token-rs-processing}} |
-| Transaction Token Service | JWT assertion grant, JWT access token, or Transaction Token with subject and optional `act` chain | Validate inbound actor information; preserve subject identity; enforce chain-depth limit; apply presenter authentication per Transaction Token mechanism | Preserve `sub`; treat `req_wl` as supporting context; add new outermost `act` | {{transaction-token-service-processing}} |
-| Client or Agent | AS and RS metadata | Check `entity_profiles_supported.actor`, `authorization_grant_profiles_supported`, and `actor_profile_token_exchange` when available | Detect likely capability mismatch | {{discovery-capability-negotiation}} |
-
 
 ## Actor Object Structure
 
@@ -298,34 +285,13 @@ act-object = {
   For example, a TTS might issue a Transaction Token with top-level `iss` equal to `https://tts.travel-provider.example` while setting `act.iss` for the booking tool to `https://as.travel-provider.example`, if local policy uses that AS's identifier namespace for booking tool identifiers.  This is valid and expected: the TTS is the token issuer, while `https://as.travel-provider.example` is the actor identifier context for the booking tool identifier.
 
 `sub_profile`:
-: RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in Section 4.2 of {{I-D.mora-oauth-entity-profiles}}.  Values used within `act` objects MUST be registered with the "Actor Profile" usage location in the OAuth Entity Profiles registry (Section 14.1 of {{I-D.mora-oauth-entity-profiles}}) or be privately defined collision-resistant values.  If the acting entity fits more than one profile, multiple values MAY be included as a space-delimited string (e.g., `"service ai_agent"`).  Interoperability requirements and implementation guidance for multi-value strings are discussed in {{forward-compat-sub-profile}}.
+: RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in Section 4.2 of {{I-D.mora-oauth-entity-profiles}}.  Values used within `act` objects MUST be registered with the "Actor Profile" usage location in the OAuth Entity Profiles registry (Section 14.1 of {{I-D.mora-oauth-entity-profiles}}) or be privately defined collision-resistant values.  If the acting entity fits more than one profile, multiple values MAY be included as a space-delimited string (e.g., `"service ai_agent"`).  Interoperability requirements and implementation guidance for multi-value strings are defined in {{I-D.mora-oauth-entity-profiles}}.  When `sub_profile` is absent from an `act` object, implementations MUST NOT assume a specific entity type for the actor; resource servers that enforce entity-type-based access control MUST treat an absent `sub_profile` as an unclassified actor and SHOULD apply the more restrictive policy applicable to unknown entity types.
 
 Per-actor key provenance within the delegation chain is outside the scope of this profile.  The current presenter's keying material is conveyed only by the token's top-level `cnf` claim, as described in {{sender-constraint}}.  Other members carried inside an `act` object, including any confirmation-style members defined by another profile, do not have standardized proof-of-possession semantics under this document unless another specification explicitly defines them.
 
 The `client_profile` claim defined in {{I-D.mora-oauth-entity-profiles}} classifies the OAuth client and MUST NOT appear within an `act` object.  Client classification belongs at the top level of the token.  An AS or RS that encounters a `client_profile` member inside an `act` node MAY reject the token or ignore the offending member; it MUST NOT treat it as a valid actor classification.
 
 When an `act` object contains extension members beyond those defined in this document, issuers and consumers MUST ignore unrecognized members unless another specification or local policy defines their meaning.  An issuer that re-issues a validated actor chain MAY preserve unrecognized extension members in inherited `act` objects under local policy.  However, companion profiles that need independently verifiable provenance, per-hop receipts, or other chain-wide state SHOULD use the top-level extension pattern described in {{companion-profile-extensibility}} rather than relying on inherited `act`-object extension members.
-
-
-## `sub_profile` Interoperability and Implementation Guidance {#forward-compat-sub-profile}
-
-Value preservation and propagation for unrecognized `sub_profile` values are governed by {{I-D.mora-oauth-entity-profiles}}.  An AS or RS MUST NOT reject a token or assertion solely because a `sub_profile` value is unrecognized; unrecognized values MUST NOT be used to infer authorization semantics.
-
-The interoperability value of `sub_profile` is at the classification and discovery layer, not the authorization layer.  A common vocabulary of entity types enables clients and servers to signal capability and detect mismatches via `entity_profiles_supported.actor` metadata before a request is made, and allows local authorization policies to be expressed in terms of standard entity types rather than deployment-specific classification schemes.  This is the same relationship that OAuth `scope` has to resource-server policy: `scope` values are standardized as a vocabulary carried in tokens and metadata, but what a given scope value authorizes at a given resource server is always a local policy decision.  Likewise, two deployments may accept the same `sub_profile` value while applying different authorization consequences to it; this document does not define interoperable authorization semantics for `sub_profile`, and whether and how it affects access control, scope restriction, or other authorization decisions remains a local policy matter.
-
-When local policy restricts the accepted set of `sub_profile` values for an actor, that set SHOULD be advertised via `entity_profiles_supported.actor` in AS metadata ({{authorization-server-metadata}}) so that clients can detect incompatibility before making a request.  Clients discover the accepted set for a given resource by consulting `entity_profiles_supported.actor` in the AS metadata for one of the authorization servers listed in the resource's `authorization_servers` array ({{RFC9728}}).
-
-When `sub_profile` is absent from an `act` object, implementations MUST NOT assume a specific entity type for the actor.  Resource servers that enforce entity-type-based access control MUST treat an absent `sub_profile` as an unclassified actor and SHOULD apply the more restrictive policy applicable to unknown entity types.
-
-### Implementation Guidance
-
-When `sub_profile` contains multiple space-delimited values, the following non-normative guidance may be useful for local policy evaluation:
-
-*  A simple local rule is to treat an entity as matching a policy rule if any of its `sub_profile` values satisfies that rule.  For example, an entity with `"service ai_agent"` would match both a policy rule for `service` and a policy rule for `ai_agent`.
-
-*  When multiple values match different policy rules with conflicting outcomes, a safer local choice is to apply the more restrictive outcome rather than the union of all matched rules' privileges.
-
-*  When local policy accepts only a specific set of `sub_profile` values (for example, values advertised via `entity_profiles_supported.actor`), one possible local rule is to treat the entity as compatible when at least one of its values appears in the accepted set.  Deployments can instead choose stricter handling.
 
 
 ## Delegation Chains {#delegation-chains}
@@ -363,10 +329,7 @@ Implementations MUST support at least depth 1.  Implementations intended for cro
 
 Implementations MUST define and enforce a local maximum delegation depth.  Implementations that receive a token exceeding their configured local maximum MUST reject it with `invalid_request`.  When a request would result in a chain exceeding that limit, the AS MUST reject with `invalid_request`; it MUST NOT silently truncate the chain.
 
-
-## When a Token Represents Delegation {#token-represents-delegation}
-
-For purposes of this document, a token represents delegation when the party exercising the token's authorization at runtime (the actor) is distinct from the token subject (`sub`) and the actor has been authorized by the subject to do so.  The conditions that establish this are:
+A token represents delegation when the party exercising the token's authorization at runtime (the actor) is distinct from the token subject (`sub`) and the actor has been authorized by the subject to do so.  The conditions that establish this are:
 
 1.  A validated `actor_token` identifying a distinct actor was present in the exchange request that produced this token.
 2.  An inbound `subject_token` from a trusted upstream issuer already carried an `act` chain, establishing that delegation was present before the current exchange.
@@ -672,7 +635,7 @@ The following claims are defined for a JWT access token that carries actor-profi
 `sub_profile` (RECOMMENDED):
 : Classifies the entity type of `sub`.  MUST conform to the values defined in {{actor-profile}}.
 
-`act` (REQUIRED when the token represents delegation per {{token-represents-delegation}}):
+`act` (REQUIRED when the token represents delegation per {{delegation-chains}}):
 : The actor object identifying the entity exercising the subject's delegated rights.  MUST conform to the actor object structure defined in {{actor-profile}}.  MUST include `act.sub` and `act.iss`.  When the token does not represent delegation, `act` MUST be omitted.
 
 `cnf` (REQUIRED when sender-constrained; otherwise OPTIONAL):
@@ -712,7 +675,7 @@ In this single-hop case the top-level bearer key identifies the same party as th
 
 ## Delegation Basis for Direct Issuance {#jwt-access-token-direct-issuance}
 
-When an AS issues a JWT access token outside Token Exchange and the token represents delegation per condition 3 of {{token-represents-delegation}}, it MUST establish an independent delegation basis for the (`sub`, actor) relationship before including `act`.  Examples include a pre-registered delegation grant, an explicit consent record, or a policy rule covering the acting party or a class of acting parties.
+When an AS issues a JWT access token outside Token Exchange and the token represents delegation per condition 3 of {{delegation-chains}}, it MUST establish an independent delegation basis for the (`sub`, actor) relationship before including `act`.  Examples include a pre-registered delegation grant, an explicit consent record, or a policy rule covering the acting party or a class of acting parties.
 
 A client registration MAY satisfy this requirement only when it uniquely identifies a single distinct acting entity and the AS can derive that actor's identifier from the registration alone (for example, a dedicated registration for a specific agent or service).  A client registration that fronts multiple distinct acting entities (for example, an agent orchestration platform or shared-client deployment) does NOT satisfy this requirement, because `client_id` alone does not identify the runtime actor in those cases.
 
@@ -1011,7 +974,7 @@ When the issued token is sender-constrained, the issuer MUST bind the output tok
 
 If a Token Exchange request explicitly seeks a delegated output, for example by supplying an `actor_token` or by presenting a `subject_token` that already carries `act`, and the AS cannot validate the actor information, it MUST reject the request with `invalid_grant`.  If the AS can validate the actor information but cannot establish or confirm the required delegation basis, or if local policy prohibits the relationship, it MUST reject the request with `actor_unauthorized`.  The AS MUST NOT issue a non-delegated JWT access token in place of the requested delegated output.
 
-1.  When the issued access token represents delegation per {{token-represents-delegation}}, the AS MUST include an `act` claim that preserves or extends the inbound delegation chain per steps 3 and 4.  The AS MUST NOT silently drop actor information.  If the inbound credential carries no `act`, no validated `actor_token` is present, and no independent delegation basis exists, the AS MUST NOT include `act` in the issued access token.
+1.  When the issued access token represents delegation per {{delegation-chains}}, the AS MUST include an `act` claim that preserves or extends the inbound delegation chain per steps 3 and 4.  The AS MUST NOT silently drop actor information.  If the inbound credential carries no `act`, no validated `actor_token` is present, and no independent delegation basis exists, the AS MUST NOT include `act` in the issued access token.
 
 2.  The AS MUST preserve `sub` to refer to the same underlying subject as the inbound token.  If the AS uses a different subject-identifier namespace, it MAY change the `sub` value only to re-express that same subject in the new namespace under a trusted local mapping.  This document permits such re-expression when required by federation across trust-domain boundaries, but it does not define an interoperable mechanism for proving or conveying subject equivalence across namespaces.  A translated `sub` therefore identifies the subject only within the trust context of the issued token and MUST NOT, by itself, be treated as portable proof that the original and translated identifiers are equivalent outside that context.  The AS MUST NOT replace `sub` with an identifier for a different subject.
 
@@ -1429,7 +1392,7 @@ This section covers how the actor profile integrates with adjacent protocol mech
 
 This document uses the actor profile support defined in {{I-D.mora-oauth-entity-profiles}}.  The `sub_profile` claim within an `act` object classifies the entity identified by `act.sub`, using values registered with the "Actor Profile" usage location in the "OAuth Entity Profiles" registry.  The `entity_profiles_supported.actor` array in AS metadata advertises which actor entity profile values are accepted, as defined in {{I-D.mora-oauth-entity-profiles}}.
 
-The values registered for actor use are defined in {{I-D.mora-oauth-entity-profiles}}.  Values within `act.sub_profile` MUST be either registered with the "Actor Profile" usage location in the "OAuth Entity Profiles" registry or privately defined collision-resistant values (see {{actor-object-structure}}).  When processing `act.sub_profile`, issuers and consumers MUST treat registered values according to the entity profile semantics defined in {{I-D.mora-oauth-entity-profiles}} and MUST NOT reject tokens solely because a value is unrecognized (see {{forward-compat-sub-profile}}).
+The values registered for actor use are defined in {{I-D.mora-oauth-entity-profiles}}.  Values within `act.sub_profile` MUST be either registered with the "Actor Profile" usage location in the "OAuth Entity Profiles" registry or privately defined collision-resistant values (see {{actor-object-structure}}).  When processing `act.sub_profile`, issuers and consumers MUST treat registered values according to the entity profile semantics defined in {{I-D.mora-oauth-entity-profiles}} and MUST NOT reject tokens solely because a value is unrecognized (see {{actor-object-structure}}).
 
 This document makes no independent requests to the "OAuth Entity Profiles" registry; all actor-profile-related registry definitions are provided by {{I-D.mora-oauth-entity-profiles}}.
 
@@ -1853,7 +1816,7 @@ WWW-Authenticate: Bearer error="actor_unauthorized",
 
 ## Token Substitution
 
-An attacker who can present a token with a crafted `sub_profile` or actor chain could attempt to escalate privileges.  ASes MUST validate inbound `sub_profile` values against the syntax requirements of this document, the applicable registry or deployment-specific allowed set where such checks are part of local policy, and the local policy applicable to the token they are issuing.  They MUST preserve unrecognized but syntactically valid values as required by {{forward-compat-sub-profile}}, and they MUST reject values that are malformed or disallowed by local policy.
+An attacker who can present a token with a crafted `sub_profile` or actor chain could attempt to escalate privileges.  ASes MUST validate inbound `sub_profile` values against the syntax requirements of this document, the applicable registry or deployment-specific allowed set where such checks are part of local policy, and the local policy applicable to the token they are issuing.  They MUST preserve unrecognized but syntactically valid values as required by {{actor-object-structure}}, and they MUST reject values that are malformed or disallowed by local policy.
 
 
 # Privacy Considerations {#privacy}
