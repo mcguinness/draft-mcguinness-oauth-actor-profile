@@ -3240,9 +3240,12 @@ AddOutermostActor(inbound_chain, new_actor):
    Actor authorization at the resource server evaluates both principals
    and the relationship between them, that is, whether the outermost
    actor is authorized to act on behalf of the subject.  This document
-   describes subject-plus-actor evaluation as one approach for resource
-   servers; it does not require every RS to implement or enforce actor
-   authorization.
+   does not require every RS to implement actor authorization for every
+   token that carries act.  When an RS accepts a token as satisfying a
+   delegated-access requirement for a request path, however, it MUST NOT
+   authorize the request solely as if the token were non-delegated.  The
+   RS SHOULD evaluate the subject and outermost actor according to local
+   policy.
 
    For Transaction Tokens, the primary policy pair remains (sub,
    act.sub).  The req_wl claim provides workload context from the TTS
@@ -3262,11 +3265,15 @@ AddOutermostActor(inbound_chain, new_actor):
 
 9.2.  Subject-Plus-Actor Evaluation
 
-   Actor authorization is OPTIONAL for delegated tokens under this
-   profile.  Resource servers that receive delegated tokens SHOULD
-   define and document their actor authorization policy.  The following
-   steps describe one approach for resource servers that choose to
-   enforce subject-plus-actor policy:
+   Actor authorization is conditional under this profile.  When an RS
+   accepts a token as satisfying a delegated-access requirement for the
+   request path, it MUST NOT ignore the act claim and authorize solely
+   as if the token were non-delegated.  The RS SHOULD evaluate the
+   subject and outermost actor according to local policy.  Resource
+   servers that receive delegated tokens SHOULD define and document
+   their actor authorization policy.  The following steps describe one
+   approach for resource servers that choose to enforce subject-plus-
+   actor policy:
 
    1.  *Advertise delegated-token requirements*: An RS that wants to
        signal that delegated requests are expected to carry actor-
@@ -3362,9 +3369,10 @@ AddOutermostActor(inbound_chain, new_actor):
        Section 12.2.
 
    5.  Apply actor authorization per Section 9.2 when required by local
-       policy.  Resource servers that do not require actor authorization
-       SHOULD still evaluate the actor as part of authorization, audit,
-       or trust decisions.
+       policy or when the token is accepted as satisfying a delegated-
+       access requirement for the request path.  Resource servers that
+       do not require actor authorization SHOULD still evaluate the
+       actor as part of authorization, audit, or trust decisions.
 
    6.  Optionally traverse inner act objects to audit the full
        delegation chain; inner actors are prior-actor context and MUST
@@ -3454,9 +3462,10 @@ AddOutermostActor(inbound_chain, new_actor):
        identifiers or reject the request according to local policy.
 
    4.  Apply actor authorization per Section 9.2 when required by local
-       policy.  Resource servers that do not require actor authorization
-       SHOULD still evaluate the actor as part of authorization, audit,
-       or trust decisions.
+       policy or when the token is accepted as satisfying a delegated-
+       access requirement for the request path.  Resource servers that
+       do not require actor authorization SHOULD still evaluate the
+       actor as part of authorization, audit, or trust decisions.
 
    5.  Optionally traverse inner act objects to audit the full
        delegation chain.  If the RS relies on inner act objects for
