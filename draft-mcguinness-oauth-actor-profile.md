@@ -1545,7 +1545,7 @@ General guidance on access token lifetime and security tradeoffs is provided in 
 
 This section enumerates per-role requirements for claiming conformance to this profile.  Profile scope (representation versus policy, supported token formats, and supported request semantics) is defined in {{profile-scope}}.  An implementation claiming conformance MUST satisfy the requirements listed for each role it performs.
 
-## Issuing Authorization Server
+## Issuing Authorization Server {#conformance-as}
 
 An issuing AS that claims conformance to this profile MUST:
 
@@ -1558,7 +1558,7 @@ An issuing AS that claims conformance to this profile MUST:
 *  return the error codes specified in {{actor-profile-error-responses}} for the listed failure conditions;
 *  preserve `act` and top-level `sub_profile` in introspection responses for active delegated tokens, when introspection is supported ({{token-introspection}}).
 
-## Transaction Token Service
+## Transaction Token Service {#conformance-tts}
 
 A TTS that claims conformance to this profile MUST:
 
@@ -1567,7 +1567,7 @@ A TTS that claims conformance to this profile MUST:
 *  apply the TTS presenter-authentication and output rules in {{transaction-token-output-rules}};
 *  treat `req_wl` as supporting workload context, not as a substitute for the outermost `act.sub` ({{actor-claim-in-transaction-tokens}}).
 
-## Resource Server
+## Resource Server {#conformance-rs}
 
 An RS that claims conformance to this profile MUST:
 
@@ -1578,7 +1578,7 @@ An RS that claims conformance to this profile MUST:
 
 An RS that enforces actor authorization additionally MUST evaluate the (`sub`, outermost `act.sub`) pair per {{actor-authorization}}.
 
-## Client
+## Client {#conformance-client}
 
 A client that claims conformance to this profile SHOULD treat `actor_profile_required: true` as an indication that delegated access for the resource requires `act`-carrying tokens ({{protected-resource-metadata}}), and adjust its grant selection or token request accordingly.
 
