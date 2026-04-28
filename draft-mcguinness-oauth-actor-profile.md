@@ -220,7 +220,7 @@ This document defines the following invariants:
 *  `client_id` and `azp` are OAuth client identifiers, not actor identifiers.
 *  When the (`act.iss`, `act.sub`) pair identifies the same entity as the (`iss`, `sub`) pair of the token, no delegation is expressed and consumers MUST NOT infer a meaningful delegation relationship.  String equality of `act.sub` and `sub` alone is not a sufficient test; the issuer or namespace context must also be considered.
 
-## Conformance Scope
+## Profile Scope {#profile-scope}
 
 ### Representation and Policy
 
@@ -312,7 +312,7 @@ In this example the booking tool (outermost `act`) is the current outermost acto
 
 Delegation depth is defined as the number of `act` objects in the chain, counting from the outermost.  A token with a single `act` object and no nested `act` within it has depth 1; each additional level of nesting adds 1.  Depth is counted on the resulting chain after any new outermost `act` is added, not on the inbound token.
 
-Depth 1 is the minimum interoperable depth.  Implementations intended for cross-domain multi-hop interoperability SHOULD support a local maximum depth sufficient for their target architecture and SHOULD document that maximum.  As a reference point, a four-hop chain (user → orchestrator → agent → tool, with the tool as current presenter) requires depth 4.  An implementation that supports only depth 1 is conformant to this document but will not interoperate with multi-hop deployments.  Same-domain deployments MAY enforce a shallower local maximum when that limit is sufficient for their architecture.
+Depth 1 is the minimum interoperable depth.  Implementations intended for cross-domain multi-hop interoperability SHOULD support a local maximum of at least depth 4 (sufficient for the reference architecture user → orchestrator → agent → tool, with the tool as current presenter) and SHOULD document the configured maximum.  An implementation that supports only depth 1 is conformant to this document but will not interoperate with multi-hop deployments.  Same-domain deployments MAY enforce a shallower local maximum when that limit is sufficient for their architecture.
 
 Implementations MUST define and enforce a local maximum delegation depth.  Implementations that receive a token exceeding their configured local maximum MUST reject it with `invalid_request`.  When a request would result in a chain exceeding that limit, the AS MUST reject with `invalid_request`; it MUST NOT silently truncate the chain.
 
@@ -370,6 +370,8 @@ AddOutermostActor(inbound_chain, new_actor):
 
 The `act.iss` value in the new outermost actor MUST be set by the issuing AS.  The AS MUST NOT rewrite `act.iss` or any other field in inherited inner actor objects; those fields were set by upstream issuers at the time of authorship and are immutable.  Dropping prior actors from the inbound chain to produce a shallower chain in the issued token is NOT permitted.  If preserving the inbound chain would cause the resulting depth to exceed the local maximum, the AS MUST reject with `invalid_request` rather than silently truncate.  The only exception is when the inbound token carries no `act` claim, in which case no prior chain exists and the issued token begins a new chain at depth 1.  When the new actor identifies the same party as the inbound outermost `act.sub` (same `act.sub` and `act.iss` under the same issuer or namespace context), the AS MAY apply C2 instead, preserving the existing chain unchanged rather than creating a redundant nested entry.
 
+Detection of identifier reappearance deeper in the inbound chain (for example, the same actor appearing in both inner and outer positions of a longer chain) is not standardized by this profile.  An AS MAY apply local policy to such cases; the chain-construction algorithm itself neither requires nor prohibits cycle detection.
+
 **C2: Preserve inbound chain unchanged (when no new actor is identified).**
 
 ~~~
@@ -413,6 +415,8 @@ When Token Exchange runs in presenter-rebind mode, the request establishes a new
 *  The issuer MUST validate proof for the newly established presenter rather than requiring proof of possession for any prior `subject_token` binding solely because the inbound `subject_token` was sender-constrained.
 *  A delegated JWT access token or any other `actor_token` whose acting identity is available only through an embedded `act` claim does not qualify as a direct presenter credential for interoperable presenter rebind under this profile.
 
+Rebind requires an `actor_token` whose own top-level `sub` names the new presenter.  An actor holding only a delegated credential cannot rebind; intermediate actors that may become new presenters must possess a direct presenter credential (workload credential ({{workload-identity-as-actor-token}}), RFC 7523 client assertion ({{jwt-client-assertion-as-actor-token}}), or non-delegated JWT access token ({{jwt-access-token-as-actor-token}})).
+
 ### Bearer-to-PoP Upgrade
 
 When the inbound `subject_token` is a bearer credential or an identity-only credential and the request supplies a validated `actor_token` establishing a new presenter, the issuer MAY issue a sender-constrained output token bound to that new presenter.  The absence of inbound top-level `cnf` creates no continuity obligation in this case.
@@ -453,8 +457,8 @@ The following claims are defined for a JWT assertion grant that carries actor-pr
 `act` (REQUIRED when delegation is asserted):
 : The actor object identifying the entity exercising the subject's delegated rights.  MUST conform to the actor object structure defined in {{actor-profile}}.  MUST include `act.sub` and `act.iss`.
 
-`cnf.jkt` (REQUIRED when DPoP is used; otherwise OPTIONAL):
-: When the JWT assertion grant is sender-constrained with DPoP, the assertion MUST carry a top-level `cnf.jkt` identifying the DPoP key to which the assertion is bound.  When DPoP is not used, top-level `cnf` is OPTIONAL for JWT assertion grants unless required by another profile or local policy.
+`cnf` (REQUIRED when sender-constrained; otherwise OPTIONAL):
+: When the JWT assertion grant is sender-constrained, the assertion MUST carry a top-level `cnf` claim identifying the binding: `cnf.jkt` per {{RFC9449}} when DPoP is used, or `cnf.x5t#S256` per {{RFC8705}} when mTLS is used.  When the assertion is not sender-constrained, top-level `cnf` is OPTIONAL unless required by another profile or local policy.
 
 When the assertion or request context also identifies an OAuth client via `client_id`, `azp`, or an authenticated client credential, interoperable processing SHOULD use `act.sub` rather than treating that client identity as a substitute for it.  Deployments that rely on client identity as a substitute actor signal are outside the interoperable scope of this profile; see step 7 in {{jwt-assertion-grants-processing}}.
 
@@ -793,6 +797,8 @@ This document does not standardize whether an AS issues refresh tokens in respon
 ## Actor Tokens {#actor-tokens}
 
 An `actor_token` of any type defined in this profile MUST identify the acting party in its top-level `sub`.  If the `actor_token` carries an `act` claim, indicating that the credential itself represents a delegation chain rather than a direct identity assertion, the AS MUST reject the request with `invalid_grant`.  This uniform rule preserves the identity-extraction invariant that the `actor_token`'s top-level `sub` is the new outermost actor.  Type-specific sections below refine validation and presenter-rebind handling.
+
+Interoperable sub-delegation under this profile therefore requires every actor that may become a new presenter to possess a direct presenter credential naming itself in `sub`.  Deployments anticipating multi-hop chains SHOULD provision intermediate actors accordingly.
 
 ### JWT Client Assertion {#jwt-client-assertion-as-actor-token}
 
@@ -1167,11 +1173,11 @@ When the resource server evaluates a JWT access token as a delegated token under
 
 6.  The RS MAY traverse inner `act` objects for audit, policy refinement, or trust decisions; such use is deployment-specific and inner actors MUST NOT be required to present proof of possession at the resource server.  Inner `act` objects are prior-actor context per V4 of {{delegation-chain-algorithm}}: when the RS relies on them for any decision, it MUST do so only after validating the outer token issuer and only when local policy trusts that issuer to carry forward the asserted delegation chain, and the RS MUST NOT treat inner `act` objects as independently authenticated.  Under this profile, interoperable authorization behavior is defined around `sub` and the outermost `act.sub`.
 
-7.  If any of the above steps fail, return an appropriate error response per {{RFC6750, Section 3.1}}:
+7.  If any of the above steps fail, return an appropriate error response.  The HTTP authentication scheme used in the `WWW-Authenticate` challenge follows the token's binding mechanism: `Bearer` per {{RFC6750, Section 3.1}} for bearer or mTLS-bound ({{RFC8705}}) tokens, or `DPoP` per {{RFC9449, Section 7.1}} for DPoP-bound tokens.
 
-    *  If signature, `iss`, `aud`, or temporal validation fails: HTTP 401 with `WWW-Authenticate: Bearer error="invalid_token"`.
+    *  If signature, `iss`, `aud`, or temporal validation fails: HTTP 401 with `error="invalid_token"`.
     *  If DPoP proof validation for `cnf.jkt` fails: HTTP 401 per {{RFC9449, Section 7}}.
-    *  If the token is structurally valid but the actor fails an authorization evaluation required by local policy, including actor authorization when required: HTTP 403 with `error="actor_unauthorized"` in the `WWW-Authenticate` challenge per {{RFC6750, Section 3.1}}.  The `error` attribute in the `WWW-Authenticate` header supports extension values registered in the OAuth Extensions Error Registry; `actor_unauthorized` is registered by this document ({{iana-error-codes}}) and MAY appear there.  The RS MUST NOT use `error="insufficient_scope"` to signal actor authorization failures; that error code indicates the token's scope is insufficient for the operation and implies the client should retry with broader scope, which does not describe an actor identity or delegation policy failure.
+    *  If the token is structurally valid but the actor fails an authorization evaluation required by local policy, including actor authorization when required: HTTP 403 with `error="actor_unauthorized"`.  The `error` attribute supports extension values registered in the OAuth Extensions Error Registry; `actor_unauthorized` is registered by this document ({{iana-error-codes}}).  The RS MUST NOT use `error="insufficient_scope"` to signal actor authorization failures; that error code indicates the token's scope is insufficient for the operation and implies the client should retry with broader scope, which does not describe an actor identity or delegation policy failure.
     *  The RS MUST NOT include actor-specific rejection details in error responses exposed to clients outside the trust domain.
 
 ## Transaction Token Processing {#txn-token-rs-processing}
@@ -1534,6 +1540,47 @@ Deployments SHOULD use shorter token lifetimes for delegated tokens than for non
 Deployments with deep chains (three or more nested `act` objects) SHOULD account for the fact that any revocation event at any hop in the chain cannot propagate to already-issued downstream tokens.  In environments with significant revocation risk (for example, AI agent delegation chains where user consent can be withdrawn at any time), deployments SHOULD combine short-lived tokens with active introspection at sensitive resource servers rather than relying solely on `exp`.
 
 General guidance on access token lifetime and security tradeoffs is provided in {{RFC9700}}.
+
+# Conformance {#conformance}
+
+This section enumerates per-role requirements for claiming conformance to this profile.  Profile scope (representation versus policy, supported token formats, and supported request semantics) is defined in {{profile-scope}}.  An implementation claiming conformance MUST satisfy the requirements listed for each role it performs.
+
+## Issuing Authorization Server
+
+An issuing AS that claims conformance to this profile MUST:
+
+*  emit `act.iss` in every newly issued token carrying `act` ({{actor-object-structure}});
+*  apply the chain validation and construction algorithm in {{delegation-chain-algorithm}};
+*  define and enforce a local maximum delegation depth ({{delegation-chains}});
+*  preserve `sub` across token issuance, translating only under a trusted local mapping ({{jwt-access-token-propagation}} step 2);
+*  apply the presenter-transition model in {{token-exchange-presenter-model}} when performing Token Exchange;
+*  reject any `actor_token` carrying `act` ({{actor-tokens}});
+*  return the error codes specified in {{actor-profile-error-responses}} for the listed failure conditions;
+*  preserve `act` and top-level `sub_profile` in introspection responses for active delegated tokens, when introspection is supported ({{token-introspection}}).
+
+## Transaction Token Service
+
+A TTS that claims conformance to this profile MUST:
+
+*  satisfy the issuing-AS requirements above for Transaction Token output;
+*  set top-level `iss` on every Transaction Token carrying `act` ({{transaction-tokens}});
+*  apply the TTS presenter-authentication and output rules in {{transaction-token-output-rules}};
+*  treat `req_wl` as supporting workload context, not as a substitute for the outermost `act.sub` ({{actor-claim-in-transaction-tokens}}).
+
+## Resource Server
+
+An RS that claims conformance to this profile MUST:
+
+*  validate `act` only when the outer token issuer is trusted to convey it ({{delegation-chain-integrity}});
+*  treat `client_id` and `azp` as client-identity inputs only, not as actor identifiers, when `act` is present ({{client-identity-delegation}});
+*  evaluate proof of possession against the top-level `cnf` only ({{delegated-pop-validation}});
+*  use the `WWW-Authenticate` challenge scheme appropriate to the token's binding mechanism ({{jwt-access-token-rs-processing}} step 7).
+
+An RS that enforces actor authorization additionally MUST evaluate the (`sub`, outermost `act.sub`) pair per {{actor-authorization}}.
+
+## Client
+
+A client that claims conformance to this profile SHOULD treat `actor_profile_required: true` as an indication that delegated access for the resource requires `act`-carrying tokens ({{protected-resource-metadata}}), and adjust its grant selection or token request accordingly.
 
 # Security Considerations
 
