@@ -396,6 +396,8 @@ The bearer-to-PoP upgrade path is a primary migration path enabled by this profi
 
 This profile does not define per-actor confirmation members within nested `act` objects.  Stronger prior-hop key provenance, if needed, would require another profile layered on top of this one using the companion-profile extension pattern in {{companion-profile-extensibility}}.
 
+DPoP nonce handling per {{RFC9449, Section 8}} applies unchanged to all DPoP-bound token requests under this profile; this profile does not modify DPoP nonce semantics.
+
 ### Top-Level `cnf` Governs the Current Presenter
 
 The top-level `cnf` claim of any token identifies the key or certificate of the current presenter.  When delegation is present, that current presenter is the party identified by the outermost `act` claim: when DPoP ({{RFC9449}}) is used, the top-level `cnf.jkt` MUST identify that party's key; when mTLS ({{RFC8705}}) is used, the top-level `cnf.x5t#S256` MUST identify that party's certificate.  The AS or RS MUST validate proof of possession against the top-level `cnf`.  Confirmation-style members that appear inside an `act` object due to another specification do not have standardized proof-of-possession semantics under this document.
@@ -420,18 +422,6 @@ Rebind requires an `actor_token` whose own top-level `sub` names the new present
 ### Bearer-to-PoP Upgrade
 
 When the inbound `subject_token` is a bearer credential or an identity-only credential and the request supplies a validated `actor_token` establishing a new presenter, the issuer MAY issue a sender-constrained output token bound to that new presenter.  The absence of inbound top-level `cnf` creates no continuity obligation in this case.
-
-### Mechanism-Specific Proof Examples
-
-The rules above are mechanism-agnostic.  The following points illustrate how common proof mechanisms fit into those rules:
-
-*  For DPoP-bound tokens, `cnf.jkt` identifies the expected proof key.  Continuation mode validates the DPoP proof against the `subject_token`'s `cnf.jkt`.  Rebind mode validates the DPoP proof, if DPoP is the selected proof mechanism, against the key established for the new presenter.
-*  For mTLS-bound tokens, `cnf.x5t#S256` identifies the presenter's certificate thumbprint.  The same continuation and rebind rules apply, with certificate binding substituted for key thumbprint.
-*  For workload credentials accompanied by a proof artifact such as a WPT, the workload-credential profile defines how the current presenter proves possession.  Under this profile, that proof satisfies the rebind obligation for the new presenter when the workload credential is used as `actor_token`.
-
-DPoP nonce handling per {{RFC9449, Section 8}} applies unchanged to all DPoP-bound token requests under this profile; this profile does not modify DPoP nonce semantics.
-
-
 
 # JWT Assertion Grants {#jwt-assertion-grants}
 
@@ -460,7 +450,7 @@ The following claims are defined for a JWT assertion grant that carries actor-pr
 `cnf` (REQUIRED when sender-constrained; otherwise OPTIONAL):
 : When the JWT assertion grant is sender-constrained, the assertion MUST carry a top-level `cnf` claim identifying the binding: `cnf.jkt` per {{RFC9449}} when DPoP is used, or `cnf.x5t#S256` per {{RFC8705}} when mTLS is used.  When the assertion is not sender-constrained, top-level `cnf` is OPTIONAL unless required by another profile or local policy.
 
-When the assertion or request context also identifies an OAuth client via `client_id`, `azp`, or an authenticated client credential, interoperable processing SHOULD use `act.sub` rather than treating that client identity as a substitute for it.  Deployments that rely on client identity as a substitute actor signal are outside the interoperable scope of this profile; see step 7 in {{jwt-assertion-grants-processing}}.
+When the assertion or request context also identifies an OAuth client via `client_id`, `azp`, or an authenticated client credential, interoperable processing SHOULD use `act.sub` rather than treating that client identity as a substitute for it (see {{client-identity-delegation}} and step 7 in {{jwt-assertion-grants-processing}}).
 
 Clients SHOULD use JWT assertion grants carrying actor-profile claims only when the AS's support for the actor-determination model has been confirmed via deployment documentation, prior agreement, or discovery.  For ID-JAG specifically, that confirmation SHOULD include whether the AS supports the actor-delegation extension model defined by this document.
 
@@ -593,7 +583,7 @@ The following claims are defined for a JWT access token that carries actor-profi
 `client_id` and `azp` (OPTIONAL):
 : Identify the OAuth client when carried in the token.  They do not identify the delegated actor and MUST NOT be used as a substitute for `act`.
 
-Some deployments also carry an `azp` claim as an auxiliary client-identity signal, often as an OpenID Connect carry-over used by vendors in practice.  When an issuer uses both `azp` and `act.sub` to represent the same acting party, it SHOULD perform identifier reconciliation between them or else treat them as distinct identifiers under local policy.  Deployments that rely on client identity claims as a substitute for `act` are outside the interoperable scope of this profile.  For migration and reconciliation rules, see {{migration-implicit-explicit}} and {{client-identity-delegation}}.
+Some deployments also carry an `azp` claim as an auxiliary client-identity signal, often as an OpenID Connect carry-over used by vendors in practice.  When an issuer uses both `azp` and `act.sub` to represent the same acting party, it SHOULD perform identifier reconciliation between them or else treat them as distinct identifiers under local policy.  See {{migration-implicit-explicit}} and {{client-identity-delegation}} for migration, reconciliation, and the normative client-identity rules.
 
 The following example shows a JWT access token with actor profile claims:
 
@@ -701,7 +691,7 @@ The AS MUST apply scope reduction per {{RFC8693, Section 4}} and MUST then apply
 
 #### JWT Access Token {#jwt-access-token-as-subject-token}
 
-When a Token Exchange request ({{RFC8693}}) presents a JWT access token as the `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:access_token`), the AS MUST apply the following steps.  Use of an opaque access token as the `subject_token` is outside the interoperable scope of this profile.  An AS MAY translate introspection results for an opaque access token into equivalent local inputs for deployment-specific use, but that behavior is not interoperable behavior defined by this document.
+When a Token Exchange request ({{RFC8693}}) presents a JWT access token as the `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:access_token`), the AS MUST apply the following steps.  Use of an opaque access token as the `subject_token` is outside the interoperable scope of this profile (see {{profile-scope}}).
 
 1.  The AS MUST validate the inbound JWT access token per {{RFC9068}}: signature, `iss`, `sub`, `exp`, `nbf`, and `jti`.  Because a JWT access token used as `subject_token` was issued for a resource server, its `aud` will not ordinarily include the Token Exchange AS's token endpoint; the AS MUST NOT reject the inbound token solely because its `aud` does not include the AS's token endpoint URI.
 
@@ -867,7 +857,7 @@ A non-delegated JWT access token may be presented as `actor_token` to establish 
 
 #### Processing
 
-When a Token Exchange request includes an `actor_token` that is a JWT access token (`actor_token_type=urn:ietf:params:oauth:token-type:access_token`), the AS MUST apply the following steps.  Use of an opaque access token as the `actor_token` is outside the interoperable scope of this profile; an AS MAY translate introspection results for such tokens into equivalent local inputs, but that behavior is deployment-specific and not defined here.
+When a Token Exchange request includes an `actor_token` that is a JWT access token (`actor_token_type=urn:ietf:params:oauth:token-type:access_token`), the AS MUST apply the following steps.  Use of an opaque access token as the `actor_token` is outside the interoperable scope of this profile (see {{profile-scope}}).
 
 1.  The AS MUST validate the `actor_token` per {{RFC9068}}.  If validation fails, the AS MUST reject the request with `invalid_grant`.
 
@@ -1167,7 +1157,7 @@ When the resource server evaluates a JWT access token as a delegated token under
 
 3.  Extract the `sub` and the outermost `act.sub` as the two principals relevant for authorization policy.
 
-4.  If the token carries `client_id`, `azp`, or both, treat those as client-identity inputs only.  In interoperable processing, the RS SHOULD use `act.sub` rather than `client_id` or `azp` as the actor identifier when `act` is present.  Deployments that rely on client identity as a substitute actor signal are outside the interoperable scope of this profile.  When local policy expects both to identify the same acting party, the RS SHOULD perform identifier reconciliation; if reconciliation cannot be established, the RS MUST either treat them as distinct identifiers or reject the request according to local policy.  See {{client-identity-delegation}}.
+4.  If the token carries `client_id`, `azp`, or both, treat those as client-identity inputs only.  The RS SHOULD use `act.sub` rather than `client_id` or `azp` as the actor identifier when `act` is present.  When local policy expects both to identify the same acting party, the RS SHOULD perform identifier reconciliation; if reconciliation cannot be established, the RS MUST either treat them as distinct identifiers or reject the request according to local policy.  See {{client-identity-delegation}}.
 
 5.  Apply actor authorization per {{actor-authorization}} when required by local policy or when the token is accepted as satisfying a delegated-access requirement for the request path.  Resource servers that do not require actor authorization SHOULD still evaluate the actor as part of authorization, audit, or trust decisions.
 
@@ -1280,9 +1270,9 @@ Example of an actor not authorized for the requested scope:
 
 # Metadata and Discovery {#metadata-and-discovery}
 
-This section defines a minimal set of metadata parameters that, together with the `entity_profiles_supported.actor` array defined in {{I-D.mora-oauth-entity-profiles}} and the `authorization_grant_profiles_supported` parameter defined by {{I-D.ietf-oauth-identity-assertion-authz-grant}}, allow authorization servers and resource servers to advertise actor-profile support with reduced out-of-band coordination.  These parameters provide coarse-grained capability signaling only; they do not provide a complete machine-readable description of every supported grant path, profile-specific JWT assertion-grant variant, presenter-binding mechanism, subject-token-to-actor-token combination, or method by which the AS determines the acting party.  Metadata helps clients detect likely incompatibilities, but it does not guarantee successful token issuance or resource access and does not define a required client workflow.  Deployment documentation, prior agreement, or companion profiles can still be needed for details outside the parameters defined here.  Companion profiles MAY define additional metadata for supplementary features such as provenance, consistent with {{companion-profile-extensibility}}.
+This section defines a minimal set of metadata parameters that, together with the `entity_profiles_supported.actor` array defined in {{I-D.mora-oauth-entity-profiles}} and the `authorization_grant_profiles_supported` parameter defined by {{I-D.ietf-oauth-identity-assertion-authz-grant}}, allow authorization servers and resource servers to advertise actor-profile support with reduced out-of-band coordination.  Authorization grant profile support uses `authorization_grant_profiles_supported`; Token Exchange role-specific capabilities are grouped under `actor_profile_token_exchange`; entity type enumeration uses {{I-D.mora-oauth-entity-profiles}} metadata.
 
-The design principle is that **authorization grant profile support uses `authorization_grant_profiles_supported`; Token Exchange role-specific capabilities are grouped under `actor_profile_token_exchange`; and entity type enumeration uses {{I-D.mora-oauth-entity-profiles}} metadata**.  When these metadata are available, clients can use `authorization_grant_profiles_supported` to assess whether an AS advertises support for actor-profile JWT authorization grants, `actor_profile_token_exchange` to assess coarse Token Exchange input and requested output compatibility, and `entity_profiles_supported.actor` per {{I-D.mora-oauth-entity-profiles}} to assess which actor entity profiles the associated AS accepts under this profile.
+These parameters are coarse-grained capability indicators only; they do not provide a complete description of every supported grant path or guarantee successful token issuance.  Deployment documentation, prior agreement, or companion profiles can still be needed for details outside the parameters defined here.  Companion profiles MAY define additional metadata, consistent with {{companion-profile-extensibility}}.
 
 
 ## Authorization Server Metadata {#authorization-server-metadata}
@@ -1390,19 +1380,11 @@ Transaction Token support under this profile for Token Exchange paths is adverti
 
 ## Capability Signaling Usage
 
-Clients can use Protected Resource Metadata ({{RFC9728}}) to determine whether a resource advertises actor-profile conformance for delegated requests (`actor_profile_required`).  Clients can use the associated AS metadata ({{RFC8414}}) to determine whether the AS advertises actor-profile JWT authorization-grant processing (`authorization_grant_profiles_supported`), coarse Token Exchange compatibility (`actor_profile_token_exchange`), and accepted actor entity profiles (`entity_profiles_supported.actor`).  For Transaction Token paths, clients SHOULD additionally consult the transaction-token metadata described in {{transaction-token-capability-signaling}}.  When a deployment combines this profile with Identity Chaining ({{I-D.ietf-oauth-identity-chaining}}), clients SHOULD also consult the `identity_chaining_requested_token_types_supported` parameter defined by that document; the two parameter sets are independent, with `actor_profile_token_exchange` advertising actor-profile Token Exchange capabilities and the Identity Chaining parameter advertising chaining-flow token-type compatibility.
+Clients use Protected Resource Metadata ({{RFC9728}}) to determine whether a resource advertises actor-profile conformance (`actor_profile_required`), and the associated AS metadata ({{RFC8414}}) to assess JWT authorization-grant support (`authorization_grant_profiles_supported`), Token Exchange compatibility (`actor_profile_token_exchange`), and accepted actor entity profiles (`entity_profiles_supported.actor`).  When this profile is combined with Identity Chaining ({{I-D.ietf-oauth-identity-chaining}}), clients SHOULD additionally consult `identity_chaining_requested_token_types_supported`; the two parameter sets are independent.
 
-These signals are advisory capability indicators, not a complete machine-readable description of every supported grant path.  A client that detects an obvious mismatch, such as a missing authorization grant profile, unsupported Token Exchange input or requested output token type, or an actor entity profile outside the advertised accepted set, will ordinarily avoid that path or rely on deployment-specific configuration.  As a safe default, a client that intends to make a request on behalf of another principal should treat `actor_profile_required: true` as indicating that it likely needs an explicit `act`-carrying token for that resource, unless deployment documentation explicitly defines a delegated opaque-token path in which introspection supplies equivalent actor-profile claims.
+The metadata in this document does not advertise authorization-code actor-selection mechanisms or per-scope/per-path actor type restrictions.  Deployments that need either capability rely on deployment documentation, bilateral agreement, or a companion profile.  When a delegated request carries `act.sub_profile`, its value SHOULD be drawn from `entity_profiles_supported.actor` when that metadata is available.
 
-The metadata in this document does not advertise authorization-code actor-selection mechanisms.  Deployments that support actor-profile issuance from authorization code grants need deployment documentation or another profile for that behavior.
-
-When a delegated request explicitly carries actor-profile claims and `act.sub_profile` is included, its value SHOULD be drawn from the `entity_profiles_supported.actor` accepted list when that metadata is available.  When actor information is instead derived by the AS from authenticated client context or other local policy, metadata and deployment documentation can help a client assess whether the resulting token is likely to satisfy the resource's delegated-token expectations.
-
-This document does not define a mechanism for advertising per-scope or per-path actor type restrictions (for example, requiring `sub_profile=service` for one scope and `sub_profile=ai_agent` for another).  Such restrictions are deployment-specific and SHOULD be expressed through deployment documentation or bilateral agreements.  Companion profiles MAY define additional metadata parameters for this purpose.
-
-Example client preflight failure:
-
-If the RS metadata advertises `"actor_profile_required": true`, but the target AS metadata advertises `"entity_profiles_supported": { "actor": ["service"] }` and the client's acting entity profile is `ai_agent`, the client would ordinarily stop before making the token request because the AS does not advertise support for the actor type the client would need to represent.
+Example client preflight failure: if the RS metadata advertises `"actor_profile_required": true` but the target AS metadata advertises `"entity_profiles_supported": { "actor": ["service"] }` and the client's acting entity profile is `ai_agent`, the client would ordinarily stop before making the token request because the AS does not advertise support for the actor type the client would need to represent.
 
 # Companion Profiles and Extension Points {#companion-profile-extensibility}
 
@@ -1634,7 +1616,7 @@ A resource server that accepts delegated tokens but fails to enforce the (`sub`,
 Client identity, such as `client_id`, `azp`, or authenticated client context, is widely used in deployed systems as an authorization input.  Under this document, those values remain auxiliary client-identity signals, while the outermost `act.sub` is the explicit delegated-actor signal when present.  The following normative rules apply:
 
 *  When `act` is present, interoperable processing SHOULD use it as the explicit delegated-actor signal rather than substituting `client_id`, `azp`, or other client-identity signals.  Deployments that rely on such substitution are outside the interoperable scope of this profile.
-*  When a single `client_id` registration fronts multiple distinct acting entities (for example, an agent orchestration platform executing requests on behalf of different agent instances), `client_id` alone does not identify the runtime actor.  Each such request SHOULD carry `act.sub` identifying the specific acting principal; deployments that rely on `client_id` alone for actor distinction in this scenario are operating outside the interoperable scope of this profile.
+*  When a single `client_id` registration fronts multiple distinct acting entities (for example, an agent orchestration platform executing requests on behalf of different agent instances), `client_id` alone does not identify the runtime actor.  Each such request SHOULD carry `act.sub` identifying the specific acting principal.
 *  During token issuance, `client_id` and `azp` MUST NOT be rewritten to represent delegation state that belongs in `act`; see {{jwt-access-token-propagation}} for propagation rules.
 *  When both explicit (`act.sub`) and implicit (`client_id`, `azp`) signals are present and local policy expects them to identify the same party, implementations SHOULD apply trusted local mapping rules and either reconcile the identifiers or treat them as distinct according to local policy.
 *  When a protected resource or authorization path enforces explicit delegation under this profile, implementations MUST NOT downgrade to non-`act` processing solely because another token-acquisition path or legacy policy input remains available.
