@@ -109,7 +109,7 @@ informative:
 
 --- abstract
 
-OAuth deployments increasingly involve agents and workloads acting on behalf of human users across organizational boundaries.  Existing specifications provide relevant building blocks — notably the `act` claim from RFC 8693 Token Exchange — but do not define a consistent profile for representing delegated actor relationships across JWT assertion grants (RFC 7523), JWT access tokens (RFC 9068), and Transaction Tokens, nor for classifying actor entity types or signaling support between authorization servers and resource servers.  The result is inconsistent actor representation and actor-representation interoperability gaps that force deployments to rely on proprietary conventions.
+OAuth deployments increasingly involve agents and workloads acting on behalf of human users across organizational boundaries.  Existing specifications provide relevant building blocks (notably the `act` claim from RFC 8693 Token Exchange) but do not define a consistent profile for representing delegated actor relationships across JWT assertion grants (RFC 7523), JWT access tokens (RFC 9068), and Transaction Tokens, nor for classifying actor entity types or signaling support between authorization servers and resource servers.  The result is inconsistent actor representation and actor-representation interoperability gaps that force deployments to rely on proprietary conventions.
 
 This document defines the OAuth Actor Profile for Delegation.  It specifies a common `act` claim structure extended with `sub_profile` for entity-type classification, processing rules for authorization servers and resource servers across the three token families and their Token Exchange inputs, and OAuth discovery metadata parameters for advertising actor-profile support.  The profile applies uniformly across token types and integrates with existing sender-constraint mechanisms (DPoP, mTLS).  It does not standardize the policies by which systems determine whether a given actor is permitted to act for a subject; those decisions remain deployment-specific.
 
@@ -283,7 +283,7 @@ When an `act` object contains extension members beyond those defined in this doc
 
 ## Delegation Chains {#delegation-chains}
 
-Delegation chains MUST be represented by nesting `act` objects as specified in {{RFC8693, Section 4.1}}.  In a nested structure, the outermost `act` object identifies the immediate actor; inner `act` objects represent prior actors in the chain, with the innermost representing the original delegating party.  This structure records delegated-actor history within the trust model of the issuer that conveys it; it does not, by itself, provide independent cryptographic provenance for each prior hop.
+Delegation chains MUST be represented by nesting `act` objects as specified in {{RFC8693, Section 4.1}}.  In a nested structure, the outermost `act` object identifies the immediate actor; inner `act` objects represent prior actors in the chain, with the innermost representing the original delegating party.  This structure records delegated-actor history within the trust model of the issuer that conveys it; it does not, by itself, provide independent cryptographic provenance for each prior hop.  This profile defines a single linear delegation chain per token; concurrent delegations to multiple independent actors are out of scope and yield separate tokens with their own chains.
 
 This document uses the following terminology consistently:
 
@@ -327,7 +327,7 @@ When a token represents delegation, the `act` claim MUST be present and MUST con
 
 ## Delegation Chain Validation and Construction {#delegation-chain-algorithm}
 
-The following normative algorithm governs how an AS validates an inbound delegation chain and constructs the delegation chain in the issued token.  It applies to all token types defined in this profile, on request paths where actor-profile conformance is required or claimed — either because one of the type-specific processing sections ({{jwt-assertion-grants-processing}}, {{token-exchange-processing}}, or {{transaction-token-output-rules}}) mandates it or because local policy or advertised metadata requires profile conformance for the request path.  Those type-specific sections reference this algorithm and add type-specific preconditions.  Actor objects that do not conform to this profile (for example, RFC 8693 `act` objects that omit `iss`) MUST NOT be processed by this algorithm; {{migration-and-adoption}} specifies how such objects are handled.  This algorithm governs claim handling only; it does not by itself create new delegation-authorization requirements beyond those imposed by the invoking processing section and local policy.
+The following normative algorithm governs how an AS validates an inbound delegation chain and constructs the delegation chain in the issued token.  It applies to all token types defined in this profile, on request paths where actor-profile conformance is required or claimed, either because one of the type-specific processing sections ({{jwt-assertion-grants-processing}}, {{token-exchange-processing}}, or {{transaction-token-output-rules}}) mandates it or because local policy or advertised metadata requires profile conformance for the request path.  Those type-specific sections reference this algorithm and add type-specific preconditions.  Actor objects that do not conform to this profile (for example, RFC 8693 `act` objects that omit `iss`) MUST NOT be processed by this algorithm; {{migration-and-adoption}} specifies how such objects are handled.  This algorithm governs claim handling only; it does not by itself create new delegation-authorization requirements beyond those imposed by the invoking processing section and local policy.
 
 ### Terminology
 
@@ -337,23 +337,23 @@ The following normative algorithm governs how an AS validates an inbound delegat
 
 ### Validation Steps
 
-**V1 — Validate outer token.**  The AS MUST validate the token carrying the inbound delegation chain per the type-specific rules applicable to that token before extracting actor claims.
+**V1: Validate outer token.**  The AS MUST validate the token carrying the inbound delegation chain per the type-specific rules applicable to that token before extracting actor claims.
 
-**V2 — Validate outermost actor.**  For the outermost `act` object the AS MUST:
+**V2: Validate outermost actor.**  For the outermost `act` object the AS MUST:
 
 1.  Verify that both `act.sub` and `act.iss` are present.  If either is absent, reject with `invalid_request`.
 2.  Verify that the token issuer is trusted under local policy to assert the (`act.iss`, `act.sub`) actor identifier pair.  This step validates trust in the assertion of the pair; it does not interpret `act.iss` as the token issuer, as proof that `act.iss` is globally authoritative for `act.sub`, or as proof that prior hops were independently authenticated.  If the token issuer is not trusted to assert the actor identifier pair, reject with `invalid_grant`.  Non-normative examples of local validation approaches are in {{act-iss-authority-guidance}}; elaboration specific to JWT assertion grant inputs is in {{jwt-assertion-grants-processing}} step 3.
 3.  When the applicable processing path introduces a new outermost actor via C1 ({{delegation-chain-algorithm}}), the AS MUST evaluate whether that actor (`act.sub`) is authorized to exercise delegation on behalf of `sub` under local policy (for example, a pre-registered delegation grant, explicit consent record, or policy rule covering the acting party).  When the processing path preserves an existing chain from a validated, trusted upstream issuer via C2, delegation was evaluated upstream; the AS SHOULD evaluate the preserved relationship under local policy but is not required to do so for baseline interoperability.  If the required delegation relationship is prohibited by policy or cannot be confirmed, reject with `actor_unauthorized`.  Elaboration specific to JWT assertion grant inputs is in {{jwt-assertion-grants-processing}} step 4.
 
-**V3 — Optional local validation of inner actors.**  Interoperable processing under this profile is defined around `sub` and the outermost `act.sub`.  If local policy additionally uses an inner `act` object as an input to issuance decisions, the AS SHOULD apply the same three sub-steps as V2 for that entry, including delegation-confirmation only when the current processing path or local policy requires it for that entry.  Such use of inner actors is deployment-specific.
+**V3: Optional local validation of inner actors.**  Interoperable processing under this profile is defined around `sub` and the outermost `act.sub`.  If local policy additionally uses an inner `act` object as an input to issuance decisions, the AS SHOULD apply the same three sub-steps as V2 for that entry, including delegation-confirmation only when the current processing path or local policy requires it for that entry.  Such use of inner actors is deployment-specific.
 
-**V4 — Carry prior-actor context.**  For inner `act` objects preserved solely as prior-actor context without being used for any issuance decision, the AS MAY rely on trust in the outer token issuer established in V1 rather than independently validating each hop.  The AS MUST NOT treat preserved prior-actor context as independently authenticated; an inner `act` entry carried in a token is endorsed only by the outer token issuer's signature, not by independent verification at each prior hop.
+**V4: Carry prior-actor context.**  For inner `act` objects preserved solely as prior-actor context without being used for any issuance decision, the AS MAY rely on trust in the outer token issuer established in V1 rather than independently validating each hop.  The AS MUST NOT treat preserved prior-actor context as independently authenticated; an inner `act` entry carried in a token is endorsed only by the outer token issuer's signature, not by independent verification at each prior hop.
 
-**V5 — Enforce depth limit.**  Compute the depth of the resulting chain, including any new outermost actor added per C1.  If that depth exceeds the locally configured maximum ({{delegation-chains}}), reject with `invalid_request`.
+**V5: Enforce depth limit.**  Compute the depth of the resulting chain, including any new outermost actor added per C1.  If that depth exceeds the locally configured maximum ({{delegation-chains}}), reject with `invalid_request`.
 
 ### Construction Steps
 
-**C1 — Add new outermost actor (when a new actor is identified).**
+**C1: Add new outermost actor (when a new actor is identified).**
 
 ~~~
 AddOutermostActor(inbound_chain, new_actor):
@@ -368,9 +368,9 @@ AddOutermostActor(inbound_chain, new_actor):
   return outermost
 ~~~
 
-The `act.iss` value in the new outermost actor MUST be set by the issuing AS.  The AS MUST NOT rewrite `act.iss` or any other field in inherited inner actor objects; those fields were set by upstream issuers at the time of authorship and are immutable.  Dropping prior actors from the inbound chain to produce a shallower chain in the issued token is NOT permitted.  If preserving the inbound chain would cause the resulting depth to exceed the local maximum, the AS MUST reject with `invalid_request` rather than silently truncate.  The only exception is when the inbound token carries no `act` claim, in which case no prior chain exists and the issued token begins a new chain at depth 1.  When the new actor identifies the same party as the inbound outermost `act.sub` (same `act.sub` and `act.iss` under the same issuer or namespace context), the AS MAY apply C2 instead — preserving the existing chain unchanged rather than creating a redundant nested entry.
+The `act.iss` value in the new outermost actor MUST be set by the issuing AS.  The AS MUST NOT rewrite `act.iss` or any other field in inherited inner actor objects; those fields were set by upstream issuers at the time of authorship and are immutable.  Dropping prior actors from the inbound chain to produce a shallower chain in the issued token is NOT permitted.  If preserving the inbound chain would cause the resulting depth to exceed the local maximum, the AS MUST reject with `invalid_request` rather than silently truncate.  The only exception is when the inbound token carries no `act` claim, in which case no prior chain exists and the issued token begins a new chain at depth 1.  When the new actor identifies the same party as the inbound outermost `act.sub` (same `act.sub` and `act.iss` under the same issuer or namespace context), the AS MAY apply C2 instead, preserving the existing chain unchanged rather than creating a redundant nested entry.
 
-**C2 — Preserve inbound chain unchanged (when no new actor is identified).**
+**C2: Preserve inbound chain unchanged (when no new actor is identified).**
 
 ~~~
 PreserveChain(inbound_chain):
@@ -379,7 +379,7 @@ PreserveChain(inbound_chain):
 
 The AS MUST copy the validated inbound chain exactly into the issued token.  The AS MUST NOT add, remove, or rewrite any field in any actor object of a preserved chain.
 
-**C3 — No `act` in issued token.**  When no delegation is present and no actor information should appear in the issued token, the AS MUST NOT include an `act` claim.  The AS MUST NOT silently drop an inbound `act` claim; if it cannot preserve or extend the chain, it MUST reject the request per {{actor-profile-error-responses}}.
+**C3: No `act` in issued token.**  When no delegation is present and no actor information should appear in the issued token, the AS MUST NOT include an `act` claim.  The AS MUST NOT silently drop an inbound `act` claim; if it cannot preserve or extend the chain, it MUST reject the request per {{actor-profile-error-responses}}.
 
 ## Sender Constraint and Proof-of-Possession Validation {#delegated-pop-validation}
 
@@ -424,6 +424,8 @@ The rules above are mechanism-agnostic.  The following points illustrate how com
 *  For DPoP-bound tokens, `cnf.jkt` identifies the expected proof key.  Continuation mode validates the DPoP proof against the `subject_token`'s `cnf.jkt`.  Rebind mode validates the DPoP proof, if DPoP is the selected proof mechanism, against the key established for the new presenter.
 *  For mTLS-bound tokens, `cnf.x5t#S256` identifies the presenter's certificate thumbprint.  The same continuation and rebind rules apply, with certificate binding substituted for key thumbprint.
 *  For workload credentials accompanied by a proof artifact such as a WPT, the workload-credential profile defines how the current presenter proves possession.  Under this profile, that proof satisfies the rebind obligation for the new presenter when the workload credential is used as `actor_token`.
+
+DPoP nonce handling per {{RFC9449, Section 8}} applies unchanged to all DPoP-bound token requests under this profile; this profile does not modify DPoP nonce semantics.
 
 
 
@@ -638,7 +640,7 @@ Authorization-server error handling for requests processed in this section is de
 
 This profile defines three JWT-based `actor_token` credential types.  JWT access tokens use `actor_token_type=urn:ietf:params:oauth:token-type:access_token` ({{jwt-access-token-as-actor-token}}).  RFC 7523 client assertions ({{jwt-client-assertion-as-actor-token}}) and workload identity credentials ({{workload-identity-as-actor-token}}) both use `actor_token_type=urn:ietf:params:oauth:token-type:jwt` and are distinguished as follows.
 
-A JWT is identified as the RFC 7523 client-assertion profile when it is presented as `client_assertion` with `client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer` AND its `sub` equals the `client_id` of the authenticating client.  A JWT presented as `client_assertion` whose `sub` does not equal `client_id` is not a conformant RFC 7523 assertion and MUST NOT be identified as the RFC 7523 client-assertion profile solely on the basis of the `client_assertion` parameter; the AS MUST instead apply workload identity credential processing if the credential otherwise matches that profile, or reject with `invalid_grant` if no profile matches.  If the AS cannot identify exactly one supported actor-credential profile for the `actor_token`, it MUST reject the request with `invalid_grant`.
+A JWT is identified as the RFC 7523 client-assertion profile when it is presented as `client_assertion` with `client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer` AND its `sub` equals the `client_id` of the authenticating client.  A JWT presented as `client_assertion` whose `sub` does not equal `client_id` is not a conformant RFC 7523 assertion and MUST NOT be identified as the RFC 7523 client-assertion profile solely on the basis of the `client_assertion` parameter; the AS MUST instead apply workload identity credential processing if the credential otherwise matches that profile, or reject with `invalid_grant` if no profile matches.  If the AS cannot identify exactly one supported actor-credential profile for the `actor_token`, it MUST reject the request with `invalid_grant`.  When `client_assertion` and `actor_token` are different JWTs, the AS MUST process them independently per the rules of their respective types; the disambiguation rule above applies only to the `actor_token`.
 
 ## Presenter Transition Model {#token-exchange-presenter-model}
 
@@ -788,7 +790,9 @@ After completing steps 1-5, the AS MUST apply the propagation rules in {{jwt-acc
 
 This document does not standardize whether an AS issues refresh tokens in response to delegated JWT assertion grant requests, how such refresh tokens are revoked, or whether later use of such refresh tokens requires re-presentation of upstream delegation artifacts.  Those decisions remain deployment-specific.
 
-## Actor Tokens
+## Actor Tokens {#actor-tokens}
+
+An `actor_token` of any type defined in this profile MUST identify the acting party in its top-level `sub`.  If the `actor_token` carries an `act` claim, indicating that the credential itself represents a delegation chain rather than a direct identity assertion, the AS MUST reject the request with `invalid_grant`.  This uniform rule preserves the identity-extraction invariant that the `actor_token`'s top-level `sub` is the new outermost actor.  Type-specific sections below refine validation and presenter-rebind handling.
 
 ### JWT Client Assertion {#jwt-client-assertion-as-actor-token}
 
@@ -863,7 +867,7 @@ When a Token Exchange request includes an `actor_token` that is a JWT access tok
 
 2.  The AS MUST verify that the `actor_token`'s `iss` is trusted under local policy to assert the acting party's identity in the top-level `sub`.  If trust cannot be established, the AS MUST reject the request with `invalid_grant`.
 
-3.  If the `actor_token` carries `act`, the AS MUST reject the request with `invalid_grant`.
+3.  Apply the uniform `actor_token` rule in {{actor-tokens}}: if the `actor_token` carries `act`, the AS MUST reject the request with `invalid_grant`.
 
     > Note: A delegated JWT access token cannot serve as a direct presenter credential because its top-level `sub` identifies the principal the token was issued to rather than the current acting party (whose identity is in `act.sub`).  When an agent holding a delegated JWT access token needs to sub-delegate, it SHOULD present that token as `subject_token` (preserving its chain) and supply a separate direct presenter credential as `actor_token` (establishing the new outermost actor).
 
@@ -893,7 +897,7 @@ How actor identity is derived and how the identifier reconciliation check is per
 
 **`actor_token` present**: actor identity is derived from the `actor_token` per the applicable type-specific rules in this document, yielding the (`act.iss`, `act.sub`) pair.  The AS applies Identifier Reconciliation to determine whether (`subject_token.iss`, `may_act.sub`) refers to the same entity as (`act.iss`, `act.sub`).  `may_act` MUST NOT override the actor identity derived from the `actor_token`.
 
-**No `actor_token` present**: the requesting client MUST be a confidential client that has authenticated in the request; public clients MUST NOT use this path.  Actor identity is derived from the authenticated client credential.  The AS applies Identifier Reconciliation to determine whether (`subject_token.iss`, `may_act.sub`) refers to the same entity as the authenticated client, and sets the outermost `act` using the canonical identifier of the authenticated client.  This path enables the pre-authorization use case of {{RFC8693}}, where the `subject_token` pre-authorizes a specific client and that client presents it directly without a separate `actor_token`.
+**No `actor_token` present**: the requesting client MUST be a confidential client that has authenticated in the request; public clients MUST NOT use this path.  Actor identity is derived from the authenticated client credential.  The AS applies Identifier Reconciliation to determine whether (`subject_token.iss`, `may_act.sub`) refers to the same entity as the authenticated client, and sets `act.sub` to the canonical identifier of the authenticated client.  The AS MUST set `act.iss` to the issuer or namespace context that locally registered the authenticated client (typically the AS's own issuer URI when the client is registered directly with the AS).  This path enables the pre-authorization use case of {{RFC8693}}, where the `subject_token` pre-authorizes a specific client and that client presents it directly without a separate `actor_token`.
 
 When `may_act` is absent or the conditions above are not met, the AS MUST satisfy the delegation-authorization check through another recognized basis (pre-registered grant, consent record, or applicable policy rule).  The AS MUST NOT treat the mere presence of `may_act` as authorization for any actor other than the one whose canonical identity matches it.
 
@@ -945,7 +949,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
     *  The AS MUST include the effective `scope` value in the token response so that clients can detect any reduction from the requested scope.
     *  If actor-based restriction yields an empty scope because the actor is categorically unauthorized for any of the remaining scope (for example, the actor's `sub_profile` is not permitted for any of the requested scope values), the AS MUST reject with `actor_unauthorized`.
-    *  If actor-based restriction yields an empty scope for a reason unrelated to the actor's categorical authorization — for example, because the actor's scope ceiling simply does not include the requested values — the AS MUST reject with `invalid_scope`.
+    *  If actor-based restriction yields an empty scope for a reason unrelated to the actor's categorical authorization (for example, because the actor's scope ceiling simply does not include the requested values), the AS MUST reject with `invalid_scope`.
     *  The `scope` value in the token response MUST reflect the effective granted scope after all reductions, including any actor-based reduction.  This is consistent with the existing requirement in {{RFC8693, Section 4}} that `scope` in the response indicate the actual authorized scope.  Silent divergence between the requested scope and the issued token's scope is not permitted.
 
 7.  If the inbound credential carries `client_id`, `azp`, or both, the AS MAY preserve those values per the output token profile or local policy.  If preserved:
@@ -967,7 +971,7 @@ TTS error handling for requests processed in this section is defined in {{actor-
 
 Transaction Tokens {{I-D.ietf-oauth-transaction-tokens}} are short-lived JWTs that capture the workload identity and request context for a series of related service calls within a single business transaction. They are issued by a Transaction Token Service (TTS), which is a specialized authorization server.
 
-Transaction Token claims — including `aud`, `iat`, `exp`, `sub`, `scope`, `txn`, `req_wl`, `tctx`, and `rctx` — are defined in {{I-D.ietf-oauth-transaction-tokens}}.  This profile modifies or adds the following claims:
+Transaction Token claims are defined in {{I-D.ietf-oauth-transaction-tokens}}.  This profile modifies or adds the following claims:
 
 `iss` (OPTIONAL in {{I-D.ietf-oauth-transaction-tokens}}; REQUIRED by this profile when carrying `act`):
 : Issuer of the Transaction Token.  MUST be present when the Transaction Token carries an `act` claim, because recipients need to identify the token issuer before deciding whether to trust the actor identifier pairs carried in the chain.  SHOULD be present when the Transaction Token crosses trust-domain boundaries, even in non-delegated cases, as recipients can require it to validate issuer identity or chain-of-trust per local policy.  MAY be omitted only when no delegation (`act`) is present, all tokens are scoped to a single Trust Domain, and all recipients have out-of-band knowledge of the issuer.  When `iss` is omitted, recipients MUST rely on the trust-domain and issuer-identification rules of {{I-D.ietf-oauth-transaction-tokens}} and local deployment configuration rather than the generic outer-token `iss` processing rules in this document.
@@ -1192,14 +1196,14 @@ When the resource server evaluates a Transaction Token as a delegated token unde
 
 When token introspection ({{RFC7662}}) is used, an AS that issues delegated tokens MUST include the `act` claim and top-level `sub_profile` claim in introspection responses for active tokens that carry those claims.  The AS MUST NOT omit actor profile claims from introspection responses, as their omission would misrepresent the delegation status of the token to the introspecting RS.  When a delegated token carries a nested `act` chain (delegation depth greater than 1), the AS MUST include the complete nested `act` structure in the introspection response unless local privacy policy requires omitting specific inner chain entries.
 
-When local privacy policy requires omitting specific inner chain entries, the AS MAY return a filtered `act` chain but MUST include `"chain_complete": false` in the introspection response to signal that the chain is incomplete.  The AS SHOULD NOT filter inner chain entries when it has knowledge — for example, from `actor_profile_required` metadata ({{protected-resource-metadata}}), deployment configuration, or bilateral agreement — that the RS uses one or more inner chain entries as inputs to authorization, scope, or other security decisions.  In those cases the AS SHOULD either return the full chain or reject the introspection request rather than return a filtered response that the RS cannot safely act upon.
+When local privacy policy requires omitting specific inner chain entries, the AS MAY return a filtered `act` chain but MUST include `"chain_complete": false` in the introspection response to signal that the chain is incomplete.  The AS SHOULD NOT filter inner chain entries when it has knowledge (for example, from `actor_profile_required` metadata ({{protected-resource-metadata}}), deployment configuration, or bilateral agreement) that the RS uses one or more inner chain entries as inputs to authorization, scope, or other security decisions.  In those cases the AS SHOULD either return the full chain or reject the introspection request rather than return a filtered response that the RS cannot safely act upon.
 
 When `chain_complete` is absent from the introspection response, the RS SHOULD treat the chain as complete unless local policy or deployment context indicates otherwise (for example, a known introspection proxy that does not emit `chain_complete`).
 
 The appropriate RS handling of `chain_complete: false` depends on whether the RS uses inner chain entries for security decisions or only for audit:
 
 *  **Security-relevant use**: When local policy uses any inner `act` entry as an input to an authorization, scope determination, or other security decision, the RS MUST reject the request upon receiving `chain_complete: false`.  The RS cannot safely make that security decision on an incomplete chain, and a filtered chain is indistinguishable from a chain that was truncated or manipulated before reaching the introspection endpoint.
-*  **Audit-only use**: When local policy uses inner `act` entries solely for logging, audit, or informational purposes — and not as inputs to any security decision — the RS MAY accept a filtered chain and record the partial information, provided it notes the incompleteness.  The outermost `act.sub` and `sub`, which are unaffected by inner-chain filtering, remain available for authorization.
+*  **Audit-only use**: When local policy uses inner `act` entries solely for logging, audit, or informational purposes, and not as inputs to any security decision, the RS MAY accept a filtered chain and record the partial information, provided it notes the incompleteness.  The outermost `act.sub` and `sub`, which are unaffected by inner-chain filtering, remain available for authorization.
 
 In either case, the RS MUST NOT treat the partial chain as a faithful representation of the complete delegation history.  A companion profile that defines additional introspection parameters aligned to the visible delegation chain MUST define how those parameters behave when the visible `act` chain is filtered, consistent with {{companion-profile-extensibility}}.
 
@@ -1218,6 +1222,8 @@ The AS MUST NOT omit the `act` claim or `sub_profile` from the introspection res
 Resource servers using introspection for delegated tokens MUST apply the same delegated-token policy to the introspection response claims that they would apply to equivalent locally validated tokens, including actor authorization when required by local policy.  An RS that relies on introspection rather than local JWT validation MUST treat a missing `act` claim in the introspection response as an inconsistency whenever local policy, protected resource metadata, or other token context indicates that the token is delegated or that actor-profile conformance is required.  In such cases, the RS MUST reject the token.  Only when no such requirement or indication exists MAY the RS treat an active introspection response without `act` as representing a non-delegated token.
 
 Introspection endpoints for delegated tokens SHOULD be advertised via the `introspection_endpoint` parameter in AS metadata ({{RFC8414}}).  When revocation is integrated, the introspection response for a revoked delegated token MUST return `"active": false` and MUST NOT include `act` or `sub_profile` claims.
+
+Resource servers that cache introspection responses for delegated tokens SHOULD use short cache lifetimes appropriate to the deployment's revocation requirements.  When an introspection response carries `"chain_complete": false`, an RS that uses inner `act` entries for security decisions SHOULD NOT cache the response, because a subsequent request relying on the cached partial chain cannot distinguish privacy filtering from chain truncation or manipulation.
 
 
 # Error Responses {#actor-profile-error-responses}
@@ -1285,22 +1291,22 @@ The following parameters are defined for use in the AS metadata document ({{RFC8
 
   *  `subject_token_types_supported`: OPTIONAL.  A JSON array of token-type URI strings indicating the `subject_token_type` values the AS accepts for Token Exchange requests in which actor-profile processing can apply.  Values defined by this document are:
 
-     -  `urn:ietf:params:oauth:token-type:jwt` — JWT assertion grants ({{jwt-assertion-grants}})
-     -  `urn:ietf:params:oauth:token-type:access_token` — JWT access tokens ({{jwt-access-tokens}})
-     -  `urn:ietf:params:oauth:token-type:id_token` — OpenID Connect ID tokens ({{id-tokens}})
-     -  `urn:ietf:params:oauth:token-type:refresh_token` — refresh tokens ({{refresh-tokens}})
-     -  `urn:ietf:params:oauth:token-type:txn_token` — Transaction Tokens ({{transaction-tokens}})
+     -  `urn:ietf:params:oauth:token-type:jwt`: JWT assertion grants ({{jwt-assertion-grants}})
+     -  `urn:ietf:params:oauth:token-type:access_token`: JWT access tokens ({{jwt-access-tokens}})
+     -  `urn:ietf:params:oauth:token-type:id_token`: OpenID Connect ID tokens ({{id-tokens}})
+     -  `urn:ietf:params:oauth:token-type:refresh_token`: refresh tokens ({{refresh-tokens}})
+     -  `urn:ietf:params:oauth:token-type:txn_token`: Transaction Tokens ({{transaction-tokens}})
 
   *  `actor_token_types_supported`: OPTIONAL.  A JSON array of token-type URI strings indicating the `actor_token_type` values the AS accepts for Token Exchange requests in which actor-profile processing can apply.  Values defined by this document are:
 
-     -  `urn:ietf:params:oauth:token-type:jwt` — JWT client assertions ({{jwt-client-assertion-as-actor-token}}) and workload identity credentials ({{workload-identity-as-actor-token}})
-     -  `urn:ietf:params:oauth:token-type:access_token` — JWT access tokens ({{jwt-access-token-as-actor-token}})
+     -  `urn:ietf:params:oauth:token-type:jwt`: JWT client assertions ({{jwt-client-assertion-as-actor-token}}) and workload identity credentials ({{workload-identity-as-actor-token}})
+     -  `urn:ietf:params:oauth:token-type:access_token`: JWT access tokens ({{jwt-access-token-as-actor-token}})
 
   *  `requested_token_types_supported`: OPTIONAL.  A JSON array of token-type URI strings indicating the `requested_token_type` values the AS accepts for Token Exchange requests in which actor-profile processing can apply.  Values defined by this document are:
 
-     -  `urn:ietf:params:oauth:token-type:access_token` — JWT access tokens ({{jwt-access-tokens}})
-     -  `urn:ietf:params:oauth:token-type:jwt` — JWT assertion grants ({{jwt-assertion-grants}})
-     -  `urn:ietf:params:oauth:token-type:txn_token` — Transaction Tokens ({{transaction-tokens}})
+     -  `urn:ietf:params:oauth:token-type:access_token`: JWT access tokens ({{jwt-access-tokens}})
+     -  `urn:ietf:params:oauth:token-type:jwt`: JWT assertion grants ({{jwt-assertion-grants}})
+     -  `urn:ietf:params:oauth:token-type:txn_token`: Transaction Tokens ({{transaction-tokens}})
 
   Each member of `actor_profile_token_exchange` is a coarse capability signal only.  The presence of a token type in one member does not guarantee that it can be combined with every token type in another member, every resource, every scope, every presenter-binding mechanism, or every profile-specific JWT variant.  For example, this document uses `urn:ietf:params:oauth:token-type:jwt` for both RFC 7523 client assertions and workload identity credentials as `actor_token` inputs, with profile disambiguation performed during request processing ({{token-exchange-processing}}).
 
@@ -1378,7 +1384,7 @@ Transaction Token support under this profile for Token Exchange paths is adverti
 
 ## Capability Signaling Usage
 
-Clients can use Protected Resource Metadata ({{RFC9728}}) to determine whether a resource advertises actor-profile conformance for delegated requests (`actor_profile_required`).  Clients can use the associated AS metadata ({{RFC8414}}) to determine whether the AS advertises actor-profile JWT authorization-grant processing (`authorization_grant_profiles_supported`), coarse Token Exchange compatibility (`actor_profile_token_exchange`), and accepted actor entity profiles (`entity_profiles_supported.actor`).  For Transaction Token paths, clients SHOULD additionally consult the transaction-token metadata described in {{transaction-token-capability-signaling}}.
+Clients can use Protected Resource Metadata ({{RFC9728}}) to determine whether a resource advertises actor-profile conformance for delegated requests (`actor_profile_required`).  Clients can use the associated AS metadata ({{RFC8414}}) to determine whether the AS advertises actor-profile JWT authorization-grant processing (`authorization_grant_profiles_supported`), coarse Token Exchange compatibility (`actor_profile_token_exchange`), and accepted actor entity profiles (`entity_profiles_supported.actor`).  For Transaction Token paths, clients SHOULD additionally consult the transaction-token metadata described in {{transaction-token-capability-signaling}}.  When a deployment combines this profile with Identity Chaining ({{I-D.ietf-oauth-identity-chaining}}), clients SHOULD also consult the `identity_chaining_requested_token_types_supported` parameter defined by that document; the two parameter sets are independent, with `actor_profile_token_exchange` advertising actor-profile Token Exchange capabilities and the Identity Chaining parameter advertising chaining-flow token-type compatibility.
 
 These signals are advisory capability indicators, not a complete machine-readable description of every supported grant path.  A client that detects an obvious mismatch, such as a missing authorization grant profile, unsupported Token Exchange input or requested output token type, or an actor entity profile outside the advertised accepted set, will ordinarily avoid that path or rely on deployment-specific configuration.  As a safe default, a client that intends to make a request on behalf of another principal should treat `actor_profile_required: true` as indicating that it likely needs an explicit `act`-carrying token for that resource, unless deployment documentation explicitly defines a delegated opaque-token path in which introspection supplies equivalent actor-profile claims.
 
@@ -1525,15 +1531,9 @@ Delegated tokens carry the combined exposure surface of all principals in the de
 
 Deployments SHOULD use shorter token lifetimes for delegated tokens than for non-delegated tokens of equivalent scope.  In cross-domain flows, the upstream delegation artifact (e.g., an ID-JAG or delegated access token) limits how long the downstream actor can continue to request tokens without re-authenticating the delegation chain.  Transaction Tokens are already expected to be short-lived; JWT access tokens and JWT assertion grants in multi-hop chains SHOULD be issued with lifetimes no longer than necessary to complete the task they authorize.
 
-Deployments with deep chains (three or more nested `act` objects) SHOULD account for the fact that any revocation event at any hop in the chain cannot propagate to already-issued downstream tokens.  In environments with significant revocation risk — for example, AI agent delegation chains where user consent can be withdrawn at any time — deployments SHOULD combine short-lived tokens with active introspection at sensitive resource servers rather than relying solely on `exp`.
+Deployments with deep chains (three or more nested `act` objects) SHOULD account for the fact that any revocation event at any hop in the chain cannot propagate to already-issued downstream tokens.  In environments with significant revocation risk (for example, AI agent delegation chains where user consent can be withdrawn at any time), deployments SHOULD combine short-lived tokens with active introspection at sensitive resource servers rather than relying solely on `exp`.
 
 General guidance on access token lifetime and security tradeoffs is provided in {{RFC9700}}.
-
-## Concurrent Delegation {#concurrent-delegation}
-
-This profile defines the structure and processing of a single delegation chain within one token: a linear sequence of actors, from outermost (current) to innermost (original delegating party), each represented by one `act` object.  The profile does not define representations for cases where a subject has simultaneously authorized multiple independent actors — for example, Alice authorizing both a travel agent and a calendar assistant to act on her behalf at the same time.
-
-In such concurrent delegation scenarios, each active delegation yields its own separate token and delegation chain.  There is no single token structure that canonically represents all of a subject's concurrent active delegations, and this profile does not define one.  Deployments that need to track or manage a user's portfolio of active delegations across multiple actors must do so through out-of-band mechanisms such as a consent registry or delegation management service; those mechanisms are outside the scope of this document.
 
 # Security Considerations
 
@@ -1549,11 +1549,13 @@ The `act.iss` values in inner `act` objects are assertion-based prior-actor cont
 
 When a token crosses organizational boundaries, the receiving AS or RS MUST apply appropriate trust evaluation.  ASes performing Token Exchange MUST evaluate cross-domain delegation grants explicitly and SHOULD NOT grant cross-domain actors the same rights as same-domain actors absent an explicit trust decision that makes them equivalent.
 
-## Self-Issued Grants {#security-self-issued-grants}
+## Self-Issued Authorization Grants {#security-self-issued-grants}
 
-In a self-issued assertion grant, the acting entity is itself the JWT `iss` and directly asserts delegation to itself without any upstream AS having authenticated the actor or pre-validated the delegation relationship.  Self-issued grants are outside the interoperable scope of this document and MUST be rejected by default ({{jwt-assertion-grants-structure}}).  This section specifies the security controls that a deployment MUST independently establish when another specification or local policy explicitly enables self-issued grant acceptance.
+This section addresses self-issued JWT *authorization grants* ({{jwt-assertion-grants}}); it does not apply to RFC 7523 client assertions used as `actor_token` ({{jwt-client-assertion-as-actor-token}}), where `iss = sub = client_id` is the conformant pattern defined by {{RFC7523}}.
 
-Because no upstream AS vouches for the actor's identity or the delegation relationship, the receiving AS MUST NOT treat the self-asserted delegation claim alone as a sufficient authorization basis.  When a deployment enables self-issued grants, the receiving AS MUST at minimum:
+In a self-issued assertion grant, the acting entity is itself the JWT `iss` and directly asserts delegation to itself without any upstream AS having authenticated the actor or pre-validated the delegation relationship.  Self-issued authorization grants are outside the interoperable scope of this document and MUST be rejected by default ({{jwt-assertion-grants-structure}}).  This section specifies the security controls that a deployment MUST independently establish when another specification or local policy explicitly enables self-issued authorization grant acceptance.
+
+Because no upstream AS vouches for the actor's identity or the delegation relationship, the receiving AS MUST NOT treat the self-asserted delegation claim alone as a sufficient authorization basis.  When a deployment enables self-issued authorization grants, the receiving AS MUST at minimum:
 
 *  Validate the JWT signature using the key identified in the JWT header, obtained from a pre-registered or otherwise independently trusted source for the self-issuing party.
 *  Verify the `exp`, `iat`, and `nbf` claims per {{RFC7519}}.
@@ -1562,7 +1564,7 @@ Because no upstream AS vouches for the actor's identity or the delegation relati
 *  Apply the actor-profile validation requirements of this document (steps 2-7 of {{jwt-assertion-grants-processing}}).
 *  Establish the delegation relationship from an independent authorization basis such as a pre-registered grant, explicit consent record, or equivalent deployment-specific artifact.
 
-In the absence of these controls, an attacker can self-assert an arbitrary (`sub`, `act.sub`) pair and bypass actor-profile authorization enforcement.  Deployments MUST confine self-issued grants to within a single trust domain and MUST NOT propagate them across organizational boundaries.  This document defines no discovery or negotiation mechanism for self-issued grant acceptance; any such mechanism is the responsibility of the enabling specification or local policy.
+In the absence of these controls, an attacker can self-assert an arbitrary (`sub`, `act.sub`) pair and bypass actor-profile authorization enforcement.  Deployments MUST confine self-issued authorization grants to within a single trust domain and MUST NOT propagate them across organizational boundaries.  This document defines no discovery or negotiation mechanism for self-issued authorization grant acceptance; any such mechanism is the responsibility of the enabling specification or local policy.
 
 ## Assertion Replay Prevention {#security-assertion-replay}
 
@@ -1638,67 +1640,6 @@ The AS SHOULD refuse to issue new tokens for a (subject, actor) pair when it has
 When a deployment uses long-lived delegated refresh behavior, revocation of the delegation relationship may take effect later than it would in a model that requires re-presentation of a current upstream delegation artifact at each token request.  This document does not standardize refresh-token revocation or revalidation policy; deployments should account for that tradeoff explicitly.
 
 The internal mechanism by which an AS tracks delegation state (whether a formal registry, a consent store, a policy engine, or another form) is a deployment and product decision outside the scope of this document.  Resource servers in security-sensitive deployments may use token introspection ({{RFC7662}}, {{token-introspection}}) when request-time revocation state is needed, or may rely on short token lifetimes; the choice of revocation strategy is deployment-specific.
-
-## Negative Examples
-
-The following abbreviated examples illustrate rejection cases that implementations are expected to handle:
-
-### Untrusted Actor Identifier Pair
-
-~~~json
-{
-  "iss": "https://as.resource-domain.example",
-  "sub": "https://idp.example.com/users/alice",
-  "act": {
-    "sub": "urn:workload:booking-tool",
-    "iss": "https://unrelated.example"
-  }
-}
-~~~
-
-If local policy has no rule allowing `https://as.resource-domain.example` to assert the actor identifier pair (`https://unrelated.example`, `urn:workload:booking-tool`), an issuer or consumer MUST reject this actor information.
-
-### Missing required `act.iss` where actor profile is enforced
-
-~~~json
-{
-  "iss": "https://as.example.com",
-  "sub": "https://idp.example.com/users/alice",
-  "act": {
-    "sub": "https://agents.example.com/travel-assistant"
-  }
-}
-~~~
-
-This token is structurally non-conforming to this profile.  An AS processing it as an input MUST reject it with `invalid_request`, and an RS enforcing `actor_profile_required` MUST reject it as non-conforming.
-
-### Over-depth delegated chain
-
-If a request would cause the resulting nested `act` chain to exceed the implementation's configured local maximum delegation depth, the issuer MUST reject the request with `invalid_request`; it MUST NOT silently truncate the chain.
-
-### Pair authorization failure at the resource server
-
-~~~json
-{
-  "iss": "https://as.example.com",
-  "sub": "https://idp.example.com/users/alice",
-  "aud": "https://api.example.com",
-  "scope": "payments:create",
-  "act": {
-    "sub": "https://agents.example.com/travel-assistant",
-    "iss": "https://as.example.com",
-    "sub_profile": "ai_agent"
-  }
-}
-~~~
-
-If the token is otherwise valid but the resource server's local policy does not permit the (`sub`, outermost `act.sub`) pair for `payments:create`, the RS MUST reject the request with HTTP 403 and `error="actor_unauthorized"` when it applies actor authorization for that operation:
-
-~~~json
-HTTP/1.1 403 Forbidden
-WWW-Authenticate: Bearer error="actor_unauthorized",
-  error_description="actor not permitted for payments:create"
-~~~
 
 # Privacy Considerations {#privacy}
 
@@ -1945,18 +1886,17 @@ The agent consults the Travel Provider AS metadata ({{metadata-and-discovery}}) 
 }
 ~~~
 
-The agent observes that its `sub_profile` (`ai_agent`) is listed in `entity_profiles_supported.actor`, that ID-JAG and actor-profile JWT authorization grants are advertised in `authorization_grant_profiles_supported`, and that JWT `subject_token`, JWT `actor_token`, access-token output, and Transaction Token output are advertised as coarse Token Exchange capabilities in `actor_profile_token_exchange`.  These metadata do not by themselves advertise every valid combination of subject token, actor token, requested token type, resource, and proof mechanism.  Together with the ID-JAG specification and deployment documentation, they indicate that the delegated-token path is plausibly compatible with the Booking Tool RS's advertised requirements.
+The agent confirms that its `sub_profile` (`ai_agent`) is in `entity_profiles_supported.actor`, that ID-JAG and actor-profile grants are advertised in `authorization_grant_profiles_supported`, and that the planned input/output token types appear in `actor_profile_token_exchange`.  These signals are coarse compatibility indicators only; the agent proceeds because the advertised capabilities cover its planned path.
 
 
 ## Step 1: User Authentication (ID Token)
 
-Alice authenticates to the Enterprise IdP AS.  The profile-relevant claim is `sub_profile`, which propagates Alice's entity type into downstream tokens:
+Alice authenticates to the Enterprise IdP AS, which issues an ID Token.  An ID Token implicitly identifies a user; the entity type is not carried in a `sub_profile` claim and is established by the AS in subsequent issued tokens (Step 2):
 
 ~~~json
 {
   "iss": "https://as.enterprise.example",
   "sub": "https://idp.enterprise.example/users/alice",
-  "sub_profile": "user",
   "aud": "https://agents.enterprise.example/travel-assistant",
   "exp": 1743379200,
   "iat": 1743375600
@@ -1965,7 +1905,7 @@ Alice authenticates to the Enterprise IdP AS.  The profile-relevant claim is `su
 
 ## Step 2: Enterprise Token Exchange (ID Token to ID-JAG)
 
-The agent presents Alice's ID Token to the Enterprise IdP AS using Token Exchange.  In this example, the same JWT is used both as the RFC 7523 `client_assertion` and as the Token Exchange `actor_token`, making the authenticated client's actor identity explicit.  This uses the actor-delegation extension model anticipated by ID-JAG ({{I-D.ietf-oauth-identity-assertion-authz-grant}}): the base ID-JAG specification defines the token-exchange transaction and the `urn:ietf:params:oauth:token-type:id-jag` token type URI, while this document supplies the `actor_token` validation and `act`-construction rules.  The Enterprise IdP AS authenticates the client as `https://agents.enterprise.example/travel-assistant`, verifies that the ID Token audience matches that client, and uses local delegation policy plus that explicit actor credential to construct the actor-profile claims in the issued ID-JAG:
+The agent presents Alice's ID Token as `subject_token` in a Token Exchange request to the Enterprise IdP AS, requesting an ID-JAG ({{I-D.ietf-oauth-identity-assertion-authz-grant}}).  The agent's RFC 7523 client assertion serves as both `client_assertion` (for client authentication) and `actor_token` (for actor identity), per {{jwt-client-assertion-as-actor-token}}.  The Enterprise IdP AS authenticates the client, verifies the ID Token audience matches that client, and uses local delegation policy to construct the issued ID-JAG:
 
 ~~~
 POST /token HTTP/1.1
@@ -2015,7 +1955,7 @@ The `act` object records the agent as the authorized actor.  The `client_id` and
 
 ## Step 3: Agent Exchanges ID-JAG for Access Token at Travel Provider AS
 
-The agent presents the ID-JAG as a JWT Bearer authorization grant ({{RFC7523}}) to the Travel Provider AS.  In this usage, the ID-JAG functions as a profiled JWT assertion grant, so the processing rules in {{jwt-assertion-grants-processing}} apply to it:
+The agent presents the ID-JAG as a JWT Bearer authorization grant ({{RFC7523}}) to the Travel Provider AS, which processes it as an ID-JAG per {{I-D.ietf-oauth-identity-assertion-authz-grant}} with the actor-profile rules in {{jwt-assertion-grants-processing}}:
 
 ~~~
 POST /token HTTP/1.1
@@ -2068,7 +2008,7 @@ Content-Type: application/json
 {"origin": "SFO", "destination": "NYC", "depart": "2026-04-15"}
 ~~~
 
-The Booking Tool RS applies authorization of the (`sub`, outermost `act.sub`) pair ({{resource-server-processing}}): it evaluates Alice (`sub`, `sub_profile: user`) together with the Travel Assistant (`act.sub`, `sub_profile: ai_agent`) for the requested operation.  The (`sub`, outermost `act.sub`) relationship MUST satisfy local policy for this operation.  The `act.sub_profile` value is checked against `entity_profiles_supported.actor` per {{authorization-server-metadata}}.
+The Booking Tool RS applies authorization of the (`sub`, outermost `act.sub`) pair ({{resource-server-processing}}): it evaluates Alice (`sub`, `sub_profile: user`) together with the Travel Assistant (`act.sub`, `sub_profile: ai_agent`) for the requested operation.  The `act.sub_profile` value is checked against `entity_profiles_supported.actor` per {{authorization-server-metadata}}.
 
 
 ## Step 5: Booking Tool Exchanges Access Token for Transaction Token
@@ -2129,7 +2069,7 @@ The TTS applies actor-profile processing per {{transaction-token-output-rules}}:
 }
 ~~~
 
-The presenter binding rotates at this step: `cnf.jkt` is now `ToolJKT` because the Booking Tool is the current presenter.  The nested delegation chain records that the Booking Tool is now the current actor and that the Travel Assistant was the prior delegated actor.
+The presenter binding rotates at this step: `cnf.jkt` is now `ToolJKT` because the Booking Tool is the current presenter.
 
 
 ## Step 6: Booking Tool Calls Inventory Service
@@ -2142,17 +2082,17 @@ Workload-Identity-Token: <booking-tool-wit>
 Workload-Proof-Token: <tool-wpt-with-wth-and-tth>
 ~~~
 
-The Inventory Service validates the WIT and WPT according to the WIMSE specifications: the WPT proves possession of the key identified by the WIT, `wth` binds the proof to the presented WIT, and `tth` binds it to the presented Transaction Token.  The Inventory Service then applies authorization of the (`sub`, outermost `act.sub`) pair ({{resource-server-processing}}): Alice (`sub`) governs data access policy (e.g., travel tier), and the Booking Tool (`act.sub`) is the authorized internal workload for that request.  The `req_wl` claim provides consistent TTS workload context for the same service in this example.  The nested `act.act.sub` (the Travel Assistant) is carried as prior delegation context and is not evaluated for access control at this internal tier, consistent with the guidance on inner actors in {{actor-authorization}}.
+The Inventory Service validates the WIT and WPT per the WIMSE specifications, then applies authorization of the (`sub`, outermost `act.sub`) pair ({{resource-server-processing}}): Alice (`sub`) governs data access policy (e.g., travel tier), and the Booking Tool (`act.sub`) is the authorized internal workload for that request.  The `req_wl` claim provides consistent TTS workload context for the same service in this example.  The nested `act.act.sub` (the Travel Assistant) is carried as prior delegation context and is not evaluated for access control at this internal tier, consistent with the guidance on inner actors in {{actor-authorization}}.
 
 
 ## Summary of Token Transformations
 
 | Step | Token | `sub` | `req_wl` | `act.sub` (outermost) | `act.act.sub` (nested) | `cnf.jkt` |
 |------|-------|-------|----------|-----------------------|------------------------|-----------|
-| 1 | ID Token | Alice | — | — | — | — |
-| 2 | ID-JAG | Alice | — | Travel Assistant | — | AgentJKT |
-| 3 | Access Token | Alice | — | Travel Assistant | — | AgentJKT |
-| 4 | (API call) | Alice | — | Travel Assistant | — | AgentJKT |
+| 1 | ID Token | Alice |  |  |  |  |
+| 2 | ID-JAG | Alice |  | Travel Assistant |  | AgentJKT |
+| 3 | Access Token | Alice |  | Travel Assistant |  | AgentJKT |
+| 4 | (API call) | Alice |  | Travel Assistant |  | AgentJKT |
 | 5 | Transaction Token | Alice | Booking Tool | Booking Tool | Travel Assistant | ToolJKT |
 | 6 | (internal call) | Alice | Booking Tool | Booking Tool | Travel Assistant | ToolJKT |
 
