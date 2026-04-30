@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                           27 April 2026
-Expires: 29 October 2026
+Intended status: Standards Track                           30 April 2026
+Expires: 1 November 2026
 
 
                    OAuth Actor Profile for Delegation
@@ -69,7 +69,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 29 October 2026.
+   This Internet-Draft will expire on 1 November 2026.
 
 Copyright Notice
 
