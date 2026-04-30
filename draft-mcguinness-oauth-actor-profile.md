@@ -5,7 +5,7 @@ category: std
 docname: draft-mcguinness-oauth-actor-profile-latest
 submissiontype: IETF
 number:
-date: 2026-04-27
+date: 2026-04-30
 ipr: "trust200902"
 area: "Security"
 workgroup: "Web Authorization Protocol"
