@@ -3759,7 +3759,18 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
               <p id="section-12.1.1-7.1.1">If local policy or advertised metadata requires actor-profile conformance for the request path, the AS <span class="bcp14">MUST</span> reject the request.  It <span class="bcp14">MUST</span> return <code>invalid_request</code> consistent with <span><a href="#actor-profile-error-responses" class="internal xref">Error Responses</a> (<a href="#actor-profile-error-responses" class="auto internal xref">Section 9</a>)</span>.<a href="#section-12.1.1-7.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-12.1.1-7.2">
-              <p id="section-12.1.1-7.2.1">If actor-profile conformance is not required, the AS <span class="bcp14">MAY</span> process the inbound <code>act</code> object under local policy only for non-profile behavior.  It <span class="bcp14">MUST NOT</span> rewrite an inherited actor entry to add <code>act.iss</code>, and it <span class="bcp14">MUST NOT</span> omit the inbound <code>act</code> claim from an issued token that would otherwise preserve or extend the chain under this profile.  Any request path that would preserve or extend such a non-conforming chain into an actor-profile token <span class="bcp14">MUST</span> be rejected.<a href="#section-12.1.1-7.2.1" class="pilcrow">¶</a></p>
+              <p id="section-12.1.1-7.2.1">If actor-profile conformance is not required, the AS <span class="bcp14">MAY</span> process the inbound <code>act</code> object under local policy for non-profile behavior, subject to the following constraints:<a href="#section-12.1.1-7.2.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-12.1.1-7.2.2.1">
+                  <p id="section-12.1.1-7.2.2.1.1">The AS <span class="bcp14">MUST NOT</span> rewrite an inherited actor entry to add <code>act.iss</code>; inherited entries are immutable.<a href="#section-12.1.1-7.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-12.1.1-7.2.2.2">
+                  <p id="section-12.1.1-7.2.2.2.1">The AS <span class="bcp14">MUST</span> reject any request that would carry the non-conforming chain into a profile-conforming output token.<a href="#section-12.1.1-7.2.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                <li class="normal" id="section-12.1.1-7.2.2.3">
+                  <p id="section-12.1.1-7.2.2.3.1">When the AS issues a non-profile-conforming output token under local policy, it <span class="bcp14">MUST NOT</span> silently drop the inbound <code>act</code> claim.<a href="#section-12.1.1-7.2.2.3.1" class="pilcrow">¶</a></p>
+</li>
+              </ul>
 </li>
           </ul>
 <p id="section-12.1.1-8">Implementations that previously treated confirmation members inside <code>act</code> as active sender-constraining mechanisms should note that this document defines proof-of-possession only through the top-level <code>cnf</code> claim and the immediate presenter.  Deployments that relied on per-hop actor-key verification for multi-hop security properties will need a separate provenance mechanism or profile rather than the core actor profile defined here.<a href="#section-12.1.1-8" class="pilcrow">¶</a></p>
@@ -3861,7 +3872,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
         </ul>
 </section>
 </div>
-<div id="delegation-token-lifetime">
+<div id="delegation-chain-token-lifetime">
 <section id="section-12.3">
         <h3 id="name-token-lifetime-for-delegati">
 <a href="#section-12.3" class="section-number selfRef">12.3. </a><a href="#name-token-lifetime-for-delegati" class="section-name selfRef">Token Lifetime for Delegation Chains</a>

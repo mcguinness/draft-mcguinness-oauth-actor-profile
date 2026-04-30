@@ -3595,12 +3595,17 @@ AddOutermostActor(inbound_chain, new_actor):
       (Section 9).
 
    *  If actor-profile conformance is not required, the AS MAY process
-      the inbound act object under local policy only for non-profile
-      behavior.  It MUST NOT rewrite an inherited actor entry to add
-      act.iss, and it MUST NOT omit the inbound act claim from an issued
-      token that would otherwise preserve or extend the chain under this
-      profile.  Any request path that would preserve or extend such a
-      non-conforming chain into an actor-profile token MUST be rejected.
+      the inbound act object under local policy for non-profile
+      behavior, subject to the following constraints:
+
+      -  The AS MUST NOT rewrite an inherited actor entry to add
+         act.iss; inherited entries are immutable.
+
+      -  The AS MUST reject any request that would carry the non-
+         conforming chain into a profile-conforming output token.
+
+      -  When the AS issues a non-profile-conforming output token under
+         local policy, it MUST NOT silently drop the inbound act claim.
 
    Implementations that previously treated confirmation members inside
    act as active sender-constraining mechanisms should note that this
