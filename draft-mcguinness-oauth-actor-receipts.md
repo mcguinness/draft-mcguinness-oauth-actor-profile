@@ -46,6 +46,7 @@ normative:
      -
         fullname: Karl McGuinness
         organization: Independent
+        email: public@karlmcguinness.com
     date: 2026-04-27
     target: https://mcguinness.github.io/draft-mcguinness-oauth-actor-profile/draft-mcguinness-oauth-actor-profile.html
 
