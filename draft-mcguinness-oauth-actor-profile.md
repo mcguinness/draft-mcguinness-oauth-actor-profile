@@ -143,7 +143,7 @@ The mechanisms are general-purpose and apply beyond AI agent scenarios.  This do
 
 ## Illustrative Use Case
 
-Alice authorizes an AI agent to book a business trip on her behalf, and the request crosses from the enterprise identity provider's domain into an external booking domain and then into the booking provider's internal service mesh.  The enterprise authorization server first issues a delegated credential that keeps Alice as `sub` and the agent as `act`; downstream issuers later transform that credential into an access token and, for the internal tool hop, a Transaction Token rebound to the booking tool as the new presenter.  Across those steps, the subject remains Alice, the immediate actor changes only when a new presenter is explicitly established, and each trust-domain boundary re-issues the token under local control.  [Cross-Domain AI Agent Flow: ID Token to Transaction Token](#appendix-cross-domain) provides the full end-to-end walkthrough.
+Alice authorizes an AI agent to book a business trip on her behalf, and the request crosses from the enterprise identity provider's domain into an external booking domain and then into the booking provider's internal service mesh.  The enterprise authorization server first issues a delegated credential that keeps Alice as `sub` and the agent as `act`; downstream issuers later transform that credential into an access token and, for the internal tool hop, a Transaction Token rebound to the booking tool as the new presenter.  Across those steps, the subject remains Alice, the immediate actor changes only when a new presenter is explicitly established, and each trust-domain boundary re-issues the token under local control.  [The cross-domain example](#appendix-cross-domain) provides the full end-to-end walkthrough.
 
 ## Relationship to Related Work
 
@@ -151,13 +151,13 @@ Alice authorizes an AI agent to book a business trip on her behalf, and the requ
 
 **Identity Chaining ({{I-D.ietf-oauth-identity-chaining}})**: Identity Chaining addresses cross-domain subject-identity propagation; this document addresses actor representation within those same tokens.  The two are complementary and designed to be used together.
 
-**Identity Assertion JWT Authorization Grant ({{I-D.ietf-oauth-identity-assertion-authz-grant}})**: ID-JAG defines how an IdP issues a JWT authorization grant via Token Exchange and how a downstream AS consumes it.  ID-JAG permits `actor_token` inputs but leaves actor-delegation validation and resulting `act` claims to future profiles or extensions.  This document defines one such profile: when an implementation uses ID-JAG with actor-profile claims, the Token Exchange and JWT assertion-grant processing rules in this document apply.  See [Cross-Domain AI Agent Flow: ID Token to Transaction Token](#appendix-cross-domain) for an end-to-end example.
+**Identity Assertion JWT Authorization Grant ({{I-D.ietf-oauth-identity-assertion-authz-grant}})**: ID-JAG defines how an IdP issues a JWT authorization grant via Token Exchange and how a downstream AS consumes it.  ID-JAG permits `actor_token` inputs but leaves actor-delegation validation and resulting `act` claims to future profiles or extensions.  This document defines one such profile: when an implementation uses ID-JAG with actor-profile claims, the Token Exchange and JWT assertion-grant processing rules in this document apply.  See [the cross-domain example](#appendix-cross-domain) for an end-to-end walkthrough.
 
 **OAuth Entity Profiles ({{I-D.mora-oauth-entity-profiles}})**: Defines `sub_profile`, `client_profile`, `entity_profiles_supported`, and the entity profile registry.  This document consumes those mechanisms for actor classification and makes no independent registry requests.
 
 **Transaction Tokens ({{I-D.ietf-oauth-transaction-tokens}})**: This document extends the Transaction Token claim model with actor-profile support and adds actor-profile-specific TTS processing rules.  Base Transaction Token requirements continue to apply.
 
-**WIMSE Workload Identity ({{I-D.ietf-wimse-workload-creds}}{{I-D.ietf-wimse-wpt}})**: Defines workload credentials used to authenticate workloads at token endpoints.  This document is mechanism-agnostic; [Cross-Domain AI Agent Flow: ID Token to Transaction Token](#appendix-cross-domain) illustrates a WIMSE-based TTS presenter binding.
+**WIMSE Workload Identity ({{I-D.ietf-wimse-workload-creds}}{{I-D.ietf-wimse-wpt}})**: Defines workload credentials used to authenticate workloads at token endpoints.  This document is mechanism-agnostic; [the cross-domain example](#appendix-cross-domain) illustrates a WIMSE-based TTS presenter binding.
 
 
 # Conventions and Definitions {#conventions}
@@ -240,7 +240,7 @@ Subject to endpoint policy and the underlying token-exchange or grant mechanism,
 
 This document profiles token contents and the processing of those contents once present.  It does not redefine the request semantics of {{RFC8693}}, including the syntax or baseline meaning of `subject_token`, `actor_token`, `resource`, `audience`, or `requested_token_type`.  When such inputs carry or imply actor information, this document defines only how that information is represented in issued tokens and how issuers and consumers process it.
 
-For worked examples showing the actor profile in use in both same-domain service delegation and cross-domain delegation, see [Service-to-Service Delegation Example](#appendix-service-to-service) and [Cross-Domain AI Agent Flow: ID Token to Transaction Token](#appendix-cross-domain).
+For worked examples showing the actor profile in use in both same-domain service delegation and cross-domain delegation, see [the service-to-service example](#appendix-service-to-service) and [the cross-domain example](#appendix-cross-domain).
 
 ## Actor Object Structure {#actor-object-structure}
 
@@ -633,7 +633,7 @@ The following example shows a JWT access token with actor profile claims:
 }
 ~~~
 
-In this single-hop case the top-level bearer key identifies the same party as the outermost actor because the actor is the bearer.  The differing `client_id`, `azp`, and `act.sub` values in this example are intentional: they illustrate a deployment where client-facing identifiers and actor identifiers are distinct and must be reconciled, if at all, only through trusted local mapping rules.  In multi-hop chains each actor remains a distinct identity in the chain; see [Cross-Domain AI Agent Flow: ID Token to Transaction Token](#appendix-cross-domain).
+In this single-hop case the top-level bearer key identifies the same party as the outermost actor because the actor is the bearer.  The differing `client_id`, `azp`, and `act.sub` values in this example are intentional: they illustrate a deployment where client-facing identifiers and actor identifiers are distinct and must be reconciled, if at all, only through trusted local mapping rules.  In multi-hop chains each actor remains a distinct identity in the chain; see [the cross-domain example](#appendix-cross-domain).
 
 ## Delegated Token Issuance {#delegated-token-issuance}
 
