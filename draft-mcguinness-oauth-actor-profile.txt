@@ -1983,7 +1983,9 @@ AddOutermostActor(inbound_chain, new_actor):
    To establish a principal distinct from the OAuth client_id as the
    actor, the request MUST use a different actor credential type, such
    as a workload identity credential (Workload Credential Processing
-   (Section 6.3.2.2)).
+   (Section 6.3.2.2)), whose sub names that distinct principal.  A
+   client assertion conforming to [RFC7523] cannot name a subordinate
+   identity.
 
 6.3.1.2.  Processing
 

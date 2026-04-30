@@ -2739,7 +2739,7 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
                 <p id="section-6.3.1.1-2.2.1">The client authenticates by another method (e.g., <code>client_secret</code>, mTLS) and presents a separate JWT client assertion as <code>actor_token</code> to name that same client as the actor.<a href="#section-6.3.1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
-<p id="section-6.3.1.1-3">To establish a principal distinct from the OAuth <code>client_id</code> as the actor, the request <span class="bcp14">MUST</span> use a different actor credential type, such as a workload identity credential (<span><a href="#workload-identity-as-actor-token" class="internal xref">Workload Credential Processing</a> (<a href="#workload-identity-as-actor-token" class="auto internal xref">Section 6.3.2.2</a>)</span>).<a href="#section-6.3.1.1-3" class="pilcrow">¶</a></p>
+<p id="section-6.3.1.1-3">To establish a principal distinct from the OAuth <code>client_id</code> as the actor, the request <span class="bcp14">MUST</span> use a different actor credential type, such as a workload identity credential (<span><a href="#workload-identity-as-actor-token" class="internal xref">Workload Credential Processing</a> (<a href="#workload-identity-as-actor-token" class="auto internal xref">Section 6.3.2.2</a>)</span>), whose <code>sub</code> names that distinct principal.  A client assertion conforming to <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span> cannot name a subordinate identity.<a href="#section-6.3.1.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="processing">
