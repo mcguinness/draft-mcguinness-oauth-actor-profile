@@ -300,9 +300,9 @@ Table of Contents
    Transaction Token rebound to the booking tool as the new presenter.
    Across those steps, the subject remains Alice, the immediate actor
    changes only when a new presenter is explicitly established, and each
-   trust-domain boundary re-issues the token under local control.
-   Cross-Domain AI Agent Flow: ID Token to Transaction Token
-   (Appendix B) provides the full end-to-end walkthrough.
+   trust-domain boundary re-issues the token under local control.  The
+   cross-domain example (Appendix B) provides the full end-to-end
+   walkthrough.
 
 1.2.  Relationship to Related Work
 
@@ -324,8 +324,8 @@ Table of Contents
    future profiles or extensions.  This document defines one such
    profile: when an implementation uses ID-JAG with actor-profile
    claims, the Token Exchange and JWT assertion-grant processing rules
-   in this document apply.  See Cross-Domain AI Agent Flow: ID Token to
-   Transaction Token (Appendix B) for an end-to-end example.
+   in this document apply.  See the cross-domain example (Appendix B)
+   for an end-to-end walkthrough.
 
    *OAuth Entity Profiles ([I-D.mora-oauth-entity-profiles])*: Defines
    sub_profile, client_profile, entity_profiles_supported, and the
@@ -340,9 +340,8 @@ Table of Contents
    *WIMSE Workload Identity
    ([I-D.ietf-wimse-workload-creds][I-D.ietf-wimse-wpt])*: Defines
    workload credentials used to authenticate workloads at token
-   endpoints.  This document is mechanism-agnostic; Cross-Domain AI
-   Agent Flow: ID Token to Transaction Token (Appendix B) illustrates a
-   WIMSE-based TTS presenter binding.
+   endpoints.  This document is mechanism-agnostic; the cross-domain
+   example (Appendix B) illustrates a WIMSE-based TTS presenter binding.
 
 2.  Conventions and Definitions
 
@@ -562,9 +561,9 @@ Table of Contents
    and consumers process it.
 
    For worked examples showing the actor profile in use in both same-
-   domain service delegation and cross-domain delegation, see
-   Service-to-Service Delegation Example (Appendix A) and Cross-Domain
-   AI Agent Flow: ID Token to Transaction Token (Appendix B).
+   domain service delegation and cross-domain delegation, see the
+   service-to-service example (Appendix A) and the cross-domain example
+   (Appendix B).
 
 3.4.  Actor Object Structure
 
@@ -1451,8 +1450,7 @@ AddOutermostActor(inbound_chain, new_actor):
    identifiers and actor identifiers are distinct and must be
    reconciled, if at all, only through trusted local mapping rules.  In
    multi-hop chains each actor remains a distinct identity in the chain;
-   see Cross-Domain AI Agent Flow: ID Token to Transaction Token
-   (Appendix B).
+   see the cross-domain example (Appendix B).
 
 5.2.  Delegated Token Issuance
 
