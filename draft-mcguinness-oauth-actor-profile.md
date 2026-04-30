@@ -1407,7 +1407,11 @@ Steps 2 and 3 are RECOMMENDED; step 1 is REQUIRED for any AS that issues actor-p
 When an AS receives an inbound token or assertion whose `act` object omits `act.iss` (that is, the object conforms only to {{RFC8693}} and not to this profile):
 
 *  If local policy or advertised metadata requires actor-profile conformance for the request path, the AS MUST reject the request.  It MUST return `invalid_request` consistent with [Error Responses](#actor-profile-error-responses).
-*  If actor-profile conformance is not required, the AS MAY process the inbound `act` object under local policy only for non-profile behavior.  It MUST NOT rewrite an inherited actor entry to add `act.iss`, and it MUST NOT omit the inbound `act` claim from an issued token that would otherwise preserve or extend the chain under this profile.  Any request path that would preserve or extend such a non-conforming chain into an actor-profile token MUST be rejected.
+*  If actor-profile conformance is not required, the AS MAY process the inbound `act` object under local policy for non-profile behavior, subject to the following constraints:
+
+   *  The AS MUST NOT rewrite an inherited actor entry to add `act.iss`; inherited entries are immutable.
+   *  The AS MUST reject any request that would carry the non-conforming chain into a profile-conforming output token.
+   *  When the AS issues a non-profile-conforming output token under local policy, it MUST NOT silently drop the inbound `act` claim.
 
 Implementations that previously treated confirmation members inside `act` as active sender-constraining mechanisms should note that this document defines proof-of-possession only through the top-level `cnf` claim and the immediate presenter.  Deployments that relied on per-hop actor-key verification for multi-hop security properties will need a separate provenance mechanism or profile rather than the core actor profile defined here.
 
@@ -1483,7 +1487,7 @@ Examples:
 *  A token issued by `https://as.enterprise.example` with `act.iss = https://as.enterprise.example` and `act.sub = https://idp.enterprise.example/users/alice` would not ordinarily satisfy URL containment alone, because the host differs.
 *  For non-HTTPS identifier schemes such as workload-identity URNs, deployments typically rely on registry, federation, or other explicit local trust configuration rather than URL-based rules.
 
-## Token Lifetime for Delegation Chains {#delegation-token-lifetime}
+## Token Lifetime for Delegation Chains {#delegation-chain-token-lifetime}
 
 Delegated tokens carry the combined exposure surface of all principals in the delegation chain.  A single issued token may authorize actions by an actor whose delegation grant has since been revoked; the token remains valid until its `exp` time.  Because revocation cannot retroactively invalidate already-issued tokens, lifetime is the primary control.
 
