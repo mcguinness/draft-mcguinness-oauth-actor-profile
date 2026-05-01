@@ -5,7 +5,7 @@ category: exp
 docname: draft-mcguinness-oauth-actor-receipts-latest
 submissiontype: IETF
 number:
-date: 2026-04-27
+date: 2026-04-30
 ipr: "trust200902"
 area: "Security"
 workgroup: "Web Authorization Protocol"
@@ -41,21 +41,9 @@ normative:
   RFC9728:
   I-D.ietf-oauth-transaction-tokens:
   I-D.mcguinness-oauth-actor-profile:
-    title: "OAuth Actor Profile for Delegation"
-    author:
-     -
-        fullname: Karl McGuinness
-        organization: Independent
-        email: public@karlmcguinness.com
-    date: 2026-04-27
-    target: https://mcguinness.github.io/draft-mcguinness-oauth-actor-profile/draft-mcguinness-oauth-actor-profile.html
 
 informative:
   RFC6749:
-  RFC7638:
-  RFC8126:
-  RFC9068:
-  RFC9449:
   RFC9700:
 
 ...
@@ -81,6 +69,8 @@ This document defines an optional companion profile, OAuth Actor Receipts, for d
 *  carry prior-hop provenance, including historical top-level `cnf` values, in separately signed hop receipts.
 
 This document applies to tokens that already conform to the OAuth Actor Profile for Delegation.  It supplements that profile; it does not replace it.
+
+This profile is positioned as a tactical extension to existing OAuth deployments rather than a new architecture.  The strategic trust model, including issuer trust, audience scoping, sender-constraint validation, scope evaluation, and authorization decisions, remains the OAuth ({{RFC6749}}, {{RFC8693}}) and core-actor-profile model.  Receipts add an additive top-level JWT claim and a small set of metadata signals on top of that model.  Clients require no protocol changes.  Resource servers and authorization servers that do not consume `actor_receipts` continue to operate exactly as they do under the core profile, and tokens carrying receipts remain conformant tokens under the core profile when receipts are ignored.  A deployment opts into receipt-based provenance per resource server or per trust domain, without re-platforming its OAuth substrate.
 
 # Conventions and Definitions
 
@@ -128,12 +118,16 @@ The goals of this document are:
 *  preserve independently signed provenance for each visible actor hop;
 *  preserve historical top-level `cnf` values without putting them back into the core `act` claim;
 *  allow downstream recipients to validate prior-hop provenance against the issuers that created those hops;
+*  defer to OAuth ({{RFC6749}}, {{RFC8693}}) and the core actor profile for current-token trust establishment, authorization, audience scoping, and sender-constraint validation;
+*  add provenance through additive top-level claims and metadata signals, with no required changes to client request flows;
 *  support progressive deployment, including tokens with partial receipt coverage.
 
 The non-goals of this document are:
 
 *  replacing the outer token's own signature or issuer trust model;
+*  redefining OAuth audience semantics, scope evaluation, or AS-to-RS trust establishment;
 *  redefining sender-constrained token validation for the current presenter;
+*  requiring clients to change request flows, or requiring resource servers that do not consume receipts to change resource-protection logic;
 *  proving that a particular historical scope, audience, or token lifetime was in force when a receipt was created;
 *  defining transparency logs, non-repudiation systems, or public audit infrastructure.
 
@@ -171,13 +165,13 @@ When a deployment requires full provenance, local policy or resource requirement
 If a token carries `actor_receipts`, it MUST also carry an `act` claim conforming to the core actor profile.
 
 `actor_receipts_complete`:
-: OPTIONAL.  A boolean JWT claim in the outer token.  When `true`, the issuer attests that `actor_receipts` covers every visible hop in the token's `act` chain.  Because this claim is covered by the outer token's signature, consumers can detect if it has been tampered with.  When `actor_receipts_complete` is `true` in the outer token, the consumer MUST verify that the receipt count equals the visible actor-chain depth; if it does not, the consumer MUST reject the token.  Issuers SHOULD set `actor_receipts_complete: true` when they emit complete coverage, to enable consumers to detect chain truncation.
+: OPTIONAL.  A boolean JWT claim in the outer token.  When `true`, the issuer attests that `actor_receipts` covers every visible hop in the token's `act` chain.  When `actor_receipts_complete` is `true` in the outer token, the consumer MUST verify that the receipt count equals the visible actor-chain depth; if it does not, the consumer MUST reject the token.  Issuers SHOULD set `actor_receipts_complete: true` when they emit complete coverage, to enable consumers to detect chain truncation.  Issuers SHOULD set `actor_receipts_complete: false` when they emit partial coverage; omitting the claim is observationally equivalent to `false` for consumers that test only for the literal value `true`, but does not provide a positive attestation that coverage is partial.
 
 This document does not require every delegated token to carry `actor_receipts`.  A deployment that requires provenance receipts uses local policy or the metadata defined in {{discovery-capability-signaling}} to express that requirement.
 
 # Actor Receipt JWT Format {#actor-receipt-jwt-format}
 
-Each element of `actor_receipts` is a signed JWT represented using JWS compact serialization.
+Each element of `actor_receipts` is a signed JWT represented using JWS compact serialization {{RFC7515}}.
 
 ## JOSE Header
 
@@ -230,7 +224,10 @@ The JWT payload of an actor receipt uses the following claims:
 : REQUIRED.  A unique identifier for the receipt, as defined in {{RFC7519}}.
 
 `token_id`:
-: RECOMMENDED.  The `jti` value of the specific outer token that this receipt was created for.  When present, `token_id` binds the receipt to the specific token instance issued at this hop, enabling consumers to detect receipts transplanted from a different token whose visible `act` structure happens to match.  Issuers SHOULD include `token_id` whenever the token they are issuing carries a `jti` claim.
+: RECOMMENDED.  The `jti` value of the specific outer token that this receipt was created for.  When present, `token_id` binds the receipt to the specific token instance issued at this hop, enabling consumers to detect receipts transplanted from a different token whose visible `act` structure happens to match.  Issuers SHOULD include `token_id` whenever the token they are issuing carries a `jti` claim.  Consumer verification of `token_id` is defined in {{consumer-processing}}; it is independently verifiable only for `receipt[0]`, and only when that receipt was signed by the same issuer that signed the current outer token.  For all other receipts, `token_id` records the historical outer-token `jti` at the hop where the receipt was created and is informational provenance.
+
+`aud`:
+: NOT RECOMMENDED.  A receipt travels with the outer token to whichever audiences the outer token serves.  Receipt validity is anchored to trust in `iss`, the binding to the outer token via `token_id` and `prh`, and the outer token's own audience scoping.  Including `aud` in a receipt has no defined meaning under this profile, and issuers SHOULD omit it.
 
 A receipt MAY contain additional claims defined by another specification or by deployment policy.  Consumers MUST ignore unrecognized claims unless another specification or local agreement defines their meaning.
 
@@ -241,11 +238,13 @@ When the issuer creates a new receipt and prepends it to an inherited receipt ch
 *  if there is an older receipt immediately following it in the array, the new receipt MUST include `prh`, and that value MUST hash the exact compact JWT string of that next receipt;
 *  if the new receipt is the only receipt in the array, it MUST omit `prh`.
 
-No JSON canonicalization is applied.  `prh` hashes the exact compact-serialized JWS string of the next older receipt as carried in the array.  Systems that carry, store, or forward `actor_receipts` arrays MUST preserve each compact JWT string byte-for-byte without parsing, re-serializing, normalizing whitespace, or re-encoding base64url segments.  Any modification to a receipt string — even a semantically equivalent one — invalidates `prh` for any receipt that references it.
+No JSON canonicalization is applied.  `prh` hashes the exact compact-serialized JWS string of the next older receipt as carried in the array.  Systems that carry, store, or forward `actor_receipts` arrays MUST preserve each compact JWT string byte-for-byte without parsing, re-serializing, normalizing whitespace, or re-encoding base64url segments.  Any modification to a receipt string, including semantically equivalent re-encoding, invalidates `prh` for any receipt that references it.
 
 # Issuer Processing
 
 This section defines how an authorization server or Transaction Token Service creates, preserves, and extends `actor_receipts`.
+
+When an issuer adds a new outermost actor hop and creates the corresponding receipt, that issuer is the same authorization server or Transaction Token Service that signs the outer token carrying the new hop.  As a result, in tokens emitted under {{creating-the-first-receipt}} or {{extending-an-existing-receipt-chain}}, `receipt[0].iss` is equal to the outer token's `iss`.  The only case in which `receipt[0].iss` legitimately differs from the outer token's `iss` is reissuance of an existing token without adding a new actor hop, as defined in {{reissuance-without-a-new-actor-hop}}.  Consumer rules in {{consumer-processing}} use this property to scope the bind-to-current checks for `receipt[0]`.
 
 ## Creating the First Receipt
 
@@ -264,11 +263,12 @@ If it does so, the new receipt:
 
 When an issuer adds a new outermost actor hop and also preserves an inbound `actor_receipts` array, it:
 
-1.  MUST validate the inbound receipt chain before relying on it or carrying it forward.
-2.  MUST preserve each inbound receipt byte-for-byte unchanged.
-3.  MUST create exactly one new receipt for the new outermost actor hop.
-4.  MUST prepend that new receipt to the inherited array.
-5.  MUST set the new receipt's `prh`, if the inherited array is non-empty, to the SHA-256 hash of the exact compact serialization of the receipt that is now at the next array index.
+1.  MUST validate the inbound receipt chain by applying the consumer processing rules in {{consumer-processing}} before relying on it or carrying it forward.
+2.  MUST verify that each inbound receipt's `exp` is no earlier than the issued outer token's `exp`.  Carrying a receipt forward whose `exp` precedes the outer token's `exp` would cause consumers to reject the chain mid-token-lifetime under {{consumer-processing}}; an inbound receipt that fails this check is treated as failing validation under step 1.
+3.  MUST preserve each inbound receipt byte-for-byte unchanged.
+4.  MUST create exactly one new receipt for the new outermost actor hop.
+5.  MUST prepend that new receipt to the inherited array.
+6.  MUST set the new receipt's `prh`, if the inherited array is non-empty, to the SHA-256 hash of the exact compact serialization of the receipt that is now at the next array index.
 
 An issuer MUST NOT reserialize, resign, normalize, trim, or otherwise alter a prior receipt.
 
@@ -280,11 +280,14 @@ An issuer that reissues, translates, or introspects and re-emits a token without
 
 *  MAY carry an inbound `actor_receipts` array forward unchanged;
 *  MUST NOT create a new receipt;
-*  MUST NOT continue to carry an inherited `actor_receipts` array if it cannot preserve the visible hop alignment required by {{consumer-processing}}.
+*  MUST NOT continue to carry an inherited `actor_receipts` array if it cannot preserve the visible hop alignment required by {{consumer-processing}};
+*  MUST NOT change the outer token's top-level `sub` while carrying inherited receipts forward; a `sub` change re-expresses subject identity and breaks the alignment between `receipt[0].sub` and the outer token's top-level `sub` that consumers verify under {{consumer-processing}}.
 
 If such an issuer changes the visible outermost actor, it has added a new hop and MUST follow {{extending-an-existing-receipt-chain}}.
 
 A change in the outer token's top-level `cnf` value, by itself, does not invalidate carried-forward receipts.  Receipt `cnf` records the historical presenter binding in effect when that hop was created.  The current token's top-level `cnf` can later change, for example because of key rotation or token reissuance, without requiring a new receipt so long as the visible actor hop itself is unchanged.
+
+Reissuance under this section is the only case in which `receipt[0].iss` legitimately differs from the outer token's `iss` and `receipt[0].token_id` legitimately differs from the outer token's `jti`.  Consumer rules in {{consumer-processing}} relax the bind-to-current `token_id` check for `receipt[0]` accordingly when those issuer values diverge.
 
 ## Partial Coverage and Full Coverage
 
@@ -298,31 +301,25 @@ However:
 
 ## Transaction Token Service Rebinding
 
-When a Transaction Token Service establishes a new presenter and makes that presenter the new outermost actor, it follows the same receipt rules as any other issuer that adds a new outermost actor hop:
-
-*  it validates and preserves any inbound `actor_receipts`;
-*  it creates one new receipt for the newly established outermost actor;
-*  it copies the issued Transaction Token's top-level `cnf`, if any, into the new receipt, subject to the disclosure considerations in {{receipt-claims}}.
-
-This profile does not define additional receipt claims specific to Transaction Tokens.  Any transaction-specific semantics remain governed by the Transaction Token itself and its deployment profile.
+A Transaction Token Service that establishes a new presenter and makes that presenter the new outermost actor follows the same receipt rules as any other issuer that adds a new outermost actor hop, as defined in {{extending-an-existing-receipt-chain}} (or {{creating-the-first-receipt}} when no inbound `actor_receipts` exist).  This profile does not define additional receipt claims specific to Transaction Tokens; any transaction-specific semantics remain governed by the Transaction Token itself and its deployment profile.
 
 # Consumer Processing {#consumer-processing}
 
 An issuer, resource server, or other recipient that relies on `actor_receipts` MUST perform the following steps.
 
 1.  Validate the outer token according to its token type and the core actor profile.
-2.  If `actor_receipts` is absent, treat the token as lacking receipt-based provenance.  Whether that is acceptable is determined by local policy or metadata.
+2.  If `actor_receipts` is absent, treat the token as lacking receipt-based provenance.  Whether that is acceptable is determined by local policy or by Protected Resource Metadata signals such as `actor_receipts_required` and `actor_receipts_complete_required` defined in {{discovery-capability-signaling}}.
 3.  Verify that `actor_receipts`, if present, is a non-empty JSON array of strings.
 4.  Verify that the number of receipts does not exceed the visible actor-chain depth of the outer token.  If the outer token carries `actor_receipts_complete: true`, verify that the receipt count exactly equals the visible actor-chain depth; if it does not, reject the token.
 5.  For each receipt, in array order:
     *  parse the string as a compact JWT;
     *  verify that the receipt issuer is within the recipient's pre-configured trusted-issuer set before performing any network retrieval for that issuer's metadata or keys;
-    *  resolve the signing key from the trusted issuer's `jwks_uri` metadata {{RFC8414}} or from local configuration;
+    *  resolve the signing key from the receipt issuer's authorization server metadata `jwks_uri` {{RFC8414}} (where the receipt issuer is identified by the receipt's `iss` claim, which may differ from the outer token's issuer) or from local configuration;
     *  validate the JWT signature;
     *  verify that `typ` equals `actor-receipt+jwt`;
     *  verify that the receipt `act` object is single-hop, contains no nested `act`, and contains no `cnf`;
     *  enforce `exp`, `iat`, and other JWT validity rules.  Because `exp` is REQUIRED on receipts and MUST cover the expected outer token lifetime, an expired receipt SHOULD be treated as invalid even for older hops.  Local policy MAY permit continued use of a receipt that is expired by a small clock-skew margin, but MUST NOT relax `exp` enforcement broadly as a workaround for issuers that failed to set adequate `exp` values.
-    *  if `token_id` is present in the receipt, verify that it equals the `jti` of the outer token at the corresponding hop position.
+    *  for `receipt[0]` only, if `token_id` is present and `receipt[0].iss` equals the outer token's `iss`, verify that `receipt[0].token_id` equals the outer token's `jti`.  When `receipt[0].iss` differs from the outer token's `iss` (the case described in {{reissuance-without-a-new-actor-hop}}), `receipt[0].token_id` records the prior outer-token `jti` and is not required to equal the current outer token's `jti`.  For receipts other than `receipt[0]`, `token_id` records the historical outer-token `jti` at the hop where the receipt was created, is not independently verifiable by the consumer, and is informational provenance only.
 6.  Verify receipt-chain linkage:
     *  each receipt other than the oldest MUST include `prh`;
     *  each non-oldest receipt's `prh` MUST hash the next older receipt;
@@ -397,7 +394,7 @@ The following parameters are defined for use in Protected Resource Metadata {{RF
 : OPTIONAL.  A boolean.  When `true`, the resource server indicates that delegated requests are expected to carry valid actor receipts covering at minimum the outermost visible actor hop.  When `false` or absent, the resource server makes no metadata declaration about receipt-based provenance requirements.
 
 `actor_receipts_complete_required`:
-: OPTIONAL.  A boolean.  When `true`, the resource server indicates that it requires complete receipt coverage — the receipt count must equal the visible actor-chain depth and `actor_receipts_complete` must be `true` in the outer token or the introspection response.  This parameter refines `actor_receipts_required`; a resource server SHOULD NOT set `actor_receipts_complete_required: true` without also setting `actor_receipts_required: true`.  When `false` or absent, partial receipt coverage is acceptable to the resource server, subject to any further local policy.
+: OPTIONAL.  A boolean.  When `true`, the resource server indicates that it requires complete receipt coverage: the receipt count must equal the visible actor-chain depth and `actor_receipts_complete` must be `true` in the outer token or the introspection response.  This parameter refines `actor_receipts_required`; a resource server SHOULD NOT set `actor_receipts_complete_required: true` without also setting `actor_receipts_required: true`.  When `false` or absent, partial receipt coverage is acceptable to the resource server, subject to any further local policy.
 
 ## Introspection Response Members
 
@@ -411,7 +408,7 @@ The following members are defined for use in OAuth Token Introspection responses
 
 # Security Considerations
 
-Actor receipts strengthen provenance for visible actor hops, but they do not replace ordinary token validation.
+Actor receipts strengthen provenance for visible actor hops, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}} apply to systems implementing this profile.
 
 ## Current Presenter Validation
 
@@ -432,6 +429,12 @@ To avoid attacker-controlled key resolution, a recipient MUST determine whether 
 Receipts prove that trusted issuers attested particular actor hops and, optionally, historical presenter bindings.  They do not by themselves prove that the current outer token's audience, scope, expiration, or other authorization details were in force when older receipts were created.
 
 Accordingly, a recipient MUST NOT treat a valid receipt chain as evidence of historical authorization scope or audience beyond what the current outer token itself authorizes.
+
+The integrity of the receipt chain rests on two anchors.  First, `receipt[0].token_id`, when present and signed by the same issuer that signed the outer token, binds `receipt[0]` to the specific outer token instance and prevents transplantation of a receipt chain from a different token whose visible `act` structure happens to match.  Second, `prh` chains each receipt cryptographically to its older neighbor, so that all inner receipts inherit their binding from `receipt[0]` through the hash chain.  Inner receipts' `token_id` values are not independently verifiable by the consumer (see {{consumer-processing}}); deployments that depend on receipt-chain integrity MUST rely on `prh` plus a verifiable `receipt[0].token_id`, not on inner `token_id` values.
+
+## Hash Algorithm Agility
+
+`prh` is defined as a base64url-encoded SHA-256 hash of the next older receipt.  This document does not provide an in-protocol mechanism to negotiate or substitute a different hash algorithm.  A future revision that needs to migrate away from SHA-256 will need to introduce algorithm signaling, either through a new claim alongside `prh`, a new `typ` value, or a successor specification.  Deployments SHOULD treat the SHA-256 dependency as a long-lived but ultimately bounded property of this profile.
 
 ## Compromised Outer Issuer
 
@@ -474,7 +477,7 @@ This document requests registration of the following media type in the "Media Ty
 *  Subtype name: `actor-receipt+jwt`
 *  Required parameters: N/A
 *  Optional parameters: N/A
-*  Encoding considerations: 8bit; an actor receipt is a JWS compact-serialized JWT consisting of base64url-encoded segments separated by period (`.`) characters.
+*  Encoding considerations: 8bit; an actor receipt is a JWS compact-serialized JWT {{RFC7515}} {{RFC7519}} consisting of base64url-encoded segments separated by period (`.`) characters.
 *  Security considerations: See {{security-considerations}} of this document and {{RFC8725}}.
 *  Interoperability considerations: N/A
 *  Published specification: This document
@@ -556,7 +559,7 @@ This document requests registration of the following names in the "OAuth Token I
 
 # Examples
 
-The examples in this section show decoded receipt contents.  Real receipts are compact-signed JWT strings carried in the `actor_receipts` array.
+The examples in this section show decoded receipt contents.  Real receipts are compact-signed JWT strings carried in the `actor_receipts` array.  The `iat` and `exp` values shown are illustrative only; in deployments, receipt `exp` is set per {{receipt-claims}} and {{extending-an-existing-receipt-chain}} so that no inbound receipt expires before the outer token that carries it.
 
 ## Two-Hop Delegation Chain
 
