@@ -28,8 +28,8 @@
     platformdirs 4.9.6
     pycountry 24.6.1
     PyYAML 6.0.3
-    requests 2.32.5
-    wcwidth 0.6.0
+    requests 2.33.1
+    wcwidth 0.7.0
 -->
 <link href="draft-mcguinness-oauth-actor-receipts.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -1585,69 +1585,75 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.7">
-<code>act</code>:</dt>
+<code>sub_id</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.8">
-            <p id="section-7.2-2.8.1"><span class="bcp14">REQUIRED</span>.  A single-hop actor object.  This object:<a href="#section-7.2-2.8.1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-7.2-2.8.2.1">
-                <p id="section-7.2-2.8.2.1.1"><span class="bcp14">MUST</span> conform to the core actor profile's actor-object rules;<a href="#section-7.2-2.8.2.1.1" class="pilcrow">¶</a></p>
-</li>
-              <li class="normal" id="section-7.2-2.8.2.2">
-                <p id="section-7.2-2.8.2.2.1"><span class="bcp14">MUST</span> include <code>act.sub</code> and <code>act.iss</code>;<a href="#section-7.2-2.8.2.2.1" class="pilcrow">¶</a></p>
-</li>
-              <li class="normal" id="section-7.2-2.8.2.3">
-                <p id="section-7.2-2.8.2.3.1"><span class="bcp14">MAY</span> include <code>act.sub_profile</code>;<a href="#section-7.2-2.8.2.3.1" class="pilcrow">¶</a></p>
-</li>
-              <li class="normal" id="section-7.2-2.8.2.4">
-                <p id="section-7.2-2.8.2.4.1"><span class="bcp14">MUST NOT</span> contain <code>cnf</code>;<a href="#section-7.2-2.8.2.4.1" class="pilcrow">¶</a></p>
-</li>
-              <li class="normal" id="section-7.2-2.8.2.5">
-                <p id="section-7.2-2.8.2.5.1"><span class="bcp14">MUST NOT</span> contain a nested <code>act</code>.<a href="#section-7.2-2.8.2.5.1" class="pilcrow">¶</a></p>
-</li>
-            </ul>
-<p id="section-7.2-2.8.3">The prohibition on <code>act.cnf</code> exists because a <code>cnf</code> claim inside an <code>act</code> object would create ambiguity about whether it represents a historical key binding or a current proof-of-possession requirement for the actor.  Historical presenter binding belongs at the receipt's top level in the <code>cnf</code> claim, where its role as provenance-only information is unambiguous.  Additional claims permitted by the core actor profile in <code>act</code> objects <span class="bcp14">MAY</span> appear in receipt <code>act</code> objects unless explicitly prohibited here.  A receipt that carries <code>act.cnf</code> is invalid under this profile.<a href="#section-7.2-2.8.3" class="pilcrow">¶</a></p>
+            <p id="section-7.2-2.8.1"><span class="bcp14">OPTIONAL</span>.  When the token issued at this hop carried a top-level <code>sub_id</code> claim per the Subject Issuer Context section of <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>, the receipt <span class="bcp14">MAY</span> include <code>sub_id</code> with the same value.  When present, <code>sub_id</code> <span class="bcp14">MUST</span> equal the top-level <code>sub_id</code> claim of the token issued at this hop.  This value records the canonical subject identifier in effect at the hop represented by the receipt.  Issuers <span class="bcp14">SHOULD</span> include <code>sub_id</code> in a receipt only when the relying parties that will receive the token have been evaluated for the associated upstream-identity disclosure risk; omitting <code>sub_id</code> does not invalidate the receipt.<a href="#section-7.2-2.8.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.9">
-<code>cnf</code>:</dt>
+<code>act</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.10">
-            <p id="section-7.2-2.10.1"><span class="bcp14">OPTIONAL</span>.  A confirmation claim as defined in <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>.  When present, it <span class="bcp14">MUST</span> equal the top-level <code>cnf</code> claim of the token issued at this hop.  This value records historical presenter-binding information for the hop represented by the receipt.  It does not create a current proof-of-possession obligation for the current request.  Issuers <span class="bcp14">SHOULD NOT</span> include <code>cnf</code> in a receipt unless the relying parties that will receive the token have been evaluated for the associated disclosure risk; omitting <code>cnf</code> does not invalidate the receipt.<a href="#section-7.2-2.10.1" class="pilcrow">¶</a></p>
+            <p id="section-7.2-2.10.1"><span class="bcp14">REQUIRED</span>.  A single-hop actor object.  This object:<a href="#section-7.2-2.10.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7.2-2.10.2.1">
+                <p id="section-7.2-2.10.2.1.1"><span class="bcp14">MUST</span> conform to the core actor profile's actor-object rules;<a href="#section-7.2-2.10.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-7.2-2.10.2.2">
+                <p id="section-7.2-2.10.2.2.1"><span class="bcp14">MUST</span> include <code>act.sub</code> and <code>act.iss</code>;<a href="#section-7.2-2.10.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-7.2-2.10.2.3">
+                <p id="section-7.2-2.10.2.3.1"><span class="bcp14">MAY</span> include <code>act.sub_profile</code>;<a href="#section-7.2-2.10.2.3.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-7.2-2.10.2.4">
+                <p id="section-7.2-2.10.2.4.1"><span class="bcp14">MUST NOT</span> contain <code>cnf</code>;<a href="#section-7.2-2.10.2.4.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-7.2-2.10.2.5">
+                <p id="section-7.2-2.10.2.5.1"><span class="bcp14">MUST NOT</span> contain a nested <code>act</code>.<a href="#section-7.2-2.10.2.5.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+<p id="section-7.2-2.10.3">The prohibition on <code>act.cnf</code> exists because a <code>cnf</code> claim inside an <code>act</code> object would create ambiguity about whether it represents a historical key binding or a current proof-of-possession requirement for the actor.  Historical presenter binding belongs at the receipt's top level in the <code>cnf</code> claim, where its role as provenance-only information is unambiguous.  Additional claims permitted by the core actor profile in <code>act</code> objects <span class="bcp14">MAY</span> appear in receipt <code>act</code> objects unless explicitly prohibited here.  A receipt that carries <code>act.cnf</code> is invalid under this profile.<a href="#section-7.2-2.10.3" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.11">
-<code>prh</code>:</dt>
+<code>cnf</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.12">
-            <p id="section-7.2-2.12.1"><span class="bcp14">OPTIONAL</span>.  Previous receipt hash.  When present, <code>prh</code> <span class="bcp14">MUST</span> be the base64url-encoded SHA-256 hash of the complete compact serialization of the next older receipt in the chain.  The oldest receipt in the chain <span class="bcp14">MUST</span> omit <code>prh</code>.<a href="#section-7.2-2.12.1" class="pilcrow">¶</a></p>
+            <p id="section-7.2-2.12.1"><span class="bcp14">OPTIONAL</span>.  A confirmation claim as defined in <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>.  When present, it <span class="bcp14">MUST</span> equal the top-level <code>cnf</code> claim of the token issued at this hop.  This value records historical presenter-binding information for the hop represented by the receipt.  It does not create a current proof-of-possession obligation for the current request.  Issuers <span class="bcp14">SHOULD NOT</span> include <code>cnf</code> in a receipt unless the relying parties that will receive the token have been evaluated for the associated disclosure risk; omitting <code>cnf</code> does not invalidate the receipt.<a href="#section-7.2-2.12.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.13">
-<code>iat</code>:</dt>
+<code>prh</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.14">
-            <p id="section-7.2-2.14.1"><span class="bcp14">REQUIRED</span>.  The time at which the receipt was created, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-7.2-2.14.1" class="pilcrow">¶</a></p>
+            <p id="section-7.2-2.14.1"><span class="bcp14">OPTIONAL</span>.  Previous receipt hash.  When present, <code>prh</code> <span class="bcp14">MUST</span> be the base64url-encoded SHA-256 hash of the complete compact serialization of the next older receipt in the chain.  The oldest receipt in the chain <span class="bcp14">MUST</span> omit <code>prh</code>.<a href="#section-7.2-2.14.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.15">
-<code>exp</code>:</dt>
+<code>iat</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.16">
-            <p id="section-7.2-2.16.1"><span class="bcp14">REQUIRED</span>.  Expiration time for the receipt, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.  <code>exp</code> <span class="bcp14">MUST</span> be set to a value that covers the expected maximum token lifetime of any token that will carry or inherit this receipt, so that consumer validation of older receipts in a valid chain is not prematurely rejected.  Short <code>exp</code> values on receipts limit the window during which a compromised receipt signing key can be exploited.<a href="#section-7.2-2.16.1" class="pilcrow">¶</a></p>
+            <p id="section-7.2-2.16.1"><span class="bcp14">REQUIRED</span>.  The time at which the receipt was created, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-7.2-2.16.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.17">
-<code>jti</code>:</dt>
+<code>exp</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.18">
-            <p id="section-7.2-2.18.1"><span class="bcp14">REQUIRED</span>.  A unique identifier for the receipt, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-7.2-2.18.1" class="pilcrow">¶</a></p>
+            <p id="section-7.2-2.18.1"><span class="bcp14">REQUIRED</span>.  Expiration time for the receipt, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.  <code>exp</code> <span class="bcp14">MUST</span> be set to a value that covers the expected maximum token lifetime of any token that will carry or inherit this receipt, so that consumer validation of older receipts in a valid chain is not prematurely rejected.  Short <code>exp</code> values on receipts limit the window during which a compromised receipt signing key can be exploited.<a href="#section-7.2-2.18.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.19">
-<code>token_id</code>:</dt>
+<code>jti</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.20">
-            <p id="section-7.2-2.20.1"><span class="bcp14">RECOMMENDED</span>.  The <code>jti</code> value of the specific outer token that this receipt was created for.  When present, <code>token_id</code> binds the receipt to the specific token instance issued at this hop, enabling consumers to detect receipts transplanted from a different token whose visible <code>act</code> structure happens to match.  Issuers <span class="bcp14">SHOULD</span> include <code>token_id</code> whenever the token they are issuing carries a <code>jti</code> claim.  Consumer verification of <code>token_id</code> is defined in <a href="#consumer-processing" class="auto internal xref">Section 9</a>; it is independently verifiable only for <code>receipt[0]</code>, and only when that receipt was signed by the same issuer that signed the current outer token.  For all other receipts, <code>token_id</code> records the historical outer-token <code>jti</code> at the hop where the receipt was created and is informational provenance.<a href="#section-7.2-2.20.1" class="pilcrow">¶</a></p>
+            <p id="section-7.2-2.20.1"><span class="bcp14">REQUIRED</span>.  A unique identifier for the receipt, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-7.2-2.20.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-7.2-2.21">
-<code>aud</code>:</dt>
+<code>token_id</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-7.2-2.22">
-            <p id="section-7.2-2.22.1"><span class="bcp14">NOT RECOMMENDED</span>.  A receipt travels with the outer token to whichever audiences the outer token serves.  Receipt validity is anchored to trust in <code>iss</code>, the binding to the outer token via <code>token_id</code> and <code>prh</code>, and the outer token's own audience scoping.  Including <code>aud</code> in a receipt has no defined meaning under this profile, and issuers <span class="bcp14">SHOULD</span> omit it.<a href="#section-7.2-2.22.1" class="pilcrow">¶</a></p>
+            <p id="section-7.2-2.22.1"><span class="bcp14">RECOMMENDED</span>.  The <code>jti</code> value of the specific outer token that this receipt was created for.  When present, <code>token_id</code> binds the receipt to the specific token instance issued at this hop, enabling consumers to detect receipts transplanted from a different token whose visible <code>act</code> structure happens to match.  Issuers <span class="bcp14">SHOULD</span> include <code>token_id</code> whenever the token they are issuing carries a <code>jti</code> claim.  Consumer verification of <code>token_id</code> is defined in <a href="#consumer-processing" class="auto internal xref">Section 9</a>; it is independently verifiable only for <code>receipt[0]</code>, and only when that receipt was signed by the same issuer that signed the current outer token.  For all other receipts, <code>token_id</code> records the historical outer-token <code>jti</code> at the hop where the receipt was created and is informational provenance.<a href="#section-7.2-2.22.1" class="pilcrow">¶</a></p>
+</dd>
+          <dd class="break"></dd>
+<dt id="section-7.2-2.23">
+<code>aud</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-7.2-2.24">
+            <p id="section-7.2-2.24.1"><span class="bcp14">NOT RECOMMENDED</span>.  A receipt travels with the outer token to whichever audiences the outer token serves.  Receipt validity is anchored to trust in <code>iss</code>, the binding to the outer token via <code>token_id</code> and <code>prh</code>, and the outer token's own audience scoping.  Including <code>aud</code> in a receipt has no defined meaning under this profile, and issuers <span class="bcp14">SHOULD</span> omit it.<a href="#section-7.2-2.24.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -1701,10 +1707,13 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-8.1-3.4.1"><span class="bcp14">MUST</span> copy the issued token's top-level <code>cnf</code>, if any, into the receipt <code>cnf</code>, subject to the disclosure considerations in <a href="#receipt-claims" class="auto internal xref">Section 7.2</a>;<a href="#section-8.1-3.4.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.1-3.5">
-            <p id="section-8.1-3.5.1"><span class="bcp14">SHOULD</span> set <code>token_id</code> to the issued token's <code>jti</code>, if the issued token carries a <code>jti</code>;<a href="#section-8.1-3.5.1" class="pilcrow">¶</a></p>
+            <p id="section-8.1-3.5.1"><span class="bcp14">MAY</span> copy the issued token's top-level <code>sub_id</code>, if any, into the receipt <code>sub_id</code>, subject to the disclosure considerations in <a href="#receipt-claims" class="auto internal xref">Section 7.2</a>;<a href="#section-8.1-3.5.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.1-3.6">
-            <p id="section-8.1-3.6.1"><span class="bcp14">MUST</span> omit <code>prh</code>.<a href="#section-8.1-3.6.1" class="pilcrow">¶</a></p>
+            <p id="section-8.1-3.6.1"><span class="bcp14">SHOULD</span> set <code>token_id</code> to the issued token's <code>jti</code>, if the issued token carries a <code>jti</code>;<a href="#section-8.1-3.6.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.1-3.7">
+            <p id="section-8.1-3.7.1"><span class="bcp14">MUST</span> omit <code>prh</code>.<a href="#section-8.1-3.7.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1877,7 +1886,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           </ul>
 </li>
         <li id="section-9-2.8">
-          <p id="section-9-2.8.1">Verify that <code>receipt[0].sub</code> equals the outer token's top-level <code>sub</code>.<a href="#section-9-2.8.1" class="pilcrow">¶</a></p>
+          <p id="section-9-2.8.1">Verify that <code>receipt[0].sub</code> equals the outer token's top-level <code>sub</code>.  When <code>receipt[0]</code> carries <code>sub_id</code>, it <span class="bcp14">MUST</span> equal the outer token's top-level <code>sub_id</code>; when the outer token carries <code>sub_id</code> and <code>receipt[0]</code> does not, the recipient <span class="bcp14">MAY</span> accept this as receipt-side privacy suppression and treat the outer token's <code>sub_id</code> as authoritative for the canonical subject identifier per the Subject Issuer Context section of <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>.<a href="#section-9-2.8.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-9-2.9">
           <p id="section-9-2.9.1">Treat each receipt <code>cnf</code> value, if present, only as historical provenance for that hop.  A mismatch between the current outer token's top-level <code>cnf</code> and the outermost receipt <code>cnf</code> <span class="bcp14">MUST NOT</span> by itself invalidate the receipt chain under this profile.<a href="#section-9-2.9.1" class="pilcrow">¶</a></p>
@@ -1892,7 +1901,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-subject-re-expression-acros">
 <a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-subject-re-expression-acros" class="section-name selfRef">Subject Re-Expression Across Hops</a>
         </h3>
-<p id="section-9.1-1">Older receipts can carry a different <code>sub</code> value from the current outer token when the subject has been re-expressed across issuer namespaces.  This document does not define a universal subject-mapping algorithm.<a href="#section-9.1-1" class="pilcrow">¶</a></p>
+<p id="section-9.1-1">Older receipts can carry a different <code>sub</code> value, a different <code>sub_id</code> value, or both, from the current outer token when the subject has been re-expressed across issuer namespaces.  This document does not define a universal subject-mapping algorithm.<a href="#section-9.1-1" class="pilcrow">¶</a></p>
 <p id="section-9.1-2">Accordingly:<a href="#section-9.1-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-9.1-3.1">
@@ -1902,7 +1911,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-9.1-3.2.1">older receipt <code>sub</code> values <span class="bcp14">MAY</span> differ;<a href="#section-9.1-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-9.1-3.3">
-            <p id="section-9.1-3.3.1">a recipient that applies stronger continuity requirements across older <code>sub</code> values <span class="bcp14">MUST</span> do so under explicit trusted local mapping rules.<a href="#section-9.1-3.3.1" class="pilcrow">¶</a></p>
+            <p id="section-9.1-3.3.1">older receipt <code>sub_id</code> values, when present, <span class="bcp14">MAY</span> identify a different namespace authority from the current outer token's <code>sub_id</code> or <code>iss</code>;<a href="#section-9.1-3.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.1-3.4">
+            <p id="section-9.1-3.4.1">a recipient that applies stronger continuity requirements across older <code>sub</code> or <code>sub_id</code> values <span class="bcp14">MUST</span> do so under explicit trusted local mapping rules.<a href="#section-9.1-3.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-9.1-4">Recipients <span class="bcp14">MUST</span> be aware that permitting differing <code>sub</code> values across receipts creates a cross-subject insertion risk: a receipt from an unrelated subject chain that happens to share the same actor identity could satisfy the structural hop-alignment check.  Deployments where subject continuity is a security requirement <span class="bcp14">SHOULD</span> require consistent <code>sub</code> values across all receipts in the chain, or enforce explicit trusted subject-mapping rules that can positively confirm each distinct <code>sub</code> value refers to the same underlying entity.  When neither condition is met, the recipient <span class="bcp14">MUST</span> treat the differing <code>sub</code> values as unverified subject continuity and <span class="bcp14">MUST NOT</span> rely on those older receipts for authorization decisions.<a href="#section-9.1-4" class="pilcrow">¶</a></p>
@@ -2451,7 +2463,13 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <div class="lang-json sourcecode" id="section-14.2-3">
 <pre>
 {
+  "iss": "https://tts.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
+  "sub_id": {
+    "format": "iss_sub",
+    "iss": "https://idp.enterprise.example",
+    "sub": "https://idp.enterprise.example/users/alice"
+  },
   "act": {
     "sub": "https://wimse.travel-provider.example/workloads/payments",
     "iss": "https://tts.travel-provider.example",
@@ -2479,12 +2497,18 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 }
 </pre><a href="#section-14.2-3" class="pilcrow">¶</a>
 </div>
-<p id="section-14.2-4">The new leading receipt created by the TTS is:<a href="#section-14.2-4" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-14.2-5">
+<p id="section-14.2-4">The token's <code>iss</code> is the TTS, but its <code>sub</code> was assigned by the enterprise identity provider.  The <code>sub_id</code> claim in <code>iss_sub</code> format records the enterprise IdP as the namespace authority for <code>sub</code>, so that recipients can evaluate the canonical subject identifier as (<code>https://idp.enterprise.example</code>, <code>https://idp.enterprise.example/users/alice</code>) rather than relying on the TTS as the subject namespace authority.<a href="#section-14.2-4" class="pilcrow">¶</a></p>
+<p id="section-14.2-5">The new leading receipt created by the TTS is:<a href="#section-14.2-5" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="section-14.2-6">
 <pre>
 {
   "iss": "https://tts.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
+  "sub_id": {
+    "format": "iss_sub",
+    "iss": "https://idp.enterprise.example",
+    "sub": "https://idp.enterprise.example/users/alice"
+  },
   "act": {
     "sub": "https://wimse.travel-provider.example/workloads/payments",
     "iss": "https://tts.travel-provider.example",
@@ -2499,9 +2523,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
   "jti": "8b1ab6d1-c345-4bd3-8af2-f302d54444b7",
   "token_id": "f0e1d2c3-b4a5-6789-cdef-012345678901"
 }
-</pre><a href="#section-14.2-5" class="pilcrow">¶</a>
+</pre><a href="#section-14.2-6" class="pilcrow">¶</a>
 </div>
-<p id="section-14.2-6">The inherited receipts for the booking tool and the AI agent are carried forward unchanged.<a href="#section-14.2-6" class="pilcrow">¶</a></p>
+<p id="section-14.2-7">The inherited receipts for the booking tool and the AI agent are carried forward unchanged.<a href="#section-14.2-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2556,6 +2580,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <dt id="RFC8725">[RFC8725]</dt>
         <dd>
 <span class="refAuthor">Sheffer, Y.</span>, <span class="refAuthor">Hardt, D.</span>, and <span class="refAuthor">M. Jones</span>, <span class="refTitle">"JSON Web Token Best Current Practices"</span>, <span class="seriesInfo">BCP 225</span>, <span class="seriesInfo">RFC 8725</span>, <span class="seriesInfo">DOI 10.17487/RFC8725</span>, <time datetime="2020-02" class="refDate">February 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8725">https://www.rfc-editor.org/info/rfc8725</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9493">[RFC9493]</dt>
+        <dd>
+<span class="refAuthor">Backman, A., Ed.</span>, <span class="refAuthor">Scurtescu, M.</span>, and <span class="refAuthor">P. Jain</span>, <span class="refTitle">"Subject Identifiers for Security Event Tokens"</span>, <span class="seriesInfo">RFC 9493</span>, <span class="seriesInfo">DOI 10.17487/RFC9493</span>, <time datetime="2023-12" class="refDate">December 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9493">https://www.rfc-editor.org/info/rfc9493</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9728">[RFC9728]</dt>
         <dd>
