@@ -38,7 +38,6 @@ normative:
   RFC8414:
   RFC8693:
   RFC8725:
-  RFC9493:
   RFC9728:
   I-D.ietf-oauth-transaction-tokens:
   I-D.mcguinness-oauth-actor-profile:
@@ -198,9 +197,6 @@ The JWT payload of an actor receipt uses the following claims:
 `sub_profile`:
 : OPTIONAL.  The top-level `sub_profile` value, when the token issued at this hop carried one.
 
-`sub_id`:
-: OPTIONAL.  When the token issued at this hop carried a top-level `sub_id` claim per the Subject Issuer Context section of {{I-D.mcguinness-oauth-actor-profile}}, the receipt MAY include `sub_id` with the same value.  When present, `sub_id` MUST equal the top-level `sub_id` claim of the token issued at this hop.  This value records the canonical subject identifier in effect at the hop represented by the receipt.  Issuers SHOULD include `sub_id` in a receipt only when the relying parties that will receive the token have been evaluated for the associated upstream-identity disclosure risk; omitting `sub_id` does not invalidate the receipt.
-
 `act`:
 : REQUIRED.  A single-hop actor object.  This object:
 
@@ -260,7 +256,6 @@ If it does so, the new receipt:
 *  MUST set `sub` to the issued token's top-level `sub`;
 *  MUST set `act.sub` and `act.iss` to the new outermost actor;
 *  MUST copy the issued token's top-level `cnf`, if any, into the receipt `cnf`, subject to the disclosure considerations in {{receipt-claims}};
-*  MAY copy the issued token's top-level `sub_id`, if any, into the receipt `sub_id`, subject to the disclosure considerations in {{receipt-claims}};
 *  SHOULD set `token_id` to the issued token's `jti`, if the issued token carries a `jti`;
 *  MUST omit `prh`.
 
@@ -335,7 +330,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  and so on for the number of receipts present;
     *  when `act.sub_profile` is present in the receipt `act` object, the corresponding visible `act` object MUST contain `act.sub_profile` with the same value;
     *  when `act.sub_profile` is present only in the visible `act` object, the receipt remains aligned for this profile.  The visible value is not independently attested by that receipt, and recipients that require receipt coverage for actor classification MUST reject the receipt chain or apply explicit local mapping rules.
-8.  Verify that `receipt[0].sub` equals the outer token's top-level `sub`.  When `receipt[0]` carries `sub_id`, it MUST equal the outer token's top-level `sub_id`; when the outer token carries `sub_id` and `receipt[0]` does not, the recipient MAY accept this as receipt-side privacy suppression and treat the outer token's `sub_id` as authoritative for the canonical subject identifier per the Subject Issuer Context section of {{I-D.mcguinness-oauth-actor-profile}}.
+8.  Verify that `receipt[0].sub` equals the outer token's top-level `sub`.
 9.  Treat each receipt `cnf` value, if present, only as historical provenance for that hop.  A mismatch between the current outer token's top-level `cnf` and the outermost receipt `cnf` MUST NOT by itself invalidate the receipt chain under this profile.
 10.  Receipt `cnf` values MUST NOT replace validation of the current request against the outer token's top-level `cnf`.
 
@@ -343,14 +338,13 @@ If any required check fails, the recipient MUST reject the receipt chain for the
 
 ## Subject Re-Expression Across Hops
 
-Older receipts can carry a different `sub` value, a different `sub_id` value, or both, from the current outer token when the subject has been re-expressed across issuer namespaces.  This document does not define a universal subject-mapping algorithm.
+Older receipts can carry a different `sub` value from the current outer token when the subject has been re-expressed across issuer namespaces.  This document does not define a universal subject-mapping algorithm.
 
 Accordingly:
 
 *  only `receipt[0].sub` is required to equal the current outer token `sub`;
 *  older receipt `sub` values MAY differ;
-*  older receipt `sub_id` values, when present, MAY identify a different namespace authority from the current outer token's `sub_id` or `iss`;
-*  a recipient that applies stronger continuity requirements across older `sub` or `sub_id` values MUST do so under explicit trusted local mapping rules.
+*  a recipient that applies stronger continuity requirements across older `sub` values MUST do so under explicit trusted local mapping rules.
 
 Recipients MUST be aware that permitting differing `sub` values across receipts creates a cross-subject insertion risk: a receipt from an unrelated subject chain that happens to share the same actor identity could satisfy the structural hop-alignment check.  Deployments where subject continuity is a security requirement SHOULD require consistent `sub` values across all receipts in the chain, or enforce explicit trusted subject-mapping rules that can positively confirm each distinct `sub` value refers to the same underlying entity.  When neither condition is met, the recipient MUST treat the differing `sub` values as unverified subject continuity and MUST NOT rely on those older receipts for authorization decisions.
 
@@ -648,13 +642,7 @@ The resulting Transaction Token can carry:
 
 ~~~json
 {
-  "iss": "https://tts.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
-  "sub_id": {
-    "format": "iss_sub",
-    "iss": "https://idp.enterprise.example",
-    "sub": "https://idp.enterprise.example/users/alice"
-  },
   "act": {
     "sub": "https://wimse.travel-provider.example/workloads/payments",
     "iss": "https://tts.travel-provider.example",
@@ -682,19 +670,12 @@ The resulting Transaction Token can carry:
 }
 ~~~
 
-The token's `iss` is the TTS, but its `sub` was assigned by the enterprise identity provider.  The `sub_id` claim in `iss_sub` format records the enterprise IdP as the namespace authority for `sub`, so that recipients can evaluate the canonical subject identifier as (`https://idp.enterprise.example`, `https://idp.enterprise.example/users/alice`) rather than relying on the TTS as the subject namespace authority.
-
 The new leading receipt created by the TTS is:
 
 ~~~json
 {
   "iss": "https://tts.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
-  "sub_id": {
-    "format": "iss_sub",
-    "iss": "https://idp.enterprise.example",
-    "sub": "https://idp.enterprise.example/users/alice"
-  },
   "act": {
     "sub": "https://wimse.travel-provider.example/workloads/payments",
     "iss": "https://tts.travel-provider.example",

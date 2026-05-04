@@ -940,7 +940,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 1.  When the issued access token represents delegation per [Delegation Chains](#delegation-chains), the AS MUST include an `act` claim.  The AS MUST NOT silently drop actor information.  If the inbound credential carries no `act`, no validated `actor_token` is present, and no independent delegation basis exists, the AS MUST omit `act`.
 
-2.  The AS MUST preserve `sub` to refer to the same underlying subject as the inbound token.  If the AS uses a different subject-identifier namespace, it MAY change the `sub` value only to re-express that same subject in the new namespace under a trusted local mapping.  The AS MUST NOT replace `sub` with an identifier for a different subject.  Subject-namespace translation requirements and relying-party consequences are described in [Subject Namespace Translation](#subject-namespace-translation).  When the AS preserves a `sub` whose namespace authority is in a different trust domain from the issued token's `iss`, [Subject Issuer Context](#sub-iss) describes the optional `sub_id` claim used to convey that namespace authority in cross-domain scenarios.
+2.  The AS MUST preserve `sub` to refer to the same underlying subject as the inbound token.  If the AS uses a different subject-identifier namespace, it MAY change the `sub` value only to re-express that same subject in the new namespace under a trusted local mapping.  The AS MUST NOT replace `sub` with an identifier for a different subject.  Subject-namespace translation requirements and relying-party consequences are described in [Subject Namespace Translation](#subject-namespace-translation).
 
 3.  The AS MUST construct the `act` claim using the construction decision order in [Delegation Chain Validation and Construction](#delegation-chain-algorithm).  In summary:
 
@@ -1078,7 +1078,6 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
 
     *  The TTS MAY re-express `sub` in a different identifier namespace only when a trusted local mapping establishes that both identifiers refer to the same underlying subject (for example, when crossing trust-domain boundaries in a federation scenario).
     *  The TTS MUST NOT replace `sub` with an identifier for a different subject.
-    *  When the TTS preserves a `sub` whose namespace authority is in a different trust domain from the issued Transaction Token's `iss`, [Subject Issuer Context](#sub-iss) describes the optional `sub_id` claim used to convey that namespace authority in cross-domain scenarios.
 
     > Note: Subject-namespace translation requirements and relying-party consequences are described in [Subject Namespace Translation](#subject-namespace-translation).
 
@@ -1126,7 +1125,7 @@ This section brings together the normative rules for delegated-token consumers a
 
 When a token contains both `sub` and an `act` claim, a resource server has two independent principals available for authorization policy:
 
-*  **Subject principal** (`sub`): the party whose authorization is being exercised.  This principal typically has a relationship with the resource (e.g., an account, a role, a permission).  When the token carries a top-level `sub_id` claim with format `iss_sub`, the canonical subject identifier is (`sub_id.iss`, `sub_id.sub`) per [Subject Issuer Context](#sub-iss); otherwise it is (`iss`, `sub`).  Authorization decisions and identifier reconciliation across tokens MUST use the canonical pair.
+*  **Subject principal** (`sub`): the party whose authorization is being exercised.  This principal typically has a relationship with the resource (e.g., an account, a role, a permission).
 
 *  **Actor principal** (`act.sub`): the party that is making the immediate request.  This principal may be in a different organizational domain and trust level from the subject.
 
@@ -1614,36 +1613,6 @@ A receiving AS or RS that relies only on the issued token MAY evaluate the trans
 
 Deployments that need portable proof of subject equivalence across namespaces, or independently verifiable subject-mapping evidence, require another specification or companion profile; such a mechanism is outside the scope of this document.
 
-## Subject Issuer Context {#sub-iss}
-
-When an issued token preserves an inbound `sub` whose namespace authority differs from the token's own `iss`, the JWT default rule that `iss` is the namespace authority for `sub` no longer holds.  This typically arises in cross-domain delegation: a Transaction Token issued by a TTS that preserves a subject from an upstream identity-provider domain, or a JWT access token whose AS preserves an inbound subject from a different identity-provider namespace.
-
-To record the namespace context for `sub` independently of the token's own `iss`, this profile uses the `sub_id` claim defined in {{RFC9493}} with the `iss_sub` format (Section 3.2 of {{RFC9493}}).  No additional claim is defined here.
-
-`sub_id` is OPTIONAL under this profile.  Issuers SHOULD include it only when both of the following hold:
-
-*  the namespace authority for `sub` is in a different trust domain from the token issuer (the cross-domain case described above), and
-*  exposing that upstream namespace authority to the token's recipients is acceptable under deployment privacy policy.
-
-In single-domain or co-located deployments, the (`iss`, `sub`) default conveys subject namespace context without disclosing additional upstream identity, and `sub_id` SHOULD be omitted.
-
-The canonical subject identifier under this profile is:
-
-*  (`sub_id.iss`, `sub_id.sub`) when the token carries `sub_id` with format `iss_sub`;
-*  (`iss`, `sub`) otherwise.
-
-Recipients MUST evaluate the canonical subject identifier using these rules.  Equality of `sub` alone across tokens carrying different namespace authorities is not a sufficient basis for treating two subjects as the same entity.
-
-When an issuer chooses to include `sub_id`:
-
-*  If the issuer preserves an inbound `sub` whose namespace authority differs from the issued token's own `iss`, `sub_id.iss` MUST identify that upstream authority and `sub_id.sub` MUST equal the issued token's top-level `sub`.
-*  If the issuer translates `sub` into its own namespace under a trusted local mapping and chooses to record the pre-translation identifier, `sub_id.iss` and `sub_id.sub` MAY identify the original upstream subject identifier.  Such a `sub_id` records the issuer's pre-translation identifier; it is not portable proof of cross-namespace subject equivalence (see [Subject Namespace Translation](#subject-namespace-translation)).
-*  An issuer that reissues a token without translating `sub` MUST preserve any inbound `sub_id` claim unchanged.
-
-This profile uses only the `iss_sub` format for cross-namespace subject provenance.  Issuers MAY include `sub_id` values in other {{RFC9493}} formats for orthogonal purposes; recipients MUST evaluate the canonical subject rules above only against an `iss_sub`-format `sub_id`.
-
-Privacy considerations for `sub_id` disclosure are described in [Privacy Considerations](#privacy).
-
 ## Presenter Binding
 
 Without top-level presenter proof of possession, a leaked token can be replayed by any party.
@@ -1690,8 +1659,6 @@ The `txn` claim in Transaction Tokens ({{I-D.ietf-oauth-transaction-tokens}}) is
 The `act.sub_profile` claim discloses the entity type of the actor, including values such as `ai_agent` that reveal that a request is being made by an automated agent on behalf of the subject.  In some jurisdictions or deployment contexts, this disclosure may be legally significant or may reveal sensitive information about user behavior and tool composition that should not flow across trust-domain boundaries.  Issuers SHOULD consider audience-specific disclosure constraints when including `act.sub_profile` in cross-domain tokens, and SHOULD omit or suppress actor entity-type values when the recipient does not require them for authorization, audit, or policy enforcement.
 
 The `req_wl` claim in Transaction Tokens can also expose sensitive information about internal workload topology and service composition.  Transaction Token Services SHOULD disclose `req_wl` only to relying parties that need that information for authorization, audit, or policy enforcement, and SHOULD avoid propagating internal-only workload identifiers across trust-domain boundaries unless such disclosure is explicitly required by the deployment.
-
-The `sub_id` claim defined in [Subject Issuer Context](#sub-iss) discloses the upstream namespace authority for `sub` to every recipient of the token.  This identifier can reveal the upstream identity-provider domain and enable cross-service or cross-token correlation of subjects under that authority.  Issuers SHOULD include `sub_id` only in cross-domain scenarios where the recipient needs the upstream namespace authority to evaluate the canonical subject identifier, and SHOULD omit it in single-domain or co-located deployments where the (`iss`, `sub`) default already conveys subject namespace context.
 
 
 # IANA Considerations
