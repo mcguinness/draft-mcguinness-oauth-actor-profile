@@ -1440,19 +1440,16 @@ svg :is([fill="white"], [fill^="#fff"]) {
                 <p id="section-toc.1-1.14.2.9.1"><a href="#section-14.9" class="auto internal xref">14.9</a>.  <a href="#name-subject-namespace-translati" class="internal xref">Subject Namespace Translation</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14.2.10">
-                <p id="section-toc.1-1.14.2.10.1"><a href="#section-14.10" class="auto internal xref">14.10</a>. <a href="#name-subject-issuer-context" class="internal xref">Subject Issuer Context</a></p>
+                <p id="section-toc.1-1.14.2.10.1"><a href="#section-14.10" class="auto internal xref">14.10</a>. <a href="#name-presenter-binding" class="internal xref">Presenter Binding</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14.2.11">
-                <p id="section-toc.1-1.14.2.11.1"><a href="#section-14.11" class="auto internal xref">14.11</a>. <a href="#name-presenter-binding" class="internal xref">Presenter Binding</a></p>
+                <p id="section-toc.1-1.14.2.11.1"><a href="#section-14.11" class="auto internal xref">14.11</a>. <a href="#name-delegation-depth-limits" class="internal xref">Delegation Depth Limits</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14.2.12">
-                <p id="section-toc.1-1.14.2.12.1"><a href="#section-14.12" class="auto internal xref">14.12</a>. <a href="#name-delegation-depth-limits" class="internal xref">Delegation Depth Limits</a></p>
+                <p id="section-toc.1-1.14.2.12.1"><a href="#section-14.12" class="auto internal xref">14.12</a>. <a href="#name-actor-identity-rotation" class="internal xref">Actor Identity Rotation</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14.2.13">
-                <p id="section-toc.1-1.14.2.13.1"><a href="#section-14.13" class="auto internal xref">14.13</a>. <a href="#name-actor-identity-rotation" class="internal xref">Actor Identity Rotation</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14.2.14">
-                <p id="section-toc.1-1.14.2.14.1"><a href="#section-14.14" class="auto internal xref">14.14</a>. <a href="#name-delegation-revocation" class="internal xref">Delegation Revocation</a></p>
+                <p id="section-toc.1-1.14.2.13.1"><a href="#section-14.13" class="auto internal xref">14.13</a>. <a href="#name-delegation-revocation" class="internal xref">Delegation Revocation</a></p>
 </li>
             </ul>
 </li>
@@ -2969,7 +2966,7 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
               <p id="section-6.5.2-7.1.1">When the issued access token represents delegation per <span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.5</a>)</span>, the AS <span class="bcp14">MUST</span> include an <code>act</code> claim.  The AS <span class="bcp14">MUST NOT</span> silently drop actor information.  If the inbound credential carries no <code>act</code>, no validated <code>actor_token</code> is present, and no independent delegation basis exists, the AS <span class="bcp14">MUST</span> omit <code>act</code>.<a href="#section-6.5.2-7.1.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-6.5.2-7.2">
-              <p id="section-6.5.2-7.2.1">The AS <span class="bcp14">MUST</span> preserve <code>sub</code> to refer to the same underlying subject as the inbound token.  If the AS uses a different subject-identifier namespace, it <span class="bcp14">MAY</span> change the <code>sub</code> value only to re-express that same subject in the new namespace under a trusted local mapping.  The AS <span class="bcp14">MUST NOT</span> replace <code>sub</code> with an identifier for a different subject.  Subject-namespace translation requirements and relying-party consequences are described in <span><a href="#subject-namespace-translation" class="internal xref">Subject Namespace Translation</a> (<a href="#subject-namespace-translation" class="auto internal xref">Section 14.9</a>)</span>.  When the AS preserves a <code>sub</code> whose namespace authority is in a different trust domain from the issued token's <code>iss</code>, <span><a href="#sub-iss" class="internal xref">Subject Issuer Context</a> (<a href="#sub-iss" class="auto internal xref">Section 14.10</a>)</span> describes the optional <code>sub_id</code> claim used to convey that namespace authority in cross-domain scenarios.<a href="#section-6.5.2-7.2.1" class="pilcrow">¶</a></p>
+              <p id="section-6.5.2-7.2.1">The AS <span class="bcp14">MUST</span> preserve <code>sub</code> to refer to the same underlying subject as the inbound token.  If the AS uses a different subject-identifier namespace, it <span class="bcp14">MAY</span> change the <code>sub</code> value only to re-express that same subject in the new namespace under a trusted local mapping.  The AS <span class="bcp14">MUST NOT</span> replace <code>sub</code> with an identifier for a different subject.  Subject-namespace translation requirements and relying-party consequences are described in <span><a href="#subject-namespace-translation" class="internal xref">Subject Namespace Translation</a> (<a href="#subject-namespace-translation" class="auto internal xref">Section 14.9</a>)</span>.<a href="#section-6.5.2-7.2.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-6.5.2-7.3">
               <p id="section-6.5.2-7.3.1">The AS <span class="bcp14">MUST</span> construct the <code>act</code> claim using the construction decision order in <span><a href="#delegation-chain-algorithm" class="internal xref">Delegation Chain Validation and Construction</a> (<a href="#delegation-chain-algorithm" class="auto internal xref">Section 3.6</a>)</span>.  In summary:<a href="#section-6.5.2-7.3.1" class="pilcrow">¶</a></p>
@@ -3196,9 +3193,6 @@ See <span><a href="#client-identity-delegation" class="internal xref">Client Ide
               <li class="normal" id="section-7.4-3.1.2.2">
                 <p id="section-7.4-3.1.2.2.1">The TTS <span class="bcp14">MUST NOT</span> replace <code>sub</code> with an identifier for a different subject.<a href="#section-7.4-3.1.2.2.1" class="pilcrow">¶</a></p>
 </li>
-              <li class="normal" id="section-7.4-3.1.2.3">
-                <p id="section-7.4-3.1.2.3.1">When the TTS preserves a <code>sub</code> whose namespace authority is in a different trust domain from the issued Transaction Token's <code>iss</code>, <span><a href="#sub-iss" class="internal xref">Subject Issuer Context</a> (<a href="#sub-iss" class="auto internal xref">Section 14.10</a>)</span> describes the optional <code>sub_id</code> claim used to convey that namespace authority in cross-domain scenarios.<a href="#section-7.4-3.1.2.3.1" class="pilcrow">¶</a></p>
-</li>
             </ul>
 <ul class="normal ulEmpty">
 <li class="normal ulEmpty" id="section-7.4-3.1.3.1">
@@ -3286,7 +3280,7 @@ For a new outermost actor, the TTS <span class="bcp14">MUST</span> set <code>act
 <p id="section-8.1-1">When a token contains both <code>sub</code> and an <code>act</code> claim, a resource server has two independent principals available for authorization policy:<a href="#section-8.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.1-2.1">
-            <p id="section-8.1-2.1.1"><strong>Subject principal</strong> (<code>sub</code>): the party whose authorization is being exercised.  This principal typically has a relationship with the resource (e.g., an account, a role, a permission).  When the token carries a top-level <code>sub_id</code> claim with format <code>iss_sub</code>, the canonical subject identifier is (<code>sub_id.iss</code>, <code>sub_id.sub</code>) per <span><a href="#sub-iss" class="internal xref">Subject Issuer Context</a> (<a href="#sub-iss" class="auto internal xref">Section 14.10</a>)</span>; otherwise it is (<code>iss</code>, <code>sub</code>).  Authorization decisions and identifier reconciliation across tokens <span class="bcp14">MUST</span> use the canonical pair.<a href="#section-8.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-8.1-2.1.1"><strong>Subject principal</strong> (<code>sub</code>): the party whose authorization is being exercised.  This principal typically has a relationship with the resource (e.g., an account, a role, a permission).<a href="#section-8.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.1-2.2">
             <p id="section-8.1-2.2.1"><strong>Actor principal</strong> (<code>act.sub</code>): the party that is making the immediate request.  This principal may be in a different organizational domain and trust level from the subject.<a href="#section-8.1-2.2.1" class="pilcrow">¶</a></p>
@@ -4112,93 +4106,50 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <p id="section-14.9-5">Deployments that need portable proof of subject equivalence across namespaces, or independently verifiable subject-mapping evidence, require another specification or companion profile; such a mechanism is outside the scope of this document.<a href="#section-14.9-5" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="sub-iss">
-<section id="section-14.10">
-        <h3 id="name-subject-issuer-context">
-<a href="#section-14.10" class="section-number selfRef">14.10. </a><a href="#name-subject-issuer-context" class="section-name selfRef">Subject Issuer Context</a>
-        </h3>
-<p id="section-14.10-1">When an issued token preserves an inbound <code>sub</code> whose namespace authority differs from the token's own <code>iss</code>, the JWT default rule that <code>iss</code> is the namespace authority for <code>sub</code> no longer holds.  This typically arises in cross-domain delegation: a Transaction Token issued by a TTS that preserves a subject from an upstream identity-provider domain, or a JWT access token whose AS preserves an inbound subject from a different identity-provider namespace.<a href="#section-14.10-1" class="pilcrow">¶</a></p>
-<p id="section-14.10-2">To record the namespace context for <code>sub</code> independently of the token's own <code>iss</code>, this profile uses the <code>sub_id</code> claim defined in <span>[<a href="#RFC9493" class="cite xref">RFC9493</a>]</span> with the <code>iss_sub</code> format (Section 3.2 of <span>[<a href="#RFC9493" class="cite xref">RFC9493</a>]</span>).  No additional claim is defined here.<a href="#section-14.10-2" class="pilcrow">¶</a></p>
-<p id="section-14.10-3"><code>sub_id</code> is <span class="bcp14">OPTIONAL</span> under this profile.  Issuers <span class="bcp14">SHOULD</span> include it only when both of the following hold:<a href="#section-14.10-3" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-14.10-4.1">
-            <p id="section-14.10-4.1.1">the namespace authority for <code>sub</code> is in a different trust domain from the token issuer (the cross-domain case described above), and<a href="#section-14.10-4.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-14.10-4.2">
-            <p id="section-14.10-4.2.1">exposing that upstream namespace authority to the token's recipients is acceptable under deployment privacy policy.<a href="#section-14.10-4.2.1" class="pilcrow">¶</a></p>
-</li>
-        </ul>
-<p id="section-14.10-5">In single-domain or co-located deployments, the (<code>iss</code>, <code>sub</code>) default conveys subject namespace context without disclosing additional upstream identity, and <code>sub_id</code> <span class="bcp14">SHOULD</span> be omitted.<a href="#section-14.10-5" class="pilcrow">¶</a></p>
-<p id="section-14.10-6">The canonical subject identifier under this profile is:<a href="#section-14.10-6" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-14.10-7.1">
-            <p id="section-14.10-7.1.1">(<code>sub_id.iss</code>, <code>sub_id.sub</code>) when the token carries <code>sub_id</code> with format <code>iss_sub</code>;<a href="#section-14.10-7.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-14.10-7.2">
-            <p id="section-14.10-7.2.1">(<code>iss</code>, <code>sub</code>) otherwise.<a href="#section-14.10-7.2.1" class="pilcrow">¶</a></p>
-</li>
-        </ul>
-<p id="section-14.10-8">Recipients <span class="bcp14">MUST</span> evaluate the canonical subject identifier using these rules.  Equality of <code>sub</code> alone across tokens carrying different namespace authorities is not a sufficient basis for treating two subjects as the same entity.<a href="#section-14.10-8" class="pilcrow">¶</a></p>
-<p id="section-14.10-9">When an issuer chooses to include <code>sub_id</code>:<a href="#section-14.10-9" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-14.10-10.1">
-            <p id="section-14.10-10.1.1">If the issuer preserves an inbound <code>sub</code> whose namespace authority differs from the issued token's own <code>iss</code>, <code>sub_id.iss</code> <span class="bcp14">MUST</span> identify that upstream authority and <code>sub_id.sub</code> <span class="bcp14">MUST</span> equal the issued token's top-level <code>sub</code>.<a href="#section-14.10-10.1.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-14.10-10.2">
-            <p id="section-14.10-10.2.1">If the issuer translates <code>sub</code> into its own namespace under a trusted local mapping and chooses to record the pre-translation identifier, <code>sub_id.iss</code> and <code>sub_id.sub</code> <span class="bcp14">MAY</span> identify the original upstream subject identifier.  Such a <code>sub_id</code> records the issuer's pre-translation identifier; it is not portable proof of cross-namespace subject equivalence (see <span><a href="#subject-namespace-translation" class="internal xref">Subject Namespace Translation</a> (<a href="#subject-namespace-translation" class="auto internal xref">Section 14.9</a>)</span>).<a href="#section-14.10-10.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-14.10-10.3">
-            <p id="section-14.10-10.3.1">An issuer that reissues a token without translating <code>sub</code> <span class="bcp14">MUST</span> preserve any inbound <code>sub_id</code> claim unchanged.<a href="#section-14.10-10.3.1" class="pilcrow">¶</a></p>
-</li>
-        </ul>
-<p id="section-14.10-11">This profile uses only the <code>iss_sub</code> format for cross-namespace subject provenance.  Issuers <span class="bcp14">MAY</span> include <code>sub_id</code> values in other <span>[<a href="#RFC9493" class="cite xref">RFC9493</a>]</span> formats for orthogonal purposes; recipients <span class="bcp14">MUST</span> evaluate the canonical subject rules above only against an <code>iss_sub</code>-format <code>sub_id</code>.<a href="#section-14.10-11" class="pilcrow">¶</a></p>
-<p id="section-14.10-12">Privacy considerations for <code>sub_id</code> disclosure are described in <span><a href="#privacy" class="internal xref">Privacy Considerations</a> (<a href="#privacy" class="auto internal xref">Section 15</a>)</span>.<a href="#section-14.10-12" class="pilcrow">¶</a></p>
-</section>
-</div>
 <div id="presenter-binding">
-<section id="section-14.11">
+<section id="section-14.10">
         <h3 id="name-presenter-binding">
-<a href="#section-14.11" class="section-number selfRef">14.11. </a><a href="#name-presenter-binding" class="section-name selfRef">Presenter Binding</a>
+<a href="#section-14.10" class="section-number selfRef">14.10. </a><a href="#name-presenter-binding" class="section-name selfRef">Presenter Binding</a>
         </h3>
-<p id="section-14.11-1">Without top-level presenter proof of possession, a leaked token can be replayed by any party.<a href="#section-14.11-1" class="pilcrow">¶</a></p>
+<p id="section-14.10-1">Without top-level presenter proof of possession, a leaked token can be replayed by any party.<a href="#section-14.10-1" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-14.11-2.1">
-            <p id="section-14.11-2.1.1">The RS <span class="bcp14">SHOULD</span> require the presenter-proof mechanism appropriate to the token type and deployment for the top-level <code>cnf.jkt</code> or other top-level confirmation information.  For example, JWT access tokens commonly use DPoP or mTLS, while Transaction Tokens can use the workload proof mechanism defined by their deployment profile.<a href="#section-14.11-2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-14.10-2.1">
+            <p id="section-14.10-2.1.1">The RS <span class="bcp14">SHOULD</span> require the presenter-proof mechanism appropriate to the token type and deployment for the top-level <code>cnf.jkt</code> or other top-level confirmation information.  For example, JWT access tokens commonly use DPoP or mTLS, while Transaction Tokens can use the workload proof mechanism defined by their deployment profile.<a href="#section-14.10-2.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-14.11-2.2">
-            <p id="section-14.11-2.2.1">Deployments that use sender-constrained tokens for delegated access <span class="bcp14">SHOULD</span> apply that protection to the current presenter to reduce delegation-token theft risk.<a href="#section-14.11-2.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-14.10-2.2">
+            <p id="section-14.10-2.2.1">Deployments that use sender-constrained tokens for delegated access <span class="bcp14">SHOULD</span> apply that protection to the current presenter to reduce delegation-token theft risk.<a href="#section-14.10-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-14.11-3">This document does not define per-hop actor-key provenance within the delegation chain.  Deployments that need stronger assurance for prior-hop provenance <span class="bcp14">MUST</span> use an additional mechanism outside the scope of this document, such as signed hop receipts, transparency-log-based recording, or another future extension; they <span class="bcp14">MUST NOT</span> overload <code>act.iss</code> or redefine nested <code>act</code> semantics to carry that provenance.  Companion profiles that supply such mechanisms <span class="bcp14">MUST</span> follow <span><a href="#companion-profile-extensibility" class="internal xref">Companion Profiles and Extension Points</a> (<a href="#companion-profile-extensibility" class="auto internal xref">Section 11</a>)</span>.<a href="#section-14.11-3" class="pilcrow">¶</a></p>
+<p id="section-14.10-3">This document does not define per-hop actor-key provenance within the delegation chain.  Deployments that need stronger assurance for prior-hop provenance <span class="bcp14">MUST</span> use an additional mechanism outside the scope of this document, such as signed hop receipts, transparency-log-based recording, or another future extension; they <span class="bcp14">MUST NOT</span> overload <code>act.iss</code> or redefine nested <code>act</code> semantics to carry that provenance.  Companion profiles that supply such mechanisms <span class="bcp14">MUST</span> follow <span><a href="#companion-profile-extensibility" class="internal xref">Companion Profiles and Extension Points</a> (<a href="#companion-profile-extensibility" class="auto internal xref">Section 11</a>)</span>.<a href="#section-14.10-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="delegation-depth-limits">
-<section id="section-14.12">
+<section id="section-14.11">
         <h3 id="name-delegation-depth-limits">
-<a href="#section-14.12" class="section-number selfRef">14.12. </a><a href="#name-delegation-depth-limits" class="section-name selfRef">Delegation Depth Limits</a>
+<a href="#section-14.11" class="section-number selfRef">14.11. </a><a href="#name-delegation-depth-limits" class="section-name selfRef">Delegation Depth Limits</a>
         </h3>
-<p id="section-14.12-1">Unbounded delegation chains increase attack surface and complicate policy evaluation.  Depth support and interoperability requirements are defined in <span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.5</a>)</span>.  Implementations that encounter chains exceeding their configured local maximum <span class="bcp14">MUST</span> reject the token to prevent denial-of-service through chain parsing.<a href="#section-14.12-1" class="pilcrow">¶</a></p>
+<p id="section-14.11-1">Unbounded delegation chains increase attack surface and complicate policy evaluation.  Depth support and interoperability requirements are defined in <span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.5</a>)</span>.  Implementations that encounter chains exceeding their configured local maximum <span class="bcp14">MUST</span> reject the token to prevent denial-of-service through chain parsing.<a href="#section-14.11-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="actor-identity-rotation">
-<section id="section-14.13">
+<section id="section-14.12">
         <h3 id="name-actor-identity-rotation">
-<a href="#section-14.13" class="section-number selfRef">14.13. </a><a href="#name-actor-identity-rotation" class="section-name selfRef">Actor Identity Rotation</a>
+<a href="#section-14.12" class="section-number selfRef">14.12. </a><a href="#name-actor-identity-rotation" class="section-name selfRef">Actor Identity Rotation</a>
         </h3>
-<p id="section-14.13-1">The canonical actor identifier under this profile is the (<code>act.iss</code>, <code>act.sub</code>) pair.  Deployments <span class="bcp14">SHOULD</span> choose <code>act.sub</code> to be a durable, stable identifier independent of ephemeral key material.  In particular, deployments <span class="bcp14">SHOULD NOT</span> use a JWK thumbprint or other key-derived value as <code>act.sub</code>; doing so silently changes the actor identity on every key rotation, which can break delegation grants and policy bindings that reference the prior identifier.  Key rotation (replacing the DPoP key or mTLS certificate bound to an actor) does not require changing <code>act.sub</code> when the identifier is key-independent.<a href="#section-14.13-1" class="pilcrow">¶</a></p>
-<p id="section-14.13-2">When <code>act.sub</code> itself must change (for example, because an agent instance is replaced, a workload is renamed, or an actor identifier namespace migrates), existing delegation grants and issued tokens continue to reference the old identifier.  Deployments <span class="bcp14">MUST</span> explicitly re-establish delegation grants for the new identity; the old grants do not automatically transfer.  Outstanding tokens issued under the old identity remain valid until their <code>exp</code> time; short token lifetimes bound the exposure window during the transition.<a href="#section-14.13-2" class="pilcrow">¶</a></p>
+<p id="section-14.12-1">The canonical actor identifier under this profile is the (<code>act.iss</code>, <code>act.sub</code>) pair.  Deployments <span class="bcp14">SHOULD</span> choose <code>act.sub</code> to be a durable, stable identifier independent of ephemeral key material.  In particular, deployments <span class="bcp14">SHOULD NOT</span> use a JWK thumbprint or other key-derived value as <code>act.sub</code>; doing so silently changes the actor identity on every key rotation, which can break delegation grants and policy bindings that reference the prior identifier.  Key rotation (replacing the DPoP key or mTLS certificate bound to an actor) does not require changing <code>act.sub</code> when the identifier is key-independent.<a href="#section-14.12-1" class="pilcrow">¶</a></p>
+<p id="section-14.12-2">When <code>act.sub</code> itself must change (for example, because an agent instance is replaced, a workload is renamed, or an actor identifier namespace migrates), existing delegation grants and issued tokens continue to reference the old identifier.  Deployments <span class="bcp14">MUST</span> explicitly re-establish delegation grants for the new identity; the old grants do not automatically transfer.  Outstanding tokens issued under the old identity remain valid until their <code>exp</code> time; short token lifetimes bound the exposure window during the transition.<a href="#section-14.12-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="delegation-revocation">
-<section id="section-14.14">
+<section id="section-14.13">
         <h3 id="name-delegation-revocation">
-<a href="#section-14.14" class="section-number selfRef">14.14. </a><a href="#name-delegation-revocation" class="section-name selfRef">Delegation Revocation</a>
+<a href="#section-14.13" class="section-number selfRef">14.13. </a><a href="#name-delegation-revocation" class="section-name selfRef">Delegation Revocation</a>
         </h3>
-<p id="section-14.14-1">The revocation-related requirements in this section are limited to how this profile interacts with already-issued tokens and refresh behavior.<a href="#section-14.14-1" class="pilcrow">¶</a></p>
-<p id="section-14.14-2">Token revocation (<span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span>) applies to individual tokens but does not revoke an underlying delegation relationship or invalidate already-issued downstream tokens in a delegation chain.  When Alice revokes her delegation to an agent, access tokens already issued to downstream actors remain valid until their <code>exp</code> time.  Short token lifetimes are the primary mitigation; see <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> for general access token lifetime guidance.<a href="#section-14.14-2" class="pilcrow">¶</a></p>
-<p id="section-14.14-3">The AS <span class="bcp14">SHOULD</span> refuse to issue new tokens for a (subject, actor) pair when it has authoritative knowledge that the delegation relationship has been revoked.  Implementations <span class="bcp14">MUST NOT</span> use delegation chain depth as a rationale for skipping revocation checks.<a href="#section-14.14-3" class="pilcrow">¶</a></p>
-<p id="section-14.14-4">When a deployment uses long-lived delegated refresh behavior, revocation of the delegation relationship may take effect later than it would in a model that requires re-presentation of a current upstream delegation artifact at each token request.  This document does not standardize refresh-token revocation or revalidation policy; deployments should account for that tradeoff explicitly.<a href="#section-14.14-4" class="pilcrow">¶</a></p>
-<p id="section-14.14-5">The internal mechanism by which an AS tracks delegation state (whether a formal registry, a consent store, a policy engine, or another form) is a deployment and product decision outside the scope of this document.  Resource servers in security-sensitive deployments may use token introspection (<span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>, <span><a href="#token-introspection" class="internal xref">Token Introspection</a> (<a href="#token-introspection" class="auto internal xref">Section 8.4</a>)</span>) when request-time revocation state is needed, or may rely on short token lifetimes; the choice of revocation strategy is deployment-specific.<a href="#section-14.14-5" class="pilcrow">¶</a></p>
+<p id="section-14.13-1">The revocation-related requirements in this section are limited to how this profile interacts with already-issued tokens and refresh behavior.<a href="#section-14.13-1" class="pilcrow">¶</a></p>
+<p id="section-14.13-2">Token revocation (<span>[<a href="#RFC7009" class="cite xref">RFC7009</a>]</span>) applies to individual tokens but does not revoke an underlying delegation relationship or invalidate already-issued downstream tokens in a delegation chain.  When Alice revokes her delegation to an agent, access tokens already issued to downstream actors remain valid until their <code>exp</code> time.  Short token lifetimes are the primary mitigation; see <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> for general access token lifetime guidance.<a href="#section-14.13-2" class="pilcrow">¶</a></p>
+<p id="section-14.13-3">The AS <span class="bcp14">SHOULD</span> refuse to issue new tokens for a (subject, actor) pair when it has authoritative knowledge that the delegation relationship has been revoked.  Implementations <span class="bcp14">MUST NOT</span> use delegation chain depth as a rationale for skipping revocation checks.<a href="#section-14.13-3" class="pilcrow">¶</a></p>
+<p id="section-14.13-4">When a deployment uses long-lived delegated refresh behavior, revocation of the delegation relationship may take effect later than it would in a model that requires re-presentation of a current upstream delegation artifact at each token request.  This document does not standardize refresh-token revocation or revalidation policy; deployments should account for that tradeoff explicitly.<a href="#section-14.13-4" class="pilcrow">¶</a></p>
+<p id="section-14.13-5">The internal mechanism by which an AS tracks delegation state (whether a formal registry, a consent store, a policy engine, or another form) is a deployment and product decision outside the scope of this document.  Resource servers in security-sensitive deployments may use token introspection (<span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>, <span><a href="#token-introspection" class="internal xref">Token Introspection</a> (<a href="#token-introspection" class="auto internal xref">Section 8.4</a>)</span>) when request-time revocation state is needed, or may rely on short token lifetimes; the choice of revocation strategy is deployment-specific.<a href="#section-14.13-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -4215,7 +4166,6 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <p id="section-15-5">The <code>txn</code> claim in Transaction Tokens (<span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>) is a stable, globally unique identifier shared across all tokens in a single business transaction.  When Transaction Tokens cross organizational boundaries, <code>txn</code> enables cross-domain correlation of all service calls within a transaction by any party that observes multiple tokens.  Cross-domain propagation and lifetime rules for <code>txn</code> are governed by <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>; deployments <span class="bcp14">SHOULD</span> consult that specification's privacy guidance when propagating Transaction Tokens across trust-domain boundaries.  This document notes that <code>txn</code> values, like other stable identifiers, should be treated as sensitive in contexts where cross-domain correlation of user activity is not required or authorized.<a href="#section-15-5" class="pilcrow">¶</a></p>
 <p id="section-15-6">The <code>act.sub_profile</code> claim discloses the entity type of the actor, including values such as <code>ai_agent</code> that reveal that a request is being made by an automated agent on behalf of the subject.  In some jurisdictions or deployment contexts, this disclosure may be legally significant or may reveal sensitive information about user behavior and tool composition that should not flow across trust-domain boundaries.  Issuers <span class="bcp14">SHOULD</span> consider audience-specific disclosure constraints when including <code>act.sub_profile</code> in cross-domain tokens, and <span class="bcp14">SHOULD</span> omit or suppress actor entity-type values when the recipient does not require them for authorization, audit, or policy enforcement.<a href="#section-15-6" class="pilcrow">¶</a></p>
 <p id="section-15-7">The <code>req_wl</code> claim in Transaction Tokens can also expose sensitive information about internal workload topology and service composition.  Transaction Token Services <span class="bcp14">SHOULD</span> disclose <code>req_wl</code> only to relying parties that need that information for authorization, audit, or policy enforcement, and <span class="bcp14">SHOULD</span> avoid propagating internal-only workload identifiers across trust-domain boundaries unless such disclosure is explicitly required by the deployment.<a href="#section-15-7" class="pilcrow">¶</a></p>
-<p id="section-15-8">The <code>sub_id</code> claim defined in <span><a href="#sub-iss" class="internal xref">Subject Issuer Context</a> (<a href="#sub-iss" class="auto internal xref">Section 14.10</a>)</span> discloses the upstream namespace authority for <code>sub</code> to every recipient of the token.  This identifier can reveal the upstream identity-provider domain and enable cross-service or cross-token correlation of subjects under that authority.  Issuers <span class="bcp14">SHOULD</span> include <code>sub_id</code> only in cross-domain scenarios where the recipient needs the upstream namespace authority to evaluate the canonical subject identifier, and <span class="bcp14">SHOULD</span> omit it in single-domain or co-located deployments where the (<code>iss</code>, <code>sub</code>) default already conveys subject namespace context.<a href="#section-15-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="iana-considerations">

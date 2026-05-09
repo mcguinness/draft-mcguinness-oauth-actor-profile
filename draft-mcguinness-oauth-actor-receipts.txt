@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Experimental                              30 April 2026
-Expires: 1 November 2026
+Intended status: Experimental                                 9 May 2026
+Expires: 10 November 2026
 
 
              OAuth Actor Receipts for Delegation Provenance
@@ -13,21 +13,16 @@ Expires: 1 November 2026
 
 Abstract
 
-   The OAuth Actor Profile for Delegation makes delegated actor identity
-   explicit in OAuth tokens, but it intentionally limits the core
-   profile to current-token semantics.  In particular, the core profile
-   uses the top-level cnf claim only for the current presenter and does
-   not standardize signed prior-hop key history inside the act chain.
-
    This document defines OAuth Actor Receipts, an optional companion
-   provenance profile for delegated tokens.  It introduces the
-   actor_receipts claim, a signed per-hop receipt chain that records
-   which issuer added each visible actor hop, preserves the historical
-   top-level cnf value associated with that hop, and links receipts
-   together so recipients can validate prior-hop provenance without
-   relying solely on the current outer token issuer.  This document also
-   defines metadata and introspection parameters for advertising and
-   consuming actor-receipt support.
+   provenance profile for delegated OAuth tokens that conform to the
+   OAuth Actor Profile for Delegation.  It introduces the actor_receipts
+   claim, a signed per-hop receipt chain that records which issuer added
+   each visible actor hop, preserves the historical top-level cnf value
+   associated with that hop, and links receipts together so recipients
+   can validate prior-hop provenance without relying solely on the
+   current outer token issuer.  This document also defines metadata and
+   introspection parameters for advertising and consuming actor-receipt
+   support.
 
 About This Document
 
@@ -62,7 +57,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 1 November 2026.
+   This Internet-Draft will expire on 10 November 2026.
 
 Copyright Notice
 
@@ -112,7 +107,8 @@ Table of Contents
      11.4.  Hash Algorithm Agility
      11.5.  Compromised Outer Issuer
      11.6.  Receipt Signing Key Compromise
-     11.7.  Historical cnf Disclosure
+     11.7.  Receipt Chain Size
+     11.8.  Historical cnf Disclosure
    12. Privacy Considerations
    13. IANA Considerations
      13.1.  Media Type Registration
@@ -164,21 +160,11 @@ Table of Contents
 
    This document applies to tokens that already conform to the OAuth
    Actor Profile for Delegation.  It supplements that profile; it does
-   not replace it.
-
-   This profile is positioned as a tactical extension to existing OAuth
-   deployments rather than a new architecture.  The strategic trust
-   model, including issuer trust, audience scoping, sender-constraint
-   validation, scope evaluation, and authorization decisions, remains
-   the OAuth ([RFC6749], [RFC8693]) and core-actor-profile model.
-   Receipts add an additive top-level JWT claim and a small set of
-   metadata signals on top of that model.  Clients require no protocol
-   changes.  Resource servers and authorization servers that do not
-   consume actor_receipts continue to operate exactly as they do under
-   the core profile, and tokens carrying receipts remain conformant
-   tokens under the core profile when receipts are ignored.  A
-   deployment opts into receipt-based provenance per resource server or
-   per trust domain, without re-platforming its OAuth substrate.
+   not replace it.  Receipts add an additive top-level JWT claim and a
+   small set of metadata signals on top of the existing OAuth
+   ([RFC6749], [RFC8693]) and core-actor-profile trust model;
+   deployments opt in per resource server or per trust domain.  Detailed
+   scope is captured in Design Goals and Non-Goals (Section 4).
 
 2.  Conventions and Definitions
 
@@ -198,6 +184,10 @@ Table of Contents
 
    Actor Receipt:  A signed JWT that attests one visible actor hop in a
       delegated token chain.
+
+   Outer Token:  The JWT access token or Transaction Token whose top-
+      level actor_receipts claim carries the receipt chain.
+      Distinguished from the receipt JWTs nested within it.
 
    Receipt Chain:  The ordered actor_receipts array carried in a token
       or introspection response.
@@ -392,27 +382,21 @@ Table of Contents
       signer.  The act.iss value inside the receipt identifies the
       namespace authority for act.sub, using the meaning defined by the
       core actor profile.  These values MAY be the same entity or
-      different entities.  When they differ, consumers MUST validate
-      trust in the receipt signer and namespace authority according to
-      their respective roles under local policy; the difference alone
-      does not make the receipt invalid under this profile.
+      different entities.  When they differ, consumers MUST evaluate two
+      distinct trust questions: (a) trust in iss as a receipt signer,
+      that is, whether this issuer's signature attests receipts under
+      local policy; and (b) trust in act.iss as the namespace authority
+      for act.sub, that is, whether this issuer's namespace produces
+      actor identifiers the recipient accepts.  These evaluations are
+      independent even when the same entity holds both roles.  The
+      difference between iss and act.iss alone does not make the receipt
+      invalid under this profile.
 
    sub:  REQUIRED.  The top-level sub value that was present in the
       token issued at this hop.
 
    sub_profile:  OPTIONAL.  The top-level sub_profile value, when the
       token issued at this hop carried one.
-
-   sub_id:  OPTIONAL.  When the token issued at this hop carried a top-
-      level sub_id claim per the Subject Issuer Context section of
-      [I-D.mcguinness-oauth-actor-profile], the receipt MAY include
-      sub_id with the same value.  When present, sub_id MUST equal the
-      top-level sub_id claim of the token issued at this hop.  This
-      value records the canonical subject identifier in effect at the
-      hop represented by the receipt.  Issuers SHOULD include sub_id in
-      a receipt only when the relying parties that will receive the
-      token have been evaluated for the associated upstream-identity
-      disclosure risk; omitting sub_id does not invalidate the receipt.
 
    act:  REQUIRED.  A single-hop actor object.  This object:
 
@@ -449,7 +433,8 @@ Table of Contents
    prh:  OPTIONAL.  Previous receipt hash.  When present, prh MUST be
       the base64url-encoded SHA-256 hash of the complete compact
       serialization of the next older receipt in the chain.  The oldest
-      receipt in the chain MUST omit prh.
+      receipt in the chain, including a single-element chain in which
+      the sole receipt is both newest and oldest, MUST omit prh.
 
    iat:  REQUIRED.  The time at which the receipt was created, as
       defined in [RFC7519].
@@ -458,9 +443,14 @@ Table of Contents
       [RFC7519].  exp MUST be set to a value that covers the expected
       maximum token lifetime of any token that will carry or inherit
       this receipt, so that consumer validation of older receipts in a
-      valid chain is not prematurely rejected.  Short exp values on
-      receipts limit the window during which a compromised receipt
-      signing key can be exploited.
+      valid chain is not prematurely rejected.  Issuers SHOULD set exp
+      to the maximum delegated-token lifetime permitted under local
+      policy for tokens that may inherit this receipt.  Downstream
+      issuers reject inbound receipts whose exp precedes the issued
+      outer token's exp (Section 8.2), so an under-set exp causes
+      propagation failure rather than mid-token-lifetime consumer
+      rejection.  Short exp values on receipts limit the window during
+      which a compromised receipt signing key can be exploited.
 
    jti:  REQUIRED.  A unique identifier for the receipt, as defined in
       [RFC7519].
@@ -542,10 +532,6 @@ Table of Contents
 
    *  MUST copy the issued token's top-level cnf, if any, into the
       receipt cnf, subject to the disclosure considerations in
-      Section 7.2;
-
-   *  MAY copy the issued token's top-level sub_id, if any, into the
-      receipt sub_id, subject to the disclosure considerations in
       Section 7.2;
 
    *  SHOULD set token_id to the issued token's jti, if the issued token
@@ -639,6 +625,14 @@ Table of Contents
       provenance, the issuer MUST either emit complete receipt coverage
       or fail the request under the error model of the underlying
       protocol.
+
+   When the issuer also filters the visible act chain (see the
+   chain_complete introspection member defined in the core actor profile
+   [I-D.mcguinness-oauth-actor-profile]), actor_receipts covers only the
+   visible filtered chain.  In that case actor_receipts_complete
+   describes coverage relative to the visible filtered chain, not the
+   unfiltered delegation chain; recipients that need true-chain
+   completeness MUST evaluate chain_complete separately.
 
 8.5.  Transaction Token Service Rebinding
 
@@ -748,13 +742,8 @@ Table of Contents
            explicit local mapping rules.
 
    8.   Verify that receipt[0].sub equals the outer token's top-level
-        sub.  When receipt[0] carries sub_id, it MUST equal the outer
-        token's top-level sub_id; when the outer token carries sub_id
-        and receipt[0] does not, the recipient MAY accept this as
-        receipt-side privacy suppression and treat the outer token's
-        sub_id as authoritative for the canonical subject identifier per
-        the Subject Issuer Context section of
-        [I-D.mcguinness-oauth-actor-profile].
+        sub.  Older receipts MAY carry differing sub values; see
+        Section 9.1.
 
    9.   Treat each receipt cnf value, if present, only as historical
         provenance for that hop.  A mismatch between the current outer
@@ -771,10 +760,10 @@ Table of Contents
 
 9.1.  Subject Re-Expression Across Hops
 
-   Older receipts can carry a different sub value, a different sub_id
-   value, or both, from the current outer token when the subject has
-   been re-expressed across issuer namespaces.  This document does not
-   define a universal subject-mapping algorithm.
+   Older receipts can carry a different sub value from the current outer
+   token when the subject has been re-expressed across issuer
+   namespaces.  This document does not define a universal subject-
+   mapping algorithm.
 
    Accordingly:
 
@@ -783,13 +772,9 @@ Table of Contents
 
    *  older receipt sub values MAY differ;
 
-   *  older receipt sub_id values, when present, MAY identify a
-      different namespace authority from the current outer token's
-      sub_id or iss;
-
    *  a recipient that applies stronger continuity requirements across
-      older sub or sub_id values MUST do so under explicit trusted local
-      mapping rules.
+      older sub values MUST do so under explicit trusted local mapping
+      rules.
 
    Recipients MUST be aware that permitting differing sub values across
    receipts creates a cross-subject insertion risk: a receipt from an
@@ -839,6 +824,14 @@ Table of Contents
    *  MAY return actor_receipts_complete to indicate whether the
       returned array provides complete coverage for the visible chain as
       known to the introspection server.
+
+   Introspection is the primary delivery mechanism for receipts
+   associated with opaque (non-JWT) outer tokens.  Such tokens cannot
+   carry an inline actor_receipts claim; the issuer instead retains the
+   receipts in its token store and surfaces them to authorized resource
+   servers via introspection.  The receipt format and consumer
+   processing rules above apply unchanged in this case, with the
+   introspection response substituting for the outer token's claim set.
 
    An introspection server that suppresses one or more receipts for
    privacy or policy reasons and still returns actor_receipts SHOULD
@@ -964,6 +957,18 @@ Table of Contents
    MUST do so only within an existing trust framework or equivalent
    local policy that defines which issuers are permitted.
 
+   Trust under this profile is per-issuer and not transitive: each
+   receipt is validated against the recipient's own trusted-issuer set,
+   regardless of which issuer minted the surrounding outer token or any
+   neighboring receipt.  A receipt chain therefore breaks at the first
+   inner receipt whose issuer is not in the recipient's trust set, even
+   when the outer token's issuer and earlier receipts are trusted.
+   Recipients SHOULD treat receipts whose issuers are not in the trusted
+   set as if they were absent and apply partial-coverage policy
+   (Section 10) accordingly.  Deployments that need uniform trust across
+   an extended chain MUST establish trust explicitly with every receipt
+   issuer that may appear in tokens they accept.
+
 11.3.  Receipt-to-Token Binding Limits
 
    Receipts prove that trusted issuers attested particular actor hops
@@ -987,6 +992,17 @@ Table of Contents
    are not independently verifiable by the consumer (see Section 9);
    deployments that depend on receipt-chain integrity MUST rely on prh
    plus a verifiable receipt[0].token_id, not on inner token_id values.
+
+   When receipt[0].iss differs from the outer token's iss, the consumer
+   relaxes the token_id bind-to-current check (Section 9) on the
+   assumption that the divergence reflects legitimate reissuance per
+   Section 8.3.  Recipients then rely on the current outer token
+   issuer's authority to have performed a legitimate reissuance; this
+   profile provides no in-band signal distinguishing legitimate
+   reissuance from a re-wrapping attack by a compromised issuer.
+   Recipients SHOULD restrict the set of issuers permitted to reissue
+   under this profile, and SHOULD treat unexpected reissuance divergence
+   as cause for additional scrutiny under local policy.
 
 11.4.  Hash Algorithm Agility
 
@@ -1030,7 +1046,19 @@ Table of Contents
    provenance for those hops and SHOULD require re-issuance through a
    trusted issuer.
 
-11.7.  Historical cnf Disclosure
+11.7.  Receipt Chain Size
+
+   Each receipt is a full signed JWT, and the receipt chain grows
+   linearly with delegation depth.  Tokens carrying deep chains can
+   exceed HTTP header size limits in proxies, gateways, or downstream
+   services.  Deployments SHOULD verify that the resulting outer token
+   plus its actor_receipts array fits within the header size budget of
+   every component on the request path that handles the token.  When
+   introspection is available, deployments MAY return receipts via
+   introspection rather than embedding them in the access token to avoid
+   header pressure for bearer-token clients.
+
+11.8.  Historical cnf Disclosure
 
    Receipt cnf values can reveal prior-hop public-key identifiers or
    certificate thumbprints to any party that receives the token or
@@ -1322,13 +1350,7 @@ Table of Contents
    The resulting Transaction Token can carry:
 
    {
-     "iss": "https://tts.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
-     "sub_id": {
-       "format": "iss_sub",
-       "iss": "https://idp.enterprise.example",
-       "sub": "https://idp.enterprise.example/users/alice"
-     },
      "act": {
        "sub": "https://wimse.travel-provider.example/workloads/payments",
        "iss": "https://tts.travel-provider.example",
@@ -1355,24 +1377,11 @@ Table of Contents
      "actor_receipts_complete": true
    }
 
-   The token's iss is the TTS, but its sub was assigned by the
-   enterprise identity provider.  The sub_id claim in iss_sub format
-   records the enterprise IdP as the namespace authority for sub, so
-   that recipients can evaluate the canonical subject identifier as
-   (https://idp.enterprise.example,
-   https://idp.enterprise.example/users/alice) rather than relying on
-   the TTS as the subject namespace authority.
-
    The new leading receipt created by the TTS is:
 
    {
      "iss": "https://tts.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
-     "sub_id": {
-       "format": "iss_sub",
-       "iss": "https://idp.enterprise.example",
-       "sub": "https://idp.enterprise.example/users/alice"
-     },
      "act": {
        "sub": "https://wimse.travel-provider.example/workloads/payments",
        "iss": "https://tts.travel-provider.example",
@@ -1437,11 +1446,6 @@ Table of Contents
               Current Practices", BCP 225, RFC 8725,
               DOI 10.17487/RFC8725, February 2020,
               <https://www.rfc-editor.org/info/rfc8725>.
-
-   [RFC9493]  Backman, A., Ed., Scurtescu, M., and P. Jain, "Subject
-              Identifiers for Security Event Tokens", RFC 9493,
-              DOI 10.17487/RFC9493, December 2023,
-              <https://www.rfc-editor.org/info/rfc9493>.
 
    [RFC9728]  Jones, M.B., Hunt, P., and A. Parecki, "OAuth 2.0
               Protected Resource Metadata", RFC 9728,
