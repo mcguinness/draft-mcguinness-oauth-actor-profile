@@ -467,10 +467,10 @@ have format-conversion patterns.
 ## See Also
 
 - [draft-mcguinness-oauth-actor-receipts](../draft-mcguinness-oauth-actor-receipts.md)
-  — companion this is built on.
+ : companion this is built on.
 - [SCITT-aligned variant](./draft-mcguinness-oauth-actor-receipts-scitt.md)
-  — alternative architectural approach.
+ : alternative architectural approach.
 - [draft-ietf-scitt-architecture](https://datatracker.ietf.org/doc/draft-ietf-scitt-architecture/)
-  — the IETF transparency framework this references.
+ : the IETF transparency framework this references.
 - [RFC 9162 (Certificate Transparency)](https://www.rfc-editor.org/rfc/rfc9162)
-  — model this draws on.
+ : model this draws on.

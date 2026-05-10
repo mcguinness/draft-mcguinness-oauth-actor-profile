@@ -10,7 +10,7 @@ working-group discussion.
 
 ### Actor-signed hop proofs
 
-- **[Actor-Signed Hop Proofs](./draft-mcguinness-oauth-actor-proofs.md)** —
+- **[Actor-Signed Hop Proofs](./draft-mcguinness-oauth-actor-proofs.md)**:
   adds actor-side cryptographic non-repudiation alongside AS-signed receipts.
   At each hop, the actor being added signs a proof attesting their own
   participation and the target binding they authorize.  Where receipts
@@ -27,11 +27,11 @@ problem: in federated and open-world delegation use cases, recipients
 cannot reasonably enumerate every receipt issuer in advance.  Both shift
 trust from N issuers to a small set of trusted log operators.
 
-- **[Transparency, JWT-native variant](./draft-mcguinness-oauth-actor-receipts-transparency.md)** —
+- **[Transparency, JWT-native variant](./draft-mcguinness-oauth-actor-receipts-transparency.md)**:
   defines inclusion proofs as JWS, with witness gossip deployment-specific.
   Self-contained but reinvents what SCITT is already building.
 
-- **[Transparency, SCITT-aligned variant](./draft-mcguinness-oauth-actor-receipts-scitt.md)** —
+- **[Transparency, SCITT-aligned variant](./draft-mcguinness-oauth-actor-receipts-scitt.md)**:
   wraps each actor receipt JWS as a COSE_Sign1 Signed Statement, submits to
   a [SCITT Transparency Service](https://datatracker.ietf.org/doc/draft-ietf-scitt-architecture/),
   carries the SCITT Receipt alongside the actor receipt in the token.

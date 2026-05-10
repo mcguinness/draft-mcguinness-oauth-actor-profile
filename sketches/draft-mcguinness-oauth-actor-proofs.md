@@ -220,8 +220,8 @@ The JWT payload of an actor proof uses the following claims.
 
 - `jti`: REQUIRED.  Unique identifier for the proof.
 
-- `token_id`: OPTIONAL.  The outer token's `jti` at the time of
-  proof creation.  Same semantics as receipt `token_id`: independently
+- `origin_jti`: OPTIONAL.  The outer token's `jti` at the time of
+  proof creation.  Same semantics as receipt `origin_jti`: independently
   verifiable only for `actor_proofs[0]` in the originating-issuance
   case.
 
@@ -553,14 +553,14 @@ recipient sees whichever subset the issuer chose to disclose.
 ## See Also
 
 - [draft-mcguinness-oauth-actor-profile](../draft-mcguinness-oauth-actor-profile.md)
-  — core profile this builds on.
+ : core profile this builds on.
 - [draft-mcguinness-oauth-actor-receipts](../draft-mcguinness-oauth-actor-receipts.md)
-  — receipts companion this composes with.
+ : receipts companion this composes with.
 - [Transparency JWT-native variant](./draft-mcguinness-oauth-actor-receipts-transparency.md)
 - [Transparency SCITT-aligned variant](./draft-mcguinness-oauth-actor-receipts-scitt.md)
 - [RFC 8693 (OAuth Token Exchange)](https://www.rfc-editor.org/rfc/rfc8693)
 - [RFC 8707 (Resource Indicators)](https://www.rfc-editor.org/rfc/rfc8707)
 - [draft-mw-oauth-actor-chain](https://datatracker.ietf.org/doc/draft-mw-oauth-actor-chain/)
-  — separate work proposing actor-signed step proofs in a different
+ : separate work proposing actor-signed step proofs in a different
   layering; this sketch is the actor-signed-proofs portion of the
   decomposition discussed in repo issues.

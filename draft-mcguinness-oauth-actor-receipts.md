@@ -291,22 +291,22 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 
 ### Outer-Token Binding
 
-`token_id`:
-: RECOMMENDED.  The `jti` value of the specific outer token that this receipt was created for.
+`origin_jti`:
+: RECOMMENDED.  The `jti` of the outer token at the time this receipt was created (the receipt's origin outer token).  This value is fixed at receipt creation; after reissuance the current outer token's `jti` may differ.
 
-  When present, `token_id` records the token instance issued at the represented hop.  It is a verifiable binding to the current outer-token instance only in the originating-issuance case, where `receipt[0].iss` equals the outer token's `iss` and `receipt[0].token_id` equals the outer token's `jti`.  In reissuance cases, and for receipts other than `receipt[0]`, `token_id` is historical issuance provenance only.  Issuers SHOULD include `token_id` whenever the token they are issuing carries a `jti` claim.
+  When present, `origin_jti` records the token instance issued at the represented hop.  It is a verifiable binding to the current outer-token instance only in the originating-issuance case, where `receipt[0].iss` equals the outer token's `iss` and `receipt[0].origin_jti` equals the outer token's `jti`.  In reissuance cases, and for receipts other than `receipt[0]`, `origin_jti` is historical issuance provenance only.  Issuers SHOULD include `origin_jti` whenever the token they are issuing carries a `jti` claim.
 
-  Consumer verification of `token_id` is defined in {{consumer-processing}}:
+  Consumer verification of `origin_jti` is defined in {{consumer-processing}}:
 
-  *  for `receipt[0]`, `token_id` is independently verifiable when `receipt[0].iss` equals the outer token's `iss` and `receipt[0].token_id` equals the outer token's `jti` (the originating-issuance case);
-  *  for receipts other than `receipt[0]`, `token_id` records the historical outer-token `jti` at the hop where the receipt was created and is informational provenance only.
+  *  for `receipt[0]`, `origin_jti` is independently verifiable when `receipt[0].iss` equals the outer token's `iss` and `receipt[0].origin_jti` equals the outer token's `jti` (the originating-issuance case);
+  *  for receipts other than `receipt[0]`, `origin_jti` records the historical outer-token `jti` at the hop where the receipt was created and is informational provenance only.
 
 ### Excluded Standard Claims
 
 `aud`:
 : NOT RECOMMENDED.  Issuers SHOULD omit `aud` from receipts.
 
-  A receipt travels with the outer token to whichever audiences the outer token serves.  Receipt validity is anchored to trust in `iss`, the originating-issuance binding to the outer token via `token_id` and `prh` when that binding is verifiable, and the outer token's own audience scoping.  Including `aud` in a receipt has no defined meaning under this profile.
+  A receipt travels with the outer token to whichever audiences the outer token serves.  Receipt validity is anchored to trust in `iss`, the originating-issuance binding to the outer token via `origin_jti` and `prh` when that binding is verifiable, and the outer token's own audience scoping.  Including `aud` in a receipt has no defined meaning under this profile.
 
   This profile diverges from the audience-validation guidance in {{RFC8725}} Section 3.10 because receipts are not validated as independent JWTs against an audience; they are validated as part of outer-token processing, and the outer token carries the audience scoping.  Including `aud` in a receipt would create ambiguity about whether the receipt asserts an audience constraint independent of the outer token, which it does not.
 
@@ -339,7 +339,7 @@ If it does so, the new receipt:
 *  MUST set `sub` to the issued token's top-level `sub`;
 *  MUST set `act.sub` and `act.iss` to the new outermost actor;
 *  MAY copy the issued token's top-level `cnf`, if any, into the receipt `cnf`, subject to the disclosure considerations in {{receipt-claims}}; when copied, the receipt `cnf` MUST equal the outer token's `cnf` value;
-*  SHOULD set `token_id` to the issued token's `jti`, if the issued token carries a `jti`;
+*  SHOULD set `origin_jti` to the issued token's `jti`, if the issued token carries a `jti`;
 *  MUST omit `prh`.
 
 ## Extending an Existing Receipt Chain
@@ -376,9 +376,9 @@ Reissuance MAY change the outer token's `aud`, `scope`, `cnf`, `exp`, and other 
 Reissuance under this section is the only case in which `receipt[0]` may legitimately diverge from the current outer-token instance.  Two patterns of divergence are possible:
 
 *  **Different-issuer reissuance**: `receipt[0].iss` differs from the outer token's `iss`.  For example, an introspection endpoint operated as a separate trust principal re-emits the token, or a token translator at a domain boundary re-issues under its own issuer identity.
-*  **Same-issuer reissuance**: `receipt[0].iss` matches the outer token's `iss`, but `receipt[0].token_id` differs from the outer token's `jti`.  For example, an authorization server refreshes its own access token: the refreshed token is signed by the same AS but carries a new `jti`, while inherited receipts (carried forward unchanged) retain the original outer-token `jti` in `token_id`.
+*  **Same-issuer reissuance**: `receipt[0].iss` matches the outer token's `iss`, but `receipt[0].origin_jti` differs from the outer token's `jti`.  For example, an authorization server refreshes its own access token: the refreshed token is signed by the same AS but carries a new `jti`, while inherited receipts (carried forward unchanged) retain the original outer-token `jti` in `origin_jti`.
 
-Consumer rules in {{consumer-processing}} treat `receipt[0].token_id` as historical provenance, not as a current-token binding, in both reissuance patterns.  Recipients distinguish legitimate reissuance from a re-wrapping attack through local policy or out-of-band trust framework, as described in {{receipt-to-token-binding-limits}}.
+Consumer rules in {{consumer-processing}} treat `receipt[0].origin_jti` as historical provenance, not as a current-token binding, in both reissuance patterns.  Recipients distinguish legitimate reissuance from a re-wrapping attack through local policy or out-of-band trust framework, as described in {{receipt-to-token-binding-limits}}.
 
 Refresh-token reissuance is a special case of reissuance under this section.  An AS that supports refresh tokens for delegated access tokens MUST persist the `actor_receipts` array associated with the original access token in its token store, so that each refreshed access token can carry the receipts forward unchanged.  Receipt-bearing refresh is interoperable only when local policy defines a bounded maximum delegated-session lifetime for tokens that may inherit the receipts.  Receipt `exp` values set under {{receipt-claims}} MUST accommodate that bounded maximum lifetime; otherwise downstream issuers will reject inbound chains under {{extending-an-existing-receipt-chain}} as receipts approach expiry, and refresh will lose receipt-based provenance.  When the bounded lifetime would be exceeded, the AS MUST either obtain fresh delegation state and start a new receipt chain or stop emitting `actor_receipts` unless local policy permits partial or absent receipt coverage.
 
@@ -414,7 +414,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  verify that `typ` equals `actor-receipt+jwt`;
     *  verify that the receipt `act` object is single-hop, contains no nested `act`, and contains no `cnf`;
     *  enforce `exp`, `iat`, and other JWT validity rules.  Because `exp` is REQUIRED on receipts and MUST cover the expected outer token lifetime, an expired receipt SHOULD be treated as invalid even for older hops.  Local policy MAY permit continued use of a receipt that is expired by a small clock-skew margin, but MUST NOT relax `exp` enforcement broadly as a workaround for issuers that failed to set adequate `exp` values.
-    *  for `receipt[0]` only, when `token_id` is present: if `receipt[0].iss` equals the outer token's `iss` AND `receipt[0].token_id` equals the outer token's `jti`, the receipt is anchored to the current outer-token instance (the originating-issuance case).  Otherwise (whether because `receipt[0].iss` differs from `outer.iss`, or because `receipt[0].iss` matches but `receipt[0].token_id` differs from `outer.jti`), `receipt[0].token_id` is historical provenance only and does not bind the receipt to the current outer-token instance.  Such divergence is valid under this profile only when accepted by local policy as legitimate reissuance per {{reissuance-without-a-new-actor-hop}}.  Same-issuer `token_id` divergence typically reflects refresh-token-driven reissuance; different-issuer divergence reflects introspection-and-re-emission or similar paths.  In either reissuance case, the consumer relies on the trust framework in {{receipt-to-token-binding-limits}} to distinguish legitimate reissuance from a re-wrapping attack.  For receipts other than `receipt[0]`, `token_id` records the historical outer-token `jti` at the hop where the receipt was created, is not independently verifiable by the consumer, and is informational provenance only.
+    *  for `receipt[0]` only, when `origin_jti` is present: if `receipt[0].iss` equals the outer token's `iss` AND `receipt[0].origin_jti` equals the outer token's `jti`, the receipt is anchored to the current outer-token instance (the originating-issuance case).  Otherwise (whether because `receipt[0].iss` differs from `outer.iss`, or because `receipt[0].iss` matches but `receipt[0].origin_jti` differs from `outer.jti`), `receipt[0].origin_jti` is historical provenance only and does not bind the receipt to the current outer-token instance.  Such divergence is valid under this profile only when accepted by local policy as legitimate reissuance per {{reissuance-without-a-new-actor-hop}}.  Same-issuer `origin_jti` divergence typically reflects refresh-token-driven reissuance; different-issuer divergence reflects introspection-and-re-emission or similar paths.  In either reissuance case, the consumer relies on the trust framework in {{receipt-to-token-binding-limits}} to distinguish legitimate reissuance from a re-wrapping attack.  For receipts other than `receipt[0]`, `origin_jti` records the historical outer-token `jti` at the hop where the receipt was created, is not independently verifiable by the consumer, and is informational provenance only.
 6.  Verify receipt-chain linkage:
     *  each receipt other than the oldest MUST include `prh`;
     *  each non-oldest receipt's `prh` MUST hash the next older receipt using the algorithm named by `prh_alg`, defaulting to `sha-256` when `prh_alg` is absent;
@@ -575,7 +575,7 @@ This profile is designed to compose with sibling companion profiles that build o
 *  **New claims inside a receipt JWT** for additional per-hop attributes (for example, historical scope, additional binding data, or extension-specific provenance).  Consumers ignore unrecognized claims under {{receipt-claims}} unless another specification or local agreement defines their meaning, so additive claims do not break the validation rules of this document.
 *  **New top-level claims on the outer token, parallel to `actor_receipts`**, for per-hop artifacts that need their own signature semantics (for example, actor-signed proofs whose threat model differs from AS-signed receipts, or recipient-signed acknowledgments).  Profiles that define such claims SHOULD follow the `<name>` plus `<name>_complete` claim-pair convention described in {{discovery-capability-signaling}}.
 *  **New JOSE `typ` values** for receipt-shaped artifacts that are not AS-signed receipts conforming to this document.  The `typ` value `actor-receipt+jwt` defined here is reserved for receipts conforming to this document and MUST NOT be used by other artifacts.
-*  **New outer-token binding claims**, analogous to `token_id`, that record an outer-token field other than `jti` (for example, a workflow correlation identifier).  Such claims are independently verifiable as current-token bindings only on the same terms as `token_id`; see {{receipt-to-token-binding-limits}}.
+*  **New outer-token binding claims**, analogous to `origin_jti`, that record an outer-token field other than `jti` (for example, a workflow correlation identifier).  Such claims are independently verifiable as current-token bindings only on the same terms as `origin_jti`; see {{receipt-to-token-binding-limits}}.
 
 Companion profile authoring rules:
 
@@ -600,7 +600,7 @@ This section indexes the adversary classes addressed (and not addressed) by this
 
 *  **Compromised downstream issuer fabricating prior-hop provenance.**  Cannot forge prior issuers' receipt signatures; `prh` chain prevents dropping or reordering inner receipts.  Primary value proposition.
 *  **Token mutation in transit.**  Each receipt is independently signed; modification invalidates the receipt's signature and any newer receipt's `prh`.
-*  **Receipt transplantation between tokens with matching visible `act` chains.**  Outer-token signature prevents non-issuer parties from constructing a substitute outer token to host transplanted receipts.  `receipt[0].token_id` provides diagnostic confirmation in the originating-issuance case (see {{receipt-to-token-binding-limits}}); it does not extend the threat model beyond the outer-token-signature defense, since outer-token issuer compromise is out of scope ({{compromised-outer-issuer}}).
+*  **Receipt transplantation between tokens with matching visible `act` chains.**  Outer-token signature prevents non-issuer parties from constructing a substitute outer token to host transplanted receipts.  `receipt[0].origin_jti` provides diagnostic confirmation in the originating-issuance case (see {{receipt-to-token-binding-limits}}); it does not extend the threat model beyond the outer-token-signature defense, since outer-token issuer compromise is out of scope ({{compromised-outer-issuer}}).
 *  **Partial-coverage misclaim.**  An issuer cannot drop an inner receipt without breaking the `prh` chain; `actor_receipts_complete: true` cannot be claimed without a count matching visible chain depth.
 
 ### Adversaries NOT Mitigated
@@ -651,10 +651,10 @@ Receipts prove that trusted issuers attested particular actor hops and, optional
 
 In the originating-issuance case, receipt-chain integrity rests on two anchors:
 
-*  `receipt[0].token_id`, when present, signed by the same issuer that signed the outer token, and equal to the outer token's `jti`, binds `receipt[0]` to the specific outer-token instance and prevents transplantation from a different token whose visible `act` structure happens to match.
+*  `receipt[0].origin_jti`, when present, signed by the same issuer that signed the outer token, and equal to the outer token's `jti`, binds `receipt[0]` to the specific outer-token instance and prevents transplantation from a different token whose visible `act` structure happens to match.
 *  `prh` chains each receipt cryptographically to its older neighbor, so all inner receipts inherit the originating-issuance binding from `receipt[0]` through the hash chain.
 
-Inner receipts' `token_id` values are not independently verifiable (see {{consumer-processing}}); deployments depending on receipt-chain integrity MUST rely on `prh` plus a verifiable `receipt[0].token_id` in the originating-issuance case, not on inner `token_id` values.  An inner receipt has no independent binding to the current request, audience, scope, or token instance; it is bound only to its older neighbor through `prh` and ultimately to the current outer token through the chain's single anchor when that anchor is verifiable.
+Inner receipts' `origin_jti` values are not independently verifiable (see {{consumer-processing}}); deployments depending on receipt-chain integrity MUST rely on `prh` plus a verifiable `receipt[0].origin_jti` in the originating-issuance case, not on inner `origin_jti` values.  An inner receipt has no independent binding to the current request, audience, scope, or token instance; it is bound only to its older neighbor through `prh` and ultimately to the current outer token through the chain's single anchor when that anchor is verifiable.
 
 This construction makes coverage tamper-evident at the structural level:
 
@@ -663,15 +663,15 @@ This construction makes coverage tamper-evident at the structural level:
 
 Coverage is therefore truthful within the limits of the trusted-issuer set: a compromised issuer can omit some or all of its own receipts and any outermost receipts from issuers it controls, but it cannot fabricate, reorder, or selectively drop receipts signed by other trusted issuers.
 
-When `receipt[0]` diverges from the current outer-token instance, either because `receipt[0].iss` differs from `outer.iss` or because `receipt[0].iss` matches but `receipt[0].token_id` differs from `outer.jti`, `receipt[0].token_id` becomes historical provenance only and does not bind the receipt chain to the current outer-token instance.  Consumers accept that divergence only when local policy treats it as legitimate reissuance per {{reissuance-without-a-new-actor-hop}}.  In this case:
+When `receipt[0]` diverges from the current outer-token instance, either because `receipt[0].iss` differs from `outer.iss` or because `receipt[0].iss` matches but `receipt[0].origin_jti` differs from `outer.jti`, `receipt[0].origin_jti` becomes historical provenance only and does not bind the receipt chain to the current outer-token instance.  Consumers accept that divergence only when local policy treats it as legitimate reissuance per {{reissuance-without-a-new-actor-hop}}.  In this case:
 
 *  Recipients rely on the current outer token issuer's authority to have performed a legitimate reissuance.
 *  This profile provides no in-band signal distinguishing legitimate reissuance from a re-wrapping attack by a compromised issuer, and does not define metadata identifying which issuers in a recipient's trust set perform reissuance versus only originating tokens.
 *  Recipients that need to distinguish reissuing from originating issuers MUST establish that distinction through local policy or out-of-band trust framework, and SHOULD treat unexpected reissuance divergence as cause for additional scrutiny under that policy.
 
-The `token_id` strict-equality check therefore provides binding only in the originating-issuance case (same-issuer, same-`jti`).  In all other cases, transplantation defense rests on the outer token's signature: a non-issuer party cannot construct a substitute outer token to host transplanted receipts.  Compromise of the outer-token issuer falls under {{compromised-outer-issuer}} and is out of scope.
+The `origin_jti` strict-equality check therefore provides binding only in the originating-issuance case (same-issuer, same-`jti`).  In all other cases, transplantation defense rests on the outer token's signature: a non-issuer party cannot construct a substitute outer token to host transplanted receipts.  Compromise of the outer-token issuer falls under {{compromised-outer-issuer}} and is out of scope.
 
-Companion profiles MAY define additional outer-token binding claims following the `token_id` pattern: each records an identifier from the outer token at receipt creation, with consumer verifiability conditioned on issuer alignment and equality with the current outer-token field.  Such claims provide parallel anchors against other outer-token fields and do not weaken the `token_id` anchor.
+Companion profiles MAY define additional outer-token binding claims following the `origin_jti` pattern: each records an identifier from the outer token at receipt creation, with consumer verifiability conditioned on issuer alignment and equality with the current outer-token field.  Such claims provide parallel anchors against other outer-token fields and do not weaken the `origin_jti` anchor.
 
 ## Hash Algorithm Agility
 
@@ -833,8 +833,8 @@ This document requests registration of the following JWT Claims in the "JSON Web
 *  Change Controller: IESG
 *  Specification Document(s): This document
 
-*  Claim Name: `token_id`
-*  Claim Description: The jti of the token instance that this actor receipt was created for
+*  Claim Name: `origin_jti`
+*  Claim Description: The jti of the outer token at the time this actor receipt was created (the receipt's origin outer token)
 *  Change Controller: IESG
 *  Specification Document(s): This document
 
@@ -935,7 +935,7 @@ The outer token carries the following visible actor chain:
   "iat": 1776745200,
   "exp": 1776832000,
   "jti": "c8e29c11-0c3a-4e6f-a0a6-30a52c4a8149",
-  "token_id": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd"
+  "origin_jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd"
 }
 ~~~
 
@@ -956,7 +956,7 @@ The outer token carries the following visible actor chain:
   "iat": 1776741600,
   "exp": 1776832000,
   "jti": "1d4c4d30-fb6d-4172-b7eb-775b6b9c2b85",
-  "token_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  "origin_jti": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 }
 ~~~
 
@@ -1016,7 +1016,7 @@ The new leading receipt created by the TTS is:
   "iat": 1776747000,
   "exp": 1776832000,
   "jti": "8b1ab6d1-c345-4bd3-8af2-f302d54444b7",
-  "token_id": "f0e1d2c3-b4a5-6789-cdef-012345678901"
+  "origin_jti": "f0e1d2c3-b4a5-6789-cdef-012345678901"
 }
 ~~~
 
@@ -1068,7 +1068,7 @@ The single receipt covers the outermost hop:
   "iat": 1776745200,
   "exp": 1776832000,
   "jti": "9b7a4e30-2c1f-4d8a-9b5e-f0e8a3c4b6d2",
-  "token_id": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd"
+  "origin_jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd"
 }
 ~~~
 
@@ -1109,6 +1109,6 @@ The re-emitted token's claims:
 The receipts are bit-identical to those in the Two-Hop Delegation Chain example.  Two divergences from the originating-issuance pattern are visible at the outer-token level:
 
 *  `outer.iss` is `https://introspection.travel-provider.example`, while `receipt[0].iss` remains `https://as.travel-provider.example`.  This divergence is legitimate under {{reissuance-without-a-new-actor-hop}}.
-*  `outer.jti` is `f4a7b9c2-1d3e-4f5a-8b6c-7d8e9f0a1b2c`, while `receipt[0].token_id` remains `d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd` (the original outer token's `jti`).  This divergence is also legitimate.
+*  `outer.jti` is `f4a7b9c2-1d3e-4f5a-8b6c-7d8e9f0a1b2c`, while `receipt[0].origin_jti` remains `d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd` (the original outer token's `jti`).  This divergence is also legitimate.
 
-Per consumer step 5 of {{consumer-processing}}, the consumer treats `receipt[0].token_id` as historical provenance rather than a current-token binding because `receipt[0]` diverges from the current outer-token instance.  This example illustrates the different-issuer pattern (`receipt[0].iss` differs from `outer.iss`); the same treatment applies to the same-issuer pattern, in which an authorization server refreshes its own token and the new outer-token `jti` differs from `receipt[0].token_id` while `iss` matches.  In both patterns, trust that the divergence reflects legitimate reissuance rather than a re-wrapping attack rests on the recipient's local policy regarding which issuers in its trust set perform reissuance under this profile, as described in {{receipt-to-token-binding-limits}}.
+Per consumer step 5 of {{consumer-processing}}, the consumer treats `receipt[0].origin_jti` as historical provenance rather than a current-token binding because `receipt[0]` diverges from the current outer-token instance.  This example illustrates the different-issuer pattern (`receipt[0].iss` differs from `outer.iss`); the same treatment applies to the same-issuer pattern, in which an authorization server refreshes its own token and the new outer-token `jti` differs from `receipt[0].origin_jti` while `iss` matches.  In both patterns, trust that the divergence reflects legitimate reissuance rather than a re-wrapping attack rests on the recipient's local policy regarding which issuers in its trust set perform reissuance under this profile, as described in {{receipt-to-token-binding-limits}}.

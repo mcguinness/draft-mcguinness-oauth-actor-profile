@@ -21,9 +21,9 @@ JWS-based actor receipts with COSE-based SCITT primitives.
 
 The [SCITT working group](https://datatracker.ietf.org/wg/scitt/about/)
 is developing the IETF's general-purpose architecture for transparency
-over signed statements.  Its model — Issuer signs Statement, submits
+over signed statements.  Its model (Issuer signs Statement, submits
 to Transparency Service, receives a Receipt that vouches for inclusion
-in an append-only ledger — is structurally identical to what the
+in an append-only ledger) is structurally identical to what the
 receipts spec would need to escape per-issuer-trust enumeration.
 
 Aligning with SCITT, rather than defining a parallel JWT-based
@@ -379,16 +379,16 @@ the path.
 ## See Also
 
 - [draft-mcguinness-oauth-actor-receipts](../draft-mcguinness-oauth-actor-receipts.md)
-  — companion this is built on.
+ : companion this is built on.
 - [JWT-native variant](./draft-mcguinness-oauth-actor-receipts-transparency.md)
-  — alternative architectural approach.
+ : alternative architectural approach.
 - [draft-ietf-scitt-architecture](https://datatracker.ietf.org/doc/draft-ietf-scitt-architecture/)
-  — the IETF transparency framework this aligns with.
+ : the IETF transparency framework this aligns with.
 - [draft-ietf-scitt-scrapi](https://datatracker.ietf.org/doc/draft-ietf-scitt-scrapi/)
-  — SCITT submission API.
+ : SCITT submission API.
 - [draft-ietf-cose-merkle-tree-proofs](https://datatracker.ietf.org/doc/draft-ietf-cose-merkle-tree-proofs/)
-  — Merkle proof format used by SCITT Receipts.
+ : Merkle proof format used by SCITT Receipts.
 - [RFC 9052 (COSE)](https://www.rfc-editor.org/rfc/rfc9052)
-  — COSE_Sign1 format used by Signed Statements.
+ : COSE_Sign1 format used by Signed Statements.
 - [RFC 9597 (CWT Claims in COSE Headers)](https://www.rfc-editor.org/rfc/rfc9597)
-  — for the `iss` claim in protected headers.
+ : for the `iss` claim in protected headers.
