@@ -122,6 +122,55 @@ Recipients validate the outer token, then for each proof:
    the corresponding receipt is present in `actor_receipts` and has
    the named `jti`.
 
+### 3.4 Why receipts and proofs are separate companions
+
+A natural design question is whether receipts and proofs should be a
+single unified mechanism (one per-hop attestation supporting both
+AS and actor signatures) rather than two parallel companion profiles.
+This sketch keeps them separate.  The rationale:
+
+- **Different adoption gates.** Receipts only require AS-side
+  implementation: an AS adds a claim and a signature.  Proofs require
+  AS-side change *plus* actor-side signing infrastructure *plus*
+  recipient-side actor-key resolution.  Bundling means the receipts
+  use case is held hostage to the harder problem.
+- **Threat models stay legible.** Receipts mitigate compromised
+  *downstream* issuers fabricating prior-hop provenance.  Proofs
+  additionally mitigate compromised *current* AS fabricating actor
+  participation.  Each spec answers "what does this give me?"
+  independently; a bundled spec would force every reader to reason
+  about both threat models even if they only need one.
+- **Composability is the right model.** Real deployments will run
+  with receipts only, proofs only, both, or neither, depending on
+  what infrastructure they have.  The receipts spec's §Extensibility
+  surface (claim-pair convention, `jti` cross-references) supports
+  this composability cleanly without bundling.
+- **Independent evolution.** Receipts is mature.  Proofs has open
+  questions on actor key resolution, the relationship between proof
+  signing keys and `cnf.jkt`, target-binding granularity, and other
+  design points.  Separate companions let receipts ship now and
+  proofs cook longer without delaying receipts adoption.
+- **Spec proliferation is bounded.** Two specs is not many.  The
+  companion pattern is the architecture; multiplying companions when
+  each addresses a separable concern is the system working as
+  designed, not a smell.
+
+The principal argument *for* unification is conceptual: receipts and
+proofs attest the same hops with different signers, and an artifact
+with multiple signatures over a common payload (using JWS JSON
+Serialization with multi-signature, [RFC 7515](https://www.rfc-editor.org/rfc/rfc7515)
+Section 7.2) would express that more directly than two parallel
+arrays.  This sketch acknowledges the elegance but rejects it for v1
+on practical grounds: JWS JSON Serialization with multi-signature is
+rare in OAuth/JWT libraries today, the format adds token-size
+overhead, and most implementations would not handle it without new
+work.  Two parallel arrays of compact-serialized JWS strings is
+boring and well-supported.
+
+If receipts and proofs both gain traction in deployment, a v2
+unified successor profile is a reasonable evolution path.  Bundling
+v1 forecloses that adoption signal.
+
 ## 4. The `actor_proofs` Claim
 
 ### `actor_proofs`

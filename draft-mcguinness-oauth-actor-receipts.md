@@ -394,6 +394,8 @@ However:
 
 When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_receipts` covers only the visible filtered chain.  In that case `actor_receipts_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness MUST evaluate `chain_complete` separately.
 
+For inline JWT tokens, this document defines no `chain_complete` JWT claim.  A recipient that needs true-chain completeness for inline JWT tokens MUST obtain that signal from trusted deployment context, introspection, or another profile; `actor_receipts_complete: true` alone attests only complete receipt coverage for the visible `act` chain.
+
 ## Transaction Token Service Rebinding
 
 A Transaction Token Service that establishes a new presenter and makes that presenter the new outermost actor follows the same receipt rules as any other issuer that adds a new outermost actor hop, as defined in {{extending-an-existing-receipt-chain}} (or {{creating-the-first-receipt}} when no inbound `actor_receipts` exist).  This profile does not define additional receipt claims specific to Transaction Tokens; any transaction-specific semantics remain governed by the Transaction Token itself and its deployment profile.
@@ -412,6 +414,8 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  resolve the signing key from the receipt issuer's authorization server metadata `jwks_uri` {{RFC8414}} (where the receipt issuer is identified by the receipt's `iss` claim, which may differ from the outer token's issuer) or from local configuration;
     *  validate the JWT signature;
     *  verify that `typ` equals `actor-receipt+jwt`;
+    *  verify that all REQUIRED receipt claims are present and have the expected JSON types, including `iss`, `sub`, `act`, `iat`, `exp`, and `jti`;
+    *  verify that OPTIONAL claims used by this profile have the expected JSON types when present, including `sub_iss`, `sub_profile`, `cnf`, `prh`, `prh_alg`, and `origin_jti`;
     *  verify that the receipt `act` object is single-hop, contains no nested `act`, and contains no `cnf`;
     *  enforce `exp`, `iat`, and other JWT validity rules.  Because `exp` is REQUIRED on receipts and MUST cover the expected outer token lifetime, an expired receipt SHOULD be treated as invalid even for older hops.  Local policy MAY permit continued use of a receipt that is expired by a small clock-skew margin, but MUST NOT relax `exp` enforcement broadly as a workaround for issuers that failed to set adequate `exp` values.
     *  for `receipt[0]` only, when `origin_jti` is present: if `receipt[0].iss` equals the outer token's `iss` AND `receipt[0].origin_jti` equals the outer token's `jti`, the receipt is anchored to the current outer-token instance (the originating-issuance case).  Otherwise (whether because `receipt[0].iss` differs from `outer.iss`, or because `receipt[0].iss` matches but `receipt[0].origin_jti` differs from `outer.jti`), `receipt[0].origin_jti` is historical provenance only and does not bind the receipt to the current outer-token instance.  Such divergence is valid under this profile only when accepted by local policy as legitimate reissuance per {{reissuance-without-a-new-actor-hop}}.  Same-issuer `origin_jti` divergence typically reflects refresh-token-driven reissuance; different-issuer divergence reflects introspection-and-re-emission or similar paths.  In either reissuance case, the consumer relies on the trust framework in {{receipt-to-token-binding-limits}} to distinguish legitimate reissuance from a re-wrapping attack.  For receipts other than `receipt[0]`, `origin_jti` records the historical outer-token `jti` at the hop where the receipt was created, is not independently verifiable by the consumer, and is informational provenance only.
@@ -429,7 +433,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  when `act.sub_profile` is present only in the visible `act` object, the receipt remains aligned for this profile.  The visible value is not independently attested by that receipt, and recipients that require receipt coverage for actor classification MUST reject the receipt chain or apply explicit local mapping rules.
 8.  Verify subject alignment:
     *  `receipt[0].sub` MUST equal the outer token's top-level `sub`;
-    *  when `receipt[0].sub_iss` and an equivalent top-level subject namespace authority are both available in the outer token or trusted validation context, they MUST identify the same namespace authority;
+    *  when `receipt[0].sub_iss` and a top-level subject namespace authority are both available from trusted validation context, they MUST identify the same namespace authority;
     *  when `receipt[0].sub_profile` is present and the outer token contains top-level `sub_profile`, the values MUST match;
     *  when `receipt[0].sub_profile` is present but the outer token does not contain top-level `sub_profile`, recipients that require receipt coverage for subject classification MUST reject the receipt chain or apply explicit local mapping rules;
     *  older receipts MAY carry differing `sub`, `sub_iss`, or `sub_profile` values; see {{subject-re-expression-across-hops}}.
@@ -643,7 +647,7 @@ Key resolution requirements:
 *  To avoid attacker-controlled key resolution, a recipient MUST determine whether a receipt `iss` is within its trusted-issuer set before performing any network retrieval for that issuer's metadata or keys.
 *  A recipient that uses dynamic discovery for receipt validation MUST do so only within an existing trust framework or equivalent local policy that defines which issuers are permitted.
 
-Trust is per-issuer and not transitive: each receipt is validated against the recipient's own trusted-issuer set, independent of the outer token's issuer or neighboring receipts.  A chain breaks at the first inner receipt whose issuer is not trusted; recipients SHOULD treat such receipts as absent and apply partial-coverage policy ({{discovery-capability-signaling}}).  Deployments needing uniform trust across an extended chain MUST establish trust explicitly with every receipt issuer that may appear in tokens they accept.
+Trust is per-issuer and not transitive: each receipt is validated against the recipient's own trusted-issuer set, independent of the outer token's issuer or neighboring receipts.  If any receipt in the presented `actor_receipts` array is signed by an issuer that is not trusted for receipt validation, the recipient MUST reject the receipt chain for the purposes of this profile.  This document does not define trusted-prefix validation across an untrusted inner receipt.  Deployments needing uniform trust across an extended chain MUST establish trust explicitly with every receipt issuer that may appear in tokens they accept.
 
 ## Receipt-to-Token Binding Limits {#receipt-to-token-binding-limits}
 
@@ -659,7 +663,7 @@ Inner receipts' `origin_jti` values are not independently verifiable (see {{cons
 This construction makes coverage tamper-evident at the structural level:
 
 *  An issuer cannot drop an inner receipt without breaking the `prh` chain: the next-newer receipt's `prh` value would no longer match the receipt now in the next array position, and consumer step 6 of {{consumer-processing}} rejects the chain.
-*  An issuer can only fail to include receipts from the outermost end of the chain, producing partial coverage that `actor_receipts_complete: true` then forbids the issuer from claiming.
+*  An issuer can only fail to include receipts from the innermost or oldest end of the chain, producing partial coverage that `actor_receipts_complete: true` then forbids the issuer from claiming.
 
 Coverage is therefore truthful within the limits of the trusted-issuer set: a compromised issuer can omit some or all of its own receipts and any outermost receipts from issuers it controls, but it cannot fabricate, reorder, or selectively drop receipts signed by other trusted issuers.
 
@@ -895,6 +899,7 @@ The outer token carries the following visible actor chain:
 
 ~~~json
 {
+  "jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
     "sub": "https://tools.example.com/booking-tool",
@@ -970,6 +975,7 @@ The resulting Transaction Token can carry:
 
 ~~~json
 {
+  "jti": "f0e1d2c3-b4a5-6789-cdef-012345678901",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
     "sub": "https://wimse.travel-provider.example/payments",
@@ -1030,6 +1036,7 @@ The resulting access token carries:
 
 ~~~json
 {
+  "jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
     "sub": "https://tools.example.com/booking-tool",
