@@ -61,17 +61,15 @@ This document defines OAuth Actor Receipts, an optional companion provenance pro
 
 # Introduction
 
-The OAuth Actor Profile for Delegation {{I-D.mcguinness-oauth-actor-profile}} makes actor identity visible in delegated tokens by standardizing the `act` claim across JWT assertion grants, JWT access tokens, and Transaction Tokens.  That core profile is intentionally narrow: it defines who the current subject is, who the visible actors are, and how the current presenter proves possession of the key bound in the token's top-level `cnf` claim.  It does not attempt to make prior-hop actor-key history independently verifiable across trust boundaries.
+The OAuth Actor Profile for Delegation {{I-D.mcguinness-oauth-actor-profile}} makes actor identity visible in delegated tokens through a common `act` claim.  A relying party can read that chain but cannot, on the basis of the outer token alone, verify prior hops independently of the current token issuer.
 
-Some deployments need stronger provenance.  A relying party can often see an `act` chain, but without independently signed prior-hop evidence it still depends on the current token issuer to have preserved that chain faithfully.  The problem is sharper when deployments want historical sender-constraint context: carrying key history inline in nested `act` objects makes that history readable, but it does not make it independently trustworthy.
+This document defines OAuth Actor Receipts, an optional companion profile that adds independently signed per-hop provenance.  Each issuer that adds an actor hop signs a receipt for that hop; receipts travel with the token, are linked into a hash chain, and are validated against each issuer's published keys.  The design center is:
 
-This document defines an optional companion profile, OAuth Actor Receipts, for deployments that need signed prior-hop provenance.  The design center is:
-
-*  keep the visible actor chain in `act`, as defined by the core actor profile;
+*  keep the visible actor chain in `act`;
 *  keep active presenter proof of possession in the token's top-level `cnf`;
 *  carry prior-hop provenance, including historical top-level `cnf` values, in separately signed hop receipts.
 
-This document applies to tokens that already conform to the OAuth Actor Profile for Delegation.  It supplements that profile; it does not replace it.  Receipts add an additive top-level JWT claim and a small set of metadata signals on top of the existing OAuth ({{RFC6749}}, {{RFC8693}}) and core-actor-profile trust model; deployments opt in per resource server or per trust domain.  Detailed scope is captured in [Design Goals and Non-Goals](#design-goals-and-non-goals).
+Receipts add a top-level JWT claim and a small set of metadata signals on top of the existing OAuth ({{RFC6749}}, {{RFC8693}}) and core-actor-profile trust model; deployments opt in per resource server or per trust domain.  Scope is detailed in [Design Goals and Non-Goals](#design-goals-and-non-goals).
 
 # Conventions and Definitions
 
@@ -137,9 +135,9 @@ The non-goals of this document are:
 
 ## Deployment Fit
 
-This profile's value scales with the number of distinct issuers in the trust set.  In federated or cross-domain deployments, where multiple authorization servers and Transaction Token Services participate in a delegation chain and each is independently trusted by the recipient, receipts let the recipient validate prior-hop attestations against the issuers that actually performed those hops, rather than relying solely on the current outer token issuer's faithful preservation of the chain.  In single-domain deployments where the outer token issuer is the only trusted source for delegation state, the outer token's own signature already conveys that issuer's attestation; in those deployments, receipts add overhead without adding meaningful provenance, and SHOULD be weighed against that overhead before adoption.
+This profile's value scales with the number of distinct issuers in the trust set.  In federated or cross-domain deployments where multiple authorization servers and Transaction Token Services each contribute hops, receipts let recipients validate each hop against its own issuer rather than relying on the current outer token issuer's faithful preservation of the chain.  In single-domain deployments where the outer token issuer is the only trusted source for delegation state, the outer token's signature already conveys that attestation; receipts add overhead without meaningful additional provenance and SHOULD be weighed before adoption.
 
-The threat model receipts address is summarized in {{trust-in-receipt-issuers}} and {{compromised-outer-issuer}}: receipts mitigate a compromised or dishonest *downstream* issuer that attempts to fabricate prior-hop provenance.  They do not mitigate a compromised current outer token issuer, and they do not provide actor non-repudiation; deployments needing those properties require additional mechanisms outside the scope of this document.
+Receipts mitigate a compromised or dishonest *downstream* issuer fabricating prior-hop provenance (see {{trust-in-receipt-issuers}} and {{compromised-outer-issuer}}).  They do not mitigate a compromised current outer token issuer and do not provide actor non-repudiation; those properties require mechanisms outside this document.
 
 # Actor Receipts Overview
 
@@ -226,7 +224,7 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
   *  MUST NOT contain `cnf`;
   *  MUST NOT contain a nested `act`.
 
-  The prohibition on `act.cnf` exists because a `cnf` claim inside an `act` object would create ambiguity about whether it represents a historical key binding or a current proof-of-possession requirement for the actor.  Historical presenter binding belongs at the receipt's top level in the `cnf` claim, where its role as provenance-only information is unambiguous.  Additional claims permitted by the core actor profile in `act` objects MAY appear in receipt `act` objects unless explicitly prohibited here.  A receipt that carries `act.cnf` is invalid under this profile.
+  `act.cnf` is prohibited to avoid ambiguity between historical key binding and a current PoP requirement on the actor; historical presenter binding belongs at the receipt's top level (the `cnf` claim), where its role as provenance-only is unambiguous.  Additional claims permitted by the core actor profile in `act` objects MAY appear in receipt `act` objects unless explicitly prohibited here.  A receipt that carries `act.cnf` is invalid under this profile.
 
 ### Historical Presenter Binding
 
@@ -299,13 +297,13 @@ When the issuer creates a new receipt and prepends it to an inherited receipt ch
 *  if there is an older receipt immediately following it in the array, the new receipt MUST include `prh`, and that value MUST hash the exact compact JWT string of that next receipt;
 *  if the new receipt is the only receipt in the array, it MUST omit `prh`.
 
-No JSON canonicalization is applied.  `prh` hashes the exact compact-serialized JWS string of the next older receipt as carried in the array.  Systems that carry, store, or forward `actor_receipts` arrays MUST preserve each compact JWT string byte-for-byte without parsing, re-serializing, normalizing whitespace, or re-encoding base64url segments.  Any modification to a receipt string, including semantically equivalent re-encoding, invalidates `prh` for any receipt that references it.
+No JSON canonicalization is applied.  `prh` hashes the exact compact-serialized JWS string of the next older receipt as carried in the array.  Systems that carry, store, or forward `actor_receipts` arrays MUST preserve each compact JWT string byte-for-byte; any modification, including semantically equivalent re-encoding, invalidates `prh` for any receipt that references it.
 
 # Issuer Processing
 
 This section defines how an authorization server or Transaction Token Service creates, preserves, and extends `actor_receipts`.
 
-When an issuer adds a new outermost actor hop and creates the corresponding receipt, that issuer is the same authorization server or Transaction Token Service that signs the outer token carrying the new hop.  As a result, in tokens emitted under {{creating-the-first-receipt}} or {{extending-an-existing-receipt-chain}}, `receipt[0].iss` is equal to the outer token's `iss`.  The only case in which `receipt[0].iss` legitimately differs from the outer token's `iss` is reissuance of an existing token without adding a new actor hop, as defined in {{reissuance-without-a-new-actor-hop}}.  Consumer rules in {{consumer-processing}} use this property to scope the bind-to-current checks for `receipt[0]`.
+When an issuer adds a new outermost actor hop and creates the corresponding receipt, that issuer is the same entity that signs the outer token; consequently `receipt[0].iss` equals the outer token's `iss` for tokens emitted under {{creating-the-first-receipt}} or {{extending-an-existing-receipt-chain}}.  Reissuance without a new actor hop ({{reissuance-without-a-new-actor-hop}}) is the only case in which `receipt[0].iss` legitimately differs from the outer token's `iss`; consumer rules in {{consumer-processing}} use this property to scope the bind-to-current checks for `receipt[0]`.
 
 ## Creating the First Receipt
 
@@ -561,26 +559,26 @@ Actor receipts strengthen provenance for visible actor hops, but they do not rep
 
 ## Threat Model {#threat-model}
 
-This section consolidates the adversary classes addressed (and not addressed) by this profile.  Detailed mitigations are described in {{trust-in-receipt-issuers}}, {{receipt-to-token-binding-limits}}, {{compromised-outer-issuer}}, and {{subject-re-expression-across-hops}}; this section provides a reviewer's index.
+This section indexes the adversary classes addressed (and not addressed) by this profile.  Detailed mitigations live in {{trust-in-receipt-issuers}}, {{receipt-to-token-binding-limits}}, {{compromised-outer-issuer}}, and {{subject-re-expression-across-hops}}.
 
 ### Adversaries Mitigated by This Profile
 
-*  **Compromised downstream issuer fabricating prior-hop provenance.**  A dishonest issuer that adds a new hop and signs the outer token cannot forge prior issuers' receipt signatures.  The `prh` chain prevents that issuer from dropping or reordering inner receipts.  This is the primary value proposition of the profile.
-*  **Token mutation in transit.**  Each receipt is independently signed.  Modification of any receipt invalidates that receipt's signature and any newer receipt's `prh` value.
-*  **Receipt transplantation between tokens with matching visible `act` chains.**  The outer token's own signature prevents non-issuer parties from constructing a substitute outer token to host transplanted receipts; this is the primary transplantation defense.  `receipt[0].token_id`, when matching the current outer-token `jti` in the originating-issuance case, provides additional diagnostic confirmation of receipt-to-token binding (see {{receipt-to-token-binding-limits}}); the strict equality check does not extend the threat model beyond the outer-token-signature defense, since outer-token issuer compromise is the threat in {{compromised-outer-issuer}} and is out of scope.
-*  **Partial-coverage misclaim.**  An issuer cannot drop an inner receipt without breaking the `prh` chain; coverage is structurally tamper-evident, and `actor_receipts_complete: true` cannot be claimed without a count matching visible chain depth.
+*  **Compromised downstream issuer fabricating prior-hop provenance.**  Cannot forge prior issuers' receipt signatures; `prh` chain prevents dropping or reordering inner receipts.  Primary value proposition.
+*  **Token mutation in transit.**  Each receipt is independently signed; modification invalidates the receipt's signature and any newer receipt's `prh`.
+*  **Receipt transplantation between tokens with matching visible `act` chains.**  Outer-token signature prevents non-issuer parties from constructing a substitute outer token to host transplanted receipts.  `receipt[0].token_id` provides diagnostic confirmation in the originating-issuance case (see {{receipt-to-token-binding-limits}}); it does not extend the threat model beyond the outer-token-signature defense, since outer-token issuer compromise is out of scope ({{compromised-outer-issuer}}).
+*  **Partial-coverage misclaim.**  An issuer cannot drop an inner receipt without breaking the `prh` chain; `actor_receipts_complete: true` cannot be claimed without a count matching visible chain depth.
 
 ### Adversaries NOT Mitigated
 
-*  **Compromised current outer token issuer.**  A compromised issuer can assemble a new outer token wrapping previously harvested valid receipts for the same visible chain prefix.  Defense requires external transparency, transaction binding, or replay detection outside the scope of this document.
-*  **Compromised receipt signing key for any one issuer.**  Forged receipts indistinguishable from legitimate ones cannot be revoked individually.  The remediation is removal of the compromised issuer from the trusted-issuer set; short receipt `exp` values bound the exposure window.
-*  **Compromised actor at a hop.**  Receipts attest issuer assertions, not actor non-repudiation.  Companion profiles defined under {{extensibility}} can address this with actor-signed proofs.
-*  **Cross-namespace subject graft with a compromised upstream issuer.**  An attacker who compromises a single upstream issuer can mint receipts for any subject in that issuer's namespace and graft them onto a re-expressed downstream chain.  Mitigation requires consistent `sub` values across the chain or trusted out-of-band subject mapping (see {{subject-re-expression-across-hops}}).
+*  **Compromised current outer token issuer.**  Can assemble a new outer token wrapping previously harvested valid receipts for the same visible chain prefix.  Defense requires external transparency, transaction binding, or replay detection.
+*  **Compromised receipt signing key for any one issuer.**  Forged receipts indistinguishable from legitimate ones cannot be revoked individually.  Remediation: remove the compromised issuer from the trusted-issuer set; short receipt `exp` bounds the exposure window.
+*  **Compromised actor at a hop.**  Receipts attest issuer assertions, not actor non-repudiation.  Companion profiles ({{extensibility}}) can address this with actor-signed proofs.
+*  **Cross-namespace subject graft with a compromised upstream issuer.**  An attacker who compromises one upstream issuer can mint receipts for any subject in that issuer's namespace and graft them onto a re-expressed downstream chain.  Mitigation: consistent `sub` across the chain or trusted out-of-band subject mapping ({{subject-re-expression-across-hops}}).
 *  **Replay of an entire token plus its receipts.**  This profile does not define replay detection; receipts inherit the outer token's replay characteristics.
 
 ### Trust Model Summary
 
-Recipients establish trust per-issuer and per-deployment.  Trust under this profile is not transitive across the chain: a receipt chain breaks at the first inner receipt whose issuer is not in the recipient's trusted-issuer set, even when the outer token's issuer and earlier receipts are trusted.  Companion profiles built on this document (see {{extensibility}}) can extend the addressed adversary set; for example, an actor-signed-proofs companion can mitigate the compromised-current-outer-token-issuer adversary by requiring an actor-side signature on each hop.
+Trust is per-issuer and per-deployment, and not transitive across the chain.  A receipt chain breaks at the first inner receipt whose issuer is not trusted, even when the outer token's issuer and earlier receipts are trusted.  Companion profiles ({{extensibility}}) can extend the addressed adversary set; for example, an actor-signed-proofs companion can mitigate the compromised-current-outer-token-issuer adversary.
 
 ## Current Presenter Validation
 
@@ -610,22 +608,18 @@ Key resolution requirements:
 *  To avoid attacker-controlled key resolution, a recipient MUST determine whether a receipt `iss` is within its trusted-issuer set before performing any network retrieval for that issuer's metadata or keys.
 *  A recipient that uses dynamic discovery for receipt validation MUST do so only within an existing trust framework or equivalent local policy that defines which issuers are permitted.
 
-Trust under this profile is per-issuer and not transitive: each receipt is validated against the recipient's own trusted-issuer set, regardless of which issuer minted the surrounding outer token or any neighboring receipt.  A receipt chain therefore breaks at the first inner receipt whose issuer is not in the recipient's trust set, even when the outer token's issuer and earlier receipts are trusted.  Recipients SHOULD treat receipts whose issuers are not in the trusted set as if they were absent and apply partial-coverage policy ({{discovery-capability-signaling}}) accordingly.  Deployments that need uniform trust across an extended chain MUST establish trust explicitly with every receipt issuer that may appear in tokens they accept.
+Trust is per-issuer and not transitive: each receipt is validated against the recipient's own trusted-issuer set, independent of the outer token's issuer or neighboring receipts.  A chain breaks at the first inner receipt whose issuer is not trusted; recipients SHOULD treat such receipts as absent and apply partial-coverage policy ({{discovery-capability-signaling}}).  Deployments needing uniform trust across an extended chain MUST establish trust explicitly with every receipt issuer that may appear in tokens they accept.
 
 ## Receipt-to-Token Binding Limits {#receipt-to-token-binding-limits}
 
-Receipts prove that trusted issuers attested particular actor hops and, optionally, historical presenter bindings.  They do not by themselves prove that the current outer token's audience, scope, expiration, or other authorization details were in force when older receipts were created.
+Receipts prove that trusted issuers attested particular actor hops and, optionally, historical presenter bindings.  They do not prove that the current outer token's audience, scope, expiration, or other authorization details were in force when older receipts were created.  A recipient MUST NOT treat a valid receipt chain as evidence of historical authorization scope or audience beyond what the current outer token authorizes.
 
-Accordingly, a recipient MUST NOT treat a valid receipt chain as evidence of historical authorization scope or audience beyond what the current outer token itself authorizes.
+Receipt-chain integrity rests on two anchors:
 
-The integrity of the receipt chain rests on two anchors:
+*  `receipt[0].token_id`, when present and signed by the same issuer that signed the outer token, binds `receipt[0]` to the specific outer-token instance and prevents transplantation from a different token whose visible `act` structure happens to match.
+*  `prh` chains each receipt cryptographically to its older neighbor, so all inner receipts inherit their binding from `receipt[0]` through the hash chain.
 
-*  `receipt[0].token_id`, when present and signed by the same issuer that signed the outer token, binds `receipt[0]` to the specific outer token instance and prevents transplantation of a receipt chain from a different token whose visible `act` structure happens to match.
-*  `prh` chains each receipt cryptographically to its older neighbor, so that all inner receipts inherit their binding from `receipt[0]` through the hash chain.
-
-Inner receipts' `token_id` values are not independently verifiable by the consumer (see {{consumer-processing}}); deployments that depend on receipt-chain integrity MUST rely on `prh` plus a verifiable `receipt[0].token_id`, not on inner `token_id` values.
-
-A receipt chain therefore has exactly one anchor to the current outer token (`receipt[0].token_id`, when issuer alignment holds) and exactly one chain of cryptographic linkage (`prh`).  All inner-receipt integrity flows from these two properties.  An inner receipt has no independent binding to the current request, audience, scope, or token instance; it is bound only to its older neighbor through `prh` and ultimately to the current outer token through the chain's anchor.
+Inner receipts' `token_id` values are not independently verifiable (see {{consumer-processing}}); deployments depending on receipt-chain integrity MUST rely on `prh` plus a verifiable `receipt[0].token_id`, not on inner `token_id` values.  An inner receipt has no independent binding to the current request, audience, scope, or token instance; it is bound only to its older neighbor through `prh` and ultimately to the current outer token through the chain's single anchor.
 
 This construction makes coverage tamper-evident at the structural level:
 
@@ -640,9 +634,9 @@ When `receipt[0]` diverges from the current outer-token instance — either beca
 *  This profile provides no in-band signal distinguishing legitimate reissuance from a re-wrapping attack by a compromised issuer, and does not define metadata identifying which issuers in a recipient's trust set perform reissuance versus only originating tokens.
 *  Recipients that need to distinguish reissuing from originating issuers MUST establish that distinction through local policy or out-of-band trust framework, and SHOULD treat unexpected reissuance divergence as cause for additional scrutiny under that policy.
 
-Because the relaxation applies whenever divergence is observed, the `token_id` strict-equality check provides binding only in the originating-issuance case (same-issuer, same-`jti`).  In all other cases, transplantation defense rests on the outer token's own signature: a party that is not the trusted outer-token issuer cannot construct a substitute outer token to host transplanted receipts, regardless of `token_id`.  An outer token issuer that is compromised falls under the threat in {{compromised-outer-issuer}}, which is explicitly out of scope for this profile.
+The `token_id` strict-equality check therefore provides binding only in the originating-issuance case (same-issuer, same-`jti`).  In all other cases, transplantation defense rests on the outer token's signature: a non-issuer party cannot construct a substitute outer token to host transplanted receipts.  Compromise of the outer-token issuer falls under {{compromised-outer-issuer}} and is out of scope.
 
-Companion profiles MAY define additional outer-token binding claims that follow the `token_id` pattern: each such claim records an identifier from the outer token at the time of receipt creation, and consumer verifiability against the current outer token is conditioned on issuer alignment in the same way `token_id` is conditioned on `receipt[0].iss` matching `outer.iss`.  An additional binding claim does not weaken the `token_id` anchor; it provides a parallel anchor against a different outer-token field.
+Companion profiles MAY define additional outer-token binding claims following the `token_id` pattern: each records an identifier from the outer token at receipt creation, with consumer verifiability conditioned on issuer alignment.  Such claims provide parallel anchors against other outer-token fields and do not weaken the `token_id` anchor.
 
 ## Hash Algorithm Agility
 
@@ -654,15 +648,15 @@ Algorithm coordination requirements:
 *  Consumers MUST reject chains that mix algorithms or that name an algorithm the recipient does not support.
 *  An issuer extending an inbound chain MUST preserve the inbound `prh_alg`.
 
-Migration semantics: algorithm migration under this profile is whole-chain, not partial.  Chains begun under one algorithm remain on that algorithm for their entire lifetime; new chains can adopt a different algorithm independently.  This profile does not define rehashing of inbound receipts under a new algorithm, because rehashing would invalidate the original signers' `prh` values and require re-signing receipts the extending issuer did not originate.
+Migration is whole-chain, not partial: chains begun under one algorithm remain on that algorithm for their lifetime; new chains can adopt a different algorithm independently.  This profile does not define rehashing of inbound receipts, because rehashing would invalidate prior signers' `prh` values and require re-signing receipts the extending issuer did not originate.
 
-Deployments planning a migration SHOULD begin issuing new chains under the target algorithm well before any indication that the legacy algorithm is reaching end of life, so that legacy chains expire naturally without forcing partial-migration patterns this profile does not support.
+Deployments SHOULD begin issuing new chains under the target algorithm well before any indication that the legacy algorithm is reaching end of life, so legacy chains expire naturally.
 
 ## Compromised Outer Issuer {#compromised-outer-issuer}
 
-Receipts provide their strongest additional assurance against a compromised or dishonest downstream issuer attempting to fabricate prior-hop provenance.  That downstream issuer cannot forge prior issuers' receipt signatures.
+Receipts mitigate a compromised or dishonest *downstream* issuer attempting to fabricate prior-hop provenance: that issuer cannot forge prior issuers' receipt signatures.
 
-However, if the current outer token issuer is compromised, that issuer can still assemble a new outer token around previously harvested valid receipts for the same visible chain prefix.  This document does not attempt to solve that class of attack.  Deployments that need stronger guarantees can combine this profile with additional transparency, transaction binding, or replay-detection mechanisms outside the scope of this document.
+A compromised current outer token issuer is a different threat.  Such an issuer can assemble a new outer token wrapping previously harvested valid receipts for the same visible chain prefix.  This document does not solve that class of attack; deployments needing stronger guarantees can combine this profile with transparency, transaction binding, or replay-detection mechanisms outside the scope of this document.
 
 ## Receipt Signing Key Compromise
 
@@ -672,13 +666,13 @@ Deployments SHOULD set short `exp` values on receipts, consistent with the REQUI
 
 ## Receipt Chain Size
 
-Each receipt is a full signed JWT, and the receipt chain grows linearly with delegation depth.  A typical signed receipt is in the 400 to 800 byte range after JWS compact serialization and base64url encoding, depending on signature algorithm and which optional claims are present; receipts that include `cnf` or larger `act` objects sit at the upper end of that range.  Chains beyond approximately 10 hops therefore approach the 8 KB Authorization header budget that is common in HTTP infrastructure, and chains beyond approximately 20 hops approach a 16 KB practical ceiling.  These figures are illustrative and depend on the specific deployment.
+Each receipt is a full signed JWT, and the chain grows linearly with delegation depth.  A typical signed receipt is 400 to 800 bytes after JWS compact serialization and base64url encoding (the upper end when `cnf` or larger `act` objects are present).  Chains beyond approximately 10 hops therefore approach the 8 KB Authorization header budget common in HTTP infrastructure; chains beyond approximately 20 hops approach a 16 KB practical ceiling.  Figures are illustrative and depend on the deployment.
 
-Tokens carrying deep chains can exceed HTTP header size limits in proxies, gateways, or downstream services.  Deployments SHOULD verify that the resulting outer token plus its `actor_receipts` array fits within the header size budget of every component on the request path that handles the token.  When introspection is available, deployments MAY return receipts via introspection rather than embedding them in the access token to avoid header pressure for bearer-token clients.
+Deployments SHOULD verify that the outer token plus its `actor_receipts` array fits within the header-size budget of every component on the request path.  When introspection is available, deployments MAY return receipts via introspection rather than embedding them, to avoid header pressure for bearer-token clients.
 
 ## Historical `cnf` Disclosure {#historical-cnf-disclosure}
 
-Receipt `cnf` values can reveal prior-hop public-key identifiers or certificate thumbprints to any party that receives the token or introspection response.  These are stable identifiers that can enable cross-request and cross-service correlation of actors and services over time.  Issuers SHOULD NOT include `cnf` in receipts unless the relying parties that will receive the token have been evaluated for that disclosure risk and the risk is acceptable.  Omitting `cnf` from a receipt does not invalidate the receipt; it means that hop lacks independently attested historical presenter binding, which is acceptable for many deployments.
+Receipt `cnf` values reveal prior-hop public-key identifiers or certificate thumbprints to any party that receives the token or introspection response.  These are stable identifiers that enable cross-request and cross-service correlation of actors and services over time.  Issuers SHOULD NOT include `cnf` in receipts unless the relying parties that will receive the token have been evaluated for that disclosure risk and the risk is acceptable.  Omitting `cnf` does not invalidate the receipt; it means that hop lacks independently attested historical presenter binding, which is acceptable for many deployments.
 
 # Privacy Considerations
 
