@@ -78,6 +78,7 @@ Table of Contents
    1.  Introduction
    2.  Conventions and Definitions
    3.  Relationship to the Core Actor Profile
+     3.1.  Relationship to Token Introspection
    4.  Design Goals and Non-Goals
      4.1.  Deployment Fit
    5.  Actor Receipts Overview
@@ -126,10 +127,18 @@ Table of Contents
      13.4.  Receipt-to-Token Binding Limits
      13.5.  Hash Algorithm Agility
      13.6.  Compromised Outer Issuer
-     13.7.  Receipt Signing Key Compromise
-     13.8.  Receipt Chain Size
-     13.9.  Historical cnf Disclosure
+     13.7.  Receipt Freshness and Replay
+     13.8.  Receipt Signing Key Compromise
+     13.9.  Receipt Chain Size
+     13.10. Historical cnf Disclosure
    14. Privacy Considerations
+     14.1.  What Receipts Disclose
+     14.2.  Minimization
+     14.3.  Selective Disclosure
+     14.4.  Audience Restriction
+     14.5.  Unnecessary Hop Disclosure
+     14.6.  Cross-Service Correlation
+     14.7.  Detached Verification Privacy
    15. IANA Considerations
      15.1.  Media Type Registration
      15.2.  JSON Web Token Claims Registration
@@ -249,6 +258,40 @@ Table of Contents
 
    *  associated metadata and introspection parameters.
 
+3.1.  Relationship to Token Introspection
+
+   Receipt-based provenance and OAuth Token Introspection ([RFC7662])
+   address overlapping but distinct needs:
+
+   *  *Introspection* returns the current AS-controlled state of a token
+      at the time of the introspection call.  It tells the resource
+      server whether the token is currently active and reflects the AS's
+      current view of the token's claims.
+
+   *  *Receipts* preserve signed cross-hop provenance that travels with
+      the token, survives across trust boundaries, may remain useful
+      after intermediate systems become unreachable or are
+      decommissioned, and supports detached verification by parties that
+      do not have access to the issuing AS's introspection endpoint.
+
+   A deployment may use either, both, or neither:
+
+   *  Receipts MAY be returned via introspection, providing both signals
+      in a single response (see Section 9.4).
+
+   *  Receipts MAY be carried inline in JWT tokens for deployments where
+      introspection is not available or where detached verification is
+      required.
+
+   *  Introspection MAY be used for active-status checks even when
+      receipts are not in use.
+
+   This document does not standardize the choice between receipts,
+   introspection, and inline-only receipt-bearing tokens; that choice is
+   a deployment decision driven by the recipient's trust framework, the
+   network availability of introspection endpoints, and the audit and
+   verification requirements of the deployment.
+
 4.  Design Goals and Non-Goals
 
    The goals of this document are:
@@ -338,6 +381,15 @@ Table of Contents
 
    When a deployment requires full provenance, local policy or resource
    requirements enforce complete receipt coverage.
+
+   Receipts are historical provenance, not authority transfer.  A valid
+   receipt chain documents prior delegation state but does not by itself
+   convey authority, authorization, entitlement, or delegation rights.
+   Validation of a receipt does not imply that the represented
+   delegation remains active, authorized, or acceptable under current
+   policy; current authorization decisions MUST evaluate the current
+   outer token, current policy, and current state, not the receipt chain
+   alone.
 
 6.  The actor_receipts Claim
 
@@ -440,6 +492,17 @@ Table of Contents
 
    sub:  REQUIRED.  The top-level sub value that was present in the
       token issued at this hop.
+
+      Receipt iss is the receipt signer; it is NOT the namespace
+      authority for receipt sub.  Receipt sub records the subject
+      identifier as it appeared in the token at the represented hop,
+      interpreted under the namespace authority that governed that
+      token.  That namespace authority is contextual to the represented
+      hop and MAY differ across receipts in the same chain (see
+      Section 9.1).  Recipients reconciling differing sub values across
+      receipts apply trusted local mapping rules; this profile does not
+      define an in-band mechanism for cross-namespace subject
+      reconciliation.
 
    sub_profile:  OPTIONAL.  The top-level sub_profile value, when the
       token issued at this hop carried one.
@@ -594,10 +657,10 @@ Table of Contents
    *  if the new receipt is the only receipt in the array, it MUST omit
       prh.
 
-   No JSON canonicalization is applied.  prh hashes the exact compact-
-   serialized JWS string of the next older receipt as carried in the
-   array.  Systems that carry, store, or forward actor_receipts arrays
-   MUST preserve each compact JWT string byte-for-byte; any
+   No JSON [RFC8259] canonicalization is applied.  prh hashes the exact
+   compact-serialized JWS string of the next older receipt as carried in
+   the array.  Systems that carry, store, or forward actor_receipts
+   arrays MUST preserve each compact JWT string byte-for-byte; any
    modification, including semantically equivalent re-encoding,
    invalidates prh for any receipt that references it.
 
@@ -852,10 +915,10 @@ Table of Contents
            receipt[0].iss equals the outer token's iss AND
            receipt[0].token_id equals the outer token's jti, the receipt
            is anchored to the current outer-token instance (the
-           originating-issuance case).  Otherwise — whether because
+           originating-issuance case).  Otherwise (whether because
            receipt[0].iss differs from outer.iss, or because
            receipt[0].iss matches but receipt[0].token_id differs from
-           outer.jti — the divergence reflects reissuance per
+           outer.jti), the divergence reflects reissuance per
            Section 8.3, and receipt[0].token_id is not required to equal
            the current outer token's jti.  Same-issuer token_id
            divergence typically reflects refresh-token-driven
@@ -1000,7 +1063,17 @@ Table of Contents
    *  does not prove that the current token's audience, scope, or
       expiration were in force when older receipts were created;
 
-   *  does not replace the need to authorize the current token itself.
+   *  does not replace the need to authorize the current token itself;
+
+   *  does not convey authority, authorization, entitlement, or
+      delegation rights;
+
+   *  does not imply the represented delegation remains active or
+      acceptable under current policy.
+
+   A resource server that bases an authorization decision on receipt
+   content alone, without re-evaluating the current outer token and
+   current policy, mis-uses this profile.
 
 9.4.  Introspection
 
@@ -1113,7 +1186,7 @@ Table of Contents
    This document does not define a metadata signal for "this resource
    server requires cnf to be present in receipts."  Issuers default to
    omitting receipt cnf for privacy reasons (see Section 7.2 and
-   Section 13.9); resource servers that need historical sender-
+   Section 13.10); resource servers that need historical sender-
    constraint provenance MUST coordinate that requirement with issuers
    through deployment policy or a future companion profile, rather than
    through metadata defined here.
@@ -1448,12 +1521,12 @@ Table of Contents
    cannot fabricate, reorder, or selectively drop receipts signed by
    other trusted issuers.
 
-   When receipt[0] diverges from the current outer-token instance —
-   either because receipt[0].iss differs from outer.iss, or because
-   receipt[0].iss matches but receipt[0].token_id differs from outer.jti
-   — the consumer relaxes the token_id bind-to-current check (Section 9)
-   on the assumption that the divergence reflects legitimate reissuance
-   per Section 8.3.  In this case:
+   When receipt[0] diverges from the current outer-token instance,
+   either because receipt[0].iss differs from outer.iss or because
+   receipt[0].iss matches but receipt[0].token_id differs from
+   outer.jti, the consumer relaxes the token_id bind-to-current check
+   (Section 9) on the assumption that the divergence reflects legitimate
+   reissuance per Section 8.3.  In this case:
 
    *  Recipients rely on the current outer token issuer's authority to
       have performed a legitimate reissuance.
@@ -1526,7 +1599,40 @@ Table of Contents
    transaction binding, or replay-detection mechanisms outside the scope
    of this document.
 
-13.7.  Receipt Signing Key Compromise
+13.7.  Receipt Freshness and Replay
+
+   Receipts are historical attestations of past delegation state.  They
+   MAY outlive the validity period of the outer token they were
+   originally issued for, and MAY be carried forward across reissuance
+   and refresh as long as their exp permits (Section 7.2).
+
+   This profile takes a deliberately limited view of receipt freshness:
+
+   *  Receipts attest hop history at the time of original issuance; they
+      do not assert that the represented delegation is still active.
+
+   *  Runtime policy evaluation, including current authorization,
+      current scope, and current revocation state, is separate from
+      receipt validation.  A valid receipt does not guarantee that the
+      represented delegation has not been revoked since.
+
+   *  Receipt exp bounds the window during which the receipt is
+      structurally usable; it does not bound the lifetime of the
+      underlying delegation.
+
+   *  Replay of a receipt within its exp window is not in itself an
+      attack.  Receipts are designed to be carried by tokens that
+      themselves have replay-detection or sender-constraint properties;
+      replay of an entire token plus its receipts is governed by the
+      outer token's replay characteristics, not by the receipt chain.
+
+   Deployments needing freshness signals beyond receipt exp, such as
+   active delegation status, fresh authorization confirmation, or
+   current revocation state, MUST obtain those signals from the AS via
+   introspection ([RFC7662]), fresh token issuance, or another mechanism
+   outside the scope of this profile.
+
+13.8.  Receipt Signing Key Compromise
 
    If a receipt issuer's signing key is compromised, previously issued
    receipts signed with that key cannot be individually revoked.  The
@@ -1542,7 +1648,7 @@ Table of Contents
    provenance for those hops and SHOULD require re-issuance through a
    trusted issuer.
 
-13.8.  Receipt Chain Size
+13.9.  Receipt Chain Size
 
    Each receipt is a full signed JWT, and the chain grows linearly with
    delegation depth.  A typical signed receipt is 400 to 800 bytes after
@@ -1559,7 +1665,7 @@ Table of Contents
    deployments MAY return receipts via introspection rather than
    embedding them, to avoid header pressure for bearer-token clients.
 
-13.9.  Historical cnf Disclosure
+13.10.  Historical cnf Disclosure
 
    Receipt cnf values reveal prior-hop public-key identifiers or
    certificate thumbprints to any party that receives the token or
@@ -1574,33 +1680,124 @@ Table of Contents
 
 14.  Privacy Considerations
 
-   Actor receipts increase delegation transparency, but they also
-   increase information disclosure:
+   Actor receipts materially increase delegation transparency and
+   observability.  This is useful for audit and provenance, but it is
+   privacy-sensitive: receipts disclose information that a non-receipt-
+   bearing token does not, and the disclosure can be hard to retract
+   once the token has reached recipients.
 
-   *  they expose which issuers created visible actor hops;
+14.1.  What Receipts Disclose
 
-   *  they can reveal historical presenter-key identifiers across
-      requests, enabling cross-session correlation;
+   Receipts can expose, to any party that receives the token or
+   introspection response:
 
-   *  they can reveal internal service identities that a deployment
-      might otherwise have kept visible only to intermediate issuers.
+   *  the set of issuers that participated in the delegation chain
+      (receipt iss values);
+
+   *  historical presenter-key identifiers across requests, enabling
+      cross-session correlation of actors and services;
+
+   *  internal service identities and intermediary actors that a
+      deployment might otherwise have kept visible only to intermediate
+      issuers;
+
+   *  workload identifiers (e.g., act.sub values) that may reveal
+      organizational structure or orchestration topology;
+
+   *  subject re-expression patterns across namespaces, which can reveal
+      cross-domain identity mappings.
+
+14.2.  Minimization
 
    Deployments SHOULD minimize receipt disclosure when full provenance
-   is not required.  In particular:
+   is not required:
 
-   *  an issuer or introspection server MAY suppress actor_receipts
-      entirely when policy does not permit disclosure;
+   *  Issuers and introspection servers MAY suppress actor_receipts
+      entirely when policy does not permit disclosure.
 
-   *  an introspection server that returns only partial receipt
-      information SHOULD set actor_receipts_complete to false;
+   *  Introspection servers returning only partial receipt information
+      SHOULD set actor_receipts_complete to false.
 
-   *  resource servers SHOULD request or require actor receipts only
+   *  Resource servers SHOULD request or require actor receipts only
       when they materially improve authorization, audit, or risk
-      controls;
+      controls.
 
-   *  issuers SHOULD omit cnf from receipts by default when the relying
-      parties that will receive the token have not been evaluated for
-      historical presenter-key disclosure risk.
+   *  Issuers SHOULD omit cnf from receipts by default when relying
+      parties have not been evaluated for historical presenter-key
+      disclosure risk (see Section 13.10).
+
+   *  Deployments SHOULD prefer per-resource-server policy on receipt
+      requirements over blanket inclusion in every token.
+
+14.3.  Selective Disclosure
+
+   This profile does not define a per-claim selective-disclosure
+   mechanism for receipts: chain integrity requires byte-for-byte
+   preservation of each receipt JWT, so selective omission of individual
+   claims within a receipt would break the chain.  Selective disclosure
+   is therefore at the whole-receipt or whole-chain granularity:
+
+   *  Introspection servers MAY suppress entire receipts and signal
+      partial coverage via actor_receipts_complete: false.
+
+   *  Issuers MAY emit partial-coverage chains that cover only the
+      outermost hops (see Section 8.4).
+
+   Deployments needing finer-grained selective disclosure require a
+   future companion profile.
+
+14.4.  Audience Restriction
+
+   A receipt travels with the outer token to whichever audiences the
+   outer token serves; receipts have no independent audience scoping
+   (Section 7.2).  Deployments needing audience-specific disclosure
+   constraints SHOULD partition receipt issuance by audience at issuance
+   time (for example, issue receipt-bearing tokens only to audiences
+   with adequate disclosure agreements) rather than relying on receipt-
+   level audience restriction, which this profile does not provide.
+
+14.5.  Unnecessary Hop Disclosure
+
+   Receipts expose every hop the issuer chose to include.  Some hops may
+   be deployment-internal (orchestration layers, internal workload-
+   identity services) that the deployment would not otherwise expose to
+   relying parties.  Issuers SHOULD evaluate, at issuance time, which
+   hops are appropriate to expose to which audiences.  Where inner hops
+   are not appropriate to expose, issuers SHOULD use partial coverage
+   (omitting the inner-hop receipts) rather than fabricating,
+   suppressing, or rewriting visible act chain entries; the latter would
+   violate the core actor profile.
+
+14.6.  Cross-Service Correlation
+
+   Stable identifiers in receipts (iss, act.sub, cnf, and any companion
+   correlation claim such as a delegation-flow identifier) enable cross-
+   service correlation of actors, subjects, and workflows over time.
+   Deployments operating in privacy-sensitive contexts SHOULD evaluate
+   the correlation risk before enabling receipts:
+
+   *  An audit pipeline that aggregates receipts across services builds
+      a graph of who delegated to whom and when, across organizational
+      boundaries.
+
+   *  Receipts from a single workflow are tied together via prh chain
+      hashes, exposing the delegation graph even when individual hops
+      are routed through privacy-preserving infrastructure.
+
+   *  Receipts persist longer than the outer tokens they were issued for
+      and may be retained in audit logs indefinitely; correlation risk
+      is not bounded by token lifetime.
+
+14.7.  Detached Verification Privacy
+
+   Receipts support detached verification (validation by parties that do
+   not have access to the issuing AS's introspection endpoint).  This is
+   a feature for auditability but a risk for privacy: any party with the
+   token plus the receipt issuer's published verification keys can
+   validate the chain, including parties the issuer did not anticipate.
+   Deployments SHOULD treat receipt-bearing tokens as carrying their
+   full provenance to anywhere the token reaches, and SHOULD scope token
+   distribution accordingly.
 
 15.  IANA Considerations
 
@@ -1982,15 +2179,15 @@ A.2.  Example: Transaction Token Service Rebinding
 
    Suppose the booking tool exchanges the access token above at a TTS,
    and the TTS rebinds the issued Transaction Token to an internal
-   workload identified as https://wimse.travel-
-   provider.example/workloads/payments.
+   workload identified as https://wimse.travel-provider.example/
+   payments.
 
    The resulting Transaction Token can carry:
 
    {
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
-       "sub": "https://wimse.travel-provider.example/workloads/payments",
+       "sub": "https://wimse.travel-provider.example/payments",
        "iss": "https://tts.travel-provider.example",
        "sub_profile": "service",
        "act": {
@@ -2021,7 +2218,7 @@ A.2.  Example: Transaction Token Service Rebinding
      "iss": "https://tts.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
-       "sub": "https://wimse.travel-provider.example/workloads/payments",
+       "sub": "https://wimse.travel-provider.example/payments",
        "iss": "https://tts.travel-provider.example",
        "sub_profile": "service"
      },
