@@ -2071,6 +2071,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         </ul>
 <p id="section-8.4-4">When the issuer also filters the visible <code>act</code> chain (see the <code>chain_complete</code> introspection member defined in the core actor profile <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>), <code>actor_receipts</code> covers only the visible filtered chain.  In that case <code>actor_receipts_complete</code> describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness <span class="bcp14">MUST</span> evaluate <code>chain_complete</code> separately.<a href="#section-8.4-4" class="pilcrow">¶</a></p>
+<p id="section-8.4-5">For inline JWT tokens, this document defines no <code>chain_complete</code> JWT claim.  A recipient that needs true-chain completeness for inline JWT tokens <span class="bcp14">MUST</span> obtain that signal from trusted deployment context, introspection, or another profile; <code>actor_receipts_complete: true</code> alone attests only complete receipt coverage for the visible <code>act</code> chain.<a href="#section-8.4-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="transaction-token-service-rebinding">
@@ -2121,13 +2122,19 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-9-2.5.2.5.1">verify that <code>typ</code> equals <code>actor-receipt+jwt</code>;<a href="#section-9-2.5.2.5.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.5.2.6">
-              <p id="section-9-2.5.2.6.1">verify that the receipt <code>act</code> object is single-hop, contains no nested <code>act</code>, and contains no <code>cnf</code>;<a href="#section-9-2.5.2.6.1" class="pilcrow">¶</a></p>
+              <p id="section-9-2.5.2.6.1">verify that all <span class="bcp14">REQUIRED</span> receipt claims are present and have the expected JSON types, including <code>iss</code>, <code>sub</code>, <code>act</code>, <code>iat</code>, <code>exp</code>, and <code>jti</code>;<a href="#section-9-2.5.2.6.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.5.2.7">
-              <p id="section-9-2.5.2.7.1">enforce <code>exp</code>, <code>iat</code>, and other JWT validity rules.  Because <code>exp</code> is <span class="bcp14">REQUIRED</span> on receipts and <span class="bcp14">MUST</span> cover the expected outer token lifetime, an expired receipt <span class="bcp14">SHOULD</span> be treated as invalid even for older hops.  Local policy <span class="bcp14">MAY</span> permit continued use of a receipt that is expired by a small clock-skew margin, but <span class="bcp14">MUST NOT</span> relax <code>exp</code> enforcement broadly as a workaround for issuers that failed to set adequate <code>exp</code> values.<a href="#section-9-2.5.2.7.1" class="pilcrow">¶</a></p>
+              <p id="section-9-2.5.2.7.1">verify that <span class="bcp14">OPTIONAL</span> claims used by this profile have the expected JSON types when present, including <code>sub_iss</code>, <code>sub_profile</code>, <code>cnf</code>, <code>prh</code>, <code>prh_alg</code>, and <code>origin_jti</code>;<a href="#section-9-2.5.2.7.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.5.2.8">
-              <p id="section-9-2.5.2.8.1">for <code>receipt[0]</code> only, when <code>origin_jti</code> is present: if <code>receipt[0].iss</code> equals the outer token's <code>iss</code> AND <code>receipt[0].origin_jti</code> equals the outer token's <code>jti</code>, the receipt is anchored to the current outer-token instance (the originating-issuance case).  Otherwise (whether because <code>receipt[0].iss</code> differs from <code>outer.iss</code>, or because <code>receipt[0].iss</code> matches but <code>receipt[0].origin_jti</code> differs from <code>outer.jti</code>), <code>receipt[0].origin_jti</code> is historical provenance only and does not bind the receipt to the current outer-token instance.  Such divergence is valid under this profile only when accepted by local policy as legitimate reissuance per <a href="#reissuance-without-a-new-actor-hop" class="auto internal xref">Section 8.3</a>.  Same-issuer <code>origin_jti</code> divergence typically reflects refresh-token-driven reissuance; different-issuer divergence reflects introspection-and-re-emission or similar paths.  In either reissuance case, the consumer relies on the trust framework in <a href="#receipt-to-token-binding-limits" class="auto internal xref">Section 13.4</a> to distinguish legitimate reissuance from a re-wrapping attack.  For receipts other than <code>receipt[0]</code>, <code>origin_jti</code> records the historical outer-token <code>jti</code> at the hop where the receipt was created, is not independently verifiable by the consumer, and is informational provenance only.<a href="#section-9-2.5.2.8.1" class="pilcrow">¶</a></p>
+              <p id="section-9-2.5.2.8.1">verify that the receipt <code>act</code> object is single-hop, contains no nested <code>act</code>, and contains no <code>cnf</code>;<a href="#section-9-2.5.2.8.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-9-2.5.2.9">
+              <p id="section-9-2.5.2.9.1">enforce <code>exp</code>, <code>iat</code>, and other JWT validity rules.  Because <code>exp</code> is <span class="bcp14">REQUIRED</span> on receipts and <span class="bcp14">MUST</span> cover the expected outer token lifetime, an expired receipt <span class="bcp14">SHOULD</span> be treated as invalid even for older hops.  Local policy <span class="bcp14">MAY</span> permit continued use of a receipt that is expired by a small clock-skew margin, but <span class="bcp14">MUST NOT</span> relax <code>exp</code> enforcement broadly as a workaround for issuers that failed to set adequate <code>exp</code> values.<a href="#section-9-2.5.2.9.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-9-2.5.2.10">
+              <p id="section-9-2.5.2.10.1">for <code>receipt[0]</code> only, when <code>origin_jti</code> is present: if <code>receipt[0].iss</code> equals the outer token's <code>iss</code> AND <code>receipt[0].origin_jti</code> equals the outer token's <code>jti</code>, the receipt is anchored to the current outer-token instance (the originating-issuance case).  Otherwise (whether because <code>receipt[0].iss</code> differs from <code>outer.iss</code>, or because <code>receipt[0].iss</code> matches but <code>receipt[0].origin_jti</code> differs from <code>outer.jti</code>), <code>receipt[0].origin_jti</code> is historical provenance only and does not bind the receipt to the current outer-token instance.  Such divergence is valid under this profile only when accepted by local policy as legitimate reissuance per <a href="#reissuance-without-a-new-actor-hop" class="auto internal xref">Section 8.3</a>.  Same-issuer <code>origin_jti</code> divergence typically reflects refresh-token-driven reissuance; different-issuer divergence reflects introspection-and-re-emission or similar paths.  In either reissuance case, the consumer relies on the trust framework in <a href="#receipt-to-token-binding-limits" class="auto internal xref">Section 13.4</a> to distinguish legitimate reissuance from a re-wrapping attack.  For receipts other than <code>receipt[0]</code>, <code>origin_jti</code> records the historical outer-token <code>jti</code> at the hop where the receipt was created, is not independently verifiable by the consumer, and is informational provenance only.<a href="#section-9-2.5.2.10.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </li>
@@ -2178,7 +2185,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-9-2.8.2.1.1"><code>receipt[0].sub</code> <span class="bcp14">MUST</span> equal the outer token's top-level <code>sub</code>;<a href="#section-9-2.8.2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.8.2.2">
-              <p id="section-9-2.8.2.2.1">when <code>receipt[0].sub_iss</code> and an equivalent top-level subject namespace authority are both available in the outer token or trusted validation context, they <span class="bcp14">MUST</span> identify the same namespace authority;<a href="#section-9-2.8.2.2.1" class="pilcrow">¶</a></p>
+              <p id="section-9-2.8.2.2.1">when <code>receipt[0].sub_iss</code> and a top-level subject namespace authority are both available from trusted validation context, they <span class="bcp14">MUST</span> identify the same namespace authority;<a href="#section-9-2.8.2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.8.2.3">
               <p id="section-9-2.8.2.3.1">when <code>receipt[0].sub_profile</code> is present and the outer token contains top-level <code>sub_profile</code>, the values <span class="bcp14">MUST</span> match;<a href="#section-9-2.8.2.3.1" class="pilcrow">¶</a></p>
@@ -2580,7 +2587,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-13.3-5.2.1">A recipient that uses dynamic discovery for receipt validation <span class="bcp14">MUST</span> do so only within an existing trust framework or equivalent local policy that defines which issuers are permitted.<a href="#section-13.3-5.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-13.3-6">Trust is per-issuer and not transitive: each receipt is validated against the recipient's own trusted-issuer set, independent of the outer token's issuer or neighboring receipts.  A chain breaks at the first inner receipt whose issuer is not trusted; recipients <span class="bcp14">SHOULD</span> treat such receipts as absent and apply partial-coverage policy (<a href="#discovery-capability-signaling" class="auto internal xref">Section 10</a>).  Deployments needing uniform trust across an extended chain <span class="bcp14">MUST</span> establish trust explicitly with every receipt issuer that may appear in tokens they accept.<a href="#section-13.3-6" class="pilcrow">¶</a></p>
+<p id="section-13.3-6">Trust is per-issuer and not transitive: each receipt is validated against the recipient's own trusted-issuer set, independent of the outer token's issuer or neighboring receipts.  If any receipt in the presented <code>actor_receipts</code> array is signed by an issuer that is not trusted for receipt validation, the recipient <span class="bcp14">MUST</span> reject the receipt chain for the purposes of this profile.  This document does not define trusted-prefix validation across an untrusted inner receipt.  Deployments needing uniform trust across an extended chain <span class="bcp14">MUST</span> establish trust explicitly with every receipt issuer that may appear in tokens they accept.<a href="#section-13.3-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="receipt-to-token-binding-limits">
@@ -2605,7 +2612,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-13.4-6.1.1">An issuer cannot drop an inner receipt without breaking the <code>prh</code> chain: the next-newer receipt's <code>prh</code> value would no longer match the receipt now in the next array position, and consumer step 6 of <a href="#consumer-processing" class="auto internal xref">Section 9</a> rejects the chain.<a href="#section-13.4-6.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-13.4-6.2">
-            <p id="section-13.4-6.2.1">An issuer can only fail to include receipts from the outermost end of the chain, producing partial coverage that <code>actor_receipts_complete: true</code> then forbids the issuer from claiming.<a href="#section-13.4-6.2.1" class="pilcrow">¶</a></p>
+            <p id="section-13.4-6.2.1">An issuer can only fail to include receipts from the innermost or oldest end of the chain, producing partial coverage that <code>actor_receipts_complete: true</code> then forbids the issuer from claiming.<a href="#section-13.4-6.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-13.4-7">Coverage is therefore truthful within the limits of the trusted-issuer set: a compromised issuer can omit some or all of its own receipts and any outermost receipts from issuers it controls, but it cannot fabricate, reorder, or selectively drop receipts signed by other trusted issuers.<a href="#section-13.4-7" class="pilcrow">¶</a></p>
@@ -3208,6 +3215,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <div class="lang-json sourcecode" id="appendix-A.1-2">
 <pre>
 {
+  "jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
     "sub": "https://tools.example.com/booking-tool",
@@ -3286,6 +3294,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <div class="lang-json sourcecode" id="appendix-A.2-3">
 <pre>
 {
+  "jti": "f0e1d2c3-b4a5-6789-cdef-012345678901",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
     "sub": "https://wimse.travel-provider.example/payments",
@@ -3349,6 +3358,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <div class="lang-json sourcecode" id="appendix-A.3-3">
 <pre>
 {
+  "jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
     "sub": "https://tools.example.com/booking-tool",

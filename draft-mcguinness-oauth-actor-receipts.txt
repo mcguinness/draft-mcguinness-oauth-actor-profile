@@ -876,6 +876,13 @@ Table of Contents
    unfiltered delegation chain; recipients that need true-chain
    completeness MUST evaluate chain_complete separately.
 
+   For inline JWT tokens, this document defines no chain_complete JWT
+   claim.  A recipient that needs true-chain completeness for inline JWT
+   tokens MUST obtain that signal from trusted deployment context,
+   introspection, or another profile; actor_receipts_complete: true
+   alone attests only complete receipt coverage for the visible act
+   chain.
+
 8.5.  Transaction Token Service Rebinding
 
    A Transaction Token Service that establishes a new presenter and
@@ -927,6 +934,14 @@ Table of Contents
         *  validate the JWT signature;
 
         *  verify that typ equals actor-receipt+jwt;
+
+        *  verify that all REQUIRED receipt claims are present and have
+           the expected JSON types, including iss, sub, act, iat, exp,
+           and jti;
+
+        *  verify that OPTIONAL claims used by this profile have the
+           expected JSON types when present, including sub_iss,
+           sub_profile, cnf, prh, prh_alg, and origin_jti;
 
         *  verify that the receipt act object is single-hop, contains no
            nested act, and contains no cnf;
@@ -1004,10 +1019,9 @@ Table of Contents
 
         *  receipt[0].sub MUST equal the outer token's top-level sub;
 
-        *  when receipt[0].sub_iss and an equivalent top-level subject
-           namespace authority are both available in the outer token or
-           trusted validation context, they MUST identify the same
-           namespace authority;
+        *  when receipt[0].sub_iss and a top-level subject namespace
+           authority are both available from trusted validation context,
+           they MUST identify the same namespace authority;
 
         *  when receipt[0].sub_profile is present and the outer token
            contains top-level sub_profile, the values MUST match;
@@ -1524,12 +1538,14 @@ Table of Contents
 
    Trust is per-issuer and not transitive: each receipt is validated
    against the recipient's own trusted-issuer set, independent of the
-   outer token's issuer or neighboring receipts.  A chain breaks at the
-   first inner receipt whose issuer is not trusted; recipients SHOULD
-   treat such receipts as absent and apply partial-coverage policy
-   (Section 10).  Deployments needing uniform trust across an extended
-   chain MUST establish trust explicitly with every receipt issuer that
-   may appear in tokens they accept.
+   outer token's issuer or neighboring receipts.  If any receipt in the
+   presented actor_receipts array is signed by an issuer that is not
+   trusted for receipt validation, the recipient MUST reject the receipt
+   chain for the purposes of this profile.  This document does not
+   define trusted-prefix validation across an untrusted inner receipt.
+   Deployments needing uniform trust across an extended chain MUST
+   establish trust explicitly with every receipt issuer that may appear
+   in tokens they accept.
 
 13.4.  Receipt-to-Token Binding Limits
 
@@ -1571,8 +1587,8 @@ Table of Contents
       the receipt now in the next array position, and consumer step 6 of
       Section 9 rejects the chain.
 
-   *  An issuer can only fail to include receipts from the outermost end
-      of the chain, producing partial coverage that
+   *  An issuer can only fail to include receipts from the innermost or
+      oldest end of the chain, producing partial coverage that
       actor_receipts_complete: true then forbids the issuer from
       claiming.
 
@@ -2179,6 +2195,7 @@ A.1.  Example: Two-Hop Delegation Chain
    The outer token carries the following visible actor chain:
 
    {
+     "jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
        "sub": "https://tools.example.com/booking-tool",
@@ -2256,6 +2273,7 @@ A.2.  Example: Transaction Token Service Rebinding
    The resulting Transaction Token can carry:
 
    {
+     "jti": "f0e1d2c3-b4a5-6789-cdef-012345678901",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
        "sub": "https://wimse.travel-provider.example/payments",
@@ -2319,6 +2337,7 @@ A.3.  Example: Partial Receipt Coverage
    The resulting access token carries:
 
    {
+     "jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
        "sub": "https://tools.example.com/booking-tool",
