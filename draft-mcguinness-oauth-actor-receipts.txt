@@ -637,16 +637,7 @@ Table of Contents
       Issuers SHOULD include origin_jti whenever the token they are
       issuing carries a jti claim.
 
-      Consumer verification of origin_jti is defined in Section 9:
-
-      *  for receipt[0], origin_jti is independently verifiable when
-         receipt[0].iss equals the outer token's iss and
-         receipt[0].origin_jti equals the outer token's jti (the
-         originating-issuance case);
-
-      *  for receipts other than receipt[0], origin_jti records the
-         historical outer-token jti at the hop where the receipt was
-         created and is informational provenance only.
+      Consumer verification of origin_jti is defined in Section 9.
 
 7.2.6.  Excluded Standard Claims
 
@@ -967,27 +958,13 @@ Table of Contents
            workaround for issuers that failed to set adequate exp
            values.
 
-        *  for receipt[0] only, when origin_jti is present: if
+        *  for receipt[0] only, when origin_jti is present: the receipt
+           is anchored to the current outer-token instance when
            receipt[0].iss equals the outer token's iss AND
-           receipt[0].origin_jti equals the outer token's jti, the
-           receipt is anchored to the current outer-token instance (the
-           originating-issuance case).  Otherwise (whether because
-           receipt[0].iss differs from outer.iss, or because
-           receipt[0].iss matches but receipt[0].origin_jti differs from
-           outer.jti), receipt[0].origin_jti is historical provenance
-           only and does not bind the receipt to the current outer-token
-           instance.  Such divergence is valid under this profile only
-           when accepted by local policy as legitimate reissuance per
-           Section 8.3.  Same-issuer origin_jti divergence typically
-           reflects refresh-token-driven reissuance; different-issuer
-           divergence reflects introspection-and-re-emission or similar
-           paths.  In either reissuance case, the consumer relies on the
-           trust framework in Section 13.4 to distinguish legitimate
-           reissuance from a re-wrapping attack.  For receipts other
-           than receipt[0], origin_jti records the historical outer-
-           token jti at the hop where the receipt was created, is not
-           independently verifiable by the consumer, and is
-           informational provenance only.
+           receipt[0].origin_jti equals the outer token's jti (the
+           originating-issuance case).  Otherwise, see Section 13.4 for
+           divergence handling.  For receipts other than receipt[0],
+           origin_jti is informational provenance only.
 
    6.   Verify receipt-chain linkage:
 
@@ -1644,11 +1621,10 @@ Table of Contents
 
    *  Recipients that have not established explicit policy for trusted
       reissuing issuers SHOULD reject any receipt chain exhibiting
-      divergence as the conservative default.  Recipients that need to
-      accept reissued tokens MUST establish that policy through local
-      configuration or an out-of-band trust framework, and SHOULD treat
-      unexpected reissuance divergence as cause for additional scrutiny
-      under that policy.
+      divergence as the conservative default.  Recipients that opt into
+      accepting reissued tokens MUST establish that policy through local
+      configuration or an out-of-band trust framework and SHOULD treat
+      unexpected reissuance divergence as cause for additional scrutiny.
 
    The origin_jti strict-equality check therefore provides binding only
    in the originating-issuance case (same-issuer, same-jti).  In all
