@@ -55,7 +55,7 @@ informative:
 
 --- abstract
 
-This document defines OAuth Actor Receipts, an optional companion provenance profile for delegated OAuth tokens that conform to the OAuth Actor Profile for Delegation.  It introduces the `actor_receipts` claim, a signed per-hop receipt chain that records which issuer added each visible actor hop, preserves the historical top-level `cnf` value associated with that hop, and links receipts together so recipients can validate prior-hop provenance without relying solely on the current outer token issuer.  This document also defines metadata and introspection parameters for advertising and consuming actor-receipt support.
+This document defines OAuth Actor Receipts, an optional companion provenance profile for delegated OAuth tokens that conform to the OAuth Actor Profile for Delegation.  It introduces the `actor_receipts` claim, a signed per-hop receipt chain that records which issuer added each visible actor hop, optionally preserves the historical top-level `cnf` value associated with that hop subject to deployment disclosure policy, and links receipts together so recipients can validate prior-hop provenance without relying solely on the current outer token issuer.  This document also defines metadata and introspection parameters for advertising and consuming actor-receipt support.
 
 --- middle
 
@@ -89,7 +89,7 @@ Receipt Chain:
 : The ordered `actor_receipts` array carried in a token or introspection response.
 
 Historical Presenter Binding:
-: The top-level `cnf` value that was present in the token issued at the hop represented by a receipt.  Historical presenter binding is informational provenance for that hop; it does not create an active proof-of-possession obligation for the current request.
+: A receipt's `cnf` claim, when present, reflecting the top-level `cnf` value that was present in the token issued at the hop represented by the receipt.  Historical presenter binding is informational provenance for that hop; it does not create an active proof-of-possession obligation for the current request.
 
 Complete Receipt Coverage:
 : A condition in which the number of receipts in `actor_receipts` equals the number of visible actor hops in the token's `act` chain, and every receipt aligns with the corresponding visible hop.
@@ -146,6 +146,7 @@ The non-goals of this document are:
 *  redefining sender-constrained token validation for the current presenter;
 *  requiring clients to change request flows, or requiring resource servers that do not consume receipts to change resource-protection logic;
 *  proving that a particular historical scope, audience, or token lifetime was in force when a receipt was created;
+*  reconciling subject identifiers that differ across receipts (see {{subject-re-expression-across-hops}});
 *  defining transparency logs, non-repudiation systems, or public audit infrastructure.
 
 ## Deployment Fit
@@ -156,7 +157,7 @@ Receipts mitigate a compromised or dishonest *downstream* issuer fabricating pri
 
 # Actor Receipts Overview
 
-An actor receipt records one actor hop.  The issuer that adds a new outermost actor hop signs a receipt describing that hop and, when the issued token is sender-constrained, copies the token's top-level `cnf` value into the receipt as historical presenter-binding context.
+An actor receipt records one actor hop.  The issuer that adds a new outermost actor hop signs a receipt describing that hop and, when the issued token is sender-constrained, may copy the token's top-level `cnf` value into the receipt as historical presenter-binding context subject to the disclosure considerations in {{receipt-claims}}.
 
 The token then carries an `actor_receipts` array:
 
@@ -294,7 +295,11 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 `origin_jti`:
 : RECOMMENDED.  The `jti` of the outer token at the time this receipt was created (the receipt's origin outer token).  This value is fixed at receipt creation; after reissuance the current outer token's `jti` may differ.
 
-  When present, `origin_jti` records the token instance issued at the represented hop.  It is a verifiable binding to the current outer-token instance only in the originating-issuance case, where `receipt[0].iss` equals the outer token's `iss` and `receipt[0].origin_jti` equals the outer token's `jti`.  In reissuance cases, and for receipts other than `receipt[0]`, `origin_jti` is historical issuance provenance only.  Issuers SHOULD include `origin_jti` whenever the token they are issuing carries a `jti` claim.
+  This value is a historical record of which outer token the receipt was originally issued with.  It does not bind the receipt to the current outer token.
+
+  There is one exception.  When `receipt[0].iss` equals the outer token's `iss` and `receipt[0].origin_jti` equals the outer token's `jti`, the value binds `receipt[0]` to the current outer-token instance.  This is the originating-issuance case.
+
+  Issuers SHOULD include `origin_jti` whenever the token they are issuing carries a `jti` claim.
 
   Consumer verification of `origin_jti` is defined in {{consumer-processing}}:
 
@@ -436,6 +441,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  when `receipt[0].sub_iss` is present and the recipient has a top-level subject namespace authority for the outer token's `sub` from local configuration, an inbound subject token's claims, or another deployment-defined source, the two MUST identify the same namespace authority;
     *  when `receipt[0].sub_profile` is present and the outer token contains top-level `sub_profile`, the values MUST match;
     *  when `receipt[0].sub_profile` is present but the outer token does not contain top-level `sub_profile`, recipients that require receipt coverage for subject classification MUST reject the receipt chain or apply explicit local mapping rules;
+    *  when `receipt[0].sub_profile` is absent but the outer token contains top-level `sub_profile`, the receipt remains aligned for this profile.  The visible value is not independently attested by that receipt, and recipients that require receipt coverage for subject classification MUST reject the receipt chain or apply explicit local mapping rules;
     *  older receipts MAY carry differing `sub`, `sub_iss`, or `sub_profile` values; see {{subject-re-expression-across-hops}}.
 9.  Treat each receipt `cnf` value, if present, only as historical provenance for that hop.  A mismatch between the current outer token's top-level `cnf` and the outermost receipt `cnf` MUST NOT by itself invalidate the receipt chain under this profile.
 10.  Receipt `cnf` values MUST NOT replace validation of the current request against the outer token's top-level `cnf`.
@@ -673,11 +679,24 @@ When `receipt[0]` diverges from the current outer-token instance, either because
 
 *  Recipients rely on the current outer token issuer's authority to have performed a legitimate reissuance.
 *  This profile provides no in-band signal distinguishing legitimate reissuance from a re-wrapping attack by a compromised issuer, and does not define metadata identifying which issuers in a recipient's trust set perform reissuance versus only originating tokens.
-*  Recipients that need to distinguish reissuing from originating issuers MUST establish that distinction through local policy or out-of-band trust framework, and SHOULD treat unexpected reissuance divergence as cause for additional scrutiny under that policy.
+*  Recipients that have not established explicit policy for trusted reissuing issuers SHOULD reject any receipt chain exhibiting divergence as the conservative default.  Recipients that need to accept reissued tokens MUST establish that policy through local configuration or an out-of-band trust framework, and SHOULD treat unexpected reissuance divergence as cause for additional scrutiny under that policy.
 
 The `origin_jti` strict-equality check therefore provides binding only in the originating-issuance case (same-issuer, same-`jti`).  In all other cases, transplantation defense rests on the outer token's signature: a non-issuer party cannot construct a substitute outer token to host transplanted receipts.  Compromise of the outer-token issuer falls under {{compromised-outer-issuer}} and is out of scope.
 
 Companion profiles MAY define additional outer-token binding claims following the `origin_jti` pattern: each records an identifier from the outer token at receipt creation, with consumer verifiability conditioned on issuer alignment and equality with the current outer-token field.  Such claims provide parallel anchors against other outer-token fields and do not weaken the `origin_jti` anchor.
+
+### Strict-Mode Validation {#strict-mode-validation}
+
+Recipients that have not explicitly configured a set of trusted reissuing issuers operate in *strict-mode validation* by default: any divergence between `receipt[0]` and the current outer-token instance (whether by differing `iss` or differing `origin_jti`) results in the recipient rejecting the receipt chain.
+
+In strict mode:
+
+*  `receipt[0].iss` MUST equal the outer token's `iss`;
+*  `receipt[0].origin_jti`, when present, MUST equal the outer token's `jti`.
+
+Divergence on either condition causes the recipient to reject the receipt chain for the purposes of this profile.
+
+Strict mode is the conservative default and the recommended posture absent specific deployment requirements.  Deployments that need to accept reissued tokens (refresh-token reissuance, introspection-and-re-emission, or token translation across trust principals) MUST configure permissive validation with an explicit set of trusted reissuing issuers, established through local policy or out-of-band trust framework.  Without such configuration, receipts on reissued tokens will be rejected.
 
 ## Hash Algorithm Agility
 
