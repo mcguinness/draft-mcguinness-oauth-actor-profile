@@ -1953,7 +1953,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <a href="#section-8" class="section-number selfRef">8. </a><a href="#name-issuer-processing" class="section-name selfRef">Issuer Processing</a>
       </h2>
 <p id="section-8-1">This section defines how an authorization server or Transaction Token Service creates, preserves, and extends <code>actor_receipts</code>.<a href="#section-8-1" class="pilcrow">¶</a></p>
-<p id="section-8-2">When an issuer adds a new outermost actor hop and creates the corresponding receipt, that issuer is the same entity that signs the outer token; consequently <code>receipt[0].iss</code> equals the outer token's <code>iss</code> for tokens emitted under <a href="#creating-the-first-receipt" class="auto internal xref">Section 8.1</a> or <a href="#extending-an-existing-receipt-chain" class="auto internal xref">Section 8.2</a>.  Reissuance without a new actor hop (<a href="#reissuance-without-a-new-actor-hop" class="auto internal xref">Section 8.3</a>) is the only case in which <code>receipt[0].iss</code> legitimately differs from the outer token's <code>iss</code>; consumer rules in <a href="#consumer-processing" class="auto internal xref">Section 9</a> use this property to scope the bind-to-current checks for <code>receipt[0]</code>.<a href="#section-8-2" class="pilcrow">¶</a></p>
+<p id="section-8-2">When an issuer adds a new outermost actor hop and creates the corresponding receipt, that issuer is the same entity that signs the outer token; consequently <code>receipt[0].iss</code> equals the outer token's <code>iss</code> and <code>receipt[0].origin_jti</code> equals the outer token's <code>jti</code> for tokens emitted under <a href="#creating-the-first-receipt" class="auto internal xref">Section 8.1</a> or <a href="#extending-an-existing-receipt-chain" class="auto internal xref">Section 8.2</a>.  Reissuance without a new actor hop (<a href="#reissuance-without-a-new-actor-hop" class="auto internal xref">Section 8.3</a>) is the only case in which <code>receipt[0]</code> may legitimately diverge from the current outer-token instance, whether because <code>receipt[0].iss</code> differs from <code>outer.iss</code> or because <code>receipt[0].iss</code> matches but <code>receipt[0].origin_jti</code> differs from <code>outer.jti</code>; consumer rules in <a href="#consumer-processing" class="auto internal xref">Section 9</a> use this property to scope the bind-to-current checks for <code>receipt[0]</code>.<a href="#section-8-2" class="pilcrow">¶</a></p>
 <div id="creating-the-first-receipt">
 <section id="section-8.1">
         <h3 id="name-creating-the-first-receipt">
@@ -2049,7 +2049,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         </ul>
 <p id="section-8.3-8">Consumer rules in <a href="#consumer-processing" class="auto internal xref">Section 9</a> treat <code>receipt[0].origin_jti</code> as historical provenance, not as a current-token binding, in both reissuance patterns.  Recipients distinguish legitimate reissuance from a re-wrapping attack through local policy or out-of-band trust framework, as described in <a href="#receipt-to-token-binding-limits" class="auto internal xref">Section 13.4</a>.<a href="#section-8.3-8" class="pilcrow">¶</a></p>
-<p id="section-8.3-9">Refresh-token reissuance is a special case of reissuance under this section.  An AS that supports refresh tokens for delegated access tokens <span class="bcp14">MUST</span> persist the <code>actor_receipts</code> array associated with the original access token in its token store, so that each refreshed access token can carry the receipts forward unchanged.  Receipt-bearing refresh is interoperable only when local policy defines a bounded maximum delegated-session lifetime for tokens that may inherit the receipts.  Receipt <code>exp</code> values set under <a href="#receipt-claims" class="auto internal xref">Section 7.2</a> <span class="bcp14">MUST</span> accommodate that bounded maximum lifetime; otherwise downstream issuers will reject inbound chains under <a href="#extending-an-existing-receipt-chain" class="auto internal xref">Section 8.2</a> as receipts approach expiry, and refresh will lose receipt-based provenance.  When the bounded lifetime would be exceeded, the AS <span class="bcp14">MUST</span> either obtain fresh delegation state and start a new receipt chain or stop emitting <code>actor_receipts</code> unless local policy permits partial or absent receipt coverage.<a href="#section-8.3-9" class="pilcrow">¶</a></p>
+<p id="section-8.3-9">Refresh-token reissuance is a special case of reissuance under this section.  An AS that supports refresh tokens for delegated access tokens <span class="bcp14">MUST</span> persist the <code>actor_receipts</code> array associated with the original access token through issuer-controlled storage (for example, a token-state database, refresh-token state, or an equivalent durable mechanism), so that each refreshed access token can carry the receipts forward unchanged.  Receipt-bearing refresh is interoperable only when local policy defines a bounded maximum delegated-session lifetime for tokens that may inherit the receipts.  Receipt <code>exp</code> values set under <a href="#receipt-claims" class="auto internal xref">Section 7.2</a> <span class="bcp14">MUST</span> accommodate that bounded maximum lifetime; otherwise downstream issuers will reject inbound chains under <a href="#extending-an-existing-receipt-chain" class="auto internal xref">Section 8.2</a> as receipts approach expiry, and refresh will lose receipt-based provenance.  When the bounded lifetime would be exceeded, the AS <span class="bcp14">MUST</span> either obtain fresh delegation state and start a new receipt chain or stop emitting <code>actor_receipts</code> unless local policy permits partial or absent receipt coverage.<a href="#section-8.3-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="partial-coverage-and-full-coverage">
@@ -2185,7 +2185,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-9-2.8.2.1.1"><code>receipt[0].sub</code> <span class="bcp14">MUST</span> equal the outer token's top-level <code>sub</code>;<a href="#section-9-2.8.2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.8.2.2">
-              <p id="section-9-2.8.2.2.1">when <code>receipt[0].sub_iss</code> and a top-level subject namespace authority are both available from trusted validation context, they <span class="bcp14">MUST</span> identify the same namespace authority;<a href="#section-9-2.8.2.2.1" class="pilcrow">¶</a></p>
+              <p id="section-9-2.8.2.2.1">when <code>receipt[0].sub_iss</code> is present and the recipient has a top-level subject namespace authority for the outer token's <code>sub</code> from local configuration, an inbound subject token's claims, or another deployment-defined source, the two <span class="bcp14">MUST</span> identify the same namespace authority;<a href="#section-9-2.8.2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.8.2.3">
               <p id="section-9-2.8.2.3.1">when <code>receipt[0].sub_profile</code> is present and the outer token contains top-level <code>sub_profile</code>, the values <span class="bcp14">MUST</span> match;<a href="#section-9-2.8.2.3.1" class="pilcrow">¶</a></p>
@@ -2588,6 +2588,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         </ul>
 <p id="section-13.3-6">Trust is per-issuer and not transitive: each receipt is validated against the recipient's own trusted-issuer set, independent of the outer token's issuer or neighboring receipts.  If any receipt in the presented <code>actor_receipts</code> array is signed by an issuer that is not trusted for receipt validation, the recipient <span class="bcp14">MUST</span> reject the receipt chain for the purposes of this profile.  This document does not define trusted-prefix validation across an untrusted inner receipt.  Deployments needing uniform trust across an extended chain <span class="bcp14">MUST</span> establish trust explicitly with every receipt issuer that may appear in tokens they accept.<a href="#section-13.3-6" class="pilcrow">¶</a></p>
+<p id="section-13.3-7">The trust evaluation in this section covers receipt signers (the <code>iss</code> claim of each receipt).  Recipients separately evaluate trust in each receipt's <code>act.iss</code> as the namespace authority for <code>act.sub</code> as described in <a href="#receipt-claims" class="auto internal xref">Section 7.2</a>; that evaluation is independent of receipt-signer trust, even when the same entity holds both roles.<a href="#section-13.3-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="receipt-to-token-binding-limits">
@@ -2612,7 +2613,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-13.4-6.1.1">An issuer cannot drop an inner receipt without breaking the <code>prh</code> chain: the next-newer receipt's <code>prh</code> value would no longer match the receipt now in the next array position, and consumer step 6 of <a href="#consumer-processing" class="auto internal xref">Section 9</a> rejects the chain.<a href="#section-13.4-6.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-13.4-6.2">
-            <p id="section-13.4-6.2.1">An issuer can only fail to include receipts from the innermost or oldest end of the chain, producing partial coverage that <code>actor_receipts_complete: true</code> then forbids the issuer from claiming.<a href="#section-13.4-6.2.1" class="pilcrow">¶</a></p>
+            <p id="section-13.4-6.2.1">An issuer can only fail to include receipts from the innermost (oldest) end of the chain, producing partial coverage that <code>actor_receipts_complete: true</code> then forbids the issuer from claiming.<a href="#section-13.4-6.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-13.4-7">Coverage is therefore truthful within the limits of the trusted-issuer set: a compromised issuer can omit some or all of its own receipts and any outermost receipts from issuers it controls, but it cannot fabricate, reorder, or selectively drop receipts signed by other trusted issuers.<a href="#section-13.4-7" class="pilcrow">¶</a></p>
@@ -3266,6 +3267,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 {
   "iss": "https://as.enterprise.example",
   "sub": "https://idp.enterprise.example/users/alice",
+  "sub_iss": "https://idp.enterprise.example",
   "act": {
     "sub": "https://agents.example.com/travel-assistant",
     "iss": "https://as.enterprise.example",
@@ -3281,7 +3283,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 }
 </pre><a href="#appendix-A.1-6" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.1-7">This example shows the key provenance property of this profile: the current token is bound to <code>ToolJKT</code>, while the older receipt preserves that the earlier actor hop was bound to <code>AgentJKT</code> when it was created.<a href="#appendix-A.1-7" class="pilcrow">¶</a></p>
+<p id="appendix-A.1-7">This example shows the key provenance property of this profile: the current token is bound to <code>ToolJKT</code>, while the older receipt preserves that the earlier actor hop was bound to <code>AgentJKT</code> when it was created.  The <code>sub_iss</code> claim on <code>receipt[1]</code> records that the subject identifier <code>https://idp.enterprise.example/users/alice</code> is interpreted under the enterprise IdP's namespace authority, distinct from the receipt's signer (<code>https://as.enterprise.example</code>, the enterprise AS).<a href="#appendix-A.1-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="example-transaction-token-service-rebinding">
@@ -3414,6 +3416,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <div class="lang-json sourcecode" id="appendix-A.4-3">
 <pre>
 {
+  "jti": "f4a7b9c2-1d3e-4f5a-8b6c-7d8e9f0a1b2c",
   "iss": "https://introspection.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
@@ -3433,8 +3436,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
     "&lt;receipt-0&gt;",
     "&lt;receipt-1&gt;"
   ],
-  "actor_receipts_complete": true,
-  "jti": "f4a7b9c2-1d3e-4f5a-8b6c-7d8e9f0a1b2c"
+  "actor_receipts_complete": true
 }
 </pre><a href="#appendix-A.4-3" class="pilcrow">¶</a>
 </div>

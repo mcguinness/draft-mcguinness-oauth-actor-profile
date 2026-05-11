@@ -695,11 +695,14 @@ Table of Contents
    When an issuer adds a new outermost actor hop and creates the
    corresponding receipt, that issuer is the same entity that signs the
    outer token; consequently receipt[0].iss equals the outer token's iss
-   for tokens emitted under Section 8.1 or Section 8.2.  Reissuance
-   without a new actor hop (Section 8.3) is the only case in which
-   receipt[0].iss legitimately differs from the outer token's iss;
-   consumer rules in Section 9 use this property to scope the bind-to-
-   current checks for receipt[0].
+   and receipt[0].origin_jti equals the outer token's jti for tokens
+   emitted under Section 8.1 or Section 8.2.  Reissuance without a new
+   actor hop (Section 8.3) is the only case in which receipt[0] may
+   legitimately diverge from the current outer-token instance, whether
+   because receipt[0].iss differs from outer.iss or because
+   receipt[0].iss matches but receipt[0].origin_jti differs from
+   outer.jti; consumer rules in Section 9 use this property to scope the
+   bind-to-current checks for receipt[0].
 
 8.1.  Creating the First Receipt
 
@@ -836,18 +839,19 @@ Table of Contents
    Refresh-token reissuance is a special case of reissuance under this
    section.  An AS that supports refresh tokens for delegated access
    tokens MUST persist the actor_receipts array associated with the
-   original access token in its token store, so that each refreshed
-   access token can carry the receipts forward unchanged.  Receipt-
-   bearing refresh is interoperable only when local policy defines a
-   bounded maximum delegated-session lifetime for tokens that may
-   inherit the receipts.  Receipt exp values set under Section 7.2 MUST
-   accommodate that bounded maximum lifetime; otherwise downstream
-   issuers will reject inbound chains under Section 8.2 as receipts
-   approach expiry, and refresh will lose receipt-based provenance.
-   When the bounded lifetime would be exceeded, the AS MUST either
-   obtain fresh delegation state and start a new receipt chain or stop
-   emitting actor_receipts unless local policy permits partial or absent
-   receipt coverage.
+   original access token through issuer-controlled storage (for example,
+   a token-state database, refresh-token state, or an equivalent durable
+   mechanism), so that each refreshed access token can carry the
+   receipts forward unchanged.  Receipt-bearing refresh is interoperable
+   only when local policy defines a bounded maximum delegated-session
+   lifetime for tokens that may inherit the receipts.  Receipt exp
+   values set under Section 7.2 MUST accommodate that bounded maximum
+   lifetime; otherwise downstream issuers will reject inbound chains
+   under Section 8.2 as receipts approach expiry, and refresh will lose
+   receipt-based provenance.  When the bounded lifetime would be
+   exceeded, the AS MUST either obtain fresh delegation state and start
+   a new receipt chain or stop emitting actor_receipts unless local
+   policy permits partial or absent receipt coverage.
 
 8.4.  Partial Coverage and Full Coverage
 
@@ -1019,9 +1023,11 @@ Table of Contents
 
         *  receipt[0].sub MUST equal the outer token's top-level sub;
 
-        *  when receipt[0].sub_iss and a top-level subject namespace
-           authority are both available from trusted validation context,
-           they MUST identify the same namespace authority;
+        *  when receipt[0].sub_iss is present and the recipient has a
+           top-level subject namespace authority for the outer token's
+           sub from local configuration, an inbound subject token's
+           claims, or another deployment-defined source, the two MUST
+           identify the same namespace authority;
 
         *  when receipt[0].sub_profile is present and the outer token
            contains top-level sub_profile, the values MUST match;
@@ -1547,6 +1553,12 @@ Table of Contents
    establish trust explicitly with every receipt issuer that may appear
    in tokens they accept.
 
+   The trust evaluation in this section covers receipt signers (the iss
+   claim of each receipt).  Recipients separately evaluate trust in each
+   receipt's act.iss as the namespace authority for act.sub as described
+   in Section 7.2; that evaluation is independent of receipt-signer
+   trust, even when the same entity holds both roles.
+
 13.4.  Receipt-to-Token Binding Limits
 
    Receipts prove that trusted issuers attested particular actor hops
@@ -1587,8 +1599,8 @@ Table of Contents
       the receipt now in the next array position, and consumer step 6 of
       Section 9 rejects the chain.
 
-   *  An issuer can only fail to include receipts from the innermost or
-      oldest end of the chain, producing partial coverage that
+   *  An issuer can only fail to include receipts from the innermost
+      (oldest) end of the chain, producing partial coverage that
       actor_receipts_complete: true then forbids the issuer from
       claiming.
 
@@ -2245,6 +2257,7 @@ A.1.  Example: Two-Hop Delegation Chain
    {
      "iss": "https://as.enterprise.example",
      "sub": "https://idp.enterprise.example/users/alice",
+     "sub_iss": "https://idp.enterprise.example",
      "act": {
        "sub": "https://agents.example.com/travel-assistant",
        "iss": "https://as.enterprise.example",
@@ -2262,6 +2275,10 @@ A.1.  Example: Two-Hop Delegation Chain
    This example shows the key provenance property of this profile: the
    current token is bound to ToolJKT, while the older receipt preserves
    that the earlier actor hop was bound to AgentJKT when it was created.
+   The sub_iss claim on receipt[1] records that the subject identifier
+   https://idp.enterprise.example/users/alice is interpreted under the
+   enterprise IdP's namespace authority, distinct from the receipt's
+   signer (https://as.enterprise.example, the enterprise AS).
 
 A.2.  Example: Transaction Token Service Rebinding
 
@@ -2400,6 +2417,7 @@ A.4.  Example: Reissuance Without a New Actor Hop
    The re-emitted token's claims:
 
    {
+     "jti": "f4a7b9c2-1d3e-4f5a-8b6c-7d8e9f0a1b2c",
      "iss": "https://introspection.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
@@ -2419,8 +2437,7 @@ A.4.  Example: Reissuance Without a New Actor Hop
        "<receipt-0>",
        "<receipt-1>"
      ],
-     "actor_receipts_complete": true,
-     "jti": "f4a7b9c2-1d3e-4f5a-8b6c-7d8e9f0a1b2c"
+     "actor_receipts_complete": true
    }
 
    The receipts are bit-identical to those in the Two-Hop Delegation
