@@ -7,7 +7,7 @@
 <title>OAuth Actor Receipts for Delegation Provenance</title>
 <meta content="Karl McGuinness" name="author">
 <meta content="
-       This document defines OAuth Actor Receipts, an optional companion provenance profile for delegated OAuth tokens that conform to the OAuth Actor Profile for Delegation.  It introduces the  actor_receipts  claim, a signed per-hop receipt chain that records which issuer added each visible actor hop, preserves the historical top-level  cnf  value associated with that hop, and links receipts together so recipients can validate prior-hop provenance without relying solely on the current outer token issuer.  This document also defines metadata and introspection parameters for advertising and consuming actor-receipt support. 
+       This document defines OAuth Actor Receipts, an optional companion provenance profile for delegated OAuth tokens that conform to the OAuth Actor Profile for Delegation.  It introduces the  actor_receipts  claim, a signed per-hop receipt chain that records which issuer added each visible actor hop, optionally preserves the historical top-level  cnf  value associated with that hop subject to deployment disclosure policy, and links receipts together so recipients can validate prior-hop provenance without relying solely on the current outer token issuer.  This document also defines metadata and introspection parameters for advertising and consuming actor-receipt support. 
     " name="description">
 <meta content="xml2rfc 3.33.0" name="generator">
 <meta content="oauth" name="keyword">
@@ -1084,7 +1084,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 <h1 id="title">OAuth Actor Receipts for Delegation Provenance</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document defines OAuth Actor Receipts, an optional companion provenance profile for delegated OAuth tokens that conform to the OAuth Actor Profile for Delegation.  It introduces the <code>actor_receipts</code> claim, a signed per-hop receipt chain that records which issuer added each visible actor hop, preserves the historical top-level <code>cnf</code> value associated with that hop, and links receipts together so recipients can validate prior-hop provenance without relying solely on the current outer token issuer.  This document also defines metadata and introspection parameters for advertising and consuming actor-receipt support.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document defines OAuth Actor Receipts, an optional companion provenance profile for delegated OAuth tokens that conform to the OAuth Actor Profile for Delegation.  It introduces the <code>actor_receipts</code> claim, a signed per-hop receipt chain that records which issuer added each visible actor hop, optionally preserves the historical top-level <code>cnf</code> value associated with that hop subject to deployment disclosure policy, and links receipts together so recipients can validate prior-hop provenance without relying solely on the current outer token issuer.  This document also defines metadata and introspection parameters for advertising and consuming actor-receipt support.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1317,6 +1317,11 @@ svg :is([fill="white"], [fill^="#fff"]) {
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.4">
                 <p id="section-toc.1-1.13.2.4.1"><a href="#section-13.4" class="auto internal xref">13.4</a>.  <a href="#name-receipt-to-token-binding-li" class="internal xref">Receipt-to-Token Binding Limits</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.4.2.1">
+                    <p id="section-toc.1-1.13.2.4.2.1.1"><a href="#section-13.4.1" class="auto internal xref">13.4.1</a>.  <a href="#name-strict-mode-validation" class="internal xref">Strict-Mode Validation</a></p>
+</li>
+                </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.5">
                 <p id="section-toc.1-1.13.2.5.1"><a href="#section-13.5" class="auto internal xref">13.5</a>.  <a href="#name-hash-algorithm-agility" class="internal xref">Hash Algorithm Agility</a></p>
@@ -1472,7 +1477,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <dd class="break"></dd>
 <dt id="section-2-4.7">Historical Presenter Binding:</dt>
         <dd style="margin-left: 1.5em" id="section-2-4.8">
-          <p id="section-2-4.8.1">The top-level <code>cnf</code> value that was present in the token issued at the hop represented by a receipt.  Historical presenter binding is informational provenance for that hop; it does not create an active proof-of-possession obligation for the current request.<a href="#section-2-4.8.1" class="pilcrow">¶</a></p>
+          <p id="section-2-4.8.1">A receipt's <code>cnf</code> claim, when present, reflecting the top-level <code>cnf</code> value that was present in the token issued at the hop represented by the receipt.  Historical presenter binding is informational provenance for that hop; it does not create an active proof-of-possession obligation for the current request.<a href="#section-2-4.8.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-2-4.9">Complete Receipt Coverage:</dt>
@@ -1592,7 +1597,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="section-4-4.5.1">proving that a particular historical scope, audience, or token lifetime was in force when a receipt was created;<a href="#section-4-4.5.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-4-4.6">
-          <p id="section-4-4.6.1">defining transparency logs, non-repudiation systems, or public audit infrastructure.<a href="#section-4-4.6.1" class="pilcrow">¶</a></p>
+          <p id="section-4-4.6.1">reconciling subject identifiers that differ across receipts (see <a href="#subject-re-expression-across-hops" class="auto internal xref">Section 9.1</a>);<a href="#section-4-4.6.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-4-4.7">
+          <p id="section-4-4.7.1">defining transparency logs, non-repudiation systems, or public audit infrastructure.<a href="#section-4-4.7.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <div id="deployment-fit">
@@ -1611,7 +1619,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
       <h2 id="name-actor-receipts-overview">
 <a href="#section-5" class="section-number selfRef">5. </a><a href="#name-actor-receipts-overview" class="section-name selfRef">Actor Receipts Overview</a>
       </h2>
-<p id="section-5-1">An actor receipt records one actor hop.  The issuer that adds a new outermost actor hop signs a receipt describing that hop and, when the issued token is sender-constrained, copies the token's top-level <code>cnf</code> value into the receipt as historical presenter-binding context.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<p id="section-5-1">An actor receipt records one actor hop.  The issuer that adds a new outermost actor hop signs a receipt describing that hop and, when the issued token is sender-constrained, may copy the token's top-level <code>cnf</code> value into the receipt as historical presenter-binding context subject to the disclosure considerations in <a href="#receipt-claims" class="auto internal xref">Section 7.2</a>.<a href="#section-5-1" class="pilcrow">¶</a></p>
 <p id="section-5-2">The token then carries an <code>actor_receipts</code> array:<a href="#section-5-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5-3.1">
@@ -1886,14 +1894,16 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <code>origin_jti</code>:</dt>
             <dd style="margin-left: 1.5em" id="section-7.2.5-1.2">
               <p id="section-7.2.5-1.2.1"><span class="bcp14">RECOMMENDED</span>.  The <code>jti</code> of the outer token at the time this receipt was created (the receipt's origin outer token).  This value is fixed at receipt creation; after reissuance the current outer token's <code>jti</code> may differ.<a href="#section-7.2.5-1.2.1" class="pilcrow">¶</a></p>
-<p id="section-7.2.5-1.2.2">When present, <code>origin_jti</code> records the token instance issued at the represented hop.  It is a verifiable binding to the current outer-token instance only in the originating-issuance case, where <code>receipt[0].iss</code> equals the outer token's <code>iss</code> and <code>receipt[0].origin_jti</code> equals the outer token's <code>jti</code>.  In reissuance cases, and for receipts other than <code>receipt[0]</code>, <code>origin_jti</code> is historical issuance provenance only.  Issuers <span class="bcp14">SHOULD</span> include <code>origin_jti</code> whenever the token they are issuing carries a <code>jti</code> claim.<a href="#section-7.2.5-1.2.2" class="pilcrow">¶</a></p>
-<p id="section-7.2.5-1.2.3">Consumer verification of <code>origin_jti</code> is defined in <a href="#consumer-processing" class="auto internal xref">Section 9</a>:<a href="#section-7.2.5-1.2.3" class="pilcrow">¶</a></p>
+<p id="section-7.2.5-1.2.2">This value is a historical record of which outer token the receipt was originally issued with.  It does not bind the receipt to the current outer token.<a href="#section-7.2.5-1.2.2" class="pilcrow">¶</a></p>
+<p id="section-7.2.5-1.2.3">There is one exception.  When <code>receipt[0].iss</code> equals the outer token's <code>iss</code> and <code>receipt[0].origin_jti</code> equals the outer token's <code>jti</code>, the value binds <code>receipt[0]</code> to the current outer-token instance.  This is the originating-issuance case.<a href="#section-7.2.5-1.2.3" class="pilcrow">¶</a></p>
+<p id="section-7.2.5-1.2.4">Issuers <span class="bcp14">SHOULD</span> include <code>origin_jti</code> whenever the token they are issuing carries a <code>jti</code> claim.<a href="#section-7.2.5-1.2.4" class="pilcrow">¶</a></p>
+<p id="section-7.2.5-1.2.5">Consumer verification of <code>origin_jti</code> is defined in <a href="#consumer-processing" class="auto internal xref">Section 9</a>:<a href="#section-7.2.5-1.2.5" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-7.2.5-1.2.4.1">
-                  <p id="section-7.2.5-1.2.4.1.1">for <code>receipt[0]</code>, <code>origin_jti</code> is independently verifiable when <code>receipt[0].iss</code> equals the outer token's <code>iss</code> and <code>receipt[0].origin_jti</code> equals the outer token's <code>jti</code> (the originating-issuance case);<a href="#section-7.2.5-1.2.4.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-7.2.5-1.2.6.1">
+                  <p id="section-7.2.5-1.2.6.1.1">for <code>receipt[0]</code>, <code>origin_jti</code> is independently verifiable when <code>receipt[0].iss</code> equals the outer token's <code>iss</code> and <code>receipt[0].origin_jti</code> equals the outer token's <code>jti</code> (the originating-issuance case);<a href="#section-7.2.5-1.2.6.1.1" class="pilcrow">¶</a></p>
 </li>
-                <li class="normal" id="section-7.2.5-1.2.4.2">
-                  <p id="section-7.2.5-1.2.4.2.1">for receipts other than <code>receipt[0]</code>, <code>origin_jti</code> records the historical outer-token <code>jti</code> at the hop where the receipt was created and is informational provenance only.<a href="#section-7.2.5-1.2.4.2.1" class="pilcrow">¶</a></p>
+                <li class="normal" id="section-7.2.5-1.2.6.2">
+                  <p id="section-7.2.5-1.2.6.2.1">for receipts other than <code>receipt[0]</code>, <code>origin_jti</code> records the historical outer-token <code>jti</code> at the hop where the receipt was created and is informational provenance only.<a href="#section-7.2.5-1.2.6.2.1" class="pilcrow">¶</a></p>
 </li>
               </ul>
 </dd>
@@ -2194,7 +2204,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-9-2.8.2.4.1">when <code>receipt[0].sub_profile</code> is present but the outer token does not contain top-level <code>sub_profile</code>, recipients that require receipt coverage for subject classification <span class="bcp14">MUST</span> reject the receipt chain or apply explicit local mapping rules;<a href="#section-9-2.8.2.4.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.8.2.5">
-              <p id="section-9-2.8.2.5.1">older receipts <span class="bcp14">MAY</span> carry differing <code>sub</code>, <code>sub_iss</code>, or <code>sub_profile</code> values; see <a href="#subject-re-expression-across-hops" class="auto internal xref">Section 9.1</a>.<a href="#section-9-2.8.2.5.1" class="pilcrow">¶</a></p>
+              <p id="section-9-2.8.2.5.1">when <code>receipt[0].sub_profile</code> is absent but the outer token contains top-level <code>sub_profile</code>, the receipt remains aligned for this profile.  The visible value is not independently attested by that receipt, and recipients that require receipt coverage for subject classification <span class="bcp14">MUST</span> reject the receipt chain or apply explicit local mapping rules;<a href="#section-9-2.8.2.5.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-9-2.8.2.6">
+              <p id="section-9-2.8.2.6.1">older receipts <span class="bcp14">MAY</span> carry differing <code>sub</code>, <code>sub_iss</code>, or <code>sub_profile</code> values; see <a href="#subject-re-expression-across-hops" class="auto internal xref">Section 9.1</a>.<a href="#section-9-2.8.2.6.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </li>
@@ -2626,11 +2639,30 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-13.4-9.2.1">This profile provides no in-band signal distinguishing legitimate reissuance from a re-wrapping attack by a compromised issuer, and does not define metadata identifying which issuers in a recipient's trust set perform reissuance versus only originating tokens.<a href="#section-13.4-9.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-13.4-9.3">
-            <p id="section-13.4-9.3.1">Recipients that need to distinguish reissuing from originating issuers <span class="bcp14">MUST</span> establish that distinction through local policy or out-of-band trust framework, and <span class="bcp14">SHOULD</span> treat unexpected reissuance divergence as cause for additional scrutiny under that policy.<a href="#section-13.4-9.3.1" class="pilcrow">¶</a></p>
+            <p id="section-13.4-9.3.1">Recipients that have not established explicit policy for trusted reissuing issuers <span class="bcp14">SHOULD</span> reject any receipt chain exhibiting divergence as the conservative default.  Recipients that need to accept reissued tokens <span class="bcp14">MUST</span> establish that policy through local configuration or an out-of-band trust framework, and <span class="bcp14">SHOULD</span> treat unexpected reissuance divergence as cause for additional scrutiny under that policy.<a href="#section-13.4-9.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-13.4-10">The <code>origin_jti</code> strict-equality check therefore provides binding only in the originating-issuance case (same-issuer, same-<code>jti</code>).  In all other cases, transplantation defense rests on the outer token's signature: a non-issuer party cannot construct a substitute outer token to host transplanted receipts.  Compromise of the outer-token issuer falls under <a href="#compromised-outer-issuer" class="auto internal xref">Section 13.6</a> and is out of scope.<a href="#section-13.4-10" class="pilcrow">¶</a></p>
 <p id="section-13.4-11">Companion profiles <span class="bcp14">MAY</span> define additional outer-token binding claims following the <code>origin_jti</code> pattern: each records an identifier from the outer token at receipt creation, with consumer verifiability conditioned on issuer alignment and equality with the current outer-token field.  Such claims provide parallel anchors against other outer-token fields and do not weaken the <code>origin_jti</code> anchor.<a href="#section-13.4-11" class="pilcrow">¶</a></p>
+<div id="strict-mode-validation">
+<section id="section-13.4.1">
+          <h4 id="name-strict-mode-validation">
+<a href="#section-13.4.1" class="section-number selfRef">13.4.1. </a><a href="#name-strict-mode-validation" class="section-name selfRef">Strict-Mode Validation</a>
+          </h4>
+<p id="section-13.4.1-1">Recipients that have not explicitly configured a set of trusted reissuing issuers operate in <em>strict-mode validation</em> by default: any divergence between <code>receipt[0]</code> and the current outer-token instance (whether by differing <code>iss</code> or differing <code>origin_jti</code>) results in the recipient rejecting the receipt chain.<a href="#section-13.4.1-1" class="pilcrow">¶</a></p>
+<p id="section-13.4.1-2">In strict mode:<a href="#section-13.4.1-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-13.4.1-3.1">
+              <p id="section-13.4.1-3.1.1"><code>receipt[0].iss</code> <span class="bcp14">MUST</span> equal the outer token's <code>iss</code>;<a href="#section-13.4.1-3.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-13.4.1-3.2">
+              <p id="section-13.4.1-3.2.1"><code>receipt[0].origin_jti</code>, when present, <span class="bcp14">MUST</span> equal the outer token's <code>jti</code>.<a href="#section-13.4.1-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-13.4.1-4">Divergence on either condition causes the recipient to reject the receipt chain for the purposes of this profile.<a href="#section-13.4.1-4" class="pilcrow">¶</a></p>
+<p id="section-13.4.1-5">Strict mode is the conservative default and the recommended posture absent specific deployment requirements.  Deployments that need to accept reissued tokens (refresh-token reissuance, introspection-and-re-emission, or token translation across trust principals) <span class="bcp14">MUST</span> configure permissive validation with an explicit set of trusted reissuing issuers, established through local policy or out-of-band trust framework.  Without such configuration, receipts on reissued tokens will be rejected.<a href="#section-13.4.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
 </section>
 </div>
 <div id="hash-algorithm-agility">
