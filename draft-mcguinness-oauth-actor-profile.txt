@@ -4453,9 +4453,9 @@ AddOutermostActor(inbound_chain, new_actor):
               Campbell, B., Salowey, J. A., Schwenkschuster, A.,
               Sheffer, Y., and Y. Rosomakho, "WIMSE Workload
               Credentials", Work in Progress, Internet-Draft, draft-
-              ietf-wimse-workload-creds-00, 3 November 2025,
+              ietf-wimse-workload-creds-01, 5 May 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-wimse-
-              workload-creds-00>.
+              workload-creds-01>.
 
    [I-D.ietf-wimse-wpt]
               Campbell, B. and A. Schwenkschuster, "WIMSE Workload Proof
@@ -4501,12 +4501,12 @@ AddOutermostActor(inbound_chain, new_actor):
               draft-parecki-oauth-jwt-dpop-grant-01>.
 
    [I-D.ietf-oauth-identity-chaining]
-              Schwenkschuster, A., Kasselmann, P., Burgin, K., Jenkins,
-              M., Campbell, B., and A. Parecki, "OAuth Identity and
+              Schwenkschuster, A., Kasselman, P., Burgin, K., Jenkins,
+              M. J., Campbell, B., and A. Parecki, "OAuth Identity and
               Authorization Chaining Across Domains", Work in Progress,
-              Internet-Draft, draft-ietf-oauth-identity-chaining-10, 24
-              April 2026, <https://datatracker.ietf.org/doc/html/draft-
-              ietf-oauth-identity-chaining-10>.
+              Internet-Draft, draft-ietf-oauth-identity-chaining-12, 11
+              May 2026, <https://datatracker.ietf.org/doc/html/draft-
+              ietf-oauth-identity-chaining-12>.
 
    [I-D.ietf-oauth-identity-assertion-authz-grant]
               Parecki, A., McGuinness, K., and B. Campbell, "Identity

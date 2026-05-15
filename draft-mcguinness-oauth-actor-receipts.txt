@@ -205,19 +205,20 @@ Table of Contents
    Actor Receipt:  A signed JWT that attests one visible actor hop in a
       delegated token chain.
 
-   Outer Token:  The JWT access token or Transaction Token whose top-
-      level actor_receipts claim carries the receipt chain.
+   Outer Token:  The access token or Transaction Token (JWT-formatted or
+      opaque) whose actor_receipts is carried inline for JWT outputs, or
+      returned via introspection for opaque tokens (see Section 9.4).
       Distinguished from the receipt JWTs nested within it.
 
    Receipt Chain:  The ordered actor_receipts array carried in a token
       or introspection response.
 
-   Historical Presenter Binding:  A receipt's cnf claim, when present,
-      reflecting the top-level cnf value that was present in the token
-      issued at the hop represented by the receipt.  Historical
-      presenter binding is informational provenance for that hop; it
-      does not create an active proof-of-possession obligation for the
-      current request.
+   Historical Presenter Binding:  The presenter-binding state of a hop
+      at the time the hop was created.  When recorded, it appears as the
+      receipt's cnf claim, equal to the top-level cnf value of the token
+      issued at that hop.  Historical presenter binding is informational
+      provenance; it does not create an active proof-of-possession
+      obligation for the current request.
 
    Complete Receipt Coverage:  A condition in which the number of
       receipts in actor_receipts equals the number of visible actor hops
@@ -353,6 +354,11 @@ Table of Contents
    that attestation; receipts add overhead without meaningful additional
    provenance and SHOULD be weighed before adoption.
 
+   Authorization servers that mint refresh tokens for receipt-bearing
+   access tokens incur additional issuer-side cost: receipts must be
+   retained in issuer-controlled storage across refresh (Section 8.3).
+   Fully stateless JWT issuance does not satisfy this.
+
    Receipts mitigate a compromised or dishonest _downstream_ issuer
    fabricating prior-hop provenance (see Section 13.3 and Section 13.6).
    They do not mitigate a compromised current outer token issuer and do
@@ -422,21 +428,22 @@ Table of Contents
 
    actor_receipts_complete:  OPTIONAL.  A boolean JWT claim in the outer
       token.  When true, the issuer attests that actor_receipts covers
-      every visible hop in the token's act chain.  This attestation is
-      relative to the visible chain at the time of token issuance; it
-      does not attest that the visible chain is itself unfiltered (see
-      chain_complete in the core actor profile
-      [I-D.mcguinness-oauth-actor-profile]).  When
-      actor_receipts_complete is true in the outer token, the consumer
-      MUST verify that the receipt count equals the visible actor-chain
-      depth; if it does not, the consumer MUST reject the token.
+      every visible hop in the token's act chain.
+
+      The attestation is relative to the visible chain at issuance time;
+      it does not attest that the visible chain is itself unfiltered
+      (see chain_complete in the core actor profile
+      [I-D.mcguinness-oauth-actor-profile]).  Consumer enforcement,
+      including the count-equality check, is defined in step 4 of
+      Section 9.
+
       Issuers SHOULD set actor_receipts_complete: true when they emit
       complete coverage, to enable consumers to detect chain truncation.
       Issuers SHOULD set actor_receipts_complete: false when they emit
-      partial coverage; omitting the claim is observationally equivalent
-      to false for consumers that test only for the literal value true,
-      but does not provide a positive attestation that coverage is
-      partial.
+      partial coverage.  Omitting the claim is observationally
+      equivalent to false for consumers that test only for the literal
+      value true, but does not provide a positive attestation that
+      coverage is partial.
 
    This document does not require every delegated token to carry
    actor_receipts.  A deployment that requires provenance receipts uses
@@ -519,6 +526,15 @@ Table of Contents
       When absent, the subject namespace authority is not independently
       expressed by this profile and MUST be determined, if needed, from
       trusted local context for the represented hop.
+
+      This profile and the core actor profile
+      [I-D.mcguinness-oauth-actor-profile] do not define a top-level
+      claim on the outer token that names the namespace authority for
+      the outer token's sub.  Recipients reconciling receipt[0].sub_iss
+      with the outer token's top-level sub therefore obtain the outer-
+      token subject namespace authority from trusted local context, an
+      inbound subject token's claims, or another deployment-defined
+      source.
 
    sub_profile:  OPTIONAL.  The top-level sub_profile value, when the
       token issued at this hop carried one.
@@ -613,7 +629,11 @@ Table of Contents
       issued outer token's exp (Section 8.2), so an under-set exp causes
       propagation failure rather than mid-token-lifetime consumer
       rejection.  Short exp values on receipts limit the window during
-      which a compromised receipt signing key can be exploited.
+      which a compromised receipt signing key can be exploited.  Because
+      the originating issuer cannot enumerate every downstream issuer
+      that may inherit a receipt, deployments typically derive the
+      originating exp from a bounded delegated-session lifetime
+      (Section 8.3) coordinated across the trust set.
 
    jti:  REQUIRED.  A unique identifier for the receipt, as defined in
       [RFC7519].
@@ -637,26 +657,21 @@ Table of Contents
       Issuers SHOULD include origin_jti whenever the token they are
       issuing carries a jti claim.
 
-      Consumer verification of origin_jti is defined in Section 9.
+      Consumer verification of origin_jti is defined in step 5 of
+      Section 9, with strict-mode rejection of receipt[0] divergence in
+      Section 13.4.1.
 
 7.2.6.  Excluded Standard Claims
 
    aud:  NOT RECOMMENDED.  Issuers SHOULD omit aud from receipts.
 
-      A receipt travels with the outer token to whichever audiences the
-      outer token serves.  Receipt validity is anchored to trust in iss,
-      the originating-issuance binding to the outer token via origin_jti
-      and prh when that binding is verifiable, and the outer token's own
-      audience scoping.  Including aud in a receipt has no defined
-      meaning under this profile.
-
-      This profile diverges from the audience-validation guidance in
-      [RFC8725] Section 3.10 because receipts are not validated as
-      independent JWTs against an audience; they are validated as part
-      of outer-token processing, and the outer token carries the
-      audience scoping.  Including aud in a receipt would create
-      ambiguity about whether the receipt asserts an audience constraint
-      independent of the outer token, which it does not.
+      Receipts are validated as part of outer-token processing, not as
+      independent JWTs against an audience; the outer token carries the
+      audience scoping for the request.  This profile diverges from the
+      audience-validation guidance in [RFC8725] Section 3.10 on those
+      grounds.  Including aud in a receipt has no defined meaning under
+      this profile and would create ambiguity about whether the receipt
+      asserts an independent audience constraint, which it does not.
 
 7.2.7.  Extension Claims
 
@@ -693,15 +708,16 @@ Table of Contents
 
    When an issuer adds a new outermost actor hop and creates the
    corresponding receipt, that issuer is the same entity that signs the
-   outer token; consequently receipt[0].iss equals the outer token's iss
-   and receipt[0].origin_jti equals the outer token's jti for tokens
-   emitted under Section 8.1 or Section 8.2.  Reissuance without a new
-   actor hop (Section 8.3) is the only case in which receipt[0] may
-   legitimately diverge from the current outer-token instance, whether
-   because receipt[0].iss differs from outer.iss or because
-   receipt[0].iss matches but receipt[0].origin_jti differs from
-   outer.jti; consumer rules in Section 9 use this property to scope the
-   bind-to-current checks for receipt[0].
+   outer token.  Consequently receipt[0].iss equals the outer token's
+   iss, and receipt[0].origin_jti equals the outer token's jti, for
+   tokens emitted under Section 8.1 or Section 8.2.
+
+   Reissuance without a new actor hop (Section 8.3) is the only case in
+   which receipt[0] may legitimately diverge from the current outer-
+   token instance, either by receipt[0].iss differing from outer.iss or
+   by receipt[0].iss matching but receipt[0].origin_jti differing from
+   outer.jti.  Consumer rules in Section 9 use this property to scope
+   the bind-to-current checks for receipt[0].
 
 8.1.  Creating the First Receipt
 
@@ -754,19 +770,16 @@ Table of Contents
 
    5.  MUST prepend that new receipt to the inherited array.
 
-   6.  MUST set the new receipt's prh, if the inherited array is non-
-       empty, to the hash, computed using the algorithm named by prh_alg
-       (defaulting to SHA-256 when prh_alg is absent), of the exact
-       compact serialization of the receipt that is now at the next
-       array index.
+   6.  When the inherited array is non-empty, MUST set the new receipt's
+       prh to the hash of the exact compact serialization of the receipt
+       now at the next array index, computed using the algorithm named
+       by prh_alg (defaulting to SHA-256 when prh_alg is absent).
 
-   7.  MUST propagate prh_alg: if the inherited chain carries prh_alg,
-       the new receipt MUST carry the same prh_alg value; if the
-       inherited chain omits prh_alg, the new receipt MUST also omit it
-       (preserving the SHA-256 default for the entire chain).  An issuer
-       that does not support the inbound prh_alg value MUST reject the
-       chain rather than rehash, since rehashing would invalidate prior
-       issuers' signatures.
+   7.  MUST set the new receipt's prh_alg to the inherited value, or
+       omit prh_alg if the inherited chain omits it (preserving the
+       SHA-256 default for the chain).  An issuer that does not support
+       the inbound prh_alg value MUST reject the chain rather than
+       rehash; rehashing would invalidate prior issuers' signatures.
 
    An issuer MUST NOT reserialize, resign, normalize, trim, or otherwise
    alter a prior receipt.
@@ -836,21 +849,27 @@ Table of Contents
    as described in Section 13.4.
 
    Refresh-token reissuance is a special case of reissuance under this
-   section.  An AS that supports refresh tokens for delegated access
-   tokens MUST persist the actor_receipts array associated with the
-   original access token through issuer-controlled storage (for example,
-   a token-state database, refresh-token state, or an equivalent durable
-   mechanism), so that each refreshed access token can carry the
-   receipts forward unchanged.  Receipt-bearing refresh is interoperable
-   only when local policy defines a bounded maximum delegated-session
-   lifetime for tokens that may inherit the receipts.  Receipt exp
-   values set under Section 7.2 MUST accommodate that bounded maximum
-   lifetime; otherwise downstream issuers will reject inbound chains
-   under Section 8.2 as receipts approach expiry, and refresh will lose
-   receipt-based provenance.  When the bounded lifetime would be
-   exceeded, the AS MUST either obtain fresh delegation state and start
-   a new receipt chain or stop emitting actor_receipts unless local
-   policy permits partial or absent receipt coverage.
+   section.  Receipt-bearing refresh is interoperable only when local
+   policy defines a bounded maximum delegated-session lifetime for
+   tokens that may inherit the receipts.
+
+   An AS that supports refresh tokens for delegated access tokens:
+
+   *  MUST persist the actor_receipts array associated with the original
+      access token in issuer-controlled storage (for example, a token-
+      state database, refresh-token state, or equivalent durable
+      mechanism), so each refreshed access token can carry the receipts
+      forward unchanged.
+
+   *  MUST set receipt exp values under Section 7.2 to accommodate the
+      bounded maximum delegated-session lifetime.  Otherwise downstream
+      issuers reject inbound chains under Section 8.2 as receipts
+      approach expiry, and refresh loses receipt-based provenance.
+
+   *  When that bounded lifetime would be exceeded, MUST either obtain
+      fresh delegation state and start a new receipt chain or stop
+      emitting actor_receipts, unless local policy permits partial or
+      absent receipt coverage.
 
 8.4.  Partial Coverage and Full Coverage
 
@@ -892,10 +911,13 @@ Table of Contents
    makes that presenter the new outermost actor follows the same receipt
    rules as any other issuer that adds a new outermost actor hop, as
    defined in Section 8.2 (or Section 8.1 when no inbound actor_receipts
-   exist).  This profile does not define additional receipt claims
-   specific to Transaction Tokens; any transaction-specific semantics
-   remain governed by the Transaction Token itself and its deployment
-   profile.
+   exist).  TTS presenter rebinding inherently changes the outer token's
+   top-level cnf; the new receipt records the new presenter's cnf when
+   included (subject to Section 7.2), and inherited receipts retain
+   their historical cnf values unchanged.  This profile does not define
+   additional receipt claims specific to Transaction Tokens; any
+   transaction-specific semantics remain governed by the Transaction
+   Token itself and its deployment profile.
 
 9.  Consumer Processing
 
@@ -958,13 +980,14 @@ Table of Contents
            workaround for issuers that failed to set adequate exp
            values.
 
-        *  for receipt[0] only, when origin_jti is present: the receipt
-           is anchored to the current outer-token instance when
-           receipt[0].iss equals the outer token's iss AND
-           receipt[0].origin_jti equals the outer token's jti (the
-           originating-issuance case).  Otherwise, see Section 13.4 for
-           divergence handling.  For receipts other than receipt[0],
-           origin_jti is informational provenance only.
+        *  for receipt[0]: anchor it to the current outer-token instance
+           when receipt[0].iss equals the outer token's iss and, when
+           present, receipt[0].origin_jti equals the outer token's jti
+           (the originating-issuance case).  Otherwise, the recipient
+           MUST reject the chain unless local policy designates
+           receipt[0].iss as a trusted reissuing issuer per
+           Section 13.4.  For receipts other than receipt[0], origin_jti
+           is informational provenance only.
 
    6.   Verify receipt-chain linkage:
 
@@ -1179,13 +1202,13 @@ Table of Contents
    introspection server has suppressed inner act hops from the chain
    representation, while actor_receipts_complete: false means receipt
    coverage is partial or filtered.  A token can have chain_complete:
-   true (full act chain visible) and actor_receipts_complete: false
-   (some receipts suppressed), or vice versa.  Consumers that rely on
-   both signals MUST evaluate them independently.  A response with
-   chain_complete: false means the receipt array may cover only part of
-   the true delegation chain even when actor_receipts_complete: true; in
-   that case the receipt coverage is complete only for the visible
-   filtered chain, not the full chain.
+   true and actor_receipts_complete: false, or vice versa.
+
+   Consumers that rely on both signals MUST evaluate them independently.
+   When chain_complete: false, the receipt array may cover only part of
+   the true delegation chain even when actor_receipts_complete: true;
+   receipt coverage is then complete only for the visible filtered
+   chain, not the full chain.
 
 10.  Discovery and Capability Signaling
 
@@ -1602,29 +1625,21 @@ Table of Contents
    cannot fabricate, reorder, or selectively drop receipts signed by
    other trusted issuers.
 
-   When receipt[0] diverges from the current outer-token instance,
-   either because receipt[0].iss differs from outer.iss or because
-   receipt[0].iss matches but receipt[0].origin_jti differs from
-   outer.jti, receipt[0].origin_jti becomes historical provenance only
-   and does not bind the receipt chain to the current outer-token
-   instance.  Consumers accept that divergence only when local policy
-   treats it as legitimate reissuance per Section 8.3.  In this case:
+   When receipt[0] diverges from the current outer-token instance
+   (either receipt[0].iss differs from outer.iss, or receipt[0].iss
+   matches but receipt[0].origin_jti differs from outer.jti),
+   receipt[0].origin_jti becomes historical provenance only and does not
+   bind the receipt chain to the current outer-token instance.  Per step
+   5 of Section 9 and Section 13.4.1, consumers reject divergent chains
+   by default and accept them only when local policy designates
+   receipt[0].iss as a trusted reissuing issuer.
 
-   *  Recipients rely on the current outer token issuer's authority to
-      have performed a legitimate reissuance.
-
-   *  This profile provides no in-band signal distinguishing legitimate
-      reissuance from a re-wrapping attack by a compromised issuer, and
-      does not define metadata identifying which issuers in a
-      recipient's trust set perform reissuance versus only originating
-      tokens.
-
-   *  Recipients that have not established explicit policy for trusted
-      reissuing issuers SHOULD reject any receipt chain exhibiting
-      divergence as the conservative default.  Recipients that opt into
-      accepting reissued tokens MUST establish that policy through local
-      configuration or an out-of-band trust framework and SHOULD treat
-      unexpected reissuance divergence as cause for additional scrutiny.
+   This profile provides no in-band signal distinguishing legitimate
+   reissuance from a re-wrapping attack by a compromised issuer.
+   Recipients that opt into accepting reissued tokens MUST establish
+   that policy through local configuration or an out-of-band trust
+   framework, and SHOULD treat unexpected reissuance divergence as cause
+   for additional scrutiny.
 
    The origin_jti strict-equality check therefore provides binding only
    in the originating-issuance case (same-issuer, same-jti).  In all
@@ -1643,20 +1658,10 @@ Table of Contents
 13.4.1.  Strict-Mode Validation
 
    Recipients that have not explicitly configured a set of trusted
-   reissuing issuers operate in _strict-mode validation_ by default: any
-   divergence between receipt[0] and the current outer-token instance
-   (whether by differing iss or differing origin_jti) results in the
-   recipient rejecting the receipt chain.
-
-   In strict mode:
-
-   *  receipt[0].iss MUST equal the outer token's iss;
-
-   *  receipt[0].origin_jti, when present, MUST equal the outer token's
-      jti.
-
-   Divergence on either condition causes the recipient to reject the
-   receipt chain for the purposes of this profile.
+   reissuing issuers operate in _strict-mode validation_ by default: per
+   step 5 of Section 9, any divergence between receipt[0] and the
+   current outer-token instance (whether by differing iss or differing
+   origin_jti) causes the recipient to reject the receipt chain.
 
    Strict mode is the conservative default and the recommended posture
    absent specific deployment requirements.  Deployments that need to
@@ -1854,7 +1859,11 @@ Table of Contents
       outermost hops (see Section 8.4).
 
    Deployments needing finer-grained selective disclosure require a
-   future companion profile.
+   future companion profile.  Such a companion must alter the chain-
+   linkage construction (for example, by linking against a stable hash
+   that survives claim redaction); a companion that only adds a
+   selective-disclosure claim cannot achieve per-claim disclosure within
+   the current prh construction.
 
 14.4.  Audience Restriction
 
