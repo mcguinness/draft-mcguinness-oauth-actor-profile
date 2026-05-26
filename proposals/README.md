@@ -19,6 +19,20 @@ working-group discussion.
   Composes with receipts (a token MAY carry both); cross-references receipts
   by `jti`.
 
+### Authority bounds
+
+- **[Actor Chain Authority Bounds](./draft-mcguinness-oauth-actor-authority-bounds.md)**:
+  records and verifies how authority changes at each hop, not just which
+  actor hop was added.  Defines authority monotonicity (`scope`, `aud`,
+  `resource`, `authorization_details` do not expand across hops) with an
+  explicit re-authorization carve-out.  Where receipts attest past hop state,
+  bounds add offline-verifiable evidence that authority was not widened
+  across the visible receipt chain.  Also defines a weaker current-issuer
+  attestation for deployments without receipt-carried bounds.  Motivated in
+  part by the
+  [PIC Model](https://github.com/pic-protocol/pic-spec), which makes the
+  same property structural at the model layer.
+
 ### Transparency companions
 
 Two architectural alternatives for adding transparency-log-based trust
@@ -43,13 +57,55 @@ ecosystem trade-offs.  A future companion-profile draft would commit to
 one approach, likely after cross-working-group conversation between OAuth
 and SCITT.
 
+### Architectural alternative: capabilities
+
+- **[Actor Capabilities](./draft-mcguinness-oauth-actor-capabilities.md)**:
+  an architectural alternative to the receipts + proofs + bounds stack
+  rather than a companion to it.  Each visible hop carries a single
+  signed link from the *delegator at that hop* (the actor whose
+  authority is being extended downward), not from the authorization
+  server that minted the current token.  Attenuation is structural: a
+  child link cannot reference authority not present in its parent.
+  Collapses prior-hop provenance, actor non-repudiation, and authority
+  monotonicity into one artifact at the cost of moving signing
+  responsibility from authorization servers to actors.  A token uses
+  either the receipts-style stack or the capabilities sketch, not
+  both.  Offered as a sibling to the four companions so working-group
+  discussion can examine whether the four-companion architecture is
+  structurally required or reflects retrofit cost.
+
 ### Composability
 
-The three sketches are independent companion profiles.  A token may carry
-any combination: receipts only, proofs only, transparency proofs only, or
-all three.  Recipients select trust modes based on which signals they
-require.  See the receipts spec's Extensibility section for the underlying
-composability mechanism.
+The four sketches are independent companion profiles.  A token may carry
+any combination: receipts only, proofs only, receipt-attested bounds,
+issuer-attested bounds, transparency proofs, or any subset of these.
+Recipients select trust modes based on which signals they require.  See the
+receipts spec's Extensibility section for the underlying composability
+mechanism.
+
+Each sketch addresses a distinct adversary class:
+
+- **Receipts**: compromised *downstream* issuer fabricating prior-hop
+  provenance.
+- **Proofs**: compromised *current* outer-token issuer fabricating actor
+  participation.
+- **Bounds**: intermediate issuer silently expanding scope, audience, or
+  resources at a hop, when recipients validate receipt-attested bounds from
+  trusted issuers.
+- **Transparency**: trust scaling beyond per-issuer enumeration through
+  append-only logs of attested artifacts.
+
+A deployment that needs the strongest layered evidence uses all four
+companions, while still relying on the trust anchors and local policy each
+profile requires.  Most deployments will use a subset matched to their
+threat model.
+
+The capabilities sketch above is outside this composability framework
+by design: it occupies the receipts-plus-proofs-plus-bounds layer with
+a single artifact and is mutually exclusive with those three
+companions at the token level.  The transparency sketches remain
+applicable on top of either architecture; their leaf format is the
+only thing that changes.
 
 ## Status
 
