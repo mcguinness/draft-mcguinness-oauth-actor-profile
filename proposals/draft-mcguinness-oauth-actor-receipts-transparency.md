@@ -257,6 +257,15 @@ Log-based trust does NOT provide:
 - **Defense against compromised log operator.**  A compromised log
   operator can issue inclusion proofs for arbitrary content.
   Multi-log redundancy and witness protocols mitigate this.
+- **Defense against AS / log operator collusion.**  When a receipt
+  issuer and the log operator that logs its receipts are the same
+  party (or are colluding), both trust layers collapse to a single
+  trust principal: the issuer can fabricate receipts and the log
+  can attest their inclusion.  Recipients that rely on log-based
+  trust SHOULD require log diversity (an inclusion proof from at
+  least one log operated by a party distinct from the receipt
+  issuer), or evaluate the issuer-log relationship as part of trust
+  configuration.
 
 ### 6.3 Witness gossip
 
