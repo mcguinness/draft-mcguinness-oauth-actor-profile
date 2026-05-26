@@ -363,6 +363,7 @@ When an issuer adds a new outermost actor hop and also preserves an inbound `act
 5.  MUST prepend that new receipt to the inherited array.
 6.  When the inherited array is non-empty, MUST set the new receipt's `prh` to the hash of the exact compact serialization of the receipt now at the next array index, computed using the algorithm named by `prh_alg` (defaulting to SHA-256 when `prh_alg` is absent).
 7.  MUST set the new receipt's `prh_alg` to the inherited value, or omit `prh_alg` if the inherited chain omits it (preserving the SHA-256 default for the chain).  An issuer that does not support the inbound `prh_alg` value MUST reject the chain rather than rehash; rehashing would invalidate prior issuers' signatures.
+8.  MUST set the issued outer token's `actor_receipts_complete` to `true` when the validated inbound chain carried `actor_receipts_complete: true` and the new receipt covers the new outermost actor hop.  An issuer that cannot attest complete coverage for the issued chain MUST omit `actor_receipts_complete: true` rather than propagating the inbound value; silently downgrading from `true` to absent or `false` while preserving the inbound receipts would conceal a coverage change from recipients that do not require `actor_receipts_complete_required`.
 
 An issuer MUST NOT reserialize, resign, normalize, trim, or otherwise alter a prior receipt.
 
@@ -374,6 +375,7 @@ An issuer that reissues, translates, or introspects and re-emits a token without
 
 *  MAY carry an inbound `actor_receipts` array forward unchanged;
 *  MUST NOT create a new receipt;
+*  MUST carry the inbound `actor_receipts_complete` value forward unchanged when the inbound array is carried forward unchanged; an issuer that legitimately cannot continue to attest complete coverage (for example, an introspection server suppressing one or more receipts per {{consumer-introspection}}) MUST also drop the inbound array under the alignment rule below, rather than keep the array and silently downgrade `actor_receipts_complete`;
 *  MUST NOT continue to carry an inherited `actor_receipts` array if it cannot preserve the visible hop alignment required by {{consumer-processing}};
 *  MUST NOT change the outer token's top-level `sub` while carrying inherited receipts forward; a `sub` change re-expresses subject identity and breaks the alignment between `receipt[0].sub` and the outer token's top-level `sub` that consumers verify under {{consumer-processing}}.
 
@@ -461,6 +463,8 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
 11.  Apply any additional consumer-processing rules defined by companion profiles whose claims appear in the receipt or outer token (see {{extensibility}}).  Companion-profile rules MUST NOT relax any requirement in steps 1 through 10; they MAY add additional rejection conditions.
 
 If any required check fails, the recipient MUST reject the receipt chain for the purposes of this profile and MUST apply the underlying protocol's error handling for the stage at which the failure occurred.
+
+A recipient that has rejected a receipt chain under this profile MAY, under explicit local policy, extract structural information from the chain for use by companion profiles (for example, applying a companion's verification rules to the trusted prefix of an otherwise-invalid chain).  The recipient MUST NOT treat such partial validation as conformance with this profile, and MUST NOT relax the rejection requirements defined above.  Companion profiles defining partial-validation modes MUST do so under their own normative scope.
 
 ## Subject Re-Expression Across Hops {#subject-re-expression-across-hops}
 
@@ -567,6 +571,13 @@ This document does not define a metadata signal for "this resource server requir
 
 This document defines the per-hop artifact array `actor_receipts` together with the coverage attestation `actor_receipts_complete`, and the discovery triple (`actor_receipts_supported`, `actor_receipts_required`, `actor_receipts_complete_required`).  Companion profiles that define their own per-hop signed artifacts (for example, actor-signed proofs or recipient acknowledgments) SHOULD follow the same `<name>` plus `<name>_complete` claim-pair convention, advertise support with `<name>_supported` in Authorization Server Metadata {{RFC8414}}, and advertise resource-side requirements with `<name>_required` and (if applicable) `<name>_complete_required` in Protected Resource Metadata {{RFC9728}}.  Following this convention lets recipients evaluate independent companions through the same coverage and capability machinery defined here.
 
+Companion profiles add per-hop signal in two distinct patterns, and SHOULD pick the one that matches their signer:
+
+*  **Parallel artifact arrays**: a companion outer-token claim parallel to `actor_receipts`, following the `<name>` plus `<name>_complete` convention above.  Each entry is a separately signed JWT.  Use this pattern when the artifact needs its own signer trust independent of the receipt issuer (for example, actor-signed proofs whose threat model differs from AS-signed receipts, or recipient-signed acknowledgments).
+*  **Per-receipt extension claims**: a claim added to each receipt JWT and verified as part of the receipt's signature.  Use this pattern when the assertion is something the receipt issuer is already attesting (for example, per-hop authority bounds, delegation-flow correlation, or lifecycle-state snapshots).  Recognized per the unrecognized-claims rule in {{receipt-claims}}; cross-receipt verification follows {{extensibility}}.
+
+The two patterns serve different threat models and have different completeness semantics: parallel-array companions inherit the claim-pair coverage machinery defined here; per-receipt-claim companions define their own completeness rules over the set of receipts that carry the claim.
+
 # Error Handling {#error-handling}
 
 This section defines how receipt-related processing failures map to OAuth error responses.  Receipt validation extends the underlying OAuth or Transaction Token validation rather than replacing it; failures should be reported through the error-response mechanism applicable to the stage at which validation occurred.
@@ -597,12 +608,13 @@ This document does not define new OAuth error codes.  The mapping above reuses e
 
 # Extensibility {#extensibility}
 
-This profile is designed to compose with sibling companion profiles that build on the OAuth Actor Profile for Delegation {{I-D.mcguinness-oauth-actor-profile}}.  Companion profiles have four standard extension surfaces:
+This profile is designed to compose with sibling companion profiles that build on the OAuth Actor Profile for Delegation {{I-D.mcguinness-oauth-actor-profile}}.  Companion profiles have five standard extension surfaces:
 
 *  **New claims inside a receipt JWT** for additional per-hop attributes (for example, historical scope, additional binding data, or extension-specific provenance).  Consumers ignore unrecognized claims under {{receipt-claims}} unless another specification or local agreement defines their meaning, so additive claims do not break the validation rules of this document.
 *  **New top-level claims on the outer token, parallel to `actor_receipts`**, for per-hop artifacts that need their own signature semantics (for example, actor-signed proofs whose threat model differs from AS-signed receipts, or recipient-signed acknowledgments).  Profiles that define such claims SHOULD follow the `<name>` plus `<name>_complete` claim-pair convention described in {{discovery-capability-signaling}}.
 *  **New JOSE `typ` values** for receipt-shaped artifacts that are not AS-signed receipts conforming to this document.  The `typ` value `actor-receipt+jwt` defined here is reserved for receipts conforming to this document and MUST NOT be used by other artifacts.
 *  **New outer-token binding claims**, analogous to `origin_jti`, that record an outer-token field other than `jti` (for example, a workflow correlation identifier).  Such claims are independently verifiable as current-token bindings only on the same terms as `origin_jti`; see {{receipt-to-token-binding-limits}}.
+*  **Non-hop event artifacts** for signal that is not tied to the introduction of a new visible actor hop, including re-authorization events without a hop change, lifecycle-state changes on a governing authority object, receiver acknowledgments, and sender-constraint rotations.  Companion profiles defining such artifacts SHOULD: use a signed JWT with a `typ` value distinct from `actor-receipt+jwt`; carry the events in a top-level outer-token claim parallel to `actor_receipts` (for example, `<companion>_events`); anchor each event either to a specific receipt by including the receipt's `jti` in a `receipt_jti` claim, or to the delegation flow by including the delegation correlator defined by the core actor profile; OPTIONALLY chain events among themselves via `prh` / `prh_alg` using the linkage construction in {{receipt-claims}}; OPTIONALLY follow the `<name>` plus `<name>_complete` claim-pair convention from {{discovery-capability-signaling}}.  Companion profiles MUST NOT add event-shaped entries to `actor_receipts`; that array is reserved for per-hop AS-signed attestations defined by this document, and its byte-preservation invariant cannot accommodate entries added after the chain was formed.
 
 Companion profile authoring rules:
 
@@ -610,6 +622,7 @@ Companion profile authoring rules:
 *  Companion-profile claims and discovery metadata MUST be registered with IANA in the registries used by this document.
 *  Companion profiles MAY reuse the `prh` and `prh_alg` chain-linkage construction defined in {{receipt-claims}} when their per-hop signed artifacts form a similar chain structure, so that recipients can apply a single chain-validation routine across companions.
 *  Companions whose artifacts do not form a chain (for example, independent per-hop attestations or recipient acknowledgments that are not linked to one another) MAY define their own integrity structure.
+*  Companion profiles MAY define cross-receipt verification rules (for example, monotonicity rules over per-hop authority bounds, alignment rules between per-hop attestations, or aggregation rules over per-hop assertions) that compare claims across receipts in the chain.  The chain structure preserved by `prh` and the byte-for-byte preservation requirement make such cross-receipt verification possible.  Companion profiles defining cross-receipt rules MUST tolerate sparse coverage (not every receipt is required to carry the companion's claims) unless they explicitly require completeness.
 
 Cross-companion alignment: companion artifacts that need to reference a specific receipt (for example, an actor-signed proof at hop N referencing the corresponding AS-signed receipt at hop N) SHOULD do so by the receipt's `jti`, which is REQUIRED on receipts and unique within the issuer's namespace.  This profile does not define a hop-index claim; cross-companion alignment is established through `jti` reference plus the `prh` chain's structural integrity, not through array-position metadata.
 
@@ -803,6 +816,8 @@ Stable identifiers in receipts (`iss`, `act.sub`, `cnf`, and any companion corre
 *  An audit pipeline that aggregates receipts across services builds a graph of who delegated to whom and when, across organizational boundaries.
 *  Receipts from a single workflow are tied together via `prh` chain hashes, exposing the delegation graph even when individual hops are routed through privacy-preserving infrastructure.
 *  Receipts persist longer than the outer tokens they were issued for and may be retained in audit logs indefinitely; correlation risk is not bounded by token lifetime.
+
+Companion profiles defining per-receipt extension claims (per the patterns in {{discovery-capability-signaling}}) may introduce additional stable identifiers or correlation surfaces beyond those listed above.  Examples include authority-bounds content (which exposes per-hop scope, audience, and resource detail), Mission references, and lifecycle-state snapshots.  The privacy considerations of this section (cross-service correlation, retention beyond token lifetime, detached-verification disclosure) apply to such companion claims wherever they share these properties.  Companion profiles defining extension claims SHOULD evaluate the correlation and disclosure characteristics specific to their claims and document any deployment guidance their claims warrant.
 
 ## Detached Verification Privacy
 
