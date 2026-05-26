@@ -222,6 +222,15 @@ trust set.  This is the federation-friendly mode.
 **Belt-and-suspenders mode.**  Recipient requires both: receipt issuer
 in per-issuer trust set, AND a valid SCITT Receipt from a trusted TS.
 
+When a receipt issuer and the Transparency Service that records its
+receipts are the same party (or are colluding), both trust layers
+collapse to a single trust principal: the issuer can fabricate
+receipts and the TS can attest their registration.  Recipients that
+rely on SCITT-attested trust SHOULD require TS diversity (a SCITT
+Receipt from at least one TS operated by a party distinct from the
+receipt issuer), or evaluate the issuer-TS relationship as part of
+trust configuration.
+
 ## 9. Discovery
 
 ### 9.1 Authorization Server Metadata
