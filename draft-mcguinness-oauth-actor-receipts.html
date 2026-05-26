@@ -295,16 +295,19 @@ h1, h2, h3, h4, h5, h6 {
   font-size-adjust: 0.5;
   color: var(--title-color);
 }
-h1#title {
-  font-size: 32px;
-  line-height: 40px;
-  clear: both;
-}
-h1#title, h1#rfcnum {
-  margin: 1.5em 0 0.2em;
-}
-h1#rfcnum + h1#title {
-  margin: 0.2em 0;
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
 }
 
 h1, h2, h3 {
@@ -324,10 +327,10 @@ h4, h5, h6 {
 #abstract+p {
   font-size: 18px;
   line-height: 24px;
-}
-#abstract+p code, #abstract+p samp, #abstract+p tt {
-  font-size: 16px;
-  line-height: 0;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
 }
 
 p {
@@ -338,59 +341,59 @@ p {
 div {
   margin: 0;
 }
-.alignRight.art-text {
-  background-color: var(--highlight-color);
-  border: 1px solid var(--line-color);
-  border-radius: 3px;
-  padding: 0.5em 1em 0;
-  margin-bottom: 0.5em;
-}
-.alignRight.art-text pre {
-  padding: 0;
-  width: auto;
-}
 .alignRight {
   margin: 1em 0;
-}
-.alignRight > *:first-child {
-  border: none;
-  margin: 0;
-  float: right;
-  clear: both;
-}
-.alignRight > *:nth-child(2) {
-  clear: both;
-  display: block;
-  border: none;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
 }
 svg {
   display: block;
-}
-/* font-family isn't space-separated, but =~ will have to do */
-svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
-  font-family: var(--font-mono);
-}
-.alignCenter.art-text {
-  background-color: var(--highlight-color);
-  border: 1px solid var(--line-color);
-  border-radius: 3px;
-  padding: 0.5em 1em 0;
-  margin-bottom: 0.5em;
-}
-.alignCenter.art-text pre {
-  padding: 0;
-  width: auto;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
 }
 .alignCenter {
   margin: 1em 0;
-}
-.alignCenter > *:first-child {
-  border: none;
-  /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
-     support flexbox yet.
-  */
-  display: table;
-  margin: 0 auto;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
 }
 
 /* lists */
@@ -428,26 +431,25 @@ dl {
     --indent: 5ch;
     & > dt {
       min-width: calc(var(--indent) - 2ch);
+      float: none;
     }
-  }
-  &.olPercent > dt {
-    float: none;
   }
 
   dl > dd > & {
     margin-top: 0.5em;
     margin-bottom: 0;
   }
-}
-dl:not(.dlNewline) > dt {
-  float: left;
-  margin-right: 2ch;
-  min-width: 8ch;
-}
-dl > dd {
-  margin-bottom: .8em;
-  margin-left: var(--indent) !important; /* stupid element overrides */
-  min-height: 2ex;
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
 }
 :is(dl.compact, .dlCompact) > dd {
   margin-bottom: 0;
@@ -463,20 +465,22 @@ dl > dd {
 }
 
 /* links */
-a, a[href].selfRef:hover {
+a {
   text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
 }
-a[href] {
-  color: var(--link-color);
-}
-a[href].selfRef, .iref + a[href].internal {
+.iref + a[href].internal {
   color: var(--text-color);
-}
-a[href]:hover {
-  text-decoration: underline;
-}
-a[href].selfRef:hover {
-  background-color: var(--highlight-color);
 }
 a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
   white-space: nowrap;
@@ -512,9 +516,9 @@ img {
 figure {
   margin: 0.5em 0;
   padding: 0;
-}
-figure blockquote {
-  margin: 0.8em 0.4em 0.4em;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
 }
 figcaption, caption {
   font-style: italic;
@@ -524,17 +528,19 @@ figcaption, caption {
 }
 @media screen {
   /* Auto-collapse boilerplate. */
-  :is(#status-of-memo, #copyright) p {
-    margin: -2px 0;
-    max-height: 0;
-    transition: max-height 2s ease, margin 0.5s ease 0.5s;
-    overflow: hidden;
-  }
-  :is(#status-of-memo, #copyright):hover p,
-  :is(#status-of-memo, #copyright) h2:target ~ p {
-    margin: 0.5em 0;
-    max-height: 500px;
-    overflow: auto;
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
   }
   pre, svg {
     display: inline-block;
@@ -584,25 +590,17 @@ table {
   max-width: 100%;
   margin: 0 0 1em;
   border-collapse: collapse;
-}
-table.right {
-  margin-left: auto;
-}
-table.center {
-  margin-left: auto;
-  margin-right: auto;
-}
-table.left {
-  margin-right: auto;
-}
-table .text-left {
-  text-align: left;
-}
-table .text-center {
-  text-align: center;
-}
-table .text-right {
-  text-align: right;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
 }
 
 thead, tbody {
@@ -622,13 +620,6 @@ th {
 :is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
   background-color: var(--highlight-color);
 }
-table caption {
-  margin: 0;
-  padding: 3px 0 3px 1em;
-}
-table p {
-  margin: 0;
-}
 
 /* pilcrow */
 a.pilcrow {
@@ -639,18 +630,16 @@ a.pilcrow {
     color: var(--pilcrow-weak);
     &:hover { text-decoration: none; }
   }
-}
-@media not print {
-  :hover > a.pilcrow, a.pilcrow:focus {
-    opacity: 1;
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
   }
-  a.pilcrow[href]:hover {
-    color: var(--pilcrow-strong);
-    background-color: transparent;
-  }
-}
-@media print {
-  a.pilcrow {
+  @media print {
     display: none;
   }
 }
@@ -709,9 +698,9 @@ sub, sup {
   font-size: 0.9em;
   font-style: italic;
   margin-top: 2em;
-}
-.docInfo .prepared {
-  float: right;
+  & .prepared {
+    float: right;
+  }
 }
 
 /* table of contents */
@@ -801,23 +790,27 @@ hr.addr {
   max-width: calc(100% - 16px);
 }
 @media (min-width: 500px) {
-  #authors-addresses > section {
-    column-count: 2;
-    column-gap: 20px;
-  }
-  #authors-addresses > section > h2 {
-    column-span: all;
-  }
-  /* hack for break-inside: avoid-column */
-  #authors-addresses address {
-    display: inline-block;
-    break-inside: avoid-column;
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
   }
 }
 
 /* Comments */
-.rfcEditorRemove p:first-of-type {
-  font-style: italic;
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
 }
 .cref {
   background-color: rgba(249, 232, 105, 0.3);
@@ -828,19 +821,21 @@ hr.addr {
 }
 
 @media screen {
-  #toc nav {
-    font-family: var(--font-title);
-    font-weight: 360;
-    & > ul { margin-bottom: 2em; }
-    & ul {
-      margin: 0 0 0 4px;
-      & :is(p, li) {
-        margin: 2px 0;
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
       }
     }
-  }
-  #toc a.toplink {
-    float: right;
+    & a.toplink {
+      float: right;
+    }
   }
 }
 @media not screen {
@@ -861,54 +856,54 @@ hr.addr {
     margin: 0;
     border-bottom: 1px solid #ccc;
     opacity: 0.6;
-  }
-  #toc h2 {
-    margin: 0;
-    padding: 2px 0 2px 6px;
-    padding-right: 1em;
-    font-size: 18px;
-    line-height: 24px;
-    min-width: 190px;
-    text-align: right;
-    background-color: #444;
-    color: white;
-    cursor: pointer;
-    &::before { /* css hamburger */
-      float: right;
-      position: relative;
-      width: 1em;
-      height: 1px;
-      left: -164px;
-      margin: 8px 0 0 0;
-      background: white none repeat scroll 0 0;
-      box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
-      content: "";
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
     }
-  }
-  #toc nav {
-    display: none;
-    background-color: var(--background-color);
-    padding: 0.5em 1em 1em;
-    overflow: auto;
-    overscroll-behavior: contain;
-    height: calc(100vh - 48px);
-    border-left: 1px solid #ddd;
-  }
-  #toc.active {
-    opacity: 1;
-    & nav { display: block; }
-  }
-  /* Make the collapsed ToC header render white on gray also when it's a link */
-  #toc h2 a,
-  #toc h2 a:is(:link, :focus, :hover),
-  #toc a.toplink,
-  #toc a.toplink:hover {
-    color: white;
-    background-color: #444;
-    text-decoration: none;
-  }
-  #toc a.toplink {
-    margin: 2px 0.5em 0;
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
   }
 }
 
@@ -927,26 +922,26 @@ hr.addr {
     margin: 0;
     padding: 0;
     z-index: 1;
-  }
-  #toc h2 {
-    margin: 0;
-    padding: 0.25em 1em 1em 0;
-  }
-  #toc nav {
-    display: block;
-    height: calc(90vh - 84px);
-    bottom: 0;
-    padding: 0.5em 0 2em;
-    overflow: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
   }
   img { /* future proofing */
     max-width: 100%;
     height: auto;
-  }
-  #toc a.toplink {
-    margin: 8px 0.5em 0;
   }
 }
 
@@ -962,12 +957,13 @@ hr.addr {
   #n-copyright-notice {
     border-bottom: none;
   }
-  #toc, #n-introduction {
-    page-break-before: always;
-  }
   #toc {
+    page-break-before: always;
     border-top: none;
     padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
   }
   figure, pre, .vcard {
     page-break-inside: avoid;
@@ -1029,17 +1025,19 @@ hr.addr {
 }
 
 /* SVG Trick: a prefix match works because only black and white are allowed */
-svg :is([stroke="black"], [stroke^="#000"]) {
-  stroke: var(--text-color);
-}
-svg :is([stroke="white"], [stroke^="#fff"]) {
-  stroke: var(--background-color);
-}
-svg :is([fill="black"], [fill^="#000"], :not([fill])) {
-  fill: var(--text-color);
-}
-svg :is([fill="white"], [fill^="#fff"]) {
-  fill: var(--background-color);
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
 }
 </style>
 
@@ -2017,6 +2015,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <li id="section-8.2-2.7">
             <p id="section-8.2-2.7.1"><span class="bcp14">MUST</span> set the new receipt's <code>prh_alg</code> to the inherited value, or omit <code>prh_alg</code> if the inherited chain omits it (preserving the SHA-256 default for the chain).  An issuer that does not support the inbound <code>prh_alg</code> value <span class="bcp14">MUST</span> reject the chain rather than rehash; rehashing would invalidate prior issuers' signatures.<a href="#section-8.2-2.7.1" class="pilcrow">¶</a></p>
 </li>
+          <li id="section-8.2-2.8">
+            <p id="section-8.2-2.8.1"><span class="bcp14">MUST</span> set the issued outer token's <code>actor_receipts_complete</code> to <code>true</code> when the validated inbound chain carried <code>actor_receipts_complete: true</code> and the new receipt covers the new outermost actor hop.  An issuer that cannot attest complete coverage for the issued chain <span class="bcp14">MUST</span> omit <code>actor_receipts_complete: true</code> rather than propagating the inbound value; silently downgrading from <code>true</code> to absent or <code>false</code> while preserving the inbound receipts would conceal a coverage change from recipients that do not require <code>actor_receipts_complete_required</code>.<a href="#section-8.2-2.8.1" class="pilcrow">¶</a></p>
+</li>
         </ol>
 <p id="section-8.2-3">An issuer <span class="bcp14">MUST NOT</span> reserialize, resign, normalize, trim, or otherwise alter a prior receipt.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
 <p id="section-8.2-4">If inbound receipts fail validation, the issuer <span class="bcp14">MUST NOT</span> propagate them.  It <span class="bcp14">MAY</span> continue without <code>actor_receipts</code> only when local policy permits partial coverage; otherwise it <span class="bcp14">MUST</span> fail the request under the error model of the underlying protocol.<a href="#section-8.2-4" class="pilcrow">¶</a></p>
@@ -2036,10 +2037,13 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-8.3-2.2.1"><span class="bcp14">MUST NOT</span> create a new receipt;<a href="#section-8.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.3-2.3">
-            <p id="section-8.3-2.3.1"><span class="bcp14">MUST NOT</span> continue to carry an inherited <code>actor_receipts</code> array if it cannot preserve the visible hop alignment required by <a href="#consumer-processing" class="auto internal xref">Section 9</a>;<a href="#section-8.3-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-8.3-2.3.1"><span class="bcp14">MUST</span> carry the inbound <code>actor_receipts_complete</code> value forward unchanged when the inbound array is carried forward unchanged; an issuer that legitimately cannot continue to attest complete coverage (for example, an introspection server suppressing one or more receipts per <a href="#consumer-introspection" class="auto internal xref">Section 9.4</a>) <span class="bcp14">MUST</span> also drop the inbound array under the alignment rule below, rather than keep the array and silently downgrade <code>actor_receipts_complete</code>;<a href="#section-8.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.3-2.4">
-            <p id="section-8.3-2.4.1"><span class="bcp14">MUST NOT</span> change the outer token's top-level <code>sub</code> while carrying inherited receipts forward; a <code>sub</code> change re-expresses subject identity and breaks the alignment between <code>receipt[0].sub</code> and the outer token's top-level <code>sub</code> that consumers verify under <a href="#consumer-processing" class="auto internal xref">Section 9</a>.<a href="#section-8.3-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-8.3-2.4.1"><span class="bcp14">MUST NOT</span> continue to carry an inherited <code>actor_receipts</code> array if it cannot preserve the visible hop alignment required by <a href="#consumer-processing" class="auto internal xref">Section 9</a>;<a href="#section-8.3-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-8.3-2.5">
+            <p id="section-8.3-2.5.1"><span class="bcp14">MUST NOT</span> change the outer token's top-level <code>sub</code> while carrying inherited receipts forward; a <code>sub</code> change re-expresses subject identity and breaks the alignment between <code>receipt[0].sub</code> and the outer token's top-level <code>sub</code> that consumers verify under <a href="#consumer-processing" class="auto internal xref">Section 9</a>.<a href="#section-8.3-2.5.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-8.3-3">If such an issuer changes the visible outermost actor, it has added a new hop and <span class="bcp14">MUST</span> follow <a href="#extending-an-existing-receipt-chain" class="auto internal xref">Section 8.2</a>.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
@@ -2236,6 +2240,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
       </ol>
 <p id="section-9-3">If any required check fails, the recipient <span class="bcp14">MUST</span> reject the receipt chain for the purposes of this profile and <span class="bcp14">MUST</span> apply the underlying protocol's error handling for the stage at which the failure occurred.<a href="#section-9-3" class="pilcrow">¶</a></p>
+<p id="section-9-4">A recipient that has rejected a receipt chain under this profile <span class="bcp14">MAY</span>, under explicit local policy, extract structural information from the chain for use by companion profiles (for example, applying a companion's verification rules to the trusted prefix of an otherwise-invalid chain).  The recipient <span class="bcp14">MUST NOT</span> treat such partial validation as conformance with this profile, and <span class="bcp14">MUST NOT</span> relax the rejection requirements defined above.  Companion profiles defining partial-validation modes <span class="bcp14">MUST</span> do so under their own normative scope.<a href="#section-9-4" class="pilcrow">¶</a></p>
 <div id="subject-re-expression-across-hops">
 <section id="section-9.1">
         <h3 id="name-subject-re-expression-acros">
@@ -2411,6 +2416,16 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <a href="#section-10.5" class="section-number selfRef">10.5. </a><a href="#name-claim-pair-convention-for-s" class="section-name selfRef">Claim-Pair Convention for Sibling Profiles</a>
         </h3>
 <p id="section-10.5-1">This document defines the per-hop artifact array <code>actor_receipts</code> together with the coverage attestation <code>actor_receipts_complete</code>, and the discovery triple (<code>actor_receipts_supported</code>, <code>actor_receipts_required</code>, <code>actor_receipts_complete_required</code>).  Companion profiles that define their own per-hop signed artifacts (for example, actor-signed proofs or recipient acknowledgments) <span class="bcp14">SHOULD</span> follow the same <code>&lt;name&gt;</code> plus <code>&lt;name&gt;_complete</code> claim-pair convention, advertise support with <code>&lt;name&gt;_supported</code> in Authorization Server Metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>, and advertise resource-side requirements with <code>&lt;name&gt;_required</code> and (if applicable) <code>&lt;name&gt;_complete_required</code> in Protected Resource Metadata <span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span>.  Following this convention lets recipients evaluate independent companions through the same coverage and capability machinery defined here.<a href="#section-10.5-1" class="pilcrow">¶</a></p>
+<p id="section-10.5-2">Companion profiles add per-hop signal in two distinct patterns, and <span class="bcp14">SHOULD</span> pick the one that matches their signer:<a href="#section-10.5-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-10.5-3.1">
+            <p id="section-10.5-3.1.1"><strong>Parallel artifact arrays</strong>: a companion outer-token claim parallel to <code>actor_receipts</code>, following the <code>&lt;name&gt;</code> plus <code>&lt;name&gt;_complete</code> convention above.  Each entry is a separately signed JWT.  Use this pattern when the artifact needs its own signer trust independent of the receipt issuer (for example, actor-signed proofs whose threat model differs from AS-signed receipts, or recipient-signed acknowledgments).<a href="#section-10.5-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.5-3.2">
+            <p id="section-10.5-3.2.1"><strong>Per-receipt extension claims</strong>: a claim added to each receipt JWT and verified as part of the receipt's signature.  Use this pattern when the assertion is something the receipt issuer is already attesting (for example, per-hop authority bounds, delegation-flow correlation, or lifecycle-state snapshots).  Recognized per the unrecognized-claims rule in <a href="#receipt-claims" class="auto internal xref">Section 7.2</a>; cross-receipt verification follows <a href="#extensibility" class="auto internal xref">Section 12</a>.<a href="#section-10.5-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-10.5-4">The two patterns serve different threat models and have different completeness semantics: parallel-array companions inherit the claim-pair coverage machinery defined here; per-receipt-claim companions define their own completeness rules over the set of receipts that carry the claim.<a href="#section-10.5-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2464,7 +2479,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
       <h2 id="name-extensibility">
 <a href="#section-12" class="section-number selfRef">12. </a><a href="#name-extensibility" class="section-name selfRef">Extensibility</a>
       </h2>
-<p id="section-12-1">This profile is designed to compose with sibling companion profiles that build on the OAuth Actor Profile for Delegation <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>.  Companion profiles have four standard extension surfaces:<a href="#section-12-1" class="pilcrow">¶</a></p>
+<p id="section-12-1">This profile is designed to compose with sibling companion profiles that build on the OAuth Actor Profile for Delegation <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>.  Companion profiles have five standard extension surfaces:<a href="#section-12-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-12-2.1">
           <p id="section-12-2.1.1"><strong>New claims inside a receipt JWT</strong> for additional per-hop attributes (for example, historical scope, additional binding data, or extension-specific provenance).  Consumers ignore unrecognized claims under <a href="#receipt-claims" class="auto internal xref">Section 7.2</a> unless another specification or local agreement defines their meaning, so additive claims do not break the validation rules of this document.<a href="#section-12-2.1.1" class="pilcrow">¶</a></p>
@@ -2477,6 +2492,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         <li class="normal" id="section-12-2.4">
           <p id="section-12-2.4.1"><strong>New outer-token binding claims</strong>, analogous to <code>origin_jti</code>, that record an outer-token field other than <code>jti</code> (for example, a workflow correlation identifier).  Such claims are independently verifiable as current-token bindings only on the same terms as <code>origin_jti</code>; see <a href="#receipt-to-token-binding-limits" class="auto internal xref">Section 13.4</a>.<a href="#section-12-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-12-2.5">
+          <p id="section-12-2.5.1"><strong>Non-hop event artifacts</strong> for signal that is not tied to the introduction of a new visible actor hop, including re-authorization events without a hop change, lifecycle-state changes on a governing authority object, receiver acknowledgments, and sender-constraint rotations.  Companion profiles defining such artifacts <span class="bcp14">SHOULD</span>: use a signed JWT with a <code>typ</code> value distinct from <code>actor-receipt+jwt</code>; carry the events in a top-level outer-token claim parallel to <code>actor_receipts</code> (for example, <code>&lt;companion&gt;_events</code>); anchor each event either to a specific receipt by including the receipt's <code>jti</code> in a <code>receipt_jti</code> claim, or to the delegation flow by including the delegation correlator defined by the core actor profile; OPTIONALLY chain events among themselves via <code>prh</code> / <code>prh_alg</code> using the linkage construction in <a href="#receipt-claims" class="auto internal xref">Section 7.2</a>; OPTIONALLY follow the <code>&lt;name&gt;</code> plus <code>&lt;name&gt;_complete</code> claim-pair convention from <a href="#discovery-capability-signaling" class="auto internal xref">Section 10</a>.  Companion profiles <span class="bcp14">MUST NOT</span> add event-shaped entries to <code>actor_receipts</code>; that array is reserved for per-hop AS-signed attestations defined by this document, and its byte-preservation invariant cannot accommodate entries added after the chain was formed.<a href="#section-12-2.5.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="section-12-3">Companion profile authoring rules:<a href="#section-12-3" class="pilcrow">¶</a></p>
@@ -2492,6 +2510,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         <li class="normal" id="section-12-4.4">
           <p id="section-12-4.4.1">Companions whose artifacts do not form a chain (for example, independent per-hop attestations or recipient acknowledgments that are not linked to one another) <span class="bcp14">MAY</span> define their own integrity structure.<a href="#section-12-4.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-12-4.5">
+          <p id="section-12-4.5.1">Companion profiles <span class="bcp14">MAY</span> define cross-receipt verification rules (for example, monotonicity rules over per-hop authority bounds, alignment rules between per-hop attestations, or aggregation rules over per-hop assertions) that compare claims across receipts in the chain.  The chain structure preserved by <code>prh</code> and the byte-for-byte preservation requirement make such cross-receipt verification possible.  Companion profiles defining cross-receipt rules <span class="bcp14">MUST</span> tolerate sparse coverage (not every receipt is required to carry the companion's claims) unless they explicitly require completeness.<a href="#section-12-4.5.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="section-12-5">Cross-companion alignment: companion artifacts that need to reference a specific receipt (for example, an actor-signed proof at hop N referencing the corresponding AS-signed receipt at hop N) <span class="bcp14">SHOULD</span> do so by the receipt's <code>jti</code>, which is <span class="bcp14">REQUIRED</span> on receipts and unique within the issuer's namespace.  This profile does not define a hop-index claim; cross-companion alignment is established through <code>jti</code> reference plus the <code>prh</code> chain's structural integrity, not through array-position metadata.<a href="#section-12-5" class="pilcrow">¶</a></p>
@@ -2850,6 +2871,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-14.6-2.3.1">Receipts persist longer than the outer tokens they were issued for and may be retained in audit logs indefinitely; correlation risk is not bounded by token lifetime.<a href="#section-14.6-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
+<p id="section-14.6-3">Companion profiles defining per-receipt extension claims (per the patterns in <a href="#discovery-capability-signaling" class="auto internal xref">Section 10</a>) may introduce additional stable identifiers or correlation surfaces beyond those listed above.  Examples include authority-bounds content (which exposes per-hop scope, audience, and resource detail), Mission references, and lifecycle-state snapshots.  The privacy considerations of this section (cross-service correlation, retention beyond token lifetime, detached-verification disclosure) apply to such companion claims wherever they share these properties.  Companion profiles defining extension claims <span class="bcp14">SHOULD</span> evaluate the correlation and disclosure characteristics specific to their claims and document any deployment guidance their claims warrant.<a href="#section-14.6-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="detached-verification-privacy">
