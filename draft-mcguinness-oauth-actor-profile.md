@@ -287,6 +287,8 @@ Delegation chains MUST be represented by nesting `act` objects as specified in {
 
 This document uses the following terminology consistently:
 
+*  A **hop** is a single `act` object in a delegation chain.  The number of hops in a chain equals the chain's delegation depth.
+*  A **visible hop** is a hop that appears in the token's `act` chain as received by a recipient, after any filtering by an introspection server or upstream issuer.
 *  A **single-hop actor object** is an `act` object with no nested `act`; it represents delegation depth 1.
 *  An **inbound delegation chain** is the complete `act` structure received in an inbound token, whether depth 1 or greater.
 *  A **preserved delegation chain** is an inbound delegation chain that an issuer has validated and copied into a newly issued token without rewriting inherited actor entries.
@@ -1625,6 +1627,8 @@ This document does not define per-hop actor-key provenance within the delegation
 ## Delegation Depth Limits
 
 Unbounded delegation chains increase attack surface and complicate policy evaluation.  Depth support and interoperability requirements are defined in [Delegation Chains](#delegation-chains).  Implementations that encounter chains exceeding their configured local maximum MUST reject the token to prevent denial-of-service through chain parsing.
+
+Token size grows in proportion to chain depth when extensions to this profile attach per-hop signed material to a delegated token.  Deployments that combine the reference chain depth with one or more such per-hop mechanisms SHOULD measure realistic token sizes against their transport limits (HTTP header limits are often 8 KB) and consider using token introspection ({{RFC7662}}) where inline carriage exceeds those limits.
 
 ## Actor Identity Rotation {#actor-identity-rotation}
 
