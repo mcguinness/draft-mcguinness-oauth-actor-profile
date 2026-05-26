@@ -4,7 +4,7 @@
 > Companion to [draft-mcguinness-oauth-actor-receipts](../draft-mcguinness-oauth-actor-receipts.md)
 > and to the core [draft-mcguinness-oauth-actor-profile](../draft-mcguinness-oauth-actor-profile.md).
 > See [README](./README.md) for context.
-> Last updated: 2026-05-10
+> Last updated: 2026-05-18
 
 ## Abstract
 
@@ -173,6 +173,14 @@ v1 forecloses that adoption signal.
 
 ## 4. The `actor_proofs` Claim
 
+This profile uses the **parallel artifact array** pattern formalized
+in the receipts spec's §Claim-Pair Convention: a companion outer-token
+claim parallel to `actor_receipts`, with entries that are separately
+signed JWTs.  This pattern is chosen because the proof signer (the
+actor) differs from the receipt signer (the AS); per-receipt extension
+claims would not work since they inherit the receipt issuer's
+signature.
+
 ### `actor_proofs`
 
 OPTIONAL.  An array of strings.  Each string is the compact
@@ -328,6 +336,12 @@ inbound `actor_proofs` array:
 5. The new proof MUST set `prh` to the hash of the inbound array's
    first element, computed using the inherited `prh_alg`.
 6. Prepend the new proof to the inherited array.
+7. Set `actor_proofs_complete: true` on the issued outer token when
+   the validated inbound chain carried `actor_proofs_complete: true`
+   and the new proof covers the new outermost actor hop.  An issuer
+   that cannot attest complete coverage for the issued chain MUST
+   omit `actor_proofs_complete: true` rather than propagating the
+   inbound value silently.
 
 Issuers MUST NOT reserialize, resign, normalize, or alter inbound
 proofs.
@@ -336,7 +350,12 @@ proofs.
 
 Same rules as receipts: an issuer that reissues without adding a new
 hop MAY carry `actor_proofs` forward unchanged, MUST NOT create a
-new proof, MUST NOT change the outer token's `sub`.
+new proof, MUST NOT change the outer token's `sub`.  When carrying
+the inbound `actor_proofs` array forward unchanged, the issuer MUST
+carry the inbound `actor_proofs_complete` value forward unchanged;
+an issuer that legitimately cannot continue to attest complete
+coverage MUST drop the inbound array rather than keep the array and
+silently downgrade `actor_proofs_complete`.
 
 ### 6.4 Sibling-receipt creation
 
@@ -487,6 +506,17 @@ apply.
 This profile does not define an in-band revocation mechanism for
 proofs.
 
+A proof signature does not inherit revocation state from a paired
+actor receipt.  When a deployment carries both, the receipts spec's
+issuer can revoke a receipt's trust (via key rotation or removal of
+the issuer from the trusted-issuer set), but the actor-signed proof
+remains valid under its own key.  Recipients that require
+revocation-driven invalidation for a hop SHOULD require receipt
+validation alongside proof validation rather than relying on the
+proof alone; per the sibling-receipt convention in Section 6.4, the
+proof's `receipt_jti` identifies the receipt whose revocation state
+applies to that hop.
+
 ### 10.2 Replay
 
 Proofs are designed to be carried by tokens that themselves have
@@ -528,7 +558,9 @@ mismatches.
 
 ## 11. Privacy Considerations
 
-The privacy considerations of the receipts spec apply.  In addition:
+The privacy considerations of the receipts spec apply, including the
+specific guidance on companion artifact correlation surfaces in the
+receipts spec's §Cross-Service Correlation.  In addition:
 
 - Actor proofs reveal actor signing key identifiers (via `kid` or
   via the public key resolved for verification), which are
@@ -599,12 +631,52 @@ Disclosure profiles (subset, actor-only) defined in a future
 companion would apply uniformly to proofs and receipts: the
 recipient sees whichever subset the issuer chose to disclose.
 
+### 13.4 Authority bounds
+
+The authority-bounds companion
+([sketch](./draft-mcguinness-oauth-actor-authority-bounds.md))
+records and verifies authority monotonicity across hops.  When both
+proofs and bounds are in use:
+
+- The proof's target binding (`aud`, optional `resource`) records
+  what the actor *consented to* at its hop.
+- The receipt's `bounds` claim records what the AS *issued* at the
+  same hop.
+- A recipient operating in belt-and-suspenders mode SHOULD verify
+  the AS-issued bounds are a subset of the actor-consented target
+  binding: `receipt.bounds.aud ⊆ proof.aud` and (when both present)
+  `receipt.bounds.resource ⊆ proof.resource`.  An AS that issues
+  bounds broader than the actor authorized is detectable through
+  this check.
+
+Bounds and proofs are independent companions; either, both, or
+neither may be present in a token.  The cross-companion check above
+applies only when both are present.
+
+### 13.5 Non-hop event artifacts (receipts §Extensibility)
+
+This profile's proofs are signed at hop creation and travel forward
+unchanged.  Actor-side events that occur *between* hops (for example,
+an actor re-consenting to broader bounds without a new actor being
+added to the chain) are not covered by this profile.
+
+Future actor-side event artifacts MAY use the non-hop event artifact
+pattern defined in the receipts spec's §Extensibility: a parallel
+outer-token claim such as `actor_events` carrying signed events with
+a distinct `typ` value, anchored by `receipt_jti` (to the receipt at
+the relevant hop) or by the delegation correlator.  Out of scope for
+this profile v1; flagged here so future companions know where the
+pattern lives.
+
 ## See Also
 
 - [draft-mcguinness-oauth-actor-profile](../draft-mcguinness-oauth-actor-profile.md)
  : core profile this builds on.
 - [draft-mcguinness-oauth-actor-receipts](../draft-mcguinness-oauth-actor-receipts.md)
  : receipts companion this composes with.
+- [Authority bounds](./draft-mcguinness-oauth-actor-authority-bounds.md)
+ : sibling companion adding cross-hop authority monotonicity; pairs
+  with proofs via the cross-check in §13.4.
 - [Transparency JWT-native variant](./draft-mcguinness-oauth-actor-receipts-transparency.md)
 - [Transparency SCITT-aligned variant](./draft-mcguinness-oauth-actor-receipts-scitt.md)
 - [RFC 8693 (OAuth Token Exchange)](https://www.rfc-editor.org/rfc/rfc8693)
