@@ -5,7 +5,7 @@ category: exp
 docname: draft-mcguinness-oauth-actor-receipts-latest
 submissiontype: IETF
 number:
-date: 2026-05-09
+date: 2026-07-03
 ipr: "trust200902"
 area: "Security"
 workgroup: "Web Authorization Protocol"
@@ -399,7 +399,7 @@ Refresh-token reissuance is a special case of reissuance under this section.  Re
 
 An AS that supports refresh tokens for delegated access tokens:
 
-*  MUST persist the `actor_receipts` array associated with the original access token in issuer-controlled storage (for example, a token-state database, refresh-token state, or equivalent durable mechanism), so each refreshed access token can carry the receipts forward unchanged.
+*  MUST retain the `actor_receipts` array associated with the original access token in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the receipts forward unchanged.
 *  MUST set receipt `exp` values under {{receipt-claims}} to accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under {{extending-an-existing-receipt-chain}} as receipts approach expiry, and refresh loses receipt-based provenance.
 *  When that bounded lifetime would be exceeded, MUST either obtain fresh delegation state and start a new receipt chain or stop emitting `actor_receipts`, unless local policy permits partial or absent receipt coverage.
 
@@ -527,6 +527,8 @@ An introspection response that includes `actor_receipts` MUST include the member
 
 Receipt disclosure through introspection is all-or-nothing for a given token: a strict subset of the stored array cannot validate under {{consumer-processing}}, because removing an older receipt leaves the next newer receipt's `prh` without a target and removing the newest receipt breaks visible-hop alignment.  An introspection server that cannot disclose the full stored array for privacy or policy reasons MUST omit `actor_receipts` from the response entirely.  A stored array that itself has partial coverage is returned in full, with `actor_receipts_complete: false`.
 
+When the introspected token is revoked or otherwise inactive, the introspection response follows the core actor profile's suppression rule for delegation claims: an introspection server MUST NOT return `actor_receipts` or `actor_receipts_complete` for a token it reports as inactive.
+
 The core actor profile {{I-D.mcguinness-oauth-actor-profile}} defines a separate `chain_complete` introspection member that indicates whether the visible `act` chain itself has been filtered.  These two completeness signals are distinct: `chain_complete: false` means the introspection server has suppressed inner `act` hops from the chain representation, while `actor_receipts_complete: false` means receipt coverage of the visible chain is partial.  A token can have `chain_complete: true` and `actor_receipts_complete: false`, or vice versa.
 
 Consumers that rely on both signals MUST evaluate them independently.  When `chain_complete: false`, the receipt array may cover only part of the true delegation chain even when `actor_receipts_complete: true`; receipt coverage is then complete only for the visible filtered chain, not the full chain.
@@ -589,7 +591,7 @@ This section defines how receipt-related processing failures map to OAuth error 
 
 ## Authorization Server and Transaction Token Service Errors
 
-When an authorization server or Transaction Token Service rejects a token-exchange request because inbound `actor_receipts` cannot be validated under {{extending-an-existing-receipt-chain}} (signature failure, expired receipt, unsupported `prh_alg`, broken `prh` chain, hop misalignment, or untrusted receipt issuer), it SHOULD return `invalid_grant`, constructed per {{RFC8693}} Section 2.2.2 and {{RFC6749}} Section 5.2, consistent with the core actor profile's error mapping for actor information that fails validation.
+When an authorization server or Transaction Token Service rejects a token-exchange request because inbound `actor_receipts` cannot be validated under {{extending-an-existing-receipt-chain}} (signature failure, expired receipt, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment, or untrusted receipt issuer), it SHOULD return `invalid_grant`, constructed per {{RFC8693}} Section 2.2.2 and {{RFC6749}} Section 5.2, consistent with the core actor profile's error mapping for actor information that fails validation.
 
 When the failure reflects an actor-authorization decision rather than a structural validation failure, an issuer MAY use `actor_unauthorized` as defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}} where applicable.
 
@@ -896,7 +898,7 @@ This document requests registration of the following JWT Claims in the "JSON Web
 This document requests registration of the following metadata name in the "OAuth Authorization Server Metadata" registry {{RFC8414}}:
 
 *  Metadata Name: `actor_receipts_supported`
-*  Metadata Description: Indicates support for validating, issuing, preserving, or extending actor-receipt chains
+*  Metadata Description: Indicates support for validating, originating, preserving, or extending actor-receipt chains
 *  Change Controller: IESG
 *  Specification Document(s): This document
 

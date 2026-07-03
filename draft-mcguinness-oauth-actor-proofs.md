@@ -261,6 +261,8 @@ The JWT payload of an actor proof uses the claims defined below, grouped by purp
 
   The `act` object is deliberately redundant with the proof `iss`: it carries the `act.iss` namespace context that a bare `iss` string lacks, and it aligns the proof with the corresponding visible `act` chain entry using the same structural rules as receipt `act` objects.  A proof whose `iss` does not equal its `act.sub` is invalid under this profile.
 
+This profile deliberately defines no proof counterpart to the receipt `sub_profile` claim of {{ACTOR-RECEIPTS}}: subject classification is asserted by issuers rather than by acting parties, so an actor-signed copy would add no actor-attested information.  Actor classification travels in the proof's `act.sub_profile` when present.
+
 ### Target Binding
 
 `target`:
@@ -291,7 +293,7 @@ This document deliberately defines the target binding as a first-class `target` 
   *  Values MUST be drawn from the IANA "Named Information Hash Algorithm Registry" {{RFC6920}}, which uses lowercase forms such as `sha-256`, `sha-384`, and `sha-512`.
   *  When absent, the default is `sha-256`.
   *  When present, the value MUST identify a hash algorithm whose collision and preimage resistance is at least equivalent to `sha-256`.
-  *  All proofs in a single `actor_proofs` array MUST use the same `prh_alg` value, so that recipients can validate the chain without per-proof algorithm negotiation.  This uniformity rule is deliberately syntactic: a chain in which some proofs omit `prh_alg` and others carry an explicit `sha-256` is rejected even though the algorithm is the same, so that consumers never reconcile explicit values against defaults.  A chain that omits `prh_alg` from every proof uses the SHA-256 default for every `prh` value.
+  *  All proofs in a single `actor_proofs` array MUST use the same `prh_alg` value, so that recipients can validate the chain without per-proof algorithm negotiation.  This uniformity rule is deliberately syntactic: a chain in which some proofs omit `prh_alg` and others carry an explicit `sha-256` is rejected even though the algorithm is the same, so that consumers never reconcile explicit values against defaults.  A chain that omits `prh_alg` from every proof uses the SHA-256 default for every `prh` value.  A single-element chain MAY carry `prh_alg`, but the value has no effect unless a later proof links to it.
   *  An issuer extending an inbound chain MUST either preserve the inbound `prh_alg` or reject the chain.
   *  The proof chain's `prh_alg` is independent of the receipt chain's `prh_alg` in the same token; the two chains MAY use different algorithms.
 
@@ -321,7 +323,7 @@ This document deliberately defines the target binding as a first-class `target` 
 ### Outer-Token Binding
 
 `origin_jti`:
-: OPTIONAL.  The `jti` of the outer token issued at the hop this proof covers, with the semantics of the `origin_jti` claim defined in {{ACTOR-RECEIPTS}}.
+: OPTIONAL.  The `jti` of the outer token issued at the hop this proof covers, following the pattern of the `origin_jti` claim defined in {{ACTOR-RECEIPTS}}.
 
   Because the actor signs the proof before the outer token exists, this claim can be populated only when the issuance flow provides the prospective outer-token `jti` to the actor before signing (for example, in a challenge step).  When `actor_proofs[0].origin_jti` is present and equals the outer token's `jti`, it binds the proof chain to the current outer-token instance.  When absent, the proof chain carries no instance binding of its own; deployments that require instance binding obtain it through composition with receipts ({{proof-to-token-binding-limits}}).  Consumer evaluation is defined in step 9 of {{consumer-processing}}.
 
@@ -409,6 +411,8 @@ An issuer that reissues, translates, or introspects and re-emits a token without
 If such an issuer changes the visible outermost actor, it has added a new hop and MUST follow {{extending-an-existing-proof-chain}}.
 
 Reissuance interacts with the target binding.  A reissued token whose `aud` or effective resource indicators exceed `actor_proofs[0]`'s target binding is rejected by default-posture recipients under step 9 of {{consumer-processing}}.  An issuer that retargets the audience beyond the newest proof's target binding MUST drop the inherited `actor_proofs` array unless the deployment's recipients are configured to accept reissuance divergence under {{target-binding-strict-mode}}; a retargeted token carrying proofs is interoperable only inside such a deployment.  Reissuance that narrows or preserves the audience within `actor_proofs[0].target` does not disturb the proof chain.
+
+When an issuer drops an inherited `actor_proofs` array while carrying an `actor_receipts` array forward, any `proof_jti` values in the retained receipts ({{sibling-receipt-issuance}}) name proofs that no longer travel with the token.  Those references become informational only; recipients that require bound siblings enforce proof presence through `actor_proofs_required` or local policy, not through receipt-side references alone.
 
 An AS that supports refresh tokens for delegated access tokens carrying proofs:
 
@@ -509,6 +513,8 @@ Accordingly:
 
 Recipients MUST be aware that permitting differing `sub` values across proofs creates a cross-subject insertion risk: a proof signed by a legitimate actor for an unrelated subject's delegation could satisfy the structural hop-alignment check when the actor identity at that hop matches.  An attacker who compromises any single actor signing key can deliberately sign proofs naming any subject and any target, and graft them onto a downstream chain whose re-expressed `sub` points at a victim subject.
 
+This profile provides no in-band mechanism for cross-namespace subject reconciliation.
+
 Deployments where subject continuity is a security requirement SHOULD adopt one of the following:
 
 *  require consistent `sub` values across all proofs in the chain, rejecting re-expressed chains; or
@@ -551,6 +557,8 @@ Introspection is the primary delivery mechanism for proofs associated with opaqu
 An introspection response that includes `actor_proofs` MUST include the members needed to perform the consumer processing in {{consumer-processing}}: the token's top-level `sub`, the visible `act` chain, the token's `aud`, and the token's `iss`.  When the introspection server maintains a `jti` for the token, the response SHOULD include it so that recipients can evaluate `origin_jti` binding; when `jti` is absent from the response, recipients treat the chain as carrying no instance binding per step 9.  If `actor_proofs_complete` is present, it MUST be a JSON boolean.  A resource server that receives both inline proofs in a JWT token and proofs in an introspection response MUST apply local policy to choose the authoritative source; if both sources are consumed together, mismatched `actor_proofs` or `actor_proofs_complete` values MUST cause the resource server to reject proof-based provenance for the token.
 
 Proof disclosure through introspection is all-or-nothing for a given token: a strict subset of the stored array cannot validate under {{consumer-processing}}, because removing an older proof leaves the next newer proof's `prh` without a target and removing the newest proof breaks visible-hop alignment.  An introspection server that cannot disclose the full stored array for privacy or policy reasons MUST omit `actor_proofs` from the response entirely.  A stored array that itself has partial coverage is returned in full, with `actor_proofs_complete: false`.
+
+When the introspected token is revoked or otherwise inactive, the introspection response follows the core actor profile's suppression rule for delegation claims: an introspection server MUST NOT return `actor_proofs` or `actor_proofs_complete` for a token it reports as inactive.
 
 The core actor profile's `chain_complete` introspection member and `actor_proofs_complete` are distinct signals, exactly as described for receipts in {{ACTOR-RECEIPTS}}: when `chain_complete: false`, proof coverage is complete only for the visible filtered chain, not the full delegation chain.
 
@@ -853,7 +861,12 @@ This document requests registration of the following JWT Claims in the "JSON Web
 *  Change Controller: IESG
 *  Specification Document(s): This document
 
-This document reuses the `prh`, `prh_alg`, `origin_jti`, and `sub_iss` claims registered by {{ACTOR-RECEIPTS}}, with the semantics defined there, applied to Actor Proof JWTs as profiled in this document.  This document requests that IANA add this document to the Specification Document(s) entries for those four registrations.
+This document reuses the `prh`, `prh_alg`, `origin_jti`, and `sub_iss` claims registered by {{ACTOR-RECEIPTS}}, with the semantics defined there, applied to Actor Proof JWTs as profiled in this document.  This document requests that IANA add this document to the Specification Document(s) entries for those four registrations, and requests that their Claim Description entries be updated to cover both artifact types:
+
+*  `prh`: Base64url-encoded hash of the immediately preceding (older) entry in a chained array of Actor Receipt or Actor Proof JWTs
+*  `prh_alg`: Hash algorithm identifier (from the IANA Named Information Hash Algorithm Registry) naming the algorithm used to compute prh in an Actor Receipt or Actor Proof JWT
+*  `origin_jti`: The jti of the outer token associated with the hop at which an Actor Receipt or Actor Proof JWT was created
+*  `sub_iss`: Issuer or namespace authority for the subject in an Actor Receipt or Actor Proof JWT
 
 ## OAuth Parameters Registration
 
@@ -919,7 +932,7 @@ The outer token carries both companions:
 
 ~~~json
 {
-  "jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd",
+  "jti": "e8f4a2d6-3b1c-4d7e-9f5a-0c2b4d6e8f0a",
   "iss": "https://as.travel-provider.example",
   "aud": "https://api.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
@@ -991,7 +1004,7 @@ The outer token carries both companions:
 }
 ~~~
 
-The sibling receipts parallel the examples of {{ACTOR-RECEIPTS}}, with the `proof_jti` claim defined in {{sibling-receipt-issuance}} included at receipt creation.  The newest receipt, signed by the travel-provider AS, carries:
+The sibling receipts follow the same construction as the examples of {{ACTOR-RECEIPTS}}, with the `proof_jti` claim defined in {{sibling-receipt-issuance}} included at receipt creation.  Because these receipts carry `proof_jti`, they are different byte strings from the receipts shown in that document's examples: they carry their own `jti` values, and the newest receipt's `prh` differs because it hashes a different older receipt.  The newest receipt, signed by the travel-provider AS, carries:
 
 ~~~json
 {
@@ -1006,11 +1019,11 @@ The sibling receipts parallel the examples of {{ACTOR-RECEIPTS}}, with the `proo
     "jkt": "ToolJKT"
   },
   "proof_jti": "5f2e8d91-4a6b-4c3d-8e2f-1a9b8c7d6e5f",
-  "prh": "0QvKZr5A4XW7N9LQW0u4e7z8k2Kqz6I7xL4V4Vh2nRc",
+  "prh": "K9mPvXq2LwTnR7dYcE5uHb8jZa4gFs6iOk1rC3xW0eA",
   "iat": 1776745200,
   "exp": 1776832000,
-  "jti": "c8e29c11-0c3a-4e6f-a0a6-30a52c4a8149",
-  "origin_jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd"
+  "jti": "b7d1f3a5-8c2e-4a6b-9d0f-1e3a5c7b9d1f",
+  "origin_jti": "e8f4a2d6-3b1c-4d7e-9f5a-0c2b4d6e8f0a"
 }
 ~~~
 
