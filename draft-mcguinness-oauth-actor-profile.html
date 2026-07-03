@@ -10,7 +10,7 @@
        OAuth deployments increasingly involve agents and workloads acting on behalf of human users across organizational boundaries.  Existing specifications provide relevant building blocks (notably the  act  claim from RFC 8693 Token Exchange) but do not define a consistent profile for representing delegated actor relationships across JWT assertion grants (RFC 7523), JWT access tokens (RFC 9068), and Transaction Tokens, nor for classifying actor entity types or signaling support between authorization servers and resource servers.  The result is inconsistent actor representation and actor-representation interoperability gaps that force deployments to rely on proprietary conventions. 
        This document defines the OAuth Actor Profile for Delegation.  It specifies a common  act  claim structure extended with  sub_profile  for entity-type classification, processing rules for authorization servers and resource servers across the three token families and their Token Exchange inputs, and OAuth discovery metadata parameters for advertising actor-profile support.  The profile applies uniformly across token types and integrates with existing sender-constraint mechanisms (DPoP, mTLS).  It does not standardize the policies by which systems determine whether a given actor is permitted to act for a subject; those decisions remain deployment-specific. 
     " name="description">
-<meta content="xml2rfc 3.33.0" name="generator">
+<meta content="xml2rfc 3.34.0" name="generator">
 <meta content="oauth" name="keyword">
 <meta content="delegation" name="keyword">
 <meta content="actor" name="keyword">
@@ -18,18 +18,19 @@
 <meta content="token" name="keyword">
 <meta content="draft-mcguinness-oauth-actor-profile-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.33.0
-    Python 3.12.13
-    ConfigArgParse 1.7
+  xml2rfc 3.34.0
+    Python 3.14.5
+    ConfigArgParse 1.7.5
     google-i18n-address 3.1.1
     intervaltree 3.2.1
     Jinja2 3.1.6
-    lxml 6.0.2
-    platformdirs 4.9.6
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.10.0
     pycountry 24.6.1
     PyYAML 6.0.3
     requests 2.33.1
-    wcwidth 0.7.0
+    wcwidth 0.8.1
 -->
 <link href="draft-mcguinness-oauth-actor-profile.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -4402,7 +4403,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <dd class="break"></dd>
 <dt id="I-D.ietf-wimse-workload-creds">[I-D.ietf-wimse-workload-creds]</dt>
         <dd>
-<span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Salowey, J. A.</span>, <span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Sheffer, Y.</span>, and <span class="refAuthor">Y. Rosomakho</span>, <span class="refTitle">"WIMSE Workload Credentials"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-workload-creds-01</span>, <time datetime="2026-05-05" class="refDate">5 May 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-01">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-01</a>&gt;</span>. </dd>
+<span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Salowey, J. A.</span>, <span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Sheffer, Y.</span>, and <span class="refAuthor">Y. Rosomakho</span>, <span class="refTitle">"WIMSE Workload Credentials"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-workload-creds-02</span>, <time datetime="2026-07-02" class="refDate">2 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-02">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-02</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.ietf-wimse-wpt">[I-D.ietf-wimse-wpt]</dt>
         <dd>
@@ -4447,7 +4448,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <dd class="break"></dd>
 <dt id="I-D.ietf-oauth-identity-chaining">[I-D.ietf-oauth-identity-chaining]</dt>
         <dd>
-<span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Burgin, K.</span>, <span class="refAuthor">Jenkins, M. J.</span>, <span class="refAuthor">Campbell, B.</span>, and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"OAuth Identity and Authorization Chaining Across Domains"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-identity-chaining-12</span>, <time datetime="2026-05-11" class="refDate">11 May 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-chaining-12">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-chaining-12</a>&gt;</span>. </dd>
+<span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Burgin, K.</span>, <span class="refAuthor">Jenkins, M. J.</span>, <span class="refAuthor">Campbell, B.</span>, and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"OAuth Identity and Authorization Chaining Across Domains"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-identity-chaining-16</span>, <time datetime="2026-06-26" class="refDate">26 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-chaining-16">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-chaining-16</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.ietf-oauth-identity-assertion-authz-grant">[I-D.ietf-oauth-identity-assertion-authz-grant]</dt>
         <dd>
