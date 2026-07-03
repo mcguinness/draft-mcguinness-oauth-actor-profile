@@ -20,21 +20,23 @@ working-group discussion.
   fabricating actor participation.  Composes with receipts (a token MAY
   carry both); sibling artifacts cross-reference by `jti`.
 
-## Current sketches
-
 ### Authority bounds
 
-- **[Actor Chain Authority Bounds](./draft-mcguinness-oauth-actor-authority-bounds.md)**:
-  records and verifies how authority changes at each hop, not just which
-  actor hop was added.  Defines authority monotonicity (`scope`, `aud`,
-  `resource`, `authorization_details` do not expand across hops) with an
-  explicit re-authorization carve-out.  Where receipts attest past hop state,
-  bounds add offline-verifiable evidence that authority was not widened
-  across the visible receipt chain.  Also defines a weaker current-issuer
-  attestation for deployments without receipt-carried bounds.  Motivated in
-  part by the
+- **[OAuth Actor Chain Authority Bounds](../draft-mcguinness-oauth-actor-authority-bounds.md)**:
+  graduated from this directory to a full draft at the repository root.
+  Records and verifies how authority changes at each hop, not just which
+  actor hop was added: `scope`, `resource`, and `authorization_details`
+  do not expand across hops except at explicit, signed re-authorization
+  events, while `aud` is recorded but not monotonic by default (audience
+  retargeting is the normal purpose of token exchange).  Non-hop
+  re-authorization travels in a hash-chained `bounds_events` array.
+  Where receipts attest past hop state, bounds add offline-verifiable
+  evidence that authority was not widened across the covered chain.
+  Motivated in part by the
   [PIC Model](https://github.com/pic-protocol/pic-spec), which makes the
   same property structural at the model layer.
+
+## Current sketches
 
 ### Transparency companions
 

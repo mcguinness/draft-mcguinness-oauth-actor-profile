@@ -867,8 +867,8 @@ This document requests registration of the following JWT Claims in the "JSON Web
 
 This document reuses the `prh`, `prh_alg`, `origin_jti`, and `sub_iss` claims registered by {{ACTOR-RECEIPTS}}, with the semantics defined there, applied to Actor Proof JWTs as profiled in this document.  This document requests that IANA add this document to the Specification Document(s) entries for those four registrations, and requests that their Claim Description entries be updated to cover both artifact types:
 
-*  `prh`: Base64url-encoded hash of the immediately preceding (older) entry in a chained array of Actor Receipt or Actor Proof JWTs
-*  `prh_alg`: Hash algorithm identifier (from the IANA Named Information Hash Algorithm Registry) naming the algorithm used to compute prh in an Actor Receipt or Actor Proof JWT
+*  `prh`: Base64url-encoded hash of the immediately preceding (older) entry in a chained array of delegation-evidence JWTs (Actor Receipts, Actor Proofs, or companion event artifacts)
+*  `prh_alg`: Hash algorithm identifier (from the IANA Named Information Hash Algorithm Registry) naming the algorithm used to compute prh in a delegation-evidence JWT
 *  `origin_jti`: The jti of the outer token associated with the hop at which an Actor Receipt or Actor Proof JWT was created
 *  `sub_iss`: Issuer or namespace authority for the subject in an Actor Receipt or Actor Proof JWT
 
