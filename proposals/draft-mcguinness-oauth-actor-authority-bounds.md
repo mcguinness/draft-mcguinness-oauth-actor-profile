@@ -1127,7 +1127,7 @@ are a target consumer of bounds without being a prerequisite.
  : core profile this builds on.
 - [draft-mcguinness-oauth-actor-receipts](../draft-mcguinness-oauth-actor-receipts.md)
  : receipts companion this extends.
-- [Actor-signed hop proofs](./draft-mcguinness-oauth-actor-proofs.md)
+- [Actor-signed hop proofs](../draft-mcguinness-oauth-actor-proofs.md)
  : sibling companion adding actor-side non-repudiation.
 - [Transparency JWT-native variant](./draft-mcguinness-oauth-actor-receipts-transparency.md)
 - [Transparency SCITT-aligned variant](./draft-mcguinness-oauth-actor-receipts-scitt.md)

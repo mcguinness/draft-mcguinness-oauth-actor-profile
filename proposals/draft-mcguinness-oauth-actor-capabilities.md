@@ -5,7 +5,7 @@
 > [draft-hingnikar-cecchetti-wimse-waffles](https://clawdrey.com/drafts/waffles/)
 > for the OAuth Actor Profile family.  Alternative architecture to
 > the [receipts](../draft-mcguinness-oauth-actor-receipts.md) +
-> [proofs](./draft-mcguinness-oauth-actor-proofs.md) +
+> [proofs](../draft-mcguinness-oauth-actor-proofs.md) +
 > [authority-bounds](./draft-mcguinness-oauth-actor-authority-bounds.md)
 > companion stack.  See [README](./README.md) for family context.
 > Last updated: 2026-05-25
@@ -1363,7 +1363,7 @@ refresh).
 - [draft-mcguinness-oauth-actor-receipts](../draft-mcguinness-oauth-actor-receipts.md):
   the receipts companion this profile replaces in deployments that
   adopt `actor_caps`.
-- [draft-mcguinness-oauth-actor-proofs](./draft-mcguinness-oauth-actor-proofs.md):
+- [draft-mcguinness-oauth-actor-proofs](../draft-mcguinness-oauth-actor-proofs.md):
   the actor-signed proofs sketch this profile subsumes.
 - [draft-mcguinness-oauth-actor-authority-bounds](./draft-mcguinness-oauth-actor-authority-bounds.md):
   the authority-monotonicity sketch this profile makes structural

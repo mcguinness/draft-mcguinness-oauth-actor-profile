@@ -6,18 +6,21 @@ They are not published Internet-Drafts and not committed deliverables;
 they document design exploration and serve as concrete artifacts for
 working-group discussion.
 
-## Current sketches
+## Graduated sketches
 
 ### Actor-signed hop proofs
 
-- **[Actor-Signed Hop Proofs](./draft-mcguinness-oauth-actor-proofs.md)**:
-  adds actor-side cryptographic non-repudiation alongside AS-signed receipts.
-  At each hop, the actor being added signs a proof attesting their own
-  participation and the target binding they authorize.  Where receipts
-  mitigate a compromised *downstream* issuer, proofs additionally mitigate
-  a compromised *current* outer-token issuer fabricating actor participation.
-  Composes with receipts (a token MAY carry both); cross-references receipts
-  by `jti`.
+- **[OAuth Actor-Signed Hop Proofs](../draft-mcguinness-oauth-actor-proofs.md)**:
+  graduated from this directory to a full draft at the repository root.
+  Adds actor-side cryptographic non-repudiation alongside AS-signed
+  receipts: at each hop, the actor being added signs a proof attesting
+  its own participation and the target binding it authorizes.  Where
+  receipts mitigate a compromised *downstream* issuer, proofs
+  additionally mitigate a compromised *current* outer-token issuer
+  fabricating actor participation.  Composes with receipts (a token MAY
+  carry both); sibling artifacts cross-reference by `jti`.
+
+## Current sketches
 
 ### Authority bounds
 
@@ -76,7 +79,8 @@ and SCITT.
 
 ### Composability
 
-The four sketches are independent companion profiles.  A token may carry
+The proofs companion (now a root-level draft) and the remaining sketches
+are independent companion profiles.  A token may carry
 any combination: receipts only, proofs only, receipt-attested bounds,
 issuer-attested bounds, transparency proofs, or any subset of these.
 Recipients select trust modes based on which signals they require.  See the
