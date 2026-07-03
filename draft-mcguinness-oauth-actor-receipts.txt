@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Experimental                                 9 May 2026
-Expires: 10 November 2026
+Intended status: Experimental                                3 July 2026
+Expires: 4 January 2027
 
 
              OAuth Actor Receipts for Delegation Provenance
@@ -57,7 +57,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 10 November 2026.
+   This Internet-Draft will expire on 4 January 2027.
 
 Copyright Notice
 
@@ -902,11 +902,12 @@ Table of Contents
 
    An AS that supports refresh tokens for delegated access tokens:
 
-   *  MUST persist the actor_receipts array associated with the original
-      access token in issuer-controlled storage (for example, a token-
-      state database, refresh-token state, or equivalent durable
-      mechanism), so each refreshed access token can carry the receipts
-      forward unchanged.
+   *  MUST retain the actor_receipts array associated with the original
+      access token in issuer-controlled state across refresh, either in
+      durable storage (for example, a token-state database or refresh-
+      token state) or embedded in a self-contained refresh token, so
+      each refreshed access token can carry the receipts forward
+      unchanged.
 
    *  MUST set receipt exp values under Section 7.2 to accommodate the
       bounded maximum delegated-session lifetime.  Otherwise downstream
@@ -1299,6 +1300,12 @@ Table of Contents
    itself has partial coverage is returned in full, with
    actor_receipts_complete: false.
 
+   When the introspected token is revoked or otherwise inactive, the
+   introspection response follows the core actor profile's suppression
+   rule for delegation claims: an introspection server MUST NOT return
+   actor_receipts or actor_receipts_complete for a token it reports as
+   inactive.
+
    The core actor profile [I-D.mcguinness-oauth-actor-profile] defines a
    separate chain_complete introspection member that indicates whether
    the visible act chain itself has been filtered.  These two
@@ -1450,11 +1457,11 @@ Table of Contents
    When an authorization server or Transaction Token Service rejects a
    token-exchange request because inbound actor_receipts cannot be
    validated under Section 8.2 (signature failure, expired receipt,
-   unsupported prh_alg, broken prh chain, hop misalignment, or untrusted
-   receipt issuer), it SHOULD return invalid_grant, constructed per
-   [RFC8693] Section 2.2.2 and [RFC6749] Section 5.2, consistent with
-   the core actor profile's error mapping for actor information that
-   fails validation.
+   unsupported prh_alg, broken prh chain, hop or subject misalignment,
+   or untrusted receipt issuer), it SHOULD return invalid_grant,
+   constructed per [RFC8693] Section 2.2.2 and [RFC6749] Section 5.2,
+   consistent with the core actor profile's error mapping for actor
+   information that fails validation.
 
    When the failure reflects an actor-authorization decision rather than
    a structural validation failure, an issuer MAY use actor_unauthorized
@@ -2241,8 +2248,8 @@ Table of Contents
 
    *  Metadata Name: actor_receipts_supported
 
-   *  Metadata Description: Indicates support for validating, issuing,
-      preserving, or extending actor-receipt chains
+   *  Metadata Description: Indicates support for validating,
+      originating, preserving, or extending actor-receipt chains
 
    *  Change Controller: IESG
 

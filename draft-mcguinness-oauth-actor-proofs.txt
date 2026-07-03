@@ -552,6 +552,12 @@ Table of Contents
       objects.  A proof whose iss does not equal its act.sub is invalid
       under this profile.
 
+   This profile deliberately defines no proof counterpart to the receipt
+   sub_profile claim of [ACTOR-RECEIPTS]: subject classification is
+   asserted by issuers rather than by acting parties, so an actor-signed
+   copy would add no actor-attested information.  Actor classification
+   travels in the proof's act.sub_profile when present.
+
 7.2.2.  Target Binding
 
    target:  REQUIRED.  A JSON object recording the target binding the
@@ -624,7 +630,8 @@ Table of Contents
          though the algorithm is the same, so that consumers never
          reconcile explicit values against defaults.  A chain that omits
          prh_alg from every proof uses the SHA-256 default for every prh
-         value.
+         value.  A single-element chain MAY carry prh_alg, but the value
+         has no effect unless a later proof links to it.
 
       *  An issuer extending an inbound chain MUST either preserve the
          inbound prh_alg or reject the chain.
@@ -681,7 +688,7 @@ Table of Contents
 7.2.6.  Outer-Token Binding
 
    origin_jti:  OPTIONAL.  The jti of the outer token issued at the hop
-      this proof covers, with the semantics of the origin_jti claim
+      this proof covers, following the pattern of the origin_jti claim
       defined in [ACTOR-RECEIPTS].
 
       Because the actor signs the proof before the outer token exists,
@@ -927,6 +934,14 @@ Table of Contents
    carrying proofs is interoperable only inside such a deployment.
    Reissuance that narrows or preserves the audience within
    actor_proofs[0].target does not disturb the proof chain.
+
+   When an issuer drops an inherited actor_proofs array while carrying
+   an actor_receipts array forward, any proof_jti values in the retained
+   receipts (Section 9.6) name proofs that no longer travel with the
+   token.  Those references become informational only; recipients that
+   require bound siblings enforce proof presence through
+   actor_proofs_required or local policy, not through receipt-side
+   references alone.
 
    An AS that supports refresh tokens for delegated access tokens
    carrying proofs:
@@ -1233,6 +1248,9 @@ Table of Contents
    and graft them onto a downstream chain whose re-expressed sub points
    at a victim subject.
 
+   This profile provides no in-band mechanism for cross-namespace
+   subject reconciliation.
+
    Deployments where subject continuity is a security requirement SHOULD
    adopt one of the following:
 
@@ -1338,6 +1356,12 @@ Table of Contents
    actor_proofs from the response entirely.  A stored array that itself
    has partial coverage is returned in full, with actor_proofs_complete:
    false.
+
+   When the introspected token is revoked or otherwise inactive, the
+   introspection response follows the core actor profile's suppression
+   rule for delegation claims: an introspection server MUST NOT return
+   actor_proofs or actor_proofs_complete for a token it reports as
+   inactive.
 
    The core actor profile's chain_complete introspection member and
    actor_proofs_complete are distinct signals, exactly as described for
@@ -2078,7 +2102,22 @@ Table of Contents
    registered by [ACTOR-RECEIPTS], with the semantics defined there,
    applied to Actor Proof JWTs as profiled in this document.  This
    document requests that IANA add this document to the Specification
-   Document(s) entries for those four registrations.
+   Document(s) entries for those four registrations, and requests that
+   their Claim Description entries be updated to cover both artifact
+   types:
+
+   *  prh: Base64url-encoded hash of the immediately preceding (older)
+      entry in a chained array of Actor Receipt or Actor Proof JWTs
+
+   *  prh_alg: Hash algorithm identifier (from the IANA Named
+      Information Hash Algorithm Registry) naming the algorithm used to
+      compute prh in an Actor Receipt or Actor Proof JWT
+
+   *  origin_jti: The jti of the outer token associated with the hop at
+      which an Actor Receipt or Actor Proof JWT was created
+
+   *  sub_iss: Issuer or namespace authority for the subject in an Actor
+      Receipt or Actor Proof JWT
 
 16.3.  OAuth Parameters Registration
 
@@ -2305,7 +2344,7 @@ A.1.  Example: Two-Hop Delegation Chain with Sibling Receipts
    The outer token carries both companions:
 
    {
-     "jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd",
+     "jti": "e8f4a2d6-3b1c-4d7e-9f5a-0c2b4d6e8f0a",
      "iss": "https://as.travel-provider.example",
      "aud": "https://api.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
@@ -2375,9 +2414,13 @@ A.1.  Example: Two-Hop Delegation Chain with Sibling Receipts
      "jti": "7a1c9e42-3b5d-4f6a-9c8e-2d4f6a8b0c1e"
    }
 
-   The sibling receipts parallel the examples of [ACTOR-RECEIPTS], with
-   the proof_jti claim defined in Section 9.6 included at receipt
-   creation.  The newest receipt, signed by the travel-provider AS,
+   The sibling receipts follow the same construction as the examples of
+   [ACTOR-RECEIPTS], with the proof_jti claim defined in Section 9.6
+   included at receipt creation.  Because these receipts carry
+   proof_jti, they are different byte strings from the receipts shown in
+   that document's examples: they carry their own jti values, and the
+   newest receipt's prh differs because it hashes a different older
+   receipt.  The newest receipt, signed by the travel-provider AS,
    carries:
 
    {
@@ -2392,11 +2435,11 @@ A.1.  Example: Two-Hop Delegation Chain with Sibling Receipts
        "jkt": "ToolJKT"
      },
      "proof_jti": "5f2e8d91-4a6b-4c3d-8e2f-1a9b8c7d6e5f",
-     "prh": "0QvKZr5A4XW7N9LQW0u4e7z8k2Kqz6I7xL4V4Vh2nRc",
+     "prh": "K9mPvXq2LwTnR7dYcE5uHb8jZa4gFs6iOk1rC3xW0eA",
      "iat": 1776745200,
      "exp": 1776832000,
-     "jti": "c8e29c11-0c3a-4e6f-a0a6-30a52c4a8149",
-     "origin_jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd"
+     "jti": "b7d1f3a5-8c2e-4a6b-9d0f-1e3a5c7b9d1f",
+     "origin_jti": "e8f4a2d6-3b1c-4d7e-9f5a-0c2b4d6e8f0a"
    }
 
    This example illustrates the properties this profile adds.  The outer

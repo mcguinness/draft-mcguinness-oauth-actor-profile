@@ -1782,6 +1782,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </dd>
           <dd class="break"></dd>
 </dl>
+<p id="section-7.2.1-2">This profile deliberately defines no proof counterpart to the receipt <code>sub_profile</code> claim of <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>: subject classification is asserted by issuers rather than by acting parties, so an actor-signed copy would add no actor-attested information.  Actor classification travels in the proof's <code>act.sub_profile</code> when present.<a href="#section-7.2.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="target-binding">
@@ -1844,7 +1845,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
                   <p id="section-7.2.3-1.4.2.3.1">When present, the value <span class="bcp14">MUST</span> identify a hash algorithm whose collision and preimage resistance is at least equivalent to <code>sha-256</code>.<a href="#section-7.2.3-1.4.2.3.1" class="pilcrow">¶</a></p>
 </li>
                 <li class="normal" id="section-7.2.3-1.4.2.4">
-                  <p id="section-7.2.3-1.4.2.4.1">All proofs in a single <code>actor_proofs</code> array <span class="bcp14">MUST</span> use the same <code>prh_alg</code> value, so that recipients can validate the chain without per-proof algorithm negotiation.  This uniformity rule is deliberately syntactic: a chain in which some proofs omit <code>prh_alg</code> and others carry an explicit <code>sha-256</code> is rejected even though the algorithm is the same, so that consumers never reconcile explicit values against defaults.  A chain that omits <code>prh_alg</code> from every proof uses the SHA-256 default for every <code>prh</code> value.<a href="#section-7.2.3-1.4.2.4.1" class="pilcrow">¶</a></p>
+                  <p id="section-7.2.3-1.4.2.4.1">All proofs in a single <code>actor_proofs</code> array <span class="bcp14">MUST</span> use the same <code>prh_alg</code> value, so that recipients can validate the chain without per-proof algorithm negotiation.  This uniformity rule is deliberately syntactic: a chain in which some proofs omit <code>prh_alg</code> and others carry an explicit <code>sha-256</code> is rejected even though the algorithm is the same, so that consumers never reconcile explicit values against defaults.  A chain that omits <code>prh_alg</code> from every proof uses the SHA-256 default for every <code>prh</code> value.  A single-element chain <span class="bcp14">MAY</span> carry <code>prh_alg</code>, but the value has no effect unless a later proof links to it.<a href="#section-7.2.3-1.4.2.4.1" class="pilcrow">¶</a></p>
 </li>
                 <li class="normal" id="section-7.2.3-1.4.2.5">
                   <p id="section-7.2.3-1.4.2.5.1">An issuer extending an inbound chain <span class="bcp14">MUST</span> either preserve the inbound <code>prh_alg</code> or reject the chain.<a href="#section-7.2.3-1.4.2.5.1" class="pilcrow">¶</a></p>
@@ -1919,7 +1920,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <dt id="section-7.2.6-1.1">
 <code>origin_jti</code>:</dt>
             <dd style="margin-left: 1.5em" id="section-7.2.6-1.2">
-              <p id="section-7.2.6-1.2.1"><span class="bcp14">OPTIONAL</span>.  The <code>jti</code> of the outer token issued at the hop this proof covers, with the semantics of the <code>origin_jti</code> claim defined in <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>.<a href="#section-7.2.6-1.2.1" class="pilcrow">¶</a></p>
+              <p id="section-7.2.6-1.2.1"><span class="bcp14">OPTIONAL</span>.  The <code>jti</code> of the outer token issued at the hop this proof covers, following the pattern of the <code>origin_jti</code> claim defined in <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>.<a href="#section-7.2.6-1.2.1" class="pilcrow">¶</a></p>
 <p id="section-7.2.6-1.2.2">Because the actor signs the proof before the outer token exists, this claim can be populated only when the issuance flow provides the prospective outer-token <code>jti</code> to the actor before signing (for example, in a challenge step).  When <code>actor_proofs[0].origin_jti</code> is present and equals the outer token's <code>jti</code>, it binds the proof chain to the current outer-token instance.  When absent, the proof chain carries no instance binding of its own; deployments that require instance binding obtain it through composition with receipts (<a href="#proof-to-token-binding-limits" class="auto internal xref">Section 14.4</a>).  Consumer evaluation is defined in step 9 of <a href="#consumer-processing" class="auto internal xref">Section 10</a>.<a href="#section-7.2.6-1.2.2" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
@@ -2088,16 +2089,17 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         </ul>
 <p id="section-9.3-3">If such an issuer changes the visible outermost actor, it has added a new hop and <span class="bcp14">MUST</span> follow <a href="#extending-an-existing-proof-chain" class="auto internal xref">Section 9.2</a>.<a href="#section-9.3-3" class="pilcrow">¶</a></p>
 <p id="section-9.3-4">Reissuance interacts with the target binding.  A reissued token whose <code>aud</code> or effective resource indicators exceed <code>actor_proofs[0]</code>'s target binding is rejected by default-posture recipients under step 9 of <a href="#consumer-processing" class="auto internal xref">Section 10</a>.  An issuer that retargets the audience beyond the newest proof's target binding <span class="bcp14">MUST</span> drop the inherited <code>actor_proofs</code> array unless the deployment's recipients are configured to accept reissuance divergence under <a href="#target-binding-strict-mode" class="auto internal xref">Section 14.4.1</a>; a retargeted token carrying proofs is interoperable only inside such a deployment.  Reissuance that narrows or preserves the audience within <code>actor_proofs[0].target</code> does not disturb the proof chain.<a href="#section-9.3-4" class="pilcrow">¶</a></p>
-<p id="section-9.3-5">An AS that supports refresh tokens for delegated access tokens carrying proofs:<a href="#section-9.3-5" class="pilcrow">¶</a></p>
+<p id="section-9.3-5">When an issuer drops an inherited <code>actor_proofs</code> array while carrying an <code>actor_receipts</code> array forward, any <code>proof_jti</code> values in the retained receipts (<a href="#sibling-receipt-issuance" class="auto internal xref">Section 9.6</a>) name proofs that no longer travel with the token.  Those references become informational only; recipients that require bound siblings enforce proof presence through <code>actor_proofs_required</code> or local policy, not through receipt-side references alone.<a href="#section-9.3-5" class="pilcrow">¶</a></p>
+<p id="section-9.3-6">An AS that supports refresh tokens for delegated access tokens carrying proofs:<a href="#section-9.3-6" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-9.3-6.1">
-            <p id="section-9.3-6.1.1"><span class="bcp14">MUST</span> retain the <code>actor_proofs</code> array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.<a href="#section-9.3-6.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-9.3-7.1">
+            <p id="section-9.3-7.1.1"><span class="bcp14">MUST</span> retain the <code>actor_proofs</code> array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.<a href="#section-9.3-7.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-9.3-6.2">
-            <p id="section-9.3-6.2.1"><span class="bcp14">MUST</span> rely on proof <code>exp</code> values set per <a href="#proof-claims" class="auto internal xref">Section 7.2</a> to accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under <a href="#extending-an-existing-proof-chain" class="auto internal xref">Section 9.2</a> as proofs approach expiry, and refresh loses actor-signed evidence.<a href="#section-9.3-6.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-9.3-7.2">
+            <p id="section-9.3-7.2.1"><span class="bcp14">MUST</span> rely on proof <code>exp</code> values set per <a href="#proof-claims" class="auto internal xref">Section 7.2</a> to accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under <a href="#extending-an-existing-proof-chain" class="auto internal xref">Section 9.2</a> as proofs approach expiry, and refresh loses actor-signed evidence.<a href="#section-9.3-7.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-9.3-6.3">
-            <p id="section-9.3-6.3.1">When that bounded lifetime would be exceeded, <span class="bcp14">MUST</span> either obtain fresh delegation state with fresh proofs or stop emitting <code>actor_proofs</code>, unless local policy permits partial or absent coverage.<a href="#section-9.3-6.3.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-9.3-7.3">
+            <p id="section-9.3-7.3.1">When that bounded lifetime would be exceeded, <span class="bcp14">MUST</span> either obtain fresh delegation state with fresh proofs or stop emitting <code>actor_proofs</code>, unless local policy permits partial or absent coverage.<a href="#section-9.3-7.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2322,16 +2324,17 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         </ul>
 <p id="section-10.1-4">Recipients <span class="bcp14">MUST</span> be aware that permitting differing <code>sub</code> values across proofs creates a cross-subject insertion risk: a proof signed by a legitimate actor for an unrelated subject's delegation could satisfy the structural hop-alignment check when the actor identity at that hop matches.  An attacker who compromises any single actor signing key can deliberately sign proofs naming any subject and any target, and graft them onto a downstream chain whose re-expressed <code>sub</code> points at a victim subject.<a href="#section-10.1-4" class="pilcrow">¶</a></p>
-<p id="section-10.1-5">Deployments where subject continuity is a security requirement <span class="bcp14">SHOULD</span> adopt one of the following:<a href="#section-10.1-5" class="pilcrow">¶</a></p>
+<p id="section-10.1-5">This profile provides no in-band mechanism for cross-namespace subject reconciliation.<a href="#section-10.1-5" class="pilcrow">¶</a></p>
+<p id="section-10.1-6">Deployments where subject continuity is a security requirement <span class="bcp14">SHOULD</span> adopt one of the following:<a href="#section-10.1-6" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-10.1-6.1">
-            <p id="section-10.1-6.1.1">require consistent <code>sub</code> values across all proofs in the chain, rejecting re-expressed chains; or<a href="#section-10.1-6.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-10.1-7.1">
+            <p id="section-10.1-7.1.1">require consistent <code>sub</code> values across all proofs in the chain, rejecting re-expressed chains; or<a href="#section-10.1-7.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-10.1-6.2">
-            <p id="section-10.1-6.2.1">enforce explicit trusted subject-mapping rules that can positively confirm each distinct <code>sub</code> value refers to the same underlying entity.<a href="#section-10.1-6.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-10.1-7.2">
+            <p id="section-10.1-7.2.1">enforce explicit trusted subject-mapping rules that can positively confirm each distinct <code>sub</code> value refers to the same underlying entity.<a href="#section-10.1-7.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-10.1-7">When neither condition is met, the recipient <span class="bcp14">MUST</span> treat the differing <code>sub</code> values as unverified subject continuity and <span class="bcp14">MUST NOT</span> rely on those older proofs for authorization decisions.<a href="#section-10.1-7" class="pilcrow">¶</a></p>
+<p id="section-10.1-8">When neither condition is met, the recipient <span class="bcp14">MUST</span> treat the differing <code>sub</code> values as unverified subject continuity and <span class="bcp14">MUST NOT</span> rely on those older proofs for authorization decisions.<a href="#section-10.1-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="complete-proof-coverage">
@@ -2391,7 +2394,8 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-10.4-4">Introspection is the primary delivery mechanism for proofs associated with opaque (non-JWT) outer tokens.  Such tokens cannot carry an inline <code>actor_proofs</code> claim; the issuer instead retains the proofs in its token store and surfaces them to authorized resource servers via introspection.  The proof format and consumer processing rules above apply unchanged in this case, with the introspection response substituting for the outer token's claim set.<a href="#section-10.4-4" class="pilcrow">¶</a></p>
 <p id="section-10.4-5">An introspection response that includes <code>actor_proofs</code> <span class="bcp14">MUST</span> include the members needed to perform the consumer processing in <a href="#consumer-processing" class="auto internal xref">Section 10</a>: the token's top-level <code>sub</code>, the visible <code>act</code> chain, the token's <code>aud</code>, and the token's <code>iss</code>.  When the introspection server maintains a <code>jti</code> for the token, the response <span class="bcp14">SHOULD</span> include it so that recipients can evaluate <code>origin_jti</code> binding; when <code>jti</code> is absent from the response, recipients treat the chain as carrying no instance binding per step 9.  If <code>actor_proofs_complete</code> is present, it <span class="bcp14">MUST</span> be a JSON boolean.  A resource server that receives both inline proofs in a JWT token and proofs in an introspection response <span class="bcp14">MUST</span> apply local policy to choose the authoritative source; if both sources are consumed together, mismatched <code>actor_proofs</code> or <code>actor_proofs_complete</code> values <span class="bcp14">MUST</span> cause the resource server to reject proof-based provenance for the token.<a href="#section-10.4-5" class="pilcrow">¶</a></p>
 <p id="section-10.4-6">Proof disclosure through introspection is all-or-nothing for a given token: a strict subset of the stored array cannot validate under <a href="#consumer-processing" class="auto internal xref">Section 10</a>, because removing an older proof leaves the next newer proof's <code>prh</code> without a target and removing the newest proof breaks visible-hop alignment.  An introspection server that cannot disclose the full stored array for privacy or policy reasons <span class="bcp14">MUST</span> omit <code>actor_proofs</code> from the response entirely.  A stored array that itself has partial coverage is returned in full, with <code>actor_proofs_complete: false</code>.<a href="#section-10.4-6" class="pilcrow">¶</a></p>
-<p id="section-10.4-7">The core actor profile's <code>chain_complete</code> introspection member and <code>actor_proofs_complete</code> are distinct signals, exactly as described for receipts in <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>: when <code>chain_complete: false</code>, proof coverage is complete only for the visible filtered chain, not the full delegation chain.<a href="#section-10.4-7" class="pilcrow">¶</a></p>
+<p id="section-10.4-7">When the introspected token is revoked or otherwise inactive, the introspection response follows the core actor profile's suppression rule for delegation claims: an introspection server <span class="bcp14">MUST NOT</span> return <code>actor_proofs</code> or <code>actor_proofs_complete</code> for a token it reports as inactive.<a href="#section-10.4-7" class="pilcrow">¶</a></p>
+<p id="section-10.4-8">The core actor profile's <code>chain_complete</code> introspection member and <code>actor_proofs_complete</code> are distinct signals, exactly as described for receipts in <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>: when <code>chain_complete: false</code>, proof coverage is complete only for the visible filtered chain, not the full delegation chain.<a href="#section-10.4-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3021,7 +3025,21 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-16.2-2.20.1">Specification Document(s): This document<a href="#section-16.2-2.20.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-16.2-3">This document reuses the <code>prh</code>, <code>prh_alg</code>, <code>origin_jti</code>, and <code>sub_iss</code> claims registered by <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>, with the semantics defined there, applied to Actor Proof JWTs as profiled in this document.  This document requests that IANA add this document to the Specification Document(s) entries for those four registrations.<a href="#section-16.2-3" class="pilcrow">¶</a></p>
+<p id="section-16.2-3">This document reuses the <code>prh</code>, <code>prh_alg</code>, <code>origin_jti</code>, and <code>sub_iss</code> claims registered by <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>, with the semantics defined there, applied to Actor Proof JWTs as profiled in this document.  This document requests that IANA add this document to the Specification Document(s) entries for those four registrations, and requests that their Claim Description entries be updated to cover both artifact types:<a href="#section-16.2-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-16.2-4.1">
+            <p id="section-16.2-4.1.1"><code>prh</code>: Base64url-encoded hash of the immediately preceding (older) entry in a chained array of Actor Receipt or Actor Proof JWTs<a href="#section-16.2-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-16.2-4.2">
+            <p id="section-16.2-4.2.1"><code>prh_alg</code>: Hash algorithm identifier (from the IANA Named Information Hash Algorithm Registry) naming the algorithm used to compute prh in an Actor Receipt or Actor Proof JWT<a href="#section-16.2-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-16.2-4.3">
+            <p id="section-16.2-4.3.1"><code>origin_jti</code>: The jti of the outer token associated with the hop at which an Actor Receipt or Actor Proof JWT was created<a href="#section-16.2-4.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-16.2-4.4">
+            <p id="section-16.2-4.4.1"><code>sub_iss</code>: Issuer or namespace authority for the subject in an Actor Receipt or Actor Proof JWT<a href="#section-16.2-4.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
 </section>
 </div>
 <div id="oauth-parameters-registration">
@@ -3275,7 +3293,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <div class="lang-json sourcecode" id="appendix-A.1-2">
 <pre>
 {
-  "jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd",
+  "jti": "e8f4a2d6-3b1c-4d7e-9f5a-0c2b4d6e8f0a",
   "iss": "https://as.travel-provider.example",
   "aud": "https://api.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
@@ -3347,7 +3365,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 }
 </pre><a href="#appendix-A.1-6" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.1-7">The sibling receipts parallel the examples of <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>, with the <code>proof_jti</code> claim defined in <a href="#sibling-receipt-issuance" class="auto internal xref">Section 9.6</a> included at receipt creation.  The newest receipt, signed by the travel-provider AS, carries:<a href="#appendix-A.1-7" class="pilcrow">¶</a></p>
+<p id="appendix-A.1-7">The sibling receipts follow the same construction as the examples of <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>, with the <code>proof_jti</code> claim defined in <a href="#sibling-receipt-issuance" class="auto internal xref">Section 9.6</a> included at receipt creation.  Because these receipts carry <code>proof_jti</code>, they are different byte strings from the receipts shown in that document's examples: they carry their own <code>jti</code> values, and the newest receipt's <code>prh</code> differs because it hashes a different older receipt.  The newest receipt, signed by the travel-provider AS, carries:<a href="#appendix-A.1-7" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="appendix-A.1-8">
 <pre>
 {
@@ -3362,11 +3380,11 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
     "jkt": "ToolJKT"
   },
   "proof_jti": "5f2e8d91-4a6b-4c3d-8e2f-1a9b8c7d6e5f",
-  "prh": "0QvKZr5A4XW7N9LQW0u4e7z8k2Kqz6I7xL4V4Vh2nRc",
+  "prh": "K9mPvXq2LwTnR7dYcE5uHb8jZa4gFs6iOk1rC3xW0eA",
   "iat": 1776745200,
   "exp": 1776832000,
-  "jti": "c8e29c11-0c3a-4e6f-a0a6-30a52c4a8149",
-  "origin_jti": "d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd"
+  "jti": "b7d1f3a5-8c2e-4a6b-9d0f-1e3a5c7b9d1f",
+  "origin_jti": "e8f4a2d6-3b1c-4d7e-9f5a-0c2b4d6e8f0a"
 }
 </pre><a href="#appendix-A.1-8" class="pilcrow">¶</a>
 </div>
