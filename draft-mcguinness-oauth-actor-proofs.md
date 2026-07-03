@@ -317,6 +317,8 @@ This document deliberately defines the target binding as a first-class `target` 
 
   Downstream issuers reject inbound proofs whose `exp` precedes the issued outer token's `exp` ({{extending-an-existing-proof-chain}}), so an under-set `exp` causes propagation failure rather than mid-token-lifetime consumer rejection.  Short `exp` values bound two exposure windows: the window during which a compromised actor signing key can be exploited, and the window during which a party holding a previously valid proof can re-embed it in another token ({{proof-to-token-binding-limits}}).  Deployments typically derive `exp` from a bounded delegated-session lifetime coordinated across the trust set.
 
+  The two duties of `exp` resolve by binding mode: when the proof chain has outer-token instance binding (receipts composition in strict mode, or a provisioned `origin_jti`, per {{proof-to-token-binding-limits}}), re-embedding is detectable and `exp` MAY be sized to the full delegated-session lifetime; without instance binding, `exp` SHOULD be short, because it is the only bound on the re-embedding window.
+
 `jti`:
 : REQUIRED.  A unique identifier for the proof, as defined in {{RFC7519}}.  Recipients and auditors can use `jti` uniqueness across observed tokens to detect proof re-embedding ({{proof-to-token-binding-limits}}).
 
@@ -429,6 +431,8 @@ However:
 *  a partial chain MUST still cover a contiguous outermost prefix of the visible actor chain;
 *  an issuer MUST NOT skip an outer visible hop and carry a proof only for an inner visible hop;
 *  when local policy or resource requirements require full actor-signed evidence, the issuer MUST either emit complete proof coverage or fail the request under the error model of the underlying protocol.
+
+Because coverage is a contiguous outermost prefix, partial coverage always omits the innermost (oldest) hops first.  In many delegation chains the innermost hop is the original subject-to-actor delegation, the hop with the greatest audit and accountability value.  Deployments that value actor-signed evidence for that originating hop SHOULD deploy proof support at the origin issuer and its actors first: once the originating actor's proof starts the chain, every downstream issuer that supports this profile extends it, and coverage is complete by construction.  Resource servers that require evidence for the originating hop enforce it through `actor_proofs_complete_required` ({{discovery-capability-signaling}}) or equivalent local policy.
 
 When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_proofs` covers only the visible filtered chain.  In that case `actor_proofs_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness MUST evaluate `chain_complete` separately.
 

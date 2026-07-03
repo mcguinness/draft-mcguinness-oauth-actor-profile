@@ -105,7 +105,7 @@ COSE_Sign1 Signed Statement.  The protected header contains:
   verification keys.
 - `cty` (label 3): content type, set to `application/actor-receipt+jwt`
   (the existing receipts-spec media type).
-- `iss` (CWT_Claims label 33 → 1, per [RFC 9597](https://www.rfc-editor.org/rfc/rfc9597)):
+- `iss` (CWT_Claims header parameter, label 15, carrying CWT claim key 1, per [RFC 9597](https://www.rfc-editor.org/rfc/rfc9597)):
   the AS issuer identifier.  MUST equal the actor receipt's `iss`
   claim.
 
