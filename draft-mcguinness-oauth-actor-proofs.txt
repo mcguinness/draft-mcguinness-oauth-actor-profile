@@ -2127,11 +2127,12 @@ Table of Contents
    types:
 
    *  prh: Base64url-encoded hash of the immediately preceding (older)
-      entry in a chained array of Actor Receipt or Actor Proof JWTs
+      entry in a chained array of delegation-evidence JWTs (Actor
+      Receipts, Actor Proofs, or companion event artifacts)
 
    *  prh_alg: Hash algorithm identifier (from the IANA Named
       Information Hash Algorithm Registry) naming the algorithm used to
-      compute prh in an Actor Receipt or Actor Proof JWT
+      compute prh in a delegation-evidence JWT
 
    *  origin_jti: The jti of the outer token associated with the hop at
       which an Actor Receipt or Actor Proof JWT was created

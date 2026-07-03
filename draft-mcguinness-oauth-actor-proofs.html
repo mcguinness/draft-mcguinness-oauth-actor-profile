@@ -3030,10 +3030,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-16.2-3">This document reuses the <code>prh</code>, <code>prh_alg</code>, <code>origin_jti</code>, and <code>sub_iss</code> claims registered by <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>, with the semantics defined there, applied to Actor Proof JWTs as profiled in this document.  This document requests that IANA add this document to the Specification Document(s) entries for those four registrations, and requests that their Claim Description entries be updated to cover both artifact types:<a href="#section-16.2-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-16.2-4.1">
-            <p id="section-16.2-4.1.1"><code>prh</code>: Base64url-encoded hash of the immediately preceding (older) entry in a chained array of Actor Receipt or Actor Proof JWTs<a href="#section-16.2-4.1.1" class="pilcrow">¶</a></p>
+            <p id="section-16.2-4.1.1"><code>prh</code>: Base64url-encoded hash of the immediately preceding (older) entry in a chained array of delegation-evidence JWTs (Actor Receipts, Actor Proofs, or companion event artifacts)<a href="#section-16.2-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.2-4.2">
-            <p id="section-16.2-4.2.1"><code>prh_alg</code>: Hash algorithm identifier (from the IANA Named Information Hash Algorithm Registry) naming the algorithm used to compute prh in an Actor Receipt or Actor Proof JWT<a href="#section-16.2-4.2.1" class="pilcrow">¶</a></p>
+            <p id="section-16.2-4.2.1"><code>prh_alg</code>: Hash algorithm identifier (from the IANA Named Information Hash Algorithm Registry) naming the algorithm used to compute prh in a delegation-evidence JWT<a href="#section-16.2-4.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.2-4.3">
             <p id="section-16.2-4.3.1"><code>origin_jti</code>: The jti of the outer token associated with the hop at which an Actor Receipt or Actor Proof JWT was created<a href="#section-16.2-4.3.1" class="pilcrow">¶</a></p>
