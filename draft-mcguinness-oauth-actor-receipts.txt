@@ -353,7 +353,12 @@ Table of Contents
    deployments where the outer token issuer is the only trusted source
    for delegation state, the outer token's signature already conveys
    that attestation; receipts add overhead without meaningful additional
-   provenance and SHOULD be weighed before adoption.
+   provenance and SHOULD be weighed before adoption.  The trust-
+   configuration cost scales with the same issuer count that drives the
+   value: every receipt issuer must be within the recipient's pre-
+   configured trusted-issuer set (Section 13.3), so deployments beyond
+   bilaterally negotiated or federation-managed scale require trust-
+   distribution infrastructure outside the scope of this document.
 
    Authorization servers that mint refresh tokens for receipt-bearing
    access tokens incur additional issuer-side cost: receipts must be
@@ -937,6 +942,18 @@ Table of Contents
       provenance, the issuer MUST either emit complete receipt coverage
       or fail the request under the error model of the underlying
       protocol.
+
+   Because coverage is a contiguous outermost prefix, partial coverage
+   always omits the innermost (oldest) hops first.  In many delegation
+   chains the innermost hop is the original subject-to-actor delegation,
+   the hop with the greatest audit and accountability value.
+   Deployments that value evidence for that originating hop SHOULD
+   deploy receipt support at the origin issuer first: once the origin
+   issuer emits the first receipt, every downstream issuer that supports
+   this profile extends the chain, and coverage is complete by
+   construction.  Resource servers that require evidence for the
+   originating hop enforce it through actor_receipts_complete_required
+   (Section 10) or equivalent local policy.
 
    When the issuer also filters the visible act chain (see the
    chain_complete introspection member defined in the core actor profile
