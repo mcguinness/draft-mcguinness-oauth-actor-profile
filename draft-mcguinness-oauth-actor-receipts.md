@@ -1,7 +1,7 @@
 ---
 title: "OAuth Actor Receipts for Delegation Provenance"
 abbrev: "OAuth Actor Receipts"
-category: exp
+category: std
 docname: draft-mcguinness-oauth-actor-receipts-latest
 submissiontype: IETF
 number:
@@ -51,6 +51,9 @@ normative:
 informative:
   RFC9493:
   RFC9700:
+  I-D.mw-oauth-actor-chain:
+  I-D.liu-oauth-chain-delegation:
+  I-D.liu-oauth-authorization-evidence:
 
 ...
 
@@ -128,6 +131,14 @@ A deployment may use either, both, or neither:
 *  Introspection MAY be used for active-status checks even when receipts are not in use.
 
 This document does not standardize the choice between receipts, introspection, and inline-only receipt-bearing tokens; that choice is a deployment decision driven by the recipient's trust framework, the network availability of introspection endpoints, and the audit and verification requirements of the deployment.
+
+## Relationship to Other Delegation-Evidence Work
+
+Several contemporaneous efforts record delegation evidence for OAuth tokens; they differ from this profile chiefly in where evidence lives and who can verify it.  This section is informative.
+
+{{I-D.mw-oauth-actor-chain}} carries an issuer-signed cumulative commitment in the token while retaining the underlying per-hop evidence at the authorization server; recipients verify commitment continuity but depend on issuer retention and out-of-band access for the evidence itself.  Receipts under this profile are the evidence: each hop's attestation travels with the token and is validated by recipients directly against the attesting issuer's keys, with no retention or retrieval dependency, at the cost of per-hop token growth.
+
+{{I-D.liu-oauth-authorization-evidence}} records a single authorization-server-signed consent event inline using Rich Authorization Requests machinery, and {{I-D.liu-oauth-chain-delegation}} extends the same approach to per-hop delegation records.  Those records are not chained to one another and are re-signed at trust-domain boundaries, whereas receipts are byte-preserved standalone JWTs linked by `prh`, so recipients verify each hop against the issuer that created it rather than against the most recent re-signing issuer.  These designs address overlapping needs; convergence is a working-group discussion this document aims to inform rather than preempt.
 
 # Design Goals and Non-Goals
 

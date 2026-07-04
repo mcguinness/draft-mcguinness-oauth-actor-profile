@@ -1,7 +1,7 @@
 ---
 title: "OAuth Actor-Signed Hop Proofs"
 abbrev: "OAuth Actor Proofs"
-category: exp
+category: std
 docname: draft-mcguinness-oauth-actor-proofs-latest
 submissiontype: IETF
 number:
@@ -59,6 +59,11 @@ normative:
 
 informative:
   RFC9700:
+  I-D.mw-oauth-actor-chain:
+  I-D.liu-oauth-chain-delegation:
+  I-D.jiang-oauth-intent-admission:
+  I-D.ietf-oauth-attestation-based-client-auth:
+  I-D.ietf-oauth-spiffe-client-auth:
 
 ...
 
@@ -142,6 +147,14 @@ The choice of posture is per-recipient deployment policy; this document does not
 The two companions remain separate artifacts rather than a single multi-signature artifact because their signers, adoption prerequisites, and threat models differ: receipts require only issuer-side implementation, while proofs additionally require actor signing keys and recipient-side actor-key resolution.  A JWS structure carrying both signatures over one payload (JWS JSON Serialization, {{RFC7515}} Section 7.2) would express the sibling relationship more directly but is poorly supported in common OAuth token processing libraries; two parallel arrays of compact-serialized JWTs compose with existing tooling.
 
 The receipts companion's discussion of receipt-based provenance versus token introspection applies equally to proofs; see {{ACTOR-RECEIPTS}}.
+
+## Relationship to Other Actor-Evidence Work {#related-work}
+
+Several contemporaneous efforts add actor-side or issuer-side delegation evidence to OAuth deployments; they differ from this profile chiefly in where evidence lives, who signs it, and who can verify it.  This section is informative.
+
+{{I-D.mw-oauth-actor-chain}} also defines actor-signed step proofs, but they are submitted at token exchange and retained by the authorization server; only an issuer-signed cumulative commitment travels in the token, so recipients verify commitment continuity while actor signatures remain an exchange-time and audit-time property gated on issuer retention.  Under this profile, proofs are carried in the token and validated by recipients directly, at the cost of per-hop token growth.  {{I-D.liu-oauth-chain-delegation}} carries authorization-server-signed per-hop delegation records inline, optionally countersigned by the delegator; the countersigned fields carry no target binding, and records are re-signed at trust-domain boundaries.  {{I-D.jiang-oauth-intent-admission}} defines a single-hop intent artifact whose signature belongs to the admission authority rather than the acting party.
+
+The distinguishing property of this profile relative to each is a recipient-verifiable artifact signed by the actor itself, before issuance, over an explicit target binding.  These designs address overlapping needs; convergence is a working-group discussion this document aims to inform rather than preempt.
 
 # Design Goals and Non-Goals
 
@@ -705,9 +718,9 @@ Trust establishment requirements:
 
 This document profiles the following resolution patterns; a deployment may support any subset:
 
-*  **Pre-established keys.**  The actor's verification keys are registered with the recipient or its trust framework in advance, for example as the JWKS of a registered OAuth client at the authorization server, or as locally configured keys at a resource server.  This pattern is self-contained and provides the strongest independence properties.
+*  **Pre-established keys.**  The actor's verification keys are registered with the recipient or its trust framework in advance, for example as the JWKS of a registered OAuth client at the authorization server, or as locally configured keys at a resource server.  This pattern is self-contained and provides the strongest independence properties.  Attestation-based client authentication {{I-D.ietf-oauth-attestation-based-client-auth}} provides an interoperable way to establish such keys, with an attester vouching for the actor's key binding.
 *  **Receipt-attested presenter keys.**  When the sibling receipt for a hop carries the historical presenter binding `cnf` defined in {{ACTOR-RECEIPTS}}, and the deployment binds proof signing keys to presenter keys, the recipient MAY verify the proof signature against the key identified by the aligned receipt's `cnf`.  This pattern requires no separate key registry, but the key attestation derives from the receipt issuer: proofs verified this way provide no independence from that issuer.  In particular, at the newest hop, whose receipt is signed by the current outer token issuer in the originating-issuance case, receipt-attested key resolution provides no anti-fabrication protection against that issuer.
-*  **Federation and workload identity systems.**  Deployment-defined resolution through workload identity or federation infrastructure.  The trust and freshness properties are those of the underlying system; this document does not profile them.
+*  **Federation and workload identity systems.**  Deployment-defined resolution through workload identity or federation infrastructure.  The trust and freshness properties are those of the underlying system; this document does not profile them.  OAuth SPIFFE client authentication {{I-D.ietf-oauth-spiffe-client-auth}} is an example of workload-identity key establishment that deployments can apply to actor signing keys.
 
 The independence requirement follows from the threat model: for the anti-fabrication property against a given issuer to hold at a hop, the recipient MUST resolve the actor's key for that hop through a source independent of that issuer.
 
@@ -920,7 +933,7 @@ This document requests registration of the following names in the "OAuth Token I
 
 # Acknowledgments
 
-This document builds on the OAuth Actor Profile for Delegation {{I-D.mcguinness-oauth-actor-profile}}, on the OAuth Actor Receipts companion {{ACTOR-RECEIPTS}}, on the OAuth 2.0 Token Exchange specification {{RFC8693}}, on the OAuth 2.0 Transaction Tokens work {{I-D.ietf-oauth-transaction-tokens}}, and on prior OAuth Working Group discussion of delegation transparency, sender-constrained tokens, and proof-of-possession mechanisms ({{RFC7800}}, {{RFC8705}}, {{RFC9449}}).  Separate working group contributions have explored actor-signed step artifacts in different layerings; this document profiles the actor-signed per-hop portion of that design space as a composable companion.
+This document builds on the OAuth Actor Profile for Delegation {{I-D.mcguinness-oauth-actor-profile}}, on the OAuth Actor Receipts companion {{ACTOR-RECEIPTS}}, on the OAuth 2.0 Token Exchange specification {{RFC8693}}, on the OAuth 2.0 Transaction Tokens work {{I-D.ietf-oauth-transaction-tokens}}, and on prior OAuth Working Group discussion of delegation transparency, sender-constrained tokens, and proof-of-possession mechanisms ({{RFC7800}}, {{RFC8705}}, {{RFC9449}}).  Related actor-evidence efforts and their relationship to this document are discussed in {{related-work}}.
 
 Individual contributors and reviewers will be acknowledged in subsequent revisions of this document as feedback accumulates.
 

@@ -1,7 +1,7 @@
 ---
 title: "OAuth Actor Chain Authority Bounds"
 abbrev: "OAuth Actor Bounds"
-category: exp
+category: std
 docname: draft-mcguinness-oauth-actor-authority-bounds-latest
 submissiontype: IETF
 number:
