@@ -5,7 +5,7 @@ category: std
 docname: draft-mcguinness-oauth-actor-proofs-latest
 submissiontype: IETF
 number:
-date: 2026-07-03
+date: 2026-07-04
 ipr: "trust200902"
 area: "Security"
 workgroup: "Web Authorization Protocol"
@@ -54,7 +54,7 @@ normative:
       -
         fullname: Karl McGuinness
         organization: Independent
-    date: 2026-05
+    date: 2026-07
     target: "https://mcguinness.github.io/draft-mcguinness-oauth-actor-profile/draft-mcguinness-oauth-actor-receipts.html"
 
 informative:

@@ -5,7 +5,7 @@ category: std
 docname: draft-mcguinness-oauth-actor-receipts-latest
 submissiontype: IETF
 number:
-date: 2026-07-03
+date: 2026-07-04
 ipr: "trust200902"
 area: "Security"
 workgroup: "Web Authorization Protocol"
@@ -159,6 +159,7 @@ The non-goals of this document are:
 *  requiring clients to change request flows, or requiring resource servers that do not consume receipts to change resource-protection logic;
 *  proving that a particular historical scope, audience, or token lifetime was in force when a receipt was created;
 *  reconciling subject identifiers that differ across receipts (see {{subject-re-expression-across-hops}});
+*  defining a workflow or delegation-flow correlation identifier across tokens; cross-token correlation uses receipt `jti` and `origin_jti` values together with deployment audit infrastructure;
 *  defining transparency logs, non-repudiation systems, or public audit infrastructure.
 
 ## Deployment Fit
