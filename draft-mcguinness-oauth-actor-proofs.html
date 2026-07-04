@@ -1068,7 +1068,7 @@ svg {
 <time datetime="2026-07-03" class="published">3 July 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
-<dd class="intended-status">Experimental</dd>
+<dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
 <dd class="expires"><time datetime="2027-01-04">4 January 2027</time></dd>
 <dt class="label-authors">Author:</dt>
@@ -1160,6 +1160,9 @@ svg {
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
                 <p id="section-toc.1-1.3.2.1.1" class="keepWithNext"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-relationship-to-the-actor-r" class="internal xref">Relationship to the Actor Receipts Companion</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-relationship-to-other-actor" class="internal xref">Relationship to Other Actor-Evidence Work</a></p>
 </li>
             </ul>
 </li>
@@ -1551,6 +1554,16 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-3.1-3">The choice of posture is per-recipient deployment policy; this document does not standardize it.<a href="#section-3.1-3" class="pilcrow">¶</a></p>
 <p id="section-3.1-4">The two companions remain separate artifacts rather than a single multi-signature artifact because their signers, adoption prerequisites, and threat models differ: receipts require only issuer-side implementation, while proofs additionally require actor signing keys and recipient-side actor-key resolution.  A JWS structure carrying both signatures over one payload (JWS JSON Serialization, <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span> Section 7.2) would express the sibling relationship more directly but is poorly supported in common OAuth token processing libraries; two parallel arrays of compact-serialized JWTs compose with existing tooling.<a href="#section-3.1-4" class="pilcrow">¶</a></p>
 <p id="section-3.1-5">The receipts companion's discussion of receipt-based provenance versus token introspection applies equally to proofs; see <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>.<a href="#section-3.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="related-work">
+<section id="section-3.2">
+        <h3 id="name-relationship-to-other-actor">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-relationship-to-other-actor" class="section-name selfRef">Relationship to Other Actor-Evidence Work</a>
+        </h3>
+<p id="section-3.2-1">Several contemporaneous efforts add actor-side or issuer-side delegation evidence to OAuth deployments; they differ from this profile chiefly in where evidence lives, who signs it, and who can verify it.  This section is informative.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-2"><span>[<a href="#I-D.mw-oauth-actor-chain" class="cite xref">I-D.mw-oauth-actor-chain</a>]</span> also defines actor-signed step proofs, but they are submitted at token exchange and retained by the authorization server; only an issuer-signed cumulative commitment travels in the token, so recipients verify commitment continuity while actor signatures remain an exchange-time and audit-time property gated on issuer retention.  Under this profile, proofs are carried in the token and validated by recipients directly, at the cost of per-hop token growth.  <span>[<a href="#I-D.liu-oauth-chain-delegation" class="cite xref">I-D.liu-oauth-chain-delegation</a>]</span> carries authorization-server-signed per-hop delegation records inline, optionally countersigned by the delegator; the countersigned fields carry no target binding, and records are re-signed at trust-domain boundaries.  <span>[<a href="#I-D.jiang-oauth-intent-admission" class="cite xref">I-D.jiang-oauth-intent-admission</a>]</span> defines a single-hop intent artifact whose signature belongs to the admission authority rather than the acting party.<a href="#section-3.2-2" class="pilcrow">¶</a></p>
+<p id="section-3.2-3">The distinguishing property of this profile relative to each is a recipient-verifiable artifact signed by the actor itself, before issuance, over an explicit target binding.  These designs address overlapping needs; convergence is a working-group discussion this document aims to inform rather than preempt.<a href="#section-3.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2680,13 +2693,13 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-14.3-4">This document profiles the following resolution patterns; a deployment may support any subset:<a href="#section-14.3-4" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-14.3-5.1">
-            <p id="section-14.3-5.1.1"><strong>Pre-established keys.</strong>  The actor's verification keys are registered with the recipient or its trust framework in advance, for example as the JWKS of a registered OAuth client at the authorization server, or as locally configured keys at a resource server.  This pattern is self-contained and provides the strongest independence properties.<a href="#section-14.3-5.1.1" class="pilcrow">¶</a></p>
+            <p id="section-14.3-5.1.1"><strong>Pre-established keys.</strong>  The actor's verification keys are registered with the recipient or its trust framework in advance, for example as the JWKS of a registered OAuth client at the authorization server, or as locally configured keys at a resource server.  This pattern is self-contained and provides the strongest independence properties.  Attestation-based client authentication <span>[<a href="#I-D.ietf-oauth-attestation-based-client-auth" class="cite xref">I-D.ietf-oauth-attestation-based-client-auth</a>]</span> provides an interoperable way to establish such keys, with an attester vouching for the actor's key binding.<a href="#section-14.3-5.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-14.3-5.2">
             <p id="section-14.3-5.2.1"><strong>Receipt-attested presenter keys.</strong>  When the sibling receipt for a hop carries the historical presenter binding <code>cnf</code> defined in <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>, and the deployment binds proof signing keys to presenter keys, the recipient <span class="bcp14">MAY</span> verify the proof signature against the key identified by the aligned receipt's <code>cnf</code>.  This pattern requires no separate key registry, but the key attestation derives from the receipt issuer: proofs verified this way provide no independence from that issuer.  In particular, at the newest hop, whose receipt is signed by the current outer token issuer in the originating-issuance case, receipt-attested key resolution provides no anti-fabrication protection against that issuer.<a href="#section-14.3-5.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-14.3-5.3">
-            <p id="section-14.3-5.3.1"><strong>Federation and workload identity systems.</strong>  Deployment-defined resolution through workload identity or federation infrastructure.  The trust and freshness properties are those of the underlying system; this document does not profile them.<a href="#section-14.3-5.3.1" class="pilcrow">¶</a></p>
+            <p id="section-14.3-5.3.1"><strong>Federation and workload identity systems.</strong>  Deployment-defined resolution through workload identity or federation infrastructure.  The trust and freshness properties are those of the underlying system; this document does not profile them.  OAuth SPIFFE client authentication <span>[<a href="#I-D.ietf-oauth-spiffe-client-auth" class="cite xref">I-D.ietf-oauth-spiffe-client-auth</a>]</span> is an example of workload-identity key establishment that deployments can apply to actor signing keys.<a href="#section-14.3-5.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-14.3-6">The independence requirement follows from the threat model: for the anti-fabrication property against a given issuer to hold at a hop, the recipient <span class="bcp14">MUST</span> resolve the actor's key for that hop through a source independent of that issuer.<a href="#section-14.3-6" class="pilcrow">¶</a></p>
@@ -3163,7 +3176,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
       <h2 id="name-acknowledgments">
 <a href="#section-17" class="section-number selfRef">17. </a><a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
       </h2>
-<p id="section-17-1">This document builds on the OAuth Actor Profile for Delegation <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>, on the OAuth Actor Receipts companion <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>, on the OAuth 2.0 Token Exchange specification <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, on the OAuth 2.0 Transaction Tokens work <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>, and on prior OAuth Working Group discussion of delegation transparency, sender-constrained tokens, and proof-of-possession mechanisms (<span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>, <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>, <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>).  Separate working group contributions have explored actor-signed step artifacts in different layerings; this document profiles the actor-signed per-hop portion of that design space as a composable companion.<a href="#section-17-1" class="pilcrow">¶</a></p>
+<p id="section-17-1">This document builds on the OAuth Actor Profile for Delegation <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>, on the OAuth Actor Receipts companion <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>, on the OAuth 2.0 Token Exchange specification <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, on the OAuth 2.0 Transaction Tokens work <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>, and on prior OAuth Working Group discussion of delegation transparency, sender-constrained tokens, and proof-of-possession mechanisms (<span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>, <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>, <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>).  Related actor-evidence efforts and their relationship to this document are discussed in <a href="#related-work" class="auto internal xref">Section 3.2</a>.<a href="#section-17-1" class="pilcrow">¶</a></p>
 <p id="section-17-2">Individual contributors and reviewers will be acknowledged in subsequent revisions of this document as feedback accumulates.<a href="#section-17-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -3272,8 +3285,28 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         </h3>
 <dl class="references">
 <dt id="RFC9700">[RFC9700]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Lodderstedt, T.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Labunets, A.</span>, and <span class="refAuthor">D. Fett</span>, <span class="refTitle">"Best Current Practice for OAuth 2.0 Security"</span>, <span class="seriesInfo">BCP 240</span>, <span class="seriesInfo">RFC 9700</span>, <span class="seriesInfo">DOI 10.17487/RFC9700</span>, <time datetime="2025-01" class="refDate">January 2025</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9700">https://www.rfc-editor.org/info/rfc9700</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.mw-oauth-actor-chain">[I-D.mw-oauth-actor-chain]</dt>
+        <dd>
+<span class="refAuthor">Prasad, A.</span>, <span class="refAuthor">Krishnan, R.</span>, <span class="refAuthor">Lopez, D.</span>, and <span class="refAuthor">S. Addepalli</span>, <span class="refTitle">"Cryptographically Verifiable Actor Chains for OAuth 2.0 Token Exchange"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mw-oauth-actor-chain-01</span>, <time datetime="2026-06-15" class="refDate">15 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mw-oauth-actor-chain-01">https://datatracker.ietf.org/doc/html/draft-mw-oauth-actor-chain-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.liu-oauth-chain-delegation">[I-D.liu-oauth-chain-delegation]</dt>
+        <dd>
+<span class="refAuthor">Liu, D.</span>, <span class="refAuthor">Zhu, J.</span>, <span class="refAuthor">Krishnan, S.</span>, and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"Delegation Chain for OAuth 2.0"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-liu-oauth-chain-delegation-00</span>, <time datetime="2026-06-07" class="refDate">7 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-liu-oauth-chain-delegation-00">https://datatracker.ietf.org/doc/html/draft-liu-oauth-chain-delegation-00</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.jiang-oauth-intent-admission">[I-D.jiang-oauth-intent-admission]</dt>
+        <dd>
+<span class="refAuthor">Jiang, Y.</span>, <span class="refAuthor">Lun, L.</span>, <span class="refAuthor">Song, Y.</span>, and <span class="refAuthor">F. Liu</span>, <span class="refTitle">"Intent Admission Assertions for Agentic Systems"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-jiang-oauth-intent-admission-00</span>, <time datetime="2026-06-23" class="refDate">23 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-jiang-oauth-intent-admission-00">https://datatracker.ietf.org/doc/html/draft-jiang-oauth-intent-admission-00</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.ietf-oauth-attestation-based-client-auth">[I-D.ietf-oauth-attestation-based-client-auth]</dt>
+        <dd>
+<span class="refAuthor">Looker, T.</span>, <span class="refAuthor">Bastian, P.</span>, and <span class="refAuthor">C. Bormann</span>, <span class="refTitle">"OAuth 2.0 Attestation-Based Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-attestation-based-client-auth-09</span>, <time datetime="2026-05-25" class="refDate">25 May 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-09">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-09</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.ietf-oauth-spiffe-client-auth">[I-D.ietf-oauth-spiffe-client-auth]</dt>
+      <dd>
+<span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Rose, S.</span>, <span class="refAuthor">Thorgersen, S.</span>, and <span class="refAuthor">N. Cam-Winget</span>, <span class="refTitle">"OAuth SPIFFE Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-spiffe-client-auth-02</span>, <time datetime="2026-06-15" class="refDate">15 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>

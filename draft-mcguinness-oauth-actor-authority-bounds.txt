@@ -4,7 +4,7 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Experimental                                3 July 2026
+Intended status: Standards Track                             3 July 2026
 Expires: 4 January 2027
 
 

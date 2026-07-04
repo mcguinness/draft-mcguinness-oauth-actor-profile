@@ -1068,7 +1068,7 @@ svg {
 <time datetime="2026-07-03" class="published">3 July 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
-<dd class="intended-status">Experimental</dd>
+<dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
 <dd class="expires"><time datetime="2027-01-04">4 January 2027</time></dd>
 <dt class="label-authors">Author:</dt>
@@ -1160,6 +1160,9 @@ svg {
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
                 <p id="section-toc.1-1.3.2.1.1" class="keepWithNext"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-relationship-to-token-intro" class="internal xref">Relationship to Token Introspection</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-relationship-to-other-deleg" class="internal xref">Relationship to Other Delegation-Evidence Work</a></p>
 </li>
             </ul>
 </li>
@@ -1548,6 +1551,16 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         </ul>
 <p id="section-3.1-5">This document does not standardize the choice between receipts, introspection, and inline-only receipt-bearing tokens; that choice is a deployment decision driven by the recipient's trust framework, the network availability of introspection endpoints, and the audit and verification requirements of the deployment.<a href="#section-3.1-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="relationship-to-other-delegation-evidence-work">
+<section id="section-3.2">
+        <h3 id="name-relationship-to-other-deleg">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-relationship-to-other-deleg" class="section-name selfRef">Relationship to Other Delegation-Evidence Work</a>
+        </h3>
+<p id="section-3.2-1">Several contemporaneous efforts record delegation evidence for OAuth tokens; they differ from this profile chiefly in where evidence lives and who can verify it.  This section is informative.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-2"><span>[<a href="#I-D.mw-oauth-actor-chain" class="cite xref">I-D.mw-oauth-actor-chain</a>]</span> carries an issuer-signed cumulative commitment in the token while retaining the underlying per-hop evidence at the authorization server; recipients verify commitment continuity but depend on issuer retention and out-of-band access for the evidence itself.  Receipts under this profile are the evidence: each hop's attestation travels with the token and is validated by recipients directly against the attesting issuer's keys, with no retention or retrieval dependency, at the cost of per-hop token growth.<a href="#section-3.2-2" class="pilcrow">¶</a></p>
+<p id="section-3.2-3"><span>[<a href="#I-D.liu-oauth-authorization-evidence" class="cite xref">I-D.liu-oauth-authorization-evidence</a>]</span> records a single authorization-server-signed consent event inline using Rich Authorization Requests machinery, and <span>[<a href="#I-D.liu-oauth-chain-delegation" class="cite xref">I-D.liu-oauth-chain-delegation</a>]</span> extends the same approach to per-hop delegation records.  Those records are not chained to one another and are re-signed at trust-domain boundaries, whereas receipts are byte-preserved standalone JWTs linked by <code>prh</code>, so recipients verify each hop against the issuer that created it rather than against the most recent re-signing issuer.  These designs address overlapping needs; convergence is a working-group discussion this document aims to inform rather than preempt.<a href="#section-3.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3251,8 +3264,20 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <span class="refAuthor">Backman, A., Ed.</span>, <span class="refAuthor">Scurtescu, M.</span>, and <span class="refAuthor">P. Jain</span>, <span class="refTitle">"Subject Identifiers for Security Event Tokens"</span>, <span class="seriesInfo">RFC 9493</span>, <span class="seriesInfo">DOI 10.17487/RFC9493</span>, <time datetime="2023-12" class="refDate">December 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9493">https://www.rfc-editor.org/info/rfc9493</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC9700">[RFC9700]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Lodderstedt, T.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Labunets, A.</span>, and <span class="refAuthor">D. Fett</span>, <span class="refTitle">"Best Current Practice for OAuth 2.0 Security"</span>, <span class="seriesInfo">BCP 240</span>, <span class="seriesInfo">RFC 9700</span>, <span class="seriesInfo">DOI 10.17487/RFC9700</span>, <time datetime="2025-01" class="refDate">January 2025</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9700">https://www.rfc-editor.org/info/rfc9700</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.mw-oauth-actor-chain">[I-D.mw-oauth-actor-chain]</dt>
+        <dd>
+<span class="refAuthor">Prasad, A.</span>, <span class="refAuthor">Krishnan, R.</span>, <span class="refAuthor">Lopez, D.</span>, and <span class="refAuthor">S. Addepalli</span>, <span class="refTitle">"Cryptographically Verifiable Actor Chains for OAuth 2.0 Token Exchange"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mw-oauth-actor-chain-01</span>, <time datetime="2026-06-15" class="refDate">15 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mw-oauth-actor-chain-01">https://datatracker.ietf.org/doc/html/draft-mw-oauth-actor-chain-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.liu-oauth-chain-delegation">[I-D.liu-oauth-chain-delegation]</dt>
+        <dd>
+<span class="refAuthor">Liu, D.</span>, <span class="refAuthor">Zhu, J.</span>, <span class="refAuthor">Krishnan, S.</span>, and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"Delegation Chain for OAuth 2.0"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-liu-oauth-chain-delegation-00</span>, <time datetime="2026-06-07" class="refDate">7 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-liu-oauth-chain-delegation-00">https://datatracker.ietf.org/doc/html/draft-liu-oauth-chain-delegation-00</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.liu-oauth-authorization-evidence">[I-D.liu-oauth-authorization-evidence]</dt>
+      <dd>
+<span class="refAuthor">Liu, D.</span>, <span class="refAuthor">Zhu, J.</span>, <span class="refAuthor">Krishnan, S.</span>, and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"Authorization Evidence and Audit Trail for OAuth 2.0 Access Tokens"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-liu-oauth-authorization-evidence-01</span>, <time datetime="2026-06-22" class="refDate">22 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-liu-oauth-authorization-evidence-01">https://datatracker.ietf.org/doc/html/draft-liu-oauth-authorization-evidence-01</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>

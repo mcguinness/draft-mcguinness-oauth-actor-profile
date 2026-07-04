@@ -4,7 +4,7 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Experimental                                3 July 2026
+Intended status: Standards Track                             3 July 2026
 Expires: 4 January 2027
 
 
@@ -80,6 +80,7 @@ Table of Contents
    2.  Conventions and Definitions
    3.  Relationship to the Core Actor Profile
      3.1.  Relationship to the Actor Receipts Companion
+     3.2.  Relationship to Other Actor-Evidence Work
    4.  Design Goals and Non-Goals
      4.1.  Deployment Fit
    5.  Actor Proofs Overview
@@ -314,6 +315,34 @@ Table of Contents
    The receipts companion's discussion of receipt-based provenance
    versus token introspection applies equally to proofs; see
    [ACTOR-RECEIPTS].
+
+3.2.  Relationship to Other Actor-Evidence Work
+
+   Several contemporaneous efforts add actor-side or issuer-side
+   delegation evidence to OAuth deployments; they differ from this
+   profile chiefly in where evidence lives, who signs it, and who can
+   verify it.  This section is informative.
+
+   [I-D.mw-oauth-actor-chain] also defines actor-signed step proofs, but
+   they are submitted at token exchange and retained by the
+   authorization server; only an issuer-signed cumulative commitment
+   travels in the token, so recipients verify commitment continuity
+   while actor signatures remain an exchange-time and audit-time
+   property gated on issuer retention.  Under this profile, proofs are
+   carried in the token and validated by recipients directly, at the
+   cost of per-hop token growth.  [I-D.liu-oauth-chain-delegation]
+   carries authorization-server-signed per-hop delegation records
+   inline, optionally countersigned by the delegator; the countersigned
+   fields carry no target binding, and records are re-signed at trust-
+   domain boundaries.  [I-D.jiang-oauth-intent-admission] defines a
+   single-hop intent artifact whose signature belongs to the admission
+   authority rather than the acting party.
+
+   The distinguishing property of this profile relative to each is a
+   recipient-verifiable artifact signed by the actor itself, before
+   issuance, over an explicit target binding.  These designs address
+   overlapping needs; convergence is a working-group discussion this
+   document aims to inform rather than preempt.
 
 4.  Design Goals and Non-Goals
 
@@ -1737,7 +1766,10 @@ Table of Contents
       for example as the JWKS of a registered OAuth client at the
       authorization server, or as locally configured keys at a resource
       server.  This pattern is self-contained and provides the strongest
-      independence properties.
+      independence properties.  Attestation-based client authentication
+      [I-D.ietf-oauth-attestation-based-client-auth] provides an
+      interoperable way to establish such keys, with an attester
+      vouching for the actor's key binding.
 
    *  *Receipt-attested presenter keys.* When the sibling receipt for a
       hop carries the historical presenter binding cnf defined in
@@ -1754,7 +1786,10 @@ Table of Contents
    *  *Federation and workload identity systems.* Deployment-defined
       resolution through workload identity or federation infrastructure.
       The trust and freshness properties are those of the underlying
-      system; this document does not profile them.
+      system; this document does not profile them.  OAuth SPIFFE client
+      authentication [I-D.ietf-oauth-spiffe-client-auth] is an example
+      of workload-identity key establishment that deployments can apply
+      to actor signing keys.
 
    The independence requirement follows from the threat model: for the
    anti-fabrication property against a given issuer to hold at a hop,
@@ -2223,10 +2258,8 @@ Table of Contents
    [I-D.ietf-oauth-transaction-tokens], and on prior OAuth Working Group
    discussion of delegation transparency, sender-constrained tokens, and
    proof-of-possession mechanisms ([RFC7800], [RFC8705], [RFC9449]).
-   Separate working group contributions have explored actor-signed step
-   artifacts in different layerings; this document profiles the actor-
-   signed per-hop portion of that design space as a composable
-   companion.
+   Related actor-evidence efforts and their relationship to this
+   document are discussed in Section 3.2.
 
    Individual contributors and reviewers will be acknowledged in
    subsequent revisions of this document as feedback accumulates.
@@ -2346,6 +2379,45 @@ Table of Contents
               "Best Current Practice for OAuth 2.0 Security", BCP 240,
               RFC 9700, DOI 10.17487/RFC9700, January 2025,
               <https://www.rfc-editor.org/info/rfc9700>.
+
+   [I-D.mw-oauth-actor-chain]
+              Prasad, A., Krishnan, R., Lopez, D., and S. Addepalli,
+              "Cryptographically Verifiable Actor Chains for OAuth 2.0
+              Token Exchange", Work in Progress, Internet-Draft, draft-
+              mw-oauth-actor-chain-01, 15 June 2026,
+              <https://datatracker.ietf.org/doc/html/draft-mw-oauth-
+              actor-chain-01>.
+
+   [I-D.liu-oauth-chain-delegation]
+              Liu, D., Zhu, J., Krishnan, S., and A. Parecki,
+              "Delegation Chain for OAuth 2.0", Work in Progress,
+              Internet-Draft, draft-liu-oauth-chain-delegation-00, 7
+              June 2026, <https://datatracker.ietf.org/doc/html/draft-
+              liu-oauth-chain-delegation-00>.
+
+   [I-D.jiang-oauth-intent-admission]
+              Jiang, Y., Lun, L., Song, Y., and F. Liu, "Intent
+              Admission Assertions for Agentic Systems", Work in
+              Progress, Internet-Draft, draft-jiang-oauth-intent-
+              admission-00, 23 June 2026,
+              <https://datatracker.ietf.org/doc/html/draft-jiang-oauth-
+              intent-admission-00>.
+
+   [I-D.ietf-oauth-attestation-based-client-auth]
+              Looker, T., Bastian, P., and C. Bormann, "OAuth 2.0
+              Attestation-Based Client Authentication", Work in
+              Progress, Internet-Draft, draft-ietf-oauth-attestation-
+              based-client-auth-09, 25 May 2026,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
+              attestation-based-client-auth-09>.
+
+   [I-D.ietf-oauth-spiffe-client-auth]
+              Schwenkschuster, A., Kasselman, P., Rose, S., Thorgersen,
+              S., and N. Cam-Winget, "OAuth SPIFFE Client
+              Authentication", Work in Progress, Internet-Draft, draft-
+              ietf-oauth-spiffe-client-auth-02, 15 June 2026,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
+              spiffe-client-auth-02>.
 
 Appendix A.  Examples
 
