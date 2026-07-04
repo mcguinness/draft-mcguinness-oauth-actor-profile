@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                             3 July 2026
-Expires: 4 January 2027
+Intended status: Standards Track                             4 July 2026
+Expires: 5 January 2027
 
 
                      OAuth Actor-Signed Hop Proofs
@@ -58,7 +58,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 4 January 2027.
+   This Internet-Draft will expire on 5 January 2027.
 
 Copyright Notice
 
@@ -2360,7 +2360,7 @@ Table of Contents
 
    [ACTOR-RECEIPTS]
               McGuinness, K., "OAuth Actor Receipts for Delegation
-              Provenance", May 2026, <https://mcguinness.github.io/
+              Provenance", July 2026, <https://mcguinness.github.io/
               draft-mcguinness-oauth-actor-profile/draft-mcguinness-
               oauth-actor-receipts.html>.
 

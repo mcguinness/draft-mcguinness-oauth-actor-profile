@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                             3 July 2026
-Expires: 4 January 2027
+Intended status: Standards Track                             4 July 2026
+Expires: 5 January 2027
 
 
              OAuth Actor Receipts for Delegation Provenance
@@ -57,7 +57,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 4 January 2027.
+   This Internet-Draft will expire on 5 January 2027.
 
 Copyright Notice
 
@@ -367,6 +367,10 @@ Table of Contents
 
    *  reconciling subject identifiers that differ across receipts (see
       Section 9.1);
+
+   *  defining a workflow or delegation-flow correlation identifier
+      across tokens; cross-token correlation uses receipt jti and
+      origin_jti values together with deployment audit infrastructure;
 
    *  defining transparency logs, non-repudiation systems, or public
       audit infrastructure.
