@@ -163,12 +163,13 @@ Table of Contents
    The OAuth Actor Profile for Delegation
    [I-D.mcguinness-oauth-actor-profile] makes actor identity visible in
    delegated tokens through a common act claim.  The OAuth Actor
-   Receipts companion [ACTOR-RECEIPTS] adds authorization-server-signed
-   per-hop provenance.  Both are issuer assertions: an authorization
-   server attests that an actor was added at a hop.  Nothing in either
-   profile requires the actor's own cryptographic participation, so a
-   compromised or dishonest issuer can fabricate the participation of an
-   actor that never authorized the delegation.
+   Receipts companion [I-D.mcguinness-oauth-actor-receipts] adds
+   authorization-server-signed per-hop provenance.  Both are issuer
+   assertions: an authorization server attests that an actor was added
+   at a hop.  Nothing in either profile requires the actor's own
+   cryptographic participation, so a compromised or dishonest issuer can
+   fabricate the participation of an actor that never authorized the
+   delegation.
 
    This document defines OAuth Actor-Signed Hop Proofs, an optional
    companion profile that adds actor-side evidence.  At each covered
@@ -205,9 +206,9 @@ Table of Contents
    [RFC8693].  Transaction Token and Transaction Token Service (TTS) are
    used as defined in [I-D.ietf-oauth-transaction-tokens].  Actor
    Receipt, Receipt Chain, and Outer Token are used as defined in
-   [ACTOR-RECEIPTS]; in this document, Outer Token refers to the token
-   with which a proof chain is associated, whether or not that token
-   also carries receipts.
+   [I-D.mcguinness-oauth-actor-receipts]; in this document, Outer Token
+   refers to the token with which a proof chain is associated, whether
+   or not that token also carries receipts.
 
    The following terms are used in this document:
 
@@ -234,7 +235,8 @@ Table of Contents
       itself.
 
    Sibling Receipt:  The actor receipt, if any, created for the same
-      visible actor hop as a proof, under [ACTOR-RECEIPTS].
+      visible actor hop as a proof, under
+      [I-D.mcguinness-oauth-actor-receipts].
 
    Complete Proof Coverage:  A condition in which the number of proofs
       in actor_proofs equals the number of visible actor hops in the
@@ -289,7 +291,7 @@ Table of Contents
    validation posture by policy:
 
    *  *Receipts-only*: proofs absent or ignored; trust per
-      [ACTOR-RECEIPTS].
+      [I-D.mcguinness-oauth-actor-receipts].
 
    *  *Proofs-only*: receipts absent or ignored; trust rests on actor-
       key resolution and actor signatures.
@@ -314,7 +316,7 @@ Table of Contents
 
    The receipts companion's discussion of receipt-based provenance
    versus token introspection applies equally to proofs; see
-   [ACTOR-RECEIPTS].
+   [I-D.mcguinness-oauth-actor-receipts].
 
 3.2.  Relationship to Other Actor-Evidence Work
 
@@ -398,9 +400,9 @@ Table of Contents
    This profile's value is concentrated in deployments where actors hold
    signing keys: AI agents, workloads, and services with their own
    credentials.  Where actors cannot sign, actor receipts
-   [ACTOR-RECEIPTS] remain the available provenance layer, and this
-   profile adds nothing.  The two companions serve complementary
-   deployment populations and are strongest together.
+   [I-D.mcguinness-oauth-actor-receipts] remain the available provenance
+   layer, and this profile adds nothing.  The two companions serve
+   complementary deployment populations and are strongest together.
 
    Proofs shift trust configuration from per-issuer enumeration to per-
    actor key resolution.  This is a different burden, not a smaller one:
@@ -556,10 +558,10 @@ Table of Contents
 
    sub_iss:  OPTIONAL.  The namespace authority under which the proof
       sub value is interpreted, with the semantics defined for the
-      sub_iss claim in [ACTOR-RECEIPTS].  When absent, the subject
-      namespace authority is not independently expressed by this profile
-      and MUST be determined, if needed, from trusted local context for
-      the represented hop.
+      sub_iss claim in [I-D.mcguinness-oauth-actor-receipts].  When
+      absent, the subject namespace authority is not independently
+      expressed by this profile and MUST be determined, if needed, from
+      trusted local context for the represented hop.
 
    act:  REQUIRED.  A single-hop actor object identifying the signing
       actor.  This object:
@@ -582,10 +584,11 @@ Table of Contents
       under this profile.
 
    This profile deliberately defines no proof counterpart to the receipt
-   sub_profile claim of [ACTOR-RECEIPTS]: subject classification is
-   asserted by issuers rather than by acting parties, so an actor-signed
-   copy would add no actor-attested information.  Actor classification
-   travels in the proof's act.sub_profile when present.
+   sub_profile claim of [I-D.mcguinness-oauth-actor-receipts]: subject
+   classification is asserted by issuers rather than by acting parties,
+   so an actor-signed copy would add no actor-attested information.
+   Actor classification travels in the proof's act.sub_profile when
+   present.
 
 7.2.2.  Target Binding
 
@@ -632,11 +635,11 @@ Table of Contents
       oldest proof in the chain, including a single-element chain in
       which the sole proof is both newest and oldest, MUST omit prh.
 
-      The prh and prh_alg claims are reused from [ACTOR-RECEIPTS] with
-      the same construction, applied to proof JWTs.  The proof chain is
-      linked independently of any receipt chain carried in the same
-      token: each companion's prh values hash that companion's own
-      artifacts.
+      The prh and prh_alg claims are reused from
+      [I-D.mcguinness-oauth-actor-receipts] with the same construction,
+      applied to proof JWTs.  The proof chain is linked independently of
+      any receipt chain carried in the same token: each companion's prh
+      values hash that companion's own artifacts.
 
    prh_alg:  OPTIONAL.  Hash algorithm identifier naming the algorithm
       used to compute prh.
@@ -672,7 +675,7 @@ Table of Contents
 7.2.4.  Sibling Receipt Reference
 
    receipt_jti:  OPTIONAL.  The jti of the sibling receipt created for
-      the same hop under [ACTOR-RECEIPTS].
+      the same hop under [I-D.mcguinness-oauth-actor-receipts].
 
       Because the actor signs the proof before the issuer signs the
       sibling receipt, this claim can be populated only when the
@@ -725,7 +728,7 @@ Table of Contents
 
    origin_jti:  OPTIONAL.  The jti of the outer token issued at the hop
       this proof covers, following the pattern of the origin_jti claim
-      defined in [ACTOR-RECEIPTS].
+      defined in [I-D.mcguinness-oauth-actor-receipts].
 
       Because the actor signs the proof before the outer token exists,
       this claim can be populated only when the issuance flow provides
@@ -1050,14 +1053,15 @@ Table of Contents
 
 9.6.  Sibling Receipt Issuance
 
-   When a deployment uses both this profile and [ACTOR-RECEIPTS], the
-   issuer that adds a hop creates the receipt and embeds the proof for
-   that hop in the same issuance operation.  The two artifacts are
-   siblings: independent attestations of the same hop by different
-   signers.
+   When a deployment uses both this profile and
+   [I-D.mcguinness-oauth-actor-receipts], the issuer that adds a hop
+   creates the receipt and embeds the proof for that hop in the same
+   issuance operation.  The two artifacts are siblings: independent
+   attestations of the same hop by different signers.
 
    This document defines the following extension claim for Actor Receipt
-   JWTs, under the extension-claims rule of [ACTOR-RECEIPTS]:
+   JWTs, under the extension-claims rule of
+   [I-D.mcguinness-oauth-actor-receipts]:
 
    proof_jti:  OPTIONAL.  The jti of the proof the receipt issuer
       validated for the same hop.  When the issuer embeds a proof and
@@ -1233,7 +1237,8 @@ Table of Contents
            or resources.
 
    10.  Verify sibling references, when the token also carries
-        actor_receipts validated under [ACTOR-RECEIPTS]:
+        actor_receipts validated under
+        [I-D.mcguinness-oauth-actor-receipts]:
 
         *  for each index i covered by both arrays, when
            actor_receipts[i] carries proof_jti, it MUST equal
@@ -1414,15 +1419,15 @@ Table of Contents
 
    The core actor profile's chain_complete introspection member and
    actor_proofs_complete are distinct signals, exactly as described for
-   receipts in [ACTOR-RECEIPTS]: when chain_complete: false, proof
-   coverage is complete only for the visible filtered chain, not the
-   full delegation chain.
+   receipts in [I-D.mcguinness-oauth-actor-receipts]: when
+   chain_complete: false, proof coverage is complete only for the
+   visible filtered chain, not the full delegation chain.
 
 11.  Discovery and Capability Signaling
 
    This section defines metadata for advertising support for actor
    proofs.  It follows the claim-pair and discovery conventions defined
-   in [ACTOR-RECEIPTS].
+   in [I-D.mcguinness-oauth-actor-receipts].
 
 11.1.  Authorization Server Metadata
 
@@ -1562,7 +1567,8 @@ Table of Contents
 13.  Extensibility
 
    This profile composes with the extensibility framework defined in
-   [ACTOR-RECEIPTS] and adds proof-specific extension surfaces:
+   [I-D.mcguinness-oauth-actor-receipts] and adds proof-specific
+   extension surfaces:
 
    *  *New claims inside a proof JWT* for additional per-hop actor-
       attested attributes.  Consumers ignore unrecognized claims under
@@ -1584,10 +1590,11 @@ Table of Contents
    *  *Actor-side non-hop event artifacts*, such as an actor re-
       consenting to a different target binding without a new actor hop.
       Companion profiles defining such artifacts SHOULD follow the non-
-      hop event artifact pattern of [ACTOR-RECEIPTS]: a signed JWT with
-      a typ value distinct from actor-proof+jwt, carried in a parallel
-      outer-token claim, anchored to a specific proof by the proof's jti
-      in a claim the companion defines, or to the delegation flow by a
+      hop event artifact pattern of
+      [I-D.mcguinness-oauth-actor-receipts]: a signed JWT with a typ
+      value distinct from actor-proof+jwt, carried in a parallel outer-
+      token claim, anchored to a specific proof by the proof's jti in a
+      claim the companion defines, or to the delegation flow by a
       correlation identifier the companion profile specifies.  Companion
       profiles MUST NOT add event-shaped entries to actor_proofs; that
       array is reserved for per-hop actor-signed proofs defined by this
@@ -1609,8 +1616,8 @@ Table of Contents
 
    *  Companion profiles that define per-hop signed artifacts SHOULD
       follow the claim-pair and discovery conventions of
-      [ACTOR-RECEIPTS], and MAY reuse the prh and prh_alg chain-linkage
-      construction.
+      [I-D.mcguinness-oauth-actor-receipts], and MAY reuse the prh and
+      prh_alg chain-linkage construction.
 
    Conflict resolution: when a recipient implements multiple companion
    profiles whose rules conflict, local policy determines precedence.
@@ -1773,15 +1780,16 @@ Table of Contents
 
    *  *Receipt-attested presenter keys.* When the sibling receipt for a
       hop carries the historical presenter binding cnf defined in
-      [ACTOR-RECEIPTS], and the deployment binds proof signing keys to
-      presenter keys, the recipient MAY verify the proof signature
-      against the key identified by the aligned receipt's cnf.  This
-      pattern requires no separate key registry, but the key attestation
-      derives from the receipt issuer: proofs verified this way provide
-      no independence from that issuer.  In particular, at the newest
-      hop, whose receipt is signed by the current outer token issuer in
-      the originating-issuance case, receipt-attested key resolution
-      provides no anti-fabrication protection against that issuer.
+      [I-D.mcguinness-oauth-actor-receipts], and the deployment binds
+      proof signing keys to presenter keys, the recipient MAY verify the
+      proof signature against the key identified by the aligned
+      receipt's cnf.  This pattern requires no separate key registry,
+      but the key attestation derives from the receipt issuer: proofs
+      verified this way provide no independence from that issuer.  In
+      particular, at the newest hop, whose receipt is signed by the
+      current outer token issuer in the originating-issuance case,
+      receipt-attested key resolution provides no anti-fabrication
+      protection against that issuer.
 
    *  *Federation and workload identity systems.* Deployment-defined
       resolution through workload identity or federation infrastructure.
@@ -1820,12 +1828,12 @@ Table of Contents
 
    *  *Receipts composition.* When the token also carries receipts, the
       receipt chain's origin_jti anchoring and strict-mode rules in
-      [ACTOR-RECEIPTS] bind the token instance, and proof_jti
-      (Section 9.6) binds the proof chain to that anchored receipt
-      chain.  A re-embedded proof would require a matching fabricated
-      receipt, which the receipt trust model prevents for issuers that
-      cannot sign trusted receipts.  This is the RECOMMENDED posture for
-      deployments that require instance binding.
+      [I-D.mcguinness-oauth-actor-receipts] bind the token instance, and
+      proof_jti (Section 9.6) binds the proof chain to that anchored
+      receipt chain.  A re-embedded proof would require a matching
+      fabricated receipt, which the receipt trust model prevents for
+      issuers that cannot sign trusted receipts.  This is the
+      RECOMMENDED posture for deployments that require instance binding.
 
    *  *Provisioned origin_jti.* When the issuance flow provides the
       prospective outer-token jti to the actor before signing,
@@ -1867,9 +1875,10 @@ Table of Contents
 
 14.5.  Hash Algorithm Agility
 
-   The prh and prh_alg agility rules of [ACTOR-RECEIPTS] apply to proof
-   chains unchanged: one algorithm per chain, whole-chain migration
-   only, no rehashing of inherited artifacts, and rejection of mixed or
+   The prh and prh_alg agility rules of
+   [I-D.mcguinness-oauth-actor-receipts] apply to proof chains
+   unchanged: one algorithm per chain, whole-chain migration only, no
+   rehashing of inherited artifacts, and rejection of mixed or
    unsupported algorithms.  The proof chain's algorithm is independent
    of the receipt chain's algorithm in the same token.
 
@@ -1955,12 +1964,12 @@ Table of Contents
 
    A proof does not inherit revocation or trust state from its sibling
    receipt.  When a deployment removes a receipt issuer from its
-   trusted-issuer set under [ACTOR-RECEIPTS], proofs for the same hops
-   remain valid under their own actor keys, and vice versa.  Recipients
-   that require issuer-side revocation semantics for a hop MUST require
-   receipt validation alongside proof validation rather than relying on
-   the proof alone; the sibling references of Section 9.6 identify the
-   receipt whose trust state applies to a hop.
+   trusted-issuer set under [I-D.mcguinness-oauth-actor-receipts],
+   proofs for the same hops remain valid under their own actor keys, and
+   vice versa.  Recipients that require issuer-side revocation semantics
+   for a hop MUST require receipt validation alongside proof validation
+   rather than relying on the proof alone; the sibling references of
+   Section 9.6 identify the receipt whose trust state applies to a hop.
 
 15.  Privacy Considerations
 
@@ -2154,12 +2163,12 @@ Table of Contents
    *  Specification Document(s): This document
 
    This document reuses the prh, prh_alg, origin_jti, and sub_iss claims
-   registered by [ACTOR-RECEIPTS], with the semantics defined there,
-   applied to Actor Proof JWTs as profiled in this document.  This
-   document requests that IANA add this document to the Specification
-   Document(s) entries for those four registrations, and requests that
-   their Claim Description entries be updated to cover both artifact
-   types:
+   registered by [I-D.mcguinness-oauth-actor-receipts], with the
+   semantics defined there, applied to Actor Proof JWTs as profiled in
+   this document.  This document requests that IANA add this document to
+   the Specification Document(s) entries for those four registrations,
+   and requests that their Claim Description entries be updated to cover
+   both artifact types:
 
    *  prh: Base64url-encoded hash of the immediately preceding (older)
       entry in a chained array of delegation-evidence JWTs (Actor
@@ -2253,13 +2262,13 @@ Table of Contents
 
    This document builds on the OAuth Actor Profile for Delegation
    [I-D.mcguinness-oauth-actor-profile], on the OAuth Actor Receipts
-   companion [ACTOR-RECEIPTS], on the OAuth 2.0 Token Exchange
-   specification [RFC8693], on the OAuth 2.0 Transaction Tokens work
-   [I-D.ietf-oauth-transaction-tokens], and on prior OAuth Working Group
-   discussion of delegation transparency, sender-constrained tokens, and
-   proof-of-possession mechanisms ([RFC7800], [RFC8705], [RFC9449]).
-   Related actor-evidence efforts and their relationship to this
-   document are discussed in Section 3.2.
+   companion [I-D.mcguinness-oauth-actor-receipts], on the OAuth 2.0
+   Token Exchange specification [RFC8693], on the OAuth 2.0 Transaction
+   Tokens work [I-D.ietf-oauth-transaction-tokens], and on prior OAuth
+   Working Group discussion of delegation transparency, sender-
+   constrained tokens, and proof-of-possession mechanisms ([RFC7800],
+   [RFC8705], [RFC9449]).  Related actor-evidence efforts and their
+   relationship to this document are discussed in Section 3.2.
 
    Individual contributors and reviewers will be acknowledged in
    subsequent revisions of this document as feedback accumulates.
@@ -2358,11 +2367,12 @@ Table of Contents
               <https://datatracker.ietf.org/doc/html/draft-mcguinness-
               oauth-actor-profile-00>.
 
-   [ACTOR-RECEIPTS]
+   [I-D.mcguinness-oauth-actor-receipts]
               McGuinness, K., "OAuth Actor Receipts for Delegation
-              Provenance", July 2026, <https://mcguinness.github.io/
-              draft-mcguinness-oauth-actor-profile/draft-mcguinness-
-              oauth-actor-receipts.html>.
+              Provenance", Work in Progress, Internet-Draft, draft-
+              mcguinness-oauth-actor-receipts-00, 4 July 2026,
+              <https://datatracker.ietf.org/doc/html/draft-mcguinness-
+              oauth-actor-receipts-00>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -2427,10 +2437,10 @@ Appendix A.  Examples
    deployments, proof exp is set per Section 7.2 and Section 9.2 so that
    no inbound proof expires before the outer token that carries it.  The
    delegation scenario continues the two-hop travel example of
-   [ACTOR-RECEIPTS]: the subject alice delegates to an AI travel-
-   assistant agent through the enterprise AS, and the agent's token is
-   exchanged at the travel-provider AS, which adds a booking tool as the
-   new outermost actor.
+   [I-D.mcguinness-oauth-actor-receipts]: the subject alice delegates to
+   an AI travel-assistant agent through the enterprise AS, and the
+   agent's token is exchanged at the travel-provider AS, which adds a
+   booking tool as the new outermost actor.
 
 A.1.  Example: Two-Hop Delegation Chain with Sibling Receipts
 
@@ -2508,13 +2518,13 @@ A.1.  Example: Two-Hop Delegation Chain with Sibling Receipts
    }
 
    The sibling receipts follow the same construction as the examples of
-   [ACTOR-RECEIPTS], with the proof_jti claim defined in Section 9.6
-   included at receipt creation.  Because these receipts carry
-   proof_jti, they are different byte strings from the receipts shown in
-   that document's examples: they carry their own jti values, and the
-   newest receipt's prh differs because it hashes a different older
-   receipt.  The newest receipt, signed by the travel-provider AS,
-   carries:
+   [I-D.mcguinness-oauth-actor-receipts], with the proof_jti claim
+   defined in Section 9.6 included at receipt creation.  Because these
+   receipts carry proof_jti, they are different byte strings from the
+   receipts shown in that document's examples: they carry their own jti
+   values, and the newest receipt's prh differs because it hashes a
+   different older receipt.  The newest receipt, signed by the travel-
+   provider AS, carries:
 
    {
      "iss": "https://as.travel-provider.example",
