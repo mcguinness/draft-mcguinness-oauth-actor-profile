@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-07-12T01:21:41.118989+00:00",
+  "timestamp": "2026-07-23T01:25:26.316676+00:00",
   "repo": "mcguinness/draft-mcguinness-oauth-actor-profile",
   "labels": [
     {
@@ -123,6 +123,30 @@
           "body": "On the correlation claim: one construction that has held up in practice is a value recomputable from the actor chain plus the action's own fields. Take a fixed field set (agent identifier, action type, requested scope, timestamp), canonicalize with JCS (RFC 8785), hash, and record which actor in the chain holds the principal role so the principal-versus-agent distinction survives to a verifier. Any party holding the chain and the action fields can recompute the value without decision-time state.\n\nThis is the construction draft-pidlisnyi-aps specifies (section 4.1), with conformance vectors, offered here as prior art rather than a dependency. The one design point worth settling in the claim definition: keep decision-time attributes out of the preimage and bind them in the signed record instead, or the claim stops being recomputable by parties outside the authorization path.\n",
           "createdAt": "2026-07-09T23:33:29Z",
           "updatedAt": "2026-07-09T23:33:29Z"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "id": "I_kwDOR1X6Tc8AAAABJi484A",
+      "title": "act.cnf: agent-instance/CIA examples nest confirmation inside act; base profile leaves its semantics undefined and receipts prohibit it in receipt hops",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile/issues/4",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Found while planning a Mission reference implementation that composes the base actor profile with draft-mcguinness-oauth-ai-agent-instance (full instance profile), where a strict base-profile validator and instance-shaped tokens must coexist.\n\n## The three positions\n\n1. **Base actor profile** (`draft-mcguinness-oauth-actor-profile.md`, \u00a7 Top-Level cnf Governs the Current Presenter): PoP is validated against the top-level `cnf` only, and \"Confirmation-style members that appear inside an `act` object due to another specification do not have standardized proof-of-possession semantics under this document.\" Also: \"This profile does not define per-actor confirmation members within nested `act` objects\" \u2014 pointing at the companion-profile extension pattern for stronger prior-hop key provenance.\n\n2. **Actor Receipts** (`draft-mcguinness-oauth-actor-receipts.md`, receipt actor-object rules): a receipt's single-hop `act` \"MUST NOT contain `cnf`\", with the rationale that historical key binding belongs at the receipt's top-level `cnf` \"where its role as provenance-only is unambiguous. A receipt that carries `act.cnf` is invalid under this profile.\"\n\n3. **ai-agent-instance -00** (\u00a7 8 worked examples): the example access tokens carry the *same* `jkt` twice \u2014 top-level `cnf` and again inside the `act` object (e.g. `\"cnf\": {\"jkt\": \"0ZcOCORZNYy...\"}` at both levels; the second example likewise duplicates `QrS...XyZ`).\n\n## Why it matters\n\n- Duplication invites divergence: nothing says what a validator should do when `act.cnf` != top-level `cnf` (bug? attack? stale after presenter rebind?).\n- After a further delegation hop, the prior hop's `act.cnf` becomes historical key provenance \u2014 exactly the thing the base profile declines to standardize and the receipts companion deliberately relocates to receipt top-level `cnf`.\n- A deployment composing all three specs has no single answer to \"is `act.cnf` allowed, and what does it mean?\"\n\n## Possible resolutions\n\na. Drop `act.cnf` from the agent-instance/CIA examples (top-level `cnf` already carries the instance key; `agent_instance_id` is explicitly key-independent).\nb. Keep it but define its semantics in CIA-CORE/agent-instance via the base profile's companion-profile extension pattern (e.g. \"informative echo of the instance key at surfacing time; never used for PoP; MUST be ignored if it disagrees with top-level `cnf`\").\nc. Standardize historical key provenance properly \u2014 which is what Actor Receipts already does, arguing for (a) in the token itself.\n\nOur implementation stance until resolved: validate PoP against top-level `cnf` only and treat `act.cnf` as informative.",
+      "createdAt": "2026-07-21T04:51:49Z",
+      "updatedAt": "2026-07-21T21:03:39Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "mcguinness",
+          "authorAssociation": "OWNER",
+          "body": "Implementation data point from the Mission reference implementation's pre-flight spike: CIA-CORE (draft-mcguinness-oauth-client-instance-assertion) already answers the semantics half of this issue in its \u00a7 Security-binding text:\n\n> \"Per {{ACTOR-PROFILE}}, the resource server validates proof of possession against the access token's top-level `cnf` **only**; confirmation members inside an `act` object are actor context for audit and correlation, not a binding the RS independently verifies.\"\n\nAnd by construction (CIA-CORE's chain-merge rules), the outermost `act.cnf` is always set from the same validated assertion `cnf` as the token's top-level `cnf` \u2014 so in CIA-shaped tokens the duplication can never legitimately diverge at issuance time.\n\nThat narrows this issue to two residuals: (a) the divergence question is answered only for the issuance hop \u2014 after a further delegation hop the prior `act.cnf` becomes historical binding, which the base profile declines to standardize and receipts deliberately relocate; and (b) the receipts prohibition still forces a lossy transform when a receipt is minted for a CIA-shaped hop. Resolution (b) from the issue body (define semantics via the companion-profile extension pattern, e.g. \"audit echo; MUST be ignored if it disagrees with top-level `cnf`\") would close both cleanly \u2014 and CIA-CORE's existing sentence is most of that text already.\n\nOur implementation stance is unchanged: PoP against top-level `cnf` only; every `act.cnf` at any depth treated as audit metadata.",
+          "createdAt": "2026-07-21T21:03:38Z",
+          "updatedAt": "2026-07-21T21:03:38Z"
         }
       ]
     }
