@@ -255,9 +255,18 @@ Table of Contents
 3.1.  Relationship to the Actor Receipts Companion
 
    Receipts are signed by the AS; proofs are signed by the actor.  A
-   token MAY carry either or both.  Recipients choose which to validate
-   under local policy.  Validating both supplies independent
-   attestations, linked by the sibling references in Section 9.6.
+   token MAY carry either, both, or neither, and recipients select a
+   validation posture by local policy:
+
+   *  *Receipts-only*: proofs absent or ignored; trust per
+      [I-D.mcguinness-oauth-actor-receipts].
+
+   *  *Proofs-only*: receipts absent or ignored; trust rests on actor-
+      key resolution and actor signatures.
+
+   *  *Belt-and-suspenders*: both validated; independent issuer-side and
+      actor-side attestations for covered hops, linked by the sibling
+      references in Section 9.6.
 
    Separate compact JWTs let deployments adopt issuer and actor evidence
    independently.  Proofs require actor signing keys and trusted key
@@ -1165,12 +1174,30 @@ Table of Contents
 
 10.3.  Use by Resource Servers
 
-   Resource servers can use validated proofs for authorization,
-   diagnostics, and audit, subject to the limits in Section 14.1.
-   Proofs attest actor participation and hop-time target consent.  They
-   do not establish current consent, active authorization, or AS
-   validation of a hop.  The current token and policy still govern
-   access.
+   Resource servers can use validated proofs as evidence input for
+   authorization, diagnostics, and audit, subject to the limits in
+   Section 14.1.  However, a valid proof chain:
+
+   *  proves only that the covered actors signed their participation and
+      hop-time target bindings;
+
+   *  does not prove that the represented delegation remains active,
+      authorized, or acceptable under current policy;
+
+   *  does not prove that any authorization server validated the hop;
+      that attestation is the receipts companion's role;
+
+   *  does not replace the need to authorize the current token itself;
+
+   *  does not convey authority, authorization, entitlement, or
+      delegation rights;
+
+   *  is not actor consent to the current request; it is actor consent
+      to the hop-time issuance within the recorded target binding.
+
+   A resource server that bases an authorization decision on proof
+   content alone, without re-evaluating the current outer token and
+   current policy, mis-uses this profile.
 
 10.4.  Introspection
 
@@ -1589,7 +1616,8 @@ Table of Contents
 14.4.  Proof-to-Token Binding Limits
 
    Without instance binding, a proof records a subject, actor, target,
-   and validity window.  A holder can reuse it in another token matching
+   and validity window.  Any party holding it, including the issuer it
+   was legitimately submitted to, can reuse it in another token matching
    that context without invalidating its signature.  The signature
    therefore evidences consent to that context, not to a particular
    token issuance.

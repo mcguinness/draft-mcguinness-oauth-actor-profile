@@ -2211,7 +2211,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         </h3>
 <p id="section-9.2-1">Only <code>receipt[0].sub</code> must match the outer token.  Older receipts <span class="bcp14">MAY</span> carry different subject identifiers.  A recipient requiring continuity across them <span class="bcp14">MUST</span> use explicit trusted mappings.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
 <p id="section-9.2-2">Matching actors alone do not establish subject continuity.  A compromised upstream issuer can mint receipts for an unrelated subject and insert them into a chain with matching actors.  Recipients <span class="bcp14">MUST</span> account for this risk.<a href="#section-9.2-2" class="pilcrow">¶</a></p>
-<p id="section-9.2-3">Deployments requiring subject continuity <span class="bcp14">SHOULD</span> either require identical subject identifiers throughout or positively reconcile them through trusted mappings.  Otherwise, recipients <span class="bcp14">MUST</span> treat continuity as unverified and <span class="bcp14">MUST NOT</span> use the differing older receipts for authorization.<a href="#section-9.2-3" class="pilcrow">¶</a></p>
+<p id="section-9.2-3">Deployments requiring subject continuity <span class="bcp14">SHOULD</span> either require identical subject identifiers throughout or positively reconcile them through trusted mappings.  When neither applies, recipients <span class="bcp14">MUST</span> treat continuity as unverified and <span class="bcp14">MUST NOT</span> use the differing older receipts for authorization.<a href="#section-9.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="complete-receipt-coverage">
@@ -2228,7 +2228,25 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-use-by-resource-servers">
 <a href="#section-9.4" class="section-number selfRef">9.4. </a><a href="#name-use-by-resource-servers" class="section-name selfRef">Use by Resource Servers</a>
         </h3>
-<p id="section-9.4-1">Resource servers can use validated receipts for authorization, diagnostics, and audit, subject to the limits in <a href="#threat-model" class="auto internal xref">Section 13.1</a>.  Receipts attest issuer statements about hops, not historical scope, audience, lifetime, or current authorization.  The current token and policy still govern access.<a href="#section-9.4-1" class="pilcrow">¶</a></p>
+<p id="section-9.4-1">Resource servers can use validated receipts as provenance input for authorization, diagnostics, and audit, subject to the limits in <a href="#threat-model" class="auto internal xref">Section 13.1</a>.  However, a valid receipt chain:<a href="#section-9.4-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-9.4-2.1">
+            <p id="section-9.4-2.1.1">proves only that trusted issuers attested specific visible actor hops;<a href="#section-9.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.4-2.2">
+            <p id="section-9.4-2.2.1">does not prove that the current token's audience, scope, or expiration were in force when older receipts were created;<a href="#section-9.4-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.4-2.3">
+            <p id="section-9.4-2.3.1">does not replace the need to authorize the current token itself;<a href="#section-9.4-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.4-2.4">
+            <p id="section-9.4-2.4.1">does not convey authority, authorization, entitlement, or delegation rights;<a href="#section-9.4-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-9.4-2.5">
+            <p id="section-9.4-2.5.1">does not imply the represented delegation remains active or acceptable under current policy.<a href="#section-9.4-2.5.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-9.4-3">A resource server that bases an authorization decision on receipt content alone, without re-evaluating the current outer token and current policy, mis-uses this profile.<a href="#section-9.4-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="consumer-introspection">
@@ -2251,7 +2269,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-9.5-6">An RS receiving both inline and introspected receipts <span class="bcp14">MUST</span> select an authoritative source under local policy.  If it consumes both, differing arrays or completeness values <span class="bcp14">MUST</span> cause rejection of receipt-based provenance.<a href="#section-9.5-6" class="pilcrow">¶</a></p>
 <p id="section-9.5-7">An introspection server <span class="bcp14">MUST</span> return the full stored array or omit <code>actor_receipts</code>.  Removing an older entry breaks <code>prh</code>; removing the newest breaks hop alignment.  A stored array with partial coverage is returned in full with <code>actor_receipts_complete: false</code>.<a href="#section-9.5-7" class="pilcrow">¶</a></p>
 <p id="section-9.5-8">For an inactive token, the introspection server <span class="bcp14">MUST NOT</span> return <code>actor_receipts</code> or <code>actor_receipts_complete</code>.<a href="#section-9.5-8" class="pilcrow">¶</a></p>
-<p id="section-9.5-9">Consumers <span class="bcp14">MUST</span> evaluate <code>chain_complete</code> and <code>actor_receipts_complete</code> independently.  The former describes filtering of the visible <code>act</code> chain; the latter describes receipt coverage of that chain.  Complete receipt coverage therefore does not prove that no actors were filtered.<a href="#section-9.5-9" class="pilcrow">¶</a></p>
+<p id="section-9.5-9">Consumers that rely on both signals <span class="bcp14">MUST</span> evaluate <code>chain_complete</code> and <code>actor_receipts_complete</code> independently.  The former describes filtering of the visible <code>act</code> chain; the latter describes receipt coverage of that chain.  Complete receipt coverage therefore does not prove that no actors were filtered.<a href="#section-9.5-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2338,7 +2356,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-claim-pair-convention-for-s">
 <a href="#section-10.5" class="section-number selfRef">10.5. </a><a href="#name-claim-pair-convention-for-s" class="section-name selfRef">Claim-Pair Convention for Sibling Profiles</a>
         </h3>
-<p id="section-10.5-1">Sibling profiles <span class="bcp14">SHOULD</span> use the same naming convention:<a href="#section-10.5-1" class="pilcrow">¶</a></p>
+<p id="section-10.5-1">Companion profiles that define their own per-hop signed artifact arrays <span class="bcp14">SHOULD</span> use the same naming convention, <span class="bcp14">SHOULD</span> advertise support in AS metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>, and <span class="bcp14">SHOULD</span> advertise requirements in Protected Resource Metadata <span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span>:<a href="#section-10.5-1" class="pilcrow">¶</a></p>
 <table class="center" id="table-1">
           <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
 <thead>
@@ -2380,17 +2398,16 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             </tr>
           </tbody>
         </table>
-<p id="section-10.5-3">Support appears in AS metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>; requirements appear in Protected Resource Metadata <span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span>.<a href="#section-10.5-3" class="pilcrow">¶</a></p>
-<p id="section-10.5-4">Companion profiles add per-hop signal in two distinct patterns, and <span class="bcp14">SHOULD</span> pick the one that matches their signer:<a href="#section-10.5-4" class="pilcrow">¶</a></p>
+<p id="section-10.5-3">Companion profiles add per-hop signal in two distinct patterns, and <span class="bcp14">SHOULD</span> pick the one that matches their signer:<a href="#section-10.5-3" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-10.5-5.1">
-            <p id="section-10.5-5.1.1"><strong>Parallel artifact arrays</strong>: a companion outer-token claim parallel to <code>actor_receipts</code>, following the <code>&lt;name&gt;</code> plus <code>&lt;name&gt;_complete</code> convention above.  Each entry is a separately signed JWT.  Use this pattern when the artifact needs its own signer trust independent of the receipt issuer (for example, actor-signed proofs whose threat model differs from AS-signed receipts, or recipient-signed acknowledgments).<a href="#section-10.5-5.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-10.5-4.1">
+            <p id="section-10.5-4.1.1"><strong>Parallel artifact arrays</strong>: a companion outer-token claim parallel to <code>actor_receipts</code>, following the <code>&lt;name&gt;</code> plus <code>&lt;name&gt;_complete</code> convention above.  Each entry is a separately signed JWT.  Use this pattern when the artifact needs its own signer trust independent of the receipt issuer (for example, actor-signed proofs whose threat model differs from AS-signed receipts, or recipient-signed acknowledgments).<a href="#section-10.5-4.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-10.5-5.2">
-            <p id="section-10.5-5.2.1"><strong>Per-receipt extension claims</strong>: a claim added to each receipt JWT and verified as part of the receipt's signature.  Use this pattern when the assertion is something the receipt issuer is already attesting (for example, per-hop authority bounds, delegation-flow correlation, or lifecycle-state snapshots).  Recognized per the unrecognized-claims rule in <a href="#receipt-claims" class="auto internal xref">Section 7.2</a>; cross-receipt verification follows <a href="#extensibility" class="auto internal xref">Section 12</a>.<a href="#section-10.5-5.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-10.5-4.2">
+            <p id="section-10.5-4.2.1"><strong>Per-receipt extension claims</strong>: a claim added to each receipt JWT and verified as part of the receipt's signature.  Use this pattern when the assertion is something the receipt issuer is already attesting (for example, per-hop authority bounds, delegation-flow correlation, or lifecycle-state snapshots).  Recognized per the unrecognized-claims rule in <a href="#receipt-claims" class="auto internal xref">Section 7.2</a>; cross-receipt verification follows <a href="#extensibility" class="auto internal xref">Section 12</a>.<a href="#section-10.5-4.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-10.5-6">The two patterns serve different threat models and have different completeness semantics: parallel-array companions inherit the claim-pair coverage machinery defined here; per-receipt-claim companions define their own completeness rules over the set of receipts that carry the claim.<a href="#section-10.5-6" class="pilcrow">¶</a></p>
+<p id="section-10.5-5">The two patterns serve different threat models and have different completeness semantics: parallel-array companions inherit the claim-pair coverage machinery defined here; per-receipt-claim companions define their own completeness rules over the set of receipts that carry the claim.<a href="#section-10.5-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2683,7 +2700,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <a href="#section-13.7" class="section-number selfRef">13.7. </a><a href="#name-receipt-freshness-and-repla" class="section-name selfRef">Receipt Freshness and Replay</a>
         </h3>
 <p id="section-13.7-1">Receipts are historical attestations of past delegation state.  They <span class="bcp14">MAY</span> outlive the validity period of the outer token they were originally issued for, and <span class="bcp14">MAY</span> be carried forward across reissuance and refresh as long as their <code>exp</code> permits (<a href="#receipt-claims" class="auto internal xref">Section 7.2</a>).<a href="#section-13.7-1" class="pilcrow">¶</a></p>
-<p id="section-13.7-2">Receipt expiration bounds use of the artifact, not the delegation's lifetime.  Receipt reuse is expected during reissuance; replay protection for the whole token follows its token type.  Current authorization and revocation checks remain separate.<a href="#section-13.7-2" class="pilcrow">¶</a></p>
+<p id="section-13.7-2">Receipt expiration bounds use of the artifact, not the delegation's lifetime.  Reuse of a receipt within its <code>exp</code> window, including in extended, fanned-out, and reissued tokens, is not in itself an attack; replay protection for the whole token follows its token type.  Current authorization and revocation checks remain separate.<a href="#section-13.7-2" class="pilcrow">¶</a></p>
 <p id="section-13.7-3">Deployments needing freshness signals beyond receipt <code>exp</code>, such as active delegation status, fresh authorization confirmation, or current revocation state, <span class="bcp14">MUST</span> obtain those signals from the AS via introspection (<span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>), fresh token issuance, or another mechanism outside the scope of this profile.<a href="#section-13.7-3" class="pilcrow">¶</a></p>
 </section>
 </div>

@@ -7,7 +7,7 @@
 <title>OAuth Actor Chain Authority Bounds</title>
 <meta content="Karl McGuinness" name="author">
 <meta content="
-       This document defines OAuth Actor Chain Authority Bounds, an optional companion to the OAuth Actor Profile for Delegation and Actor Receipts.  Receipt claims record authority at each hop so recipients can detect expansion in governed dimensions unless an explicit re-authorization establishes new bounds.  Signed JSON Web Token (JWT) events record re-authorization between hops.  This document specifies comparison rules, issuer self-attestation, metadata, and introspection parameters. 
+       This document defines OAuth Actor Chain Authority Bounds, an optional companion to the OAuth Actor Profile for Delegation and Actor Receipts.  Receipt claims record authority at each hop so recipients can detect expansion in  scope ,  resource , and  authorization_details , and in  aud  where audience is governed, unless an explicit re-authorization establishes new bounds.  Signed JSON Web Token (JWT) events record re-authorization between hops.  This document specifies comparison rules, issuer self-attestation, metadata, and introspection parameters. 
     " name="description">
 <meta content="xml2rfc 3.34.1" name="generator">
 <meta content="oauth" name="keyword">
@@ -1081,7 +1081,7 @@ svg {
 <h1 id="title">OAuth Actor Chain Authority Bounds</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document defines OAuth Actor Chain Authority Bounds, an optional companion to the OAuth Actor Profile for Delegation and Actor Receipts.  Receipt claims record authority at each hop so recipients can detect expansion in governed dimensions unless an explicit re-authorization establishes new bounds.  Signed JSON Web Token (JWT) events record re-authorization between hops.  This document specifies comparison rules, issuer self-attestation, metadata, and introspection parameters.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document defines OAuth Actor Chain Authority Bounds, an optional companion to the OAuth Actor Profile for Delegation and Actor Receipts.  Receipt claims record authority at each hop so recipients can detect expansion in <code>scope</code>, <code>resource</code>, and <code>authorization_details</code>, and in <code>aud</code> where audience is governed, unless an explicit re-authorization establishes new bounds.  Signed JSON Web Token (JWT) events record re-authorization between hops.  This document specifies comparison rules, issuer self-attestation, metadata, and introspection parameters.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1600,7 +1600,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-6.4-2.3.1">for the common members defined by <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span>, refinement requires: <code>actions</code> a subset, <code>locations</code> a subset under the URI rules of <a href="#resource-dimension" class="auto internal xref">Section 6.3</a>, <code>datatypes</code> a subset, and <code>identifier</code> equal.<a href="#section-6.4-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-6.4-3">For unrecognized type-specific members, the recipient <span class="bcp14">MUST</span> reject verification of that dimension by default, or skip the object's refinement under explicit local policy.  RAR type specifications <span class="bcp14">SHOULD</span> define their own refinement rules; see <a href="#extensibility" class="auto internal xref">Section 14</a>.<a href="#section-6.4-3" class="pilcrow">¶</a></p>
+<p id="section-6.4-3">For type-specific members the recipient cannot evaluate, the recipient <span class="bcp14">MUST</span> reject verification of that dimension by default, or skip the object's refinement under explicit local policy.  RAR type specifications <span class="bcp14">SHOULD</span> define their own refinement rules; see <a href="#extensibility" class="auto internal xref">Section 14</a>.<a href="#section-6.4-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="dimensions-explicitly-not-governed">
@@ -1939,7 +1939,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-10.3-3.3.1"><span class="bcp14">SHOULD</span> reference, via <code>reauthorized.artifact</code>, the policy or agreement under which the cross-domain translation is authorized.<a href="#section-10.3-3.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-10.3-4">Comparison applies within each domain segment.  A recipient requiring end-to-end monotonicity <span class="bcp14">MUST</span> reject domain-transition resets unless explicit trusted mappings establish cross-domain equivalence.<a href="#section-10.3-4" class="pilcrow">¶</a></p>
+<p id="section-10.3-4">Comparison applies within each domain segment.  A recipient requiring end-to-end monotonicity <span class="bcp14">MUST</span> reject chains containing <code>domain_transition</code> bases unless explicit trusted mappings establish cross-domain equivalence.<a href="#section-10.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="partial-and-sparse-coverage">
@@ -1957,7 +1957,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
       <h2 id="name-consumer-processing">
 <a href="#section-11" class="section-number selfRef">11. </a><a href="#name-consumer-processing" class="section-name selfRef">Consumer Processing</a>
       </h2>
-<p id="section-11-1">A recipient relying on this profile <span class="bcp14">MUST</span> perform the following steps:<a href="#section-11-1" class="pilcrow">¶</a></p>
+<p id="section-11-1">An issuer, resource server, or other recipient relying on this profile <span class="bcp14">MUST</span> perform the following steps:<a href="#section-11-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-11-2">
 <li id="section-11-2.1">
           <p id="section-11-2.1.1">Validate the outer token and receipt chain under <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>.  Bounds in receipts that fail that validation <span class="bcp14">MUST NOT</span> be used.<a href="#section-11-2.1.1" class="pilcrow">¶</a></p>
@@ -1983,7 +1983,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="section-11-2.3.1">Validate events in array order:<a href="#section-11-2.3.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-11-2.3.2.1">
-              <p id="section-11-2.3.2.1.1">Parse each compact JWT and establish issuer trust under <a href="#reauthorization-abuse" class="auto internal xref">Section 15.3</a> before retrieving keys or metadata based on event content.<a href="#section-11-2.3.2.1.1" class="pilcrow">¶</a></p>
+              <p id="section-11-2.3.2.1.1">Parse each compact JWT and verify that the event issuer is acceptable under the recipient's re-authorization trust policy (<a href="#reauthorization-abuse" class="auto internal xref">Section 15.3</a>) before any network retrieval keyed by event content.<a href="#section-11-2.3.2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-11-2.3.2.2">
               <p id="section-11-2.3.2.2.1">Resolve the key and validate the signature, <code>typ: bounds-event+jwt</code>, and <code>crit</code>; reject unrecognized critical headers.<a href="#section-11-2.3.2.2.1" class="pilcrow">¶</a></p>
@@ -1992,7 +1992,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-11-2.3.2.3.1">Check required claims and their types: <code>iss</code>, <code>event_type</code>, <code>receipt_jti</code>, <code>new_bounds</code>, <code>reauthorized</code>, <code>iat</code>, <code>exp</code>, and <code>jti</code>.<a href="#section-11-2.3.2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-11-2.3.2.4">
-              <p id="section-11-2.3.2.4.1">Enforce <code>iat</code> and <code>exp</code>, require <code>event_type: bounds_reauth</code>, and resolve <code>receipt_jti</code> to a validated receipt.  Reject unresolved anchors.<a href="#section-11-2.3.2.4.1" class="pilcrow">¶</a></p>
+              <p id="section-11-2.3.2.4.1">Enforce <code>iat</code> and <code>exp</code>, require <code>event_type: bounds_reauth</code>, and verify that <code>receipt_jti</code> names a receipt present in the validated chain.  Reject unresolved anchors.<a href="#section-11-2.3.2.4.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-11-2.3.2.5">
               <p id="section-11-2.3.2.5.1">Verify linkage under <a href="#bounds-events" class="auto internal xref">Section 8</a>: each non-oldest event hashes the next older event, all use one <code>prh_alg</code> or omit it, and the oldest omits <code>prh</code>.<a href="#section-11-2.3.2.5.1" class="pilcrow">¶</a></p>
@@ -2000,7 +2000,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           </ul>
 </li>
         <li id="section-11-2.4">
-          <p id="section-11-2.4.1">Compute the effective upper bound for each recorded dimension D at each receipt.  Start with <code>receipt[k].bounds[D]</code>.  If events anchored to that receipt contain D, use <code>new_bounds[D]</code> from the newest such event in chain order.<a href="#section-11-2.4.1" class="pilcrow">¶</a></p>
+          <p id="section-11-2.4.1">Compute the effective upper bound for each dimension D at each receipt <code>receipt[k]</code> that carries <code>bounds[D]</code>.  Start with <code>receipt[k].bounds[D]</code>.  If events anchored to that receipt contain D, use <code>new_bounds[D]</code> from the newest such event in chain order.<a href="#section-11-2.4.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-11-2.5">
           <p id="section-11-2.5.1">Compare adjacent receipts for each monotonic dimension, including <code>aud</code> when governed:<a href="#section-11-2.5.1" class="pilcrow">¶</a></p>
@@ -2017,7 +2017,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           </ul>
 </li>
         <li id="section-11-2.6">
-          <p id="section-11-2.6.1">Compare the current token with <code>receipt[0]</code> for each recorded D whose effective token value is available from claims, introspection, or trusted context.  The token's value <span class="bcp14">MUST</span> be within the receipt's effective upper bound.  Skip <code>resource</code> comparison when its effective value cannot be determined.<a href="#section-11-2.6.1" class="pilcrow">¶</a></p>
+          <p id="section-11-2.6.1">Compare the current token with <code>receipt[0]</code> for each D that <code>receipt[0]</code> carries in <code>bounds</code> and whose effective token value is available from claims, introspection, or trusted context.  The token's value <span class="bcp14">MUST</span> be within the receipt's effective upper bound.  Skip <code>resource</code> comparison when its effective value cannot be determined.<a href="#section-11-2.6.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-11-2.7">
           <p id="section-11-2.7.1">Check <code>authority_bounds_enforced</code>, if present.  Every named dimension <span class="bcp14">MUST</span> be recognized.  For named dimensions with recorded bounds, steps 4 through 6 <span class="bcp14">MUST</span> succeed; inconsistency <span class="bcp14">MUST</span> reject bounds evidence.<a href="#section-11-2.7.1" class="pilcrow">¶</a></p>
@@ -2318,7 +2318,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-recorded-values-and-token-r">
 <a href="#section-15.5" class="section-number selfRef">15.5. </a><a href="#name-recorded-values-and-token-r" class="section-name selfRef">Recorded Values and Token Reality</a>
         </h3>
-<p id="section-15.5-1"><code>bounds</code> members are attested copies of issued-token values, signed by the issuer that produced both.  An issuer that records values differing from what it actually issued produces either a detectable mismatch (the outer-token comparison at the terminal hop, or the next enforcing issuer's inbound check) or a consistent lie spanning its receipt and its token, which is the compromised-issuer case above.  Recipients comparing <code>bounds</code> against token values <span class="bcp14">MUST</span> use the effective values the token actually carries, not request-time values.<a href="#section-15.5-1" class="pilcrow">¶</a></p>
+<p id="section-15.5-1"><code>bounds</code> members are attested copies of issued-token values, signed by the issuer that produced both.  An issuer that records values differing from what it actually issued produces either a detectable mismatch (the outer-token comparison at the terminal hop, or the next enforcing issuer's inbound check) or a consistent lie spanning its receipt and its token, which is the intermediate authority expansion case in <a href="#threat-model" class="auto internal xref">Section 15.1</a>.  Recipients comparing <code>bounds</code> against token values <span class="bcp14">MUST</span> use the effective values the token actually carries, not request-time values.<a href="#section-15.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="event-chain-size-and-retention">

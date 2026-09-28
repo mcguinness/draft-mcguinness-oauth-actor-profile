@@ -1042,8 +1042,8 @@ Table of Contents
 
    Deployments requiring subject continuity SHOULD either require
    identical subject identifiers throughout or positively reconcile them
-   through trusted mappings.  Otherwise, recipients MUST treat
-   continuity as unverified and MUST NOT use the differing older
+   through trusted mappings.  When neither applies, recipients MUST
+   treat continuity as unverified and MUST NOT use the differing older
    receipts for authorization.
 
 9.3.  Complete Receipt Coverage
@@ -1059,11 +1059,27 @@ Table of Contents
 
 9.4.  Use by Resource Servers
 
-   Resource servers can use validated receipts for authorization,
-   diagnostics, and audit, subject to the limits in Section 13.1.
-   Receipts attest issuer statements about hops, not historical scope,
-   audience, lifetime, or current authorization.  The current token and
-   policy still govern access.
+   Resource servers can use validated receipts as provenance input for
+   authorization, diagnostics, and audit, subject to the limits in
+   Section 13.1.  However, a valid receipt chain:
+
+   *  proves only that trusted issuers attested specific visible actor
+      hops;
+
+   *  does not prove that the current token's audience, scope, or
+      expiration were in force when older receipts were created;
+
+   *  does not replace the need to authorize the current token itself;
+
+   *  does not convey authority, authorization, entitlement, or
+      delegation rights;
+
+   *  does not imply the represented delegation remains active or
+      acceptable under current policy.
+
+   A resource server that bases an authorization decision on receipt
+   content alone, without re-evaluating the current outer token and
+   current policy, mis-uses this profile.
 
 9.5.  Introspection
 
@@ -1104,11 +1120,11 @@ Table of Contents
    For an inactive token, the introspection server MUST NOT return
    actor_receipts or actor_receipts_complete.
 
-   Consumers MUST evaluate chain_complete and actor_receipts_complete
-   independently.  The former describes filtering of the visible act
-   chain; the latter describes receipt coverage of that chain.  Complete
-   receipt coverage therefore does not prove that no actors were
-   filtered.
+   Consumers that rely on both signals MUST evaluate chain_complete and
+   actor_receipts_complete independently.  The former describes
+   filtering of the visible act chain; the latter describes receipt
+   coverage of that chain.  Complete receipt coverage therefore does not
+   prove that no actors were filtered.
 
 10.  Discovery and Capability Signaling
 
@@ -1193,7 +1209,10 @@ Table of Contents
 
 10.5.  Claim-Pair Convention for Sibling Profiles
 
-   Sibling profiles SHOULD use the same naming convention:
+   Companion profiles that define their own per-hop signed artifact
+   arrays SHOULD use the same naming convention, SHOULD advertise
+   support in AS metadata [RFC8414], and SHOULD advertise requirements
+   in Protected Resource Metadata [RFC9728]:
 
          +============================+==========================+
          | Purpose                    | Name                     |
@@ -1211,9 +1230,6 @@ Table of Contents
          +----------------------------+--------------------------+
 
                                   Table 1
-
-   Support appears in AS metadata [RFC8414]; requirements appear in
-   Protected Resource Metadata [RFC9728].
 
    Companion profiles add per-hop signal in two distinct patterns, and
    SHOULD pick the one that matches their signer:
@@ -1665,9 +1681,10 @@ Table of Contents
    and refresh as long as their exp permits (Section 7.2).
 
    Receipt expiration bounds use of the artifact, not the delegation's
-   lifetime.  Receipt reuse is expected during reissuance; replay
-   protection for the whole token follows its token type.  Current
-   authorization and revocation checks remain separate.
+   lifetime.  Reuse of a receipt within its exp window, including in
+   extended, fanned-out, and reissued tokens, is not in itself an
+   attack; replay protection for the whole token follows its token type.
+   Current authorization and revocation checks remain separate.
 
    Deployments needing freshness signals beyond receipt exp, such as
    active delegation status, fresh authorization confirmation, or

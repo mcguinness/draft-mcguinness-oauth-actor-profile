@@ -16,7 +16,8 @@ Abstract
    This document defines OAuth Actor Chain Authority Bounds, an optional
    companion to the OAuth Actor Profile for Delegation and Actor
    Receipts.  Receipt claims record authority at each hop so recipients
-   can detect expansion in governed dimensions unless an explicit re-
+   can detect expansion in scope, resource, and authorization_details,
+   and in aud where audience is governed, unless an explicit re-
    authorization establishes new bounds.  Signed JSON Web Token (JWT)
    events record re-authorization between hops.  This document specifies
    comparison rules, issuer self-attestation, metadata, and
@@ -395,10 +396,11 @@ Table of Contents
       actions a subset, locations a subset under the URI rules of
       Section 6.3, datatypes a subset, and identifier equal.
 
-   For unrecognized type-specific members, the recipient MUST reject
-   verification of that dimension by default, or skip the object's
-   refinement under explicit local policy.  RAR type specifications
-   SHOULD define their own refinement rules; see Section 14.
+   For type-specific members the recipient cannot evaluate, the
+   recipient MUST reject verification of that dimension by default, or
+   skip the object's refinement under explicit local policy.  RAR type
+   specifications SHOULD define their own refinement rules; see
+   Section 14.
 
 6.5.  Dimensions Explicitly Not Governed
 
@@ -711,8 +713,9 @@ Table of Contents
       agreement under which the cross-domain translation is authorized.
 
    Comparison applies within each domain segment.  A recipient requiring
-   end-to-end monotonicity MUST reject domain-transition resets unless
-   explicit trusted mappings establish cross-domain equivalence.
+   end-to-end monotonicity MUST reject chains containing
+   domain_transition bases unless explicit trusted mappings establish
+   cross-domain equivalence.
 
 10.4.  Partial and Sparse Coverage
 
@@ -723,7 +726,8 @@ Table of Contents
 
 11.  Consumer Processing
 
-   A recipient relying on this profile MUST perform the following steps:
+   An issuer, resource server, or other recipient relying on this
+   profile MUST perform the following steps:
 
    1.  Validate the outer token and receipt chain under
        [ACTOR-RECEIPTS].  Bounds in receipts that fail that validation
@@ -745,8 +749,9 @@ Table of Contents
 
    3.  Validate events in array order:
 
-       *  Parse each compact JWT and establish issuer trust under
-          Section 15.3 before retrieving keys or metadata based on event
+       *  Parse each compact JWT and verify that the event issuer is
+          acceptable under the recipient's re-authorization trust policy
+          (Section 15.3) before any network retrieval keyed by event
           content.
 
        *  Resolve the key and validate the signature, typ: bounds-
@@ -756,17 +761,17 @@ Table of Contents
           receipt_jti, new_bounds, reauthorized, iat, exp, and jti.
 
        *  Enforce iat and exp, require event_type: bounds_reauth, and
-          resolve receipt_jti to a validated receipt.  Reject unresolved
-          anchors.
+          verify that receipt_jti names a receipt present in the
+          validated chain.  Reject unresolved anchors.
 
        *  Verify linkage under Section 8: each non-oldest event hashes
           the next older event, all use one prh_alg or omit it, and the
           oldest omits prh.
 
-   4.  Compute the effective upper bound for each recorded dimension D
-       at each receipt.  Start with receipt[k].bounds[D].  If events
-       anchored to that receipt contain D, use new_bounds[D] from the
-       newest such event in chain order.
+   4.  Compute the effective upper bound for each dimension D at each
+       receipt receipt[k] that carries bounds[D].  Start with
+       receipt[k].bounds[D].  If events anchored to that receipt contain
+       D, use new_bounds[D] from the newest such event in chain order.
 
    5.  Compare adjacent receipts for each monotonic dimension, including
        aud when governed:
@@ -780,11 +785,12 @@ Table of Contents
           older receipt's effective upper bound under Section 6.
           Failure MUST reject bounds evidence.
 
-   6.  Compare the current token with receipt[0] for each recorded D
-       whose effective token value is available from claims,
-       introspection, or trusted context.  The token's value MUST be
-       within the receipt's effective upper bound.  Skip resource
-       comparison when its effective value cannot be determined.
+   6.  Compare the current token with receipt[0] for each D that
+       receipt[0] carries in bounds and whose effective token value is
+       available from claims, introspection, or trusted context.  The
+       token's value MUST be within the receipt's effective upper bound.
+       Skip resource comparison when its effective value cannot be
+       determined.
 
    7.  Check authority_bounds_enforced, if present.  Every named
        dimension MUST be recognized.  For named dimensions with recorded
@@ -1111,9 +1117,10 @@ Table of Contents
    differing from what it actually issued produces either a detectable
    mismatch (the outer-token comparison at the terminal hop, or the next
    enforcing issuer's inbound check) or a consistent lie spanning its
-   receipt and its token, which is the compromised-issuer case above.
-   Recipients comparing bounds against token values MUST use the
-   effective values the token actually carries, not request-time values.
+   receipt and its token, which is the intermediate authority expansion
+   case in Section 15.1.  Recipients comparing bounds against token
+   values MUST use the effective values the token actually carries, not
+   request-time values.
 
 15.6.  Event Chain Size and Retention
 

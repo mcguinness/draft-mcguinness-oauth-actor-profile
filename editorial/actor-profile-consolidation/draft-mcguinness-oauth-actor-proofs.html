@@ -1507,9 +1507,20 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-relationship-to-the-actor-r">
 <a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-relationship-to-the-actor-r" class="section-name selfRef">Relationship to the Actor Receipts Companion</a>
         </h3>
-<p id="section-3.1-1">Receipts are signed by the AS; proofs are signed by the actor.  A token <span class="bcp14">MAY</span> carry either or both.  Recipients choose which to validate under local policy.  Validating both supplies independent attestations, linked by the sibling references in <a href="#sibling-receipt-issuance" class="auto internal xref">Section 9.6</a>.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.1-2">Separate compact JWTs let deployments adopt issuer and actor evidence independently.  Proofs require actor signing keys and trusted key resolution in addition to issuer support.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
-<p id="section-3.1-3">The receipts companion's distinction between historical evidence and current introspection status also applies to proofs.<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.1-1">Receipts are signed by the AS; proofs are signed by the actor.  A token <span class="bcp14">MAY</span> carry either, both, or neither, and recipients select a validation posture by local policy:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.1-2.1">
+            <p id="section-3.1-2.1.1"><strong>Receipts-only</strong>: proofs absent or ignored; trust per <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span>.<a href="#section-3.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-3.1-2.2">
+            <p id="section-3.1-2.2.1"><strong>Proofs-only</strong>: receipts absent or ignored; trust rests on actor-key resolution and actor signatures.<a href="#section-3.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-3.1-2.3">
+            <p id="section-3.1-2.3.1"><strong>Belt-and-suspenders</strong>: both validated; independent issuer-side and actor-side attestations for covered hops, linked by the sibling references in <a href="#sibling-receipt-issuance" class="auto internal xref">Section 9.6</a>.<a href="#section-3.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-3.1-3">Separate compact JWTs let deployments adopt issuer and actor evidence independently.  Proofs require actor signing keys and trusted key resolution in addition to issuer support.<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.1-4">The receipts companion's distinction between historical evidence and current introspection status also applies to proofs.<a href="#section-3.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="related-work">
@@ -2310,7 +2321,28 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-use-by-resource-servers">
 <a href="#section-10.3" class="section-number selfRef">10.3. </a><a href="#name-use-by-resource-servers" class="section-name selfRef">Use by Resource Servers</a>
         </h3>
-<p id="section-10.3-1">Resource servers can use validated proofs for authorization, diagnostics, and audit, subject to the limits in <a href="#threat-model" class="auto internal xref">Section 14.1</a>.  Proofs attest actor participation and hop-time target consent.  They do not establish current consent, active authorization, or AS validation of a hop.  The current token and policy still govern access.<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<p id="section-10.3-1">Resource servers can use validated proofs as evidence input for authorization, diagnostics, and audit, subject to the limits in <a href="#threat-model" class="auto internal xref">Section 14.1</a>.  However, a valid proof chain:<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-10.3-2.1">
+            <p id="section-10.3-2.1.1">proves only that the covered actors signed their participation and hop-time target bindings;<a href="#section-10.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.3-2.2">
+            <p id="section-10.3-2.2.1">does not prove that the represented delegation remains active, authorized, or acceptable under current policy;<a href="#section-10.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.3-2.3">
+            <p id="section-10.3-2.3.1">does not prove that any authorization server validated the hop; that attestation is the receipts companion's role;<a href="#section-10.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.3-2.4">
+            <p id="section-10.3-2.4.1">does not replace the need to authorize the current token itself;<a href="#section-10.3-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.3-2.5">
+            <p id="section-10.3-2.5.1">does not convey authority, authorization, entitlement, or delegation rights;<a href="#section-10.3-2.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-10.3-2.6">
+            <p id="section-10.3-2.6.1">is not actor consent to the current request; it is actor consent to the hop-time issuance within the recorded target binding.<a href="#section-10.3-2.6.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-10.3-3">A resource server that bases an authorization decision on proof content alone, without re-evaluating the current outer token and current policy, mis-uses this profile.<a href="#section-10.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="consumer-introspection">
@@ -2634,7 +2666,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-proof-to-token-binding-limi">
 <a href="#section-14.4" class="section-number selfRef">14.4. </a><a href="#name-proof-to-token-binding-limi" class="section-name selfRef">Proof-to-Token Binding Limits</a>
         </h3>
-<p id="section-14.4-1">Without instance binding, a proof records a subject, actor, target, and validity window.  A holder can reuse it in another token matching that context without invalidating its signature.  The signature therefore evidences consent to that context, not to a particular token issuance.<a href="#section-14.4-1" class="pilcrow">¶</a></p>
+<p id="section-14.4-1">Without instance binding, a proof records a subject, actor, target, and validity window.  Any party holding it, including the issuer it was legitimately submitted to, can reuse it in another token matching that context without invalidating its signature.  The signature therefore evidences consent to that context, not to a particular token issuance.<a href="#section-14.4-1" class="pilcrow">¶</a></p>
 <p id="section-14.4-2">Available bindings, strongest first:<a href="#section-14.4-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-14.4-3.1">
