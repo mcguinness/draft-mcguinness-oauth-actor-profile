@@ -366,7 +366,8 @@ Table of Contents
    A valid receipt chain records issuer attestations of past delegation.
    It conveys no authority and does not establish that delegation
    remains active.  Current authorization decisions MUST evaluate the
-   outer token, current policy, and current state.
+   current outer token, current policy, and current state, not the
+   receipt chain alone.
 
 6.  The actor_receipts Claim
 
@@ -478,9 +479,10 @@ Table of Contents
 
       The (sub_iss, sub) pair identifies the subject as (act.iss,
       act.sub) identifies the actor.  If sub_iss is absent, recipients
-      MUST obtain the namespace from trusted hop context when needed.
-      This flat pair records the token's issued claims; it does not use
-      the structured Subject Identifier formats in [RFC9493].
+      MUST determine the namespace, when needed, from trusted local
+      context for the represented hop.  This flat pair records the
+      token's issued claims; it does not use the structured Subject
+      Identifier formats in [RFC9493].
 
       Neither this profile nor the core profile defines an outer-token
       subject-namespace claim.  To compare with receipt[0].sub_iss,
@@ -548,7 +550,8 @@ Table of Contents
       *  All receipts in an array MUST carry the same prh_alg value or
          all omit it.  Mixing omission with explicit sha-256 is invalid
          even though both select SHA-256.  A single-element chain MAY
-         carry prh_alg for later extension.
+         carry prh_alg, but the value has no effect unless a later
+         receipt links to it.
 
       *  An issuer extending an inbound chain MUST either preserve the
          inbound prh_alg or reject the chain.
@@ -570,10 +573,10 @@ Table of Contents
          permitted under local policy for tokens that may inherit this
          receipt.
 
-      Downstream issuers reject receipts that expire before the output
-      token.  Deployments typically coordinate a bounded delegated-
-      session lifetime to avoid propagation failure while limiting
-      signing-key exposure; see Section 8.3.
+      Downstream issuers reject receipts that expire before the issued
+      outer token.  Deployments typically coordinate a bounded
+      delegated-session lifetime to avoid propagation failure while
+      limiting signing-key exposure; see Section 8.3.
 
    jti:  REQUIRED.  A unique identifier for the receipt, as defined in
       [RFC7519].
@@ -590,9 +593,10 @@ Table of Contents
       match that token's iss and jti.
 
       Issuers SHOULD include origin_jti when the issued token has jti.
-      Strict-mode recipients requiring instance binding MUST require it
-      on receipt[0] when the outer token has jti.  See Section 9.1 and
-      Section 13.4.1 for validation and reissuance handling.
+      Strict-mode recipients requiring instance binding MUST require
+      origin_jti on receipt[0] when the outer token has jti.  See
+      Section 9.1 and Section 13.4.1 for validation and reissuance
+      handling.
 
 7.2.6.  Excluded Standard Claims
 
@@ -627,9 +631,9 @@ Table of Contents
       prh.
 
    The hash input is the exact compact JWS string, without JSON
-   [RFC8259] canonicalization.  Systems MUST preserve each receipt byte-
-   for-byte.  Re-encoding changes the hash even if the claims remain
-   equivalent.
+   [RFC8259] canonicalization.  Systems that carry, store, or forward
+   actor_receipts arrays MUST preserve each receipt byte-for-byte.  Re-
+   encoding changes the hash even if the claims remain equivalent.
 
 8.  Issuer Processing
 
@@ -688,11 +692,11 @@ Table of Contents
        processing rules in Section 9 before relying on it or carrying it
        forward.
 
-   2.  MUST verify that every inbound receipt expires no earlier than
-       the output token.  A failure is an inbound validation failure.
-       Issuers MAY allow a small, deployment-defined clock-skew margin
-       consistent with consumer validation, but MUST NOT accept a larger
-       expiry gap.
+   2.  MUST verify that every inbound receipt's exp is no earlier than
+       the issued outer token's exp.  A failure is an inbound validation
+       failure.  Issuers MAY allow a small, deployment-defined clock-
+       skew margin consistent with consumer validation, but MUST NOT
+       accept a larger expiry gap.
 
    3.  MUST preserve each inbound receipt byte-for-byte unchanged.
 
@@ -754,10 +758,11 @@ Table of Contents
    alignment restrictions above still apply.
 
    Reissuance can change the outer issuer or, for the same issuer, the
-   token's jti.  In either case, origin_jti remains historical and no
-   longer binds the chain to the current instance.  Recipients accept
-   such divergence only under the reissuing-issuer policy in
-   Section 13.4.
+   token's jti, so that receipt[0].iss or a present
+   receipt[0].origin_jti no longer matches the outer token.  In either
+   case, origin_jti remains historical and no longer binds the chain to
+   the current instance.  Recipients accept such divergence only under
+   the reissuing-issuer policy in Section 13.4.
 
    Refresh-token reissuance is a special case of reissuance under this
    section.  Receipt-bearing refresh is interoperable only when local
@@ -1025,15 +1030,15 @@ Table of Contents
        is absent, the recipient MAY accept provenance under local
        policy.  It MUST NOT treat the chain as instance-bound.
 
-   4.  Otherwise, the recipient MUST reject unless local policy trusts
-       the outer issuer to reissue chains led by this receipt issuer
-       (Section 13.4).
+   4.  Otherwise, the recipient MUST reject the chain unless local
+       policy trusts the outer issuer to reissue chains led by this
+       receipt issuer (Section 13.4).
 
 9.2.  Subject Re-Expression Across Hops
 
    Only receipt[0].sub must match the outer token.  Older receipts MAY
    carry different subject identifiers.  A recipient requiring
-   continuity across them MUST use explicit trusted mappings.
+   continuity across them MUST use explicit trusted local mapping rules.
 
    Matching actors alone do not establish subject continuity.  A
    compromised upstream issuer can mint receipts for an unrelated
@@ -1104,8 +1109,9 @@ Table of Contents
 
    An introspection response carrying receipts MUST include sub, act,
    and iss for consumer validation.  It SHOULD include the token's jti
-   when maintained by the server; otherwise, apply the no-jti case in
-   Section 9.1.  If present, actor_receipts_complete MUST be a boolean.
+   when maintained by the server; when the response omits jti,
+   recipients apply the no-jti case in Section 9.1.  If present,
+   actor_receipts_complete MUST be a boolean.
 
    An RS receiving both inline and introspected receipts MUST select an
    authoritative source under local policy.  If it consumes both,
@@ -1258,7 +1264,7 @@ Table of Contents
 
 11.  Error Handling
 
-   Receipts validation failures use the underlying protocol's error
+   Receipt validation failures use the underlying protocol's error
    mechanism for the stage at which validation occurs.
 
 11.1.  Authorization Server and Transaction Token Service Errors
@@ -1350,9 +1356,9 @@ Table of Contents
       outer-token array.  They SHOULD anchor each event to a receipt jti
       or a defined flow identifier, such as Transaction Token txn
       [I-D.ietf-oauth-transaction-tokens].  Event chaining with prh /
-      prh_alg and the completeness convention are optional.  Event
-      entries MUST NOT appear in actor_receipts, which is reserved for
-      hop attestations.
+      prh_alg and the completeness convention are optional.  Companion
+      profiles MUST NOT add event entries to actor_receipts, which is
+      reserved for the AS-signed hop receipts defined by this document.
 
    Companion profile authoring rules:
 
@@ -1628,8 +1634,8 @@ Table of Contents
 
    Strict mode is the recommended default.  Deployments accepting
    refresh, translation, or other reissuance MUST explicitly configure
-   the trusted reissuing issuers through local policy or a trust
-   framework.
+   the trusted reissuing issuers through local policy or an out-of-band
+   trust framework.
 
 13.5.  Hash Algorithm Agility
 
@@ -1853,9 +1859,9 @@ Table of Contents
       is not bounded by token lifetime.
 
    Extension claims can expose additional scope, audience, resource, or
-   lifecycle information.  Companion profiles SHOULD document their
-   disclosure and correlation risks, including retention beyond token
-   lifetime.
+   lifecycle information.  Companion profiles defining extension claims
+   SHOULD document the disclosure and correlation risks specific to
+   their claims, including retention beyond token lifetime.
 
 14.7.  Detached Verification Privacy
 

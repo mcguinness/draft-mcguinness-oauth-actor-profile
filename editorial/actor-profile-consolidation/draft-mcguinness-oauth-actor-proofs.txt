@@ -386,7 +386,8 @@ Table of Contents
    A valid proof chain records actor participation and hop-time target
    consent.  It conveys no authority and does not establish that
    delegation remains active.  Current authorization decisions MUST
-   evaluate the outer token, current policy, and current state.
+   evaluate the current outer token, current policy, and current state,
+   not the proof chain alone.
 
 6.  The actor_proofs Claim
 
@@ -604,9 +605,10 @@ Table of Contents
          permitted under local policy for tokens that may inherit this
          proof.
 
-      A proof expiring before the output token causes propagation
-      failure.  Longer validity supports delegated sessions but also
-      extends exposure to key compromise and proof reuse (Section 14.4).
+      A proof expiring before the issued outer token causes propagation
+      failure (Section 9.2).  Longer validity supports delegated
+      sessions but also extends exposure to key compromise and proof
+      reuse (Section 14.4).
 
       With instance binding through receipts in strict mode or a
       provisioned origin_jti (Section 14.4), exp MAY cover the delegated
@@ -625,8 +627,10 @@ Table of Contents
 
       This requires provisioning the prospective token identifier before
       signing.  A matching actor_proofs[0].origin_jti binds the chain to
-      that token instance.  Otherwise, instance binding requires receipt
-      composition; see Section 14.4 and consumer step 9.
+      that token instance; a present but differing value causes
+      rejection unless the outer issuer is a trusted reissuing issuer.
+      Without origin_jti, instance binding requires receipt composition;
+      see Section 14.4 and consumer step 9.
 
 7.2.7.  Excluded Standard Claims
 
@@ -661,9 +665,9 @@ Table of Contents
    *  if the new proof is the only proof in the array, it MUST omit prh.
 
    The hash input is the exact compact JWS string, without JSON
-   [RFC8259] canonicalization.  Systems MUST preserve each proof byte-
-   for-byte.  Re-encoding changes the hash even if the claims remain
-   equivalent.
+   [RFC8259] canonicalization.  Systems that carry, store, or forward
+   actor_proofs arrays MUST preserve each proof byte-for-byte.  Re-
+   encoding changes the hash even if the claims remain equivalent.
 
 8.  Conveying Proofs at Issuance
 
@@ -797,8 +801,9 @@ Table of Contents
    or its hash and prh_alg, before signing.  For JWT inputs it can read
    actor_proofs[0].  For opaque inputs, the deployment MUST supply that
    information.  If unavailable, the issuer MUST NOT accept a proof
-   without prh as a chain extension; it MAY start a new chain where
-   partial coverage is permitted.
+   without prh as a chain extension; it MAY instead start a new chain
+   under Section 9.1 where local policy permits partial coverage
+   (Section 9.4).
 
    If inbound proofs fail validation, the issuer MUST NOT propagate
    them.  It MAY continue without actor_proofs only when local policy
@@ -1406,10 +1411,12 @@ Table of Contents
       without changing proof processing.
 
    *  *Actor events between hops*, such as consent to a changed target.
-      Companion profiles SHOULD use a distinct JWT type, a parallel
-      outer-token array, and an anchor to a proof jti or defined flow
-      identifier, following the receipts extension pattern.  Events MUST
-      NOT appear in actor_proofs, which is reserved for hop proofs.
+      Companion profiles SHOULD use a JWT type distinct from actor-
+      proof+jwt, a parallel outer-token array, and an anchor to a proof
+      jti or defined flow identifier, following the non-hop event
+      pattern of [I-D.mcguinness-oauth-actor-receipts].  Companion
+      profiles MUST NOT add event entries to actor_proofs, which is
+      reserved for the actor-signed hop proofs defined by this document.
 
    *  *Multi-actor co-signed hops* are out of scope for this document
       and would require a successor or companion profile with its own
@@ -1591,7 +1598,7 @@ Table of Contents
       receipt's historical cnf to identify the verification key.  This
       avoids a separate key registry but provides no independence from
       that receipt issuer, including the current issuer at the newest
-      hop.
+      hop when that issuer created the newest receipt.
 
    *  *Federation and workload identity systems.* Deployment-defined
       resolution through workload identity or federation infrastructure.
@@ -1660,9 +1667,10 @@ Table of Contents
    the proof chain.
 
    Strict mode is the recommended default.  Deployments accepting
-   retargeted reissuance MUST configure trusted reissuing issuers.  A
-   recipient accepting divergence MUST treat proofs only as
-   participation evidence and MUST NOT infer consent to the current
+   retargeted reissuance MUST configure an explicit set of trusted
+   reissuing issuers through local policy or an out-of-band trust
+   framework.  A recipient accepting divergence MUST treat proofs only
+   as participation evidence and MUST NOT infer consent to the current
    audience or resources.  With receipts, it SHOULD apply one
    reissuance-trust decision to both companions.
 
@@ -1832,8 +1840,10 @@ Table of Contents
 15.5.  Detached Provability
 
    Unintended recipients can also verify proofs if they can resolve
-   trusted actor keys.  Deployments SHOULD account for this durable
-   evidence when limiting token distribution and retention.
+   trusted actor keys.  Deployments SHOULD treat proof-bearing tokens as
+   carrying durable, transferable participation evidence to anywhere the
+   token reaches, and SHOULD scope token distribution and retention
+   accordingly.
 
 16.  IANA Considerations
 

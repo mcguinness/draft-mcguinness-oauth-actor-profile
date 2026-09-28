@@ -272,7 +272,9 @@ Table of Contents
    This profile is most useful where issuers share authority
    vocabularies.  Changes to scope registries or resource namespaces at
    domain boundaries require explicit resets (Section 10.3), limiting
-   comparisons to each domain segment.
+   comparisons to each domain segment.  Deployments whose chains cross
+   domains at every hop gain recording and audit value from this profile
+   but little enforcement value.
 
    Detecting an intermediate expansion requires bounds on both sides of
    each compared hop.  Deployments needing that guarantee enforce dense
@@ -351,10 +353,11 @@ Table of Contents
    remain useful for audit and comparison with actor-consented targets
    (Section 11.1).
 
-   A deployment MAY require audience governance through metadata or
-   local policy.  It then applies the same monotonicity rules to aud;
-   retargeting MUST be covered by re-authorization or verification
-   fails.
+   A deployment whose chains do not retarget, or that treats retargeting
+   as a policy-controlled event, MAY require audience governance through
+   the metadata in Section 12 or local policy.  It then applies the same
+   monotonicity rules to aud; retargeting MUST be covered by re-
+   authorization or verification fails.
 
 6.3.  resource
 
@@ -744,8 +747,8 @@ Table of Contents
           non-empty arrays of strings.
 
        *  bounds_events_complete, when present, is a boolean.  A value
-          of true without bounds_events is malformed and MUST fail
-          validation.
+          of true without bounds_events is malformed and MUST be treated
+          as a failed required check.
 
    3.  Validate events in array order:
 
@@ -805,8 +808,9 @@ Table of Contents
        also require actor_receipts_complete_required and
        bounds_events_complete_required.
 
-   9.  Apply any companion rules.  They MAY add rejection conditions but
-       MUST NOT relax steps 1 through 8.
+   9.  Apply any additional rules defined by companion profiles whose
+       claims appear in the artifacts (Section 14).  They MAY add
+       rejection conditions but MUST NOT relax steps 1 through 8.
 
    If any required check fails, the recipient MUST reject the token's
    bounds-based evidence and MUST apply the underlying protocol's error
@@ -942,18 +946,20 @@ Table of Contents
    and [RFC6749] Section 5.2, consistent with the core actor profile's
    error mapping for actor information that fails validation.
 
-   When requested authority exceeds the effective bound without re-
-   authorization, the issuer SHOULD return:
+   When requested authority exceeds the effective upper bound without
+   re-authorization, the issuer SHOULD return:
 
-    +=======================+=========================================+
-    | Dimension             | Error                                   |
-    +=======================+=========================================+
-    | scope                 | invalid_scope [RFC6749]                 |
-    +-----------------------+-----------------------------------------+
-    | aud or resource       | invalid_target [RFC8693]                |
-    +-----------------------+-----------------------------------------+
-    | authorization_details | invalid_authorization_details [RFC9396] |
-    +-----------------------+-----------------------------------------+
+   +=======================+===========================================+
+   | Dimension             | Error                                     |
+   +=======================+===========================================+
+   | scope                 | invalid_scope ([RFC6749], Section 5.2)    |
+   +-----------------------+-------------------------------------------+
+   | aud or resource       | invalid_target ([RFC8693],                |
+   |                       | Section 2.2.2)                            |
+   +-----------------------+-------------------------------------------+
+   | authorization_details | invalid_authorization_details             |
+   |                       | [RFC9396]                                 |
+   +-----------------------+-------------------------------------------+
 
                                   Table 1
 
@@ -1069,14 +1075,14 @@ Table of Contents
 
    An issuer can assert authority_bounds_enforced without independent
    evidence.  Recipients MUST NOT accept it as a substitute for receipt-
-   attested verification.  Deployments requiring offline evidence MUST
-   use recorded bounds; the claim alone supports only coordination and
-   consistency checking.
+   attested verification.  Deployments requiring offline evidence that
+   authority did not expand MUST use receipt-attested bounds; the claim
+   alone supports only coordination and consistency checking.
 
 15.3.  Re-Authorization Abuse
 
-   A compromised issuer trusted to record re-authorization can use it to
-   justify arbitrary expansion.
+   A compromised or over-trusted issuer that is trusted to record re-
+   authorization can use it to justify arbitrary expansion.
 
    *  Recipients MUST evaluate re-authorization trust separately from
       receipt trust: which issuers are trusted to capture re-

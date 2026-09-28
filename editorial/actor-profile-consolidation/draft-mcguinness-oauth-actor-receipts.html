@@ -1592,7 +1592,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
       </h2>
 <p id="section-5-1">An actor receipt records one actor hop.  The issuer that adds a new outermost actor hop signs a receipt describing that hop and, when the issued token is sender-constrained, may copy the token's top-level <code>cnf</code> value into the receipt as historical presenter-binding context subject to the disclosure considerations in <a href="#receipt-claims" class="auto internal xref">Section 7.2</a>.<a href="#section-5-1" class="pilcrow">¶</a></p>
 <p id="section-5-2">The <code>actor_receipts</code> array is ordered newest first and preserves older entries unchanged.  Index 0 corresponds to outermost <code>act</code>, index 1 to <code>act.act</code>, and so on.  Coverage is either complete or a contiguous outermost prefix; local policy or resource requirements determine whether partial coverage is acceptable.<a href="#section-5-2" class="pilcrow">¶</a></p>
-<p id="section-5-3">A valid receipt chain records issuer attestations of past delegation.  It conveys no authority and does not establish that delegation remains active.  Current authorization decisions <span class="bcp14">MUST</span> evaluate the outer token, current policy, and current state.<a href="#section-5-3" class="pilcrow">¶</a></p>
+<p id="section-5-3">A valid receipt chain records issuer attestations of past delegation.  It conveys no authority and does not establish that delegation remains active.  Current authorization decisions <span class="bcp14">MUST</span> evaluate the current outer token, current policy, and current state, not the receipt chain alone.<a href="#section-5-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="actor-receipts-claim">
@@ -1708,7 +1708,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <code>sub_iss</code>:</dt>
             <dd style="margin-left: 1.5em" id="section-7.2.1-1.6">
               <p id="section-7.2.1-1.6.1"><span class="bcp14">OPTIONAL</span>.  The namespace authority under which the receipt <code>sub</code> value is interpreted.<a href="#section-7.2.1-1.6.1" class="pilcrow">¶</a></p>
-<p id="section-7.2.1-1.6.2">The (<code>sub_iss</code>, <code>sub</code>) pair identifies the subject as (<code>act.iss</code>, <code>act.sub</code>) identifies the actor.  If <code>sub_iss</code> is absent, recipients <span class="bcp14">MUST</span> obtain the namespace from trusted hop context when needed.  This flat pair records the token's issued claims; it does not use the structured Subject Identifier formats in <span>[<a href="#RFC9493" class="cite xref">RFC9493</a>]</span>.<a href="#section-7.2.1-1.6.2" class="pilcrow">¶</a></p>
+<p id="section-7.2.1-1.6.2">The (<code>sub_iss</code>, <code>sub</code>) pair identifies the subject as (<code>act.iss</code>, <code>act.sub</code>) identifies the actor.  If <code>sub_iss</code> is absent, recipients <span class="bcp14">MUST</span> determine the namespace, when needed, from trusted local context for the represented hop.  This flat pair records the token's issued claims; it does not use the structured Subject Identifier formats in <span>[<a href="#RFC9493" class="cite xref">RFC9493</a>]</span>.<a href="#section-7.2.1-1.6.2" class="pilcrow">¶</a></p>
 <p id="section-7.2.1-1.6.3">Neither this profile nor the core profile defines an outer-token subject-namespace claim.  To compare with <code>receipt[0].sub_iss</code>, recipients obtain that namespace from trusted local context, an inbound subject token, or another deployment-defined source.<a href="#section-7.2.1-1.6.3" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
@@ -1789,7 +1789,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
                   <p id="section-7.2.3-1.4.2.3.1">When present, the value <span class="bcp14">MUST</span> identify a hash algorithm whose collision and preimage resistance is at least equivalent to <code>sha-256</code>.<a href="#section-7.2.3-1.4.2.3.1" class="pilcrow">¶</a></p>
 </li>
                 <li class="normal" id="section-7.2.3-1.4.2.4">
-                  <p id="section-7.2.3-1.4.2.4.1">All receipts in an array <span class="bcp14">MUST</span> carry the same <code>prh_alg</code> value or all omit it.  Mixing omission with explicit <code>sha-256</code> is invalid even though both select SHA-256.  A single-element chain <span class="bcp14">MAY</span> carry <code>prh_alg</code> for later extension.<a href="#section-7.2.3-1.4.2.4.1" class="pilcrow">¶</a></p>
+                  <p id="section-7.2.3-1.4.2.4.1">All receipts in an array <span class="bcp14">MUST</span> carry the same <code>prh_alg</code> value or all omit it.  Mixing omission with explicit <code>sha-256</code> is invalid even though both select SHA-256.  A single-element chain <span class="bcp14">MAY</span> carry <code>prh_alg</code>, but the value has no effect unless a later receipt links to it.<a href="#section-7.2.3-1.4.2.4.1" class="pilcrow">¶</a></p>
 </li>
                 <li class="normal" id="section-7.2.3-1.4.2.5">
                   <p id="section-7.2.3-1.4.2.5.1">An issuer extending an inbound chain <span class="bcp14">MUST</span> either preserve the inbound <code>prh_alg</code> or reject the chain.<a href="#section-7.2.3-1.4.2.5.1" class="pilcrow">¶</a></p>
@@ -1824,7 +1824,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
                   <p id="section-7.2.4-1.4.2.2.1">Issuers <span class="bcp14">SHOULD</span> set <code>exp</code> to the maximum delegated-token lifetime permitted under local policy for tokens that may inherit this receipt.<a href="#section-7.2.4-1.4.2.2.1" class="pilcrow">¶</a></p>
 </li>
               </ul>
-<p id="section-7.2.4-1.4.3">Downstream issuers reject receipts that expire before the output token.  Deployments typically coordinate a bounded delegated-session lifetime to avoid propagation failure while limiting signing-key exposure; see <a href="#reissuance-without-a-new-actor-hop" class="auto internal xref">Section 8.3</a>.<a href="#section-7.2.4-1.4.3" class="pilcrow">¶</a></p>
+<p id="section-7.2.4-1.4.3">Downstream issuers reject receipts that expire before the issued outer token.  Deployments typically coordinate a bounded delegated-session lifetime to avoid propagation failure while limiting signing-key exposure; see <a href="#reissuance-without-a-new-actor-hop" class="auto internal xref">Section 8.3</a>.<a href="#section-7.2.4-1.4.3" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
 <dt id="section-7.2.4-1.5">
@@ -1847,7 +1847,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <dd style="margin-left: 1.5em" id="section-7.2.5-1.2">
               <p id="section-7.2.5-1.2.1"><span class="bcp14">RECOMMENDED</span>.  The <code>jti</code> of the outer token at the time this receipt was created (the receipt's origin outer token).  This value is fixed at receipt creation; after reissuance the current outer token's <code>jti</code> may differ.<a href="#section-7.2.5-1.2.1" class="pilcrow">¶</a></p>
 <p id="section-7.2.5-1.2.2">It identifies the originating token.  It binds to the current token only when both <code>receipt[0].iss</code> and <code>receipt[0].origin_jti</code> match that token's <code>iss</code> and <code>jti</code>.<a href="#section-7.2.5-1.2.2" class="pilcrow">¶</a></p>
-<p id="section-7.2.5-1.2.3">Issuers <span class="bcp14">SHOULD</span> include <code>origin_jti</code> when the issued token has <code>jti</code>.  Strict-mode recipients requiring instance binding <span class="bcp14">MUST</span> require it on <code>receipt[0]</code> when the outer token has <code>jti</code>.  See <a href="#receipt-instance-binding" class="auto internal xref">Section 9.1</a> and <a href="#strict-mode-validation" class="auto internal xref">Section 13.4.1</a> for validation and reissuance handling.<a href="#section-7.2.5-1.2.3" class="pilcrow">¶</a></p>
+<p id="section-7.2.5-1.2.3">Issuers <span class="bcp14">SHOULD</span> include <code>origin_jti</code> when the issued token has <code>jti</code>.  Strict-mode recipients requiring instance binding <span class="bcp14">MUST</span> require <code>origin_jti</code> on <code>receipt[0]</code> when the outer token has <code>jti</code>.  See <a href="#receipt-instance-binding" class="auto internal xref">Section 9.1</a> and <a href="#strict-mode-validation" class="auto internal xref">Section 13.4.1</a> for validation and reissuance handling.<a href="#section-7.2.5-1.2.3" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 </dl>
@@ -1893,7 +1893,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-7.3-2.2.1">if the new receipt is the only receipt in the array, it <span class="bcp14">MUST</span> omit <code>prh</code>.<a href="#section-7.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-7.3-3">The hash input is the exact compact JWS string, without JSON <span>[<a href="#RFC8259" class="cite xref">RFC8259</a>]</span> canonicalization.  Systems <span class="bcp14">MUST</span> preserve each receipt byte-for-byte.  Re-encoding changes the hash even if the claims remain equivalent.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
+<p id="section-7.3-3">The hash input is the exact compact JWS string, without JSON <span>[<a href="#RFC8259" class="cite xref">RFC8259</a>]</span> canonicalization.  Systems that carry, store, or forward <code>actor_receipts</code> arrays <span class="bcp14">MUST</span> preserve each receipt byte-for-byte.  Re-encoding changes the hash even if the claims remain equivalent.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1947,7 +1947,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-8.2-2.1.1"><span class="bcp14">MUST</span> validate the inbound receipt chain by applying the consumer processing rules in <a href="#consumer-processing" class="auto internal xref">Section 9</a> before relying on it or carrying it forward.<a href="#section-8.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.2-2.2">
-            <p id="section-8.2-2.2.1"><span class="bcp14">MUST</span> verify that every inbound receipt expires no earlier than the output token.  A failure is an inbound validation failure.  Issuers <span class="bcp14">MAY</span> allow a small, deployment-defined clock-skew margin consistent with consumer validation, but <span class="bcp14">MUST NOT</span> accept a larger expiry gap.<a href="#section-8.2-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-8.2-2.2.1"><span class="bcp14">MUST</span> verify that every inbound receipt's <code>exp</code> is no earlier than the issued outer token's <code>exp</code>.  A failure is an inbound validation failure.  Issuers <span class="bcp14">MAY</span> allow a small, deployment-defined clock-skew margin consistent with consumer validation, but <span class="bcp14">MUST NOT</span> accept a larger expiry gap.<a href="#section-8.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.2-2.3">
             <p id="section-8.2-2.3.1"><span class="bcp14">MUST</span> preserve each inbound receipt byte-for-byte unchanged.<a href="#section-8.2-2.3.1" class="pilcrow">¶</a></p>
@@ -1997,7 +1997,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         </ul>
 <p id="section-8.3-3">If such an issuer changes the visible outermost actor, it has added a new hop and <span class="bcp14">MUST</span> follow <a href="#extending-an-existing-receipt-chain" class="auto internal xref">Section 8.2</a>.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
 <p id="section-8.3-4">Reissuance <span class="bcp14">MAY</span> change <code>aud</code>, <code>scope</code>, <code>cnf</code>, <code>exp</code>, and other current-request claims without changing receipts.  Receipt <code>cnf</code> remains historical, so key rotation alone does not invalidate the chain.  The <code>sub</code> and hop-alignment restrictions above still apply.<a href="#section-8.3-4" class="pilcrow">¶</a></p>
-<p id="section-8.3-5">Reissuance can change the outer issuer or, for the same issuer, the token's <code>jti</code>.  In either case, <code>origin_jti</code> remains historical and no longer binds the chain to the current instance.  Recipients accept such divergence only under the reissuing-issuer policy in <a href="#receipt-to-token-binding-limits" class="auto internal xref">Section 13.4</a>.<a href="#section-8.3-5" class="pilcrow">¶</a></p>
+<p id="section-8.3-5">Reissuance can change the outer issuer or, for the same issuer, the token's <code>jti</code>, so that <code>receipt[0].iss</code> or a present <code>receipt[0].origin_jti</code> no longer matches the outer token.  In either case, <code>origin_jti</code> remains historical and no longer binds the chain to the current instance.  Recipients accept such divergence only under the reissuing-issuer policy in <a href="#receipt-to-token-binding-limits" class="auto internal xref">Section 13.4</a>.<a href="#section-8.3-5" class="pilcrow">¶</a></p>
 <p id="section-8.3-6">Refresh-token reissuance is a special case of reissuance under this section.  Receipt-bearing refresh is interoperable only when local policy defines a bounded maximum delegated-session lifetime for tokens that may inherit the receipts.<a href="#section-8.3-6" class="pilcrow">¶</a></p>
 <p id="section-8.3-7">An AS that supports refresh tokens for delegated access tokens:<a href="#section-8.3-7" class="pilcrow">¶</a></p>
 <ul class="normal">
@@ -2199,7 +2199,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-9.1-2.3.1">If the issuers match and the outer token has <code>jti</code>, but <code>origin_jti</code> is absent, the recipient <span class="bcp14">MAY</span> accept provenance under local policy.  It <span class="bcp14">MUST NOT</span> treat the chain as instance-bound.<a href="#section-9.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-9.1-2.4">
-            <p id="section-9.1-2.4.1">Otherwise, the recipient <span class="bcp14">MUST</span> reject unless local policy trusts the outer issuer to reissue chains led by this receipt issuer (<a href="#receipt-to-token-binding-limits" class="auto internal xref">Section 13.4</a>).<a href="#section-9.1-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-9.1-2.4.1">Otherwise, the recipient <span class="bcp14">MUST</span> reject the chain unless local policy trusts the outer issuer to reissue chains led by this receipt issuer (<a href="#receipt-to-token-binding-limits" class="auto internal xref">Section 13.4</a>).<a href="#section-9.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -2209,7 +2209,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-subject-re-expression-acros">
 <a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-subject-re-expression-acros" class="section-name selfRef">Subject Re-Expression Across Hops</a>
         </h3>
-<p id="section-9.2-1">Only <code>receipt[0].sub</code> must match the outer token.  Older receipts <span class="bcp14">MAY</span> carry different subject identifiers.  A recipient requiring continuity across them <span class="bcp14">MUST</span> use explicit trusted mappings.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
+<p id="section-9.2-1">Only <code>receipt[0].sub</code> must match the outer token.  Older receipts <span class="bcp14">MAY</span> carry different subject identifiers.  A recipient requiring continuity across them <span class="bcp14">MUST</span> use explicit trusted local mapping rules.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
 <p id="section-9.2-2">Matching actors alone do not establish subject continuity.  A compromised upstream issuer can mint receipts for an unrelated subject and insert them into a chain with matching actors.  Recipients <span class="bcp14">MUST</span> account for this risk.<a href="#section-9.2-2" class="pilcrow">¶</a></p>
 <p id="section-9.2-3">Deployments requiring subject continuity <span class="bcp14">SHOULD</span> either require identical subject identifiers throughout or positively reconcile them through trusted mappings.  When neither applies, recipients <span class="bcp14">MUST</span> treat continuity as unverified and <span class="bcp14">MUST NOT</span> use the differing older receipts for authorization.<a href="#section-9.2-3" class="pilcrow">¶</a></p>
 </section>
@@ -2265,7 +2265,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         </ul>
 <p id="section-9.5-3">The registered introspection response members are defined in <a href="#introspection-response-members" class="auto internal xref">Section 10.3</a>; introspection-server failure handling is addressed in <a href="#introspection-errors" class="auto internal xref">Section 11.3</a>.<a href="#section-9.5-3" class="pilcrow">¶</a></p>
 <p id="section-9.5-4">For opaque tokens, the issuer stores receipts and returns them to authorized resource servers through introspection.  The same format and consumer rules apply, using the response as the outer token's claim set.<a href="#section-9.5-4" class="pilcrow">¶</a></p>
-<p id="section-9.5-5">An introspection response carrying receipts <span class="bcp14">MUST</span> include <code>sub</code>, <code>act</code>, and <code>iss</code> for consumer validation.  It <span class="bcp14">SHOULD</span> include the token's <code>jti</code> when maintained by the server; otherwise, apply the no-<code>jti</code> case in <a href="#receipt-instance-binding" class="auto internal xref">Section 9.1</a>.  If present, <code>actor_receipts_complete</code> <span class="bcp14">MUST</span> be a boolean.<a href="#section-9.5-5" class="pilcrow">¶</a></p>
+<p id="section-9.5-5">An introspection response carrying receipts <span class="bcp14">MUST</span> include <code>sub</code>, <code>act</code>, and <code>iss</code> for consumer validation.  It <span class="bcp14">SHOULD</span> include the token's <code>jti</code> when maintained by the server; when the response omits <code>jti</code>, recipients apply the no-<code>jti</code> case in <a href="#receipt-instance-binding" class="auto internal xref">Section 9.1</a>.  If present, <code>actor_receipts_complete</code> <span class="bcp14">MUST</span> be a boolean.<a href="#section-9.5-5" class="pilcrow">¶</a></p>
 <p id="section-9.5-6">An RS receiving both inline and introspected receipts <span class="bcp14">MUST</span> select an authoritative source under local policy.  If it consumes both, differing arrays or completeness values <span class="bcp14">MUST</span> cause rejection of receipt-based provenance.<a href="#section-9.5-6" class="pilcrow">¶</a></p>
 <p id="section-9.5-7">An introspection server <span class="bcp14">MUST</span> return the full stored array or omit <code>actor_receipts</code>.  Removing an older entry breaks <code>prh</code>; removing the newest breaks hop alignment.  A stored array with partial coverage is returned in full with <code>actor_receipts_complete: false</code>.<a href="#section-9.5-7" class="pilcrow">¶</a></p>
 <p id="section-9.5-8">For an inactive token, the introspection server <span class="bcp14">MUST NOT</span> return <code>actor_receipts</code> or <code>actor_receipts_complete</code>.<a href="#section-9.5-8" class="pilcrow">¶</a></p>
@@ -2417,7 +2417,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
       <h2 id="name-error-handling">
 <a href="#section-11" class="section-number selfRef">11. </a><a href="#name-error-handling" class="section-name selfRef">Error Handling</a>
       </h2>
-<p id="section-11-1">Receipts validation failures use the underlying protocol's error mechanism for the stage at which validation occurs.<a href="#section-11-1" class="pilcrow">¶</a></p>
+<p id="section-11-1">Receipt validation failures use the underlying protocol's error mechanism for the stage at which validation occurs.<a href="#section-11-1" class="pilcrow">¶</a></p>
 <div id="authorization-server-and-transaction-token-service-errors">
 <section id="section-11.1">
         <h3 id="name-authorization-server-and-tr">
@@ -2476,7 +2476,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="section-12-2.4.1"><strong>New outer-token binding claims</strong>, analogous to <code>origin_jti</code>, that record an outer-token field other than <code>jti</code> (for example, a workflow correlation identifier).  Such claims are independently verifiable as current-token bindings only on the same terms as <code>origin_jti</code>; see <a href="#receipt-to-token-binding-limits" class="auto internal xref">Section 13.4</a>.<a href="#section-12-2.4.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-12-2.5">
-          <p id="section-12-2.5.1"><strong>Events between hops</strong>, such as re-authorization or key rotation.  Companion profiles <span class="bcp14">SHOULD</span> use a separate JWT type and a parallel outer-token array.  They <span class="bcp14">SHOULD</span> anchor each event to a receipt <code>jti</code> or a defined flow identifier, such as Transaction Token <code>txn</code> <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>.  Event chaining with <code>prh</code> / <code>prh_alg</code> and the completeness convention are optional.  Event entries <span class="bcp14">MUST NOT</span> appear in <code>actor_receipts</code>, which is reserved for hop attestations.<a href="#section-12-2.5.1" class="pilcrow">¶</a></p>
+          <p id="section-12-2.5.1"><strong>Events between hops</strong>, such as re-authorization or key rotation.  Companion profiles <span class="bcp14">SHOULD</span> use a separate JWT type and a parallel outer-token array.  They <span class="bcp14">SHOULD</span> anchor each event to a receipt <code>jti</code> or a defined flow identifier, such as Transaction Token <code>txn</code> <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>.  Event chaining with <code>prh</code> / <code>prh_alg</code> and the completeness convention are optional.  Companion profiles <span class="bcp14">MUST NOT</span> add event entries to <code>actor_receipts</code>, which is reserved for the AS-signed hop receipts defined by this document.<a href="#section-12-2.5.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="section-12-3">Companion profile authoring rules:<a href="#section-12-3" class="pilcrow">¶</a></p>
@@ -2658,7 +2658,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <a href="#section-13.4.1" class="section-number selfRef">13.4.1. </a><a href="#name-strict-mode-validation" class="section-name selfRef">Strict-Mode Validation</a>
           </h4>
 <p id="section-13.4.1-1">Without configured trusted reissuing issuers, recipients use strict mode: issuer or <code>origin_jti</code> divergence causes rejection.  If the outer token has <code>jti</code>, a recipient requiring instance binding also rejects a missing leading <code>origin_jti</code>.<a href="#section-13.4.1-1" class="pilcrow">¶</a></p>
-<p id="section-13.4.1-2">Strict mode is the recommended default.  Deployments accepting refresh, translation, or other reissuance <span class="bcp14">MUST</span> explicitly configure the trusted reissuing issuers through local policy or a trust framework.<a href="#section-13.4.1-2" class="pilcrow">¶</a></p>
+<p id="section-13.4.1-2">Strict mode is the recommended default.  Deployments accepting refresh, translation, or other reissuance <span class="bcp14">MUST</span> explicitly configure the trusted reissuing issuers through local policy or an out-of-band trust framework.<a href="#section-13.4.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2838,7 +2838,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-14.6-2.3.1">Receipts persist longer than the outer tokens they were issued for and may be retained in audit logs indefinitely; correlation risk is not bounded by token lifetime.<a href="#section-14.6-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-14.6-3">Extension claims can expose additional scope, audience, resource, or lifecycle information.  Companion profiles <span class="bcp14">SHOULD</span> document their disclosure and correlation risks, including retention beyond token lifetime.<a href="#section-14.6-3" class="pilcrow">¶</a></p>
+<p id="section-14.6-3">Extension claims can expose additional scope, audience, resource, or lifecycle information.  Companion profiles defining extension claims <span class="bcp14">SHOULD</span> document the disclosure and correlation risks specific to their claims, including retention beyond token lifetime.<a href="#section-14.6-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="detached-verification-privacy">
