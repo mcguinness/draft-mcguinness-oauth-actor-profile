@@ -152,6 +152,7 @@ Table of Contents
    Appendix A.  Examples
      A.1.  Example: Two-Hop Delegation Chain with Sibling Receipts
      A.2.  Example: Proofs-Only Partial Coverage
+   Document History
    Author's Address
 
 1.  Introduction
@@ -1173,9 +1174,10 @@ Table of Contents
    the proof count equals the visible actor depth.  This suffices when
    local policy requires only structural completeness.
 
-   With actor_proofs_complete_required: true, the token or introspection
-   response MUST also carry actor_proofs_complete: true.  Recipients
-   MUST reject tokens that fail the applicable completeness requirement.
+   When Protected Resource Metadata sets actor_proofs_complete_required:
+   true, the token or introspection response MUST also carry
+   actor_proofs_complete: true.  Recipients MUST reject tokens that fail
+   the applicable completeness requirement.
 
 10.3.  Use by Resource Servers
 
@@ -1225,10 +1227,12 @@ Table of Contents
    and consumer rules apply, using the response as the outer token's
    claim set.
 
-   An introspection response carrying proofs MUST include sub, act, aud,
-   and iss.  It SHOULD include jti when maintained by the server;
-   without it, the response supplies no instance binding under step 9.
-   If present, actor_proofs_complete MUST be a boolean.
+   An introspection response carrying proofs MUST include the members
+   needed for Section 10: the token's top-level sub, the visible act
+   chain, the token's aud, and the token's iss.  It SHOULD include jti
+   when maintained by the server; without it, the response supplies no
+   instance binding under step 9.  If present, actor_proofs_complete
+   MUST be a boolean.
 
    An RS receiving both inline and introspected proofs MUST select an
    authoritative source under local policy.  If it consumes both,
@@ -1593,12 +1597,14 @@ Table of Contents
       interoperable way to establish such keys, with an attester
       vouching for the actor's key binding.
 
-   *  *Receipt-attested presenter keys.* If the deployment uses
-      presenter keys to sign proofs, a recipient MAY use the aligned
-      receipt's historical cnf to identify the verification key.  This
-      avoids a separate key registry but provides no independence from
-      that receipt issuer, including the current issuer at the newest
-      hop when that issuer created the newest receipt.
+   *  *Receipt-attested presenter keys.* When the aligned receipt
+      carries the historical presenter binding cnf defined in
+      [I-D.mcguinness-oauth-actor-receipts] and the deployment uses
+      presenter keys to sign proofs, a recipient MAY use that cnf to
+      identify the verification key.  This avoids a separate key
+      registry but provides no independence from that receipt issuer,
+      including the current issuer at the newest hop when that issuer
+      created the newest receipt.
 
    *  *Federation and workload identity systems.* Deployment-defined
       resolution through workload identity or federation infrastructure.
@@ -1703,6 +1709,9 @@ Table of Contents
       advertises actor_proofs_supported: true, for a resource that
       requires them, as a signal warranting scrutiny rather than silent
       acceptance.
+
+   Issuers cannot protect recipients that do not ask; the enforcement
+   locus of this profile is the recipient.
 
 14.7.  Actor Key Compromise
 
@@ -2411,6 +2420,28 @@ A.2.  Example: Proofs-Only Partial Coverage
    outer-token instance binding; per Section 14.4, a recipient requiring
    instance binding would require the receipts companion or a
    provisioned origin_jti.
+
+Document History
+
+   [[ To be removed from the final specification ]]
+
+   -01
+
+   *  Consolidated and tightened the text throughout.
+
+   *  An issuer now drops inherited proofs when reissuance exceeds any
+      part of the newest proof's target, not only its audience.
+
+   *  Distinguished a mismatched origin_jti, which consumer processing
+      rejects unless the outer issuer is a trusted reissuer, from an
+      absent one.
+
+   *  Removed an example claim that receipt composition stops a
+      compromised issuer from re-embedding a proof.
+
+   -00
+
+   *  Initial version.
 
 Author's Address
 

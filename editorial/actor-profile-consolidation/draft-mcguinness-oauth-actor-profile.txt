@@ -188,6 +188,7 @@ Table of Contents
      B.8.  Step 6: Booking Tool Calls Inventory Service
      B.9.  Summary of Token Transformations
    Acknowledgments
+   Document History
    Author's Address
 
 1.  Introduction
@@ -329,7 +330,9 @@ Table of Contents
       structurally as the nested act claim.
 
    Outermost Actor:  The act object at the top level of the delegation
-      chain.  It identifies the immediate actor presenting the token.
+      chain (the one not nested inside any other act object).  When a
+      delegation chain of depth greater than one is present, the
+      outermost actor identifies the immediate bearer of the token.
 
    Local Policy:  Rules or decisions made by an AS, RS, or organization
       outside this specification, such as delegation approval, scope
@@ -403,9 +406,11 @@ Table of Contents
    deployments need agreements covering permitted delegation
    relationships and identifier namespaces.
 
-   Authorization of the (sub, outermost act.sub) pair is RECOMMENDED for
-   security-sensitive delegated access.  Actor Authorization
-   (Section 8.1) defines when an RS must apply that policy.
+   This document does not require every deployment to enforce
+   authorization of the (sub, outermost act.sub) pair on every request,
+   although such enforcement is RECOMMENDED for security-sensitive
+   delegated access.  Actor Authorization (Section 8.1) describes when
+   an RS applies that policy.
 
 3.3.2.  Token Format Scope
 
@@ -452,6 +457,10 @@ Table of Contents
    the restrictions in may_act (Section 6.4).  It neither establishes
    actor identity nor propagates to the output token.
 
+   For worked examples of same-domain service delegation and cross-
+   domain delegation, see the service-to-service example (Appendix A)
+   and the cross-domain example (Appendix B).
+
 3.4.  Actor Object Structure
 
    An actor object conforming to this profile is a JSON object that is
@@ -487,8 +496,10 @@ Table of Contents
 
       For example, a TTS at https://tts.travel-provider.example can
       issue a token whose booking-tool actor has act.iss set to
-      https://as.travel-provider.example.  The TTS signs the token; the
-      AS supplies the namespace for the tool's identifier.
+      https://as.travel-provider.example when local policy uses that
+      AS's identifier namespace for booking tool identifiers.  The TTS
+      signs the token; the AS supplies the namespace for the tool's
+      identifier.
 
    sub_profile:  RECOMMENDED.  A space-delimited list of entity profile
       values classifying the actor identified by act.sub, as defined in
@@ -798,7 +809,7 @@ Table of Contents
 
    The AS MUST copy the validated inbound chain exactly into the issued
    token.  The AS MUST NOT add, remove, or rewrite any field in any
-   actor object of a preserved chain.
+   actor object of a preserved delegation chain.
 
 3.6.3.3.  Omit act
 
@@ -1840,12 +1851,13 @@ Table of Contents
       canonical may_act identifier.  may_act MUST NOT override the
       derived actor.
 
-   *  *Without actor_token*: the requester MUST be an authenticated
-      confidential client; public clients MUST NOT use this path.
-      Reconcile the authenticated client with the canonical may_act
-      identifier and set act.sub to the client's canonical identifier.
-      The AS MUST set act.iss to the issuer or namespace context that
-      locally registered the client, typically the AS's own issuer URI.
+   *  *Without actor_token*: the requesting client MUST be a
+      confidential client that has authenticated in the request; public
+      clients MUST NOT use this path.  Reconcile the authenticated
+      client with the canonical may_act identifier and set act.sub to
+      the client's canonical identifier.  The AS MUST set act.iss to the
+      issuer or namespace context that locally registered the client,
+      typically the AS's own issuer URI.
 
    The second path supports a token that pre-authorizes a particular
    client to present it without a separate actor credential.
@@ -1917,7 +1929,8 @@ Table of Contents
        requirements and relying-party consequences are described in
        Subject Namespace Translation (Section 14.9).
 
-   3.  The AS MUST apply Delegation Chain Validation and Construction
+   3.  The AS MUST construct the act claim using the construction
+       decision order in Delegation Chain Validation and Construction
        (Section 3.6): extend with a new actor, preserve an existing
        chain, or omit act, in that order.  Inherited actors MUST NOT be
        rewritten.  An actor derived from actor_token is asserted by the
@@ -2626,23 +2639,34 @@ Table of Contents
    Authorization servers and resource servers advertise support through
    these parameters:
 
-    +========================================+========================+
-    | Parameter                              | Capability             |
-    +========================================+========================+
-    | authorization_grant_profiles_supported | JWT authorization-     |
-    |                                        | grant profiles         |
-    +----------------------------------------+------------------------+
-    | actor_profile_token_exchange           | Token Exchange input   |
-    |                                        | and output types       |
-    +----------------------------------------+------------------------+
-    | entity_profiles_supported.actor        | Accepted actor entity  |
-    |                                        | types                  |
-    +----------------------------------------+------------------------+
-    | actor_profile_required                 | Resource requirements  |
-    |                                        | for delegated requests |
-    +----------------------------------------+------------------------+
+   +======================================+=============+==============+
+   |Parameter                             |Metadata     |Capability    |
+   +======================================+=============+==============+
+   |authorization_grant_profiles_supported|Authorization|JWT           |
+   |                                      |server       |authorization-|
+   |                                      |             |grant profiles|
+   +--------------------------------------+-------------+--------------+
+   |actor_profile_token_exchange          |Authorization|Token Exchange|
+   |                                      |server       |input and     |
+   |                                      |             |output types  |
+   +--------------------------------------+-------------+--------------+
+   |entity_profiles_supported.actor       |Authorization|Accepted actor|
+   |                                      |server       |entity types  |
+   +--------------------------------------+-------------+--------------+
+   |actor_profile_required                |Protected    |Resource      |
+   |                                      |resource     |requirements  |
+   |                                      |             |for delegated |
+   |                                      |             |requests      |
+   +--------------------------------------+-------------+--------------+
 
                                   Table 6
+
+   [I-D.ietf-oauth-identity-assertion-authz-grant] defines
+   authorization_grant_profiles_supported, and
+   [I-D.mora-oauth-entity-profiles] defines
+   entity_profiles_supported.actor.  This document defines the other two
+   in Authorization Server Metadata (Section 10.1) and Protected
+   Resource Metadata (Section 10.2).
 
    These signals do not guarantee acceptance of a particular request or
    every combination of advertised capabilities.  Additional constraints
@@ -3243,12 +3267,12 @@ Table of Contents
 14.3.  Assertion Replay Prevention
 
    Replaying a delegated assertion can obtain tokens exercising the
-   subject's authorization.  For grants without sender constraint,
-   deployments MUST maintain a jti replay cache for each assertion's
-   validity window, as required by Authorization Grant Processing
-   (Section 4.2).  Short assertion lifetimes bound cache retention.
-   With DPoP or mTLS, jti replay prevention remains RECOMMENDED as an
-   additional control.
+   subject's authorization and establish an unauthorized delegation
+   chain.  For grants without sender constraint, deployments MUST
+   maintain a jti replay cache for each assertion's validity window, as
+   required by Authorization Grant Processing (Section 4.2).  Short
+   assertion lifetimes bound cache retention.  With DPoP or mTLS, jti
+   replay prevention remains RECOMMENDED as an additional control.
 
 14.4.  Token Substitution
 
@@ -3469,10 +3493,13 @@ Table of Contents
    domains.
 
    act.sub_profile reveals the actor's entity type, including whether it
-   is an AI agent.  Issuers SHOULD consider audience-specific disclosure
-   constraints and SHOULD omit unnecessary entity classifications when
-   constructing new actor objects.  Inherited actors remain subject to
-   the preservation rules in Preserve Inbound Chain (Section 3.6.3.2).
+   is an AI agent.  In some jurisdictions or deployment contexts, this
+   disclosure may be legally significant or may reveal sensitive
+   information about user behavior and tool composition.  Issuers SHOULD
+   consider audience-specific disclosure constraints and SHOULD omit
+   unnecessary entity classifications when constructing new actor
+   objects.  Inherited actors remain subject to the preservation rules
+   in Preserve Inbound Chain (Section 3.6.3.2).
 
    req_wl can reveal internal workload topology.  A TTS SHOULD disclose
    it only where needed for authorization, audit, or policy enforcement,
@@ -4232,6 +4259,43 @@ Acknowledgments
 
    The author thanks the OAuth Working Group for the specifications on
    which this profile builds.
+
+Document History
+
+   [[ To be removed from the final specification ]]
+
+   -01
+
+   *  Consolidated and tightened the text throughout; claim roles,
+      supported token types, and error mappings now use tables.
+
+   *  Added hop and visible-hop terminology, and token-size guidance for
+      extensions that attach per-hop signed material.
+
+   *  JWT access tokens now require client_id, per [RFC9068].
+
+   *  Corrected citations: scope reduction and resource indicators are
+      no longer attributed to [RFC8693], and the DPoP key comparison
+      cites Sections 4.3 and 6.1 of [RFC9449].
+
+   *  may_act now uses may_act.iss as the identifier context when
+      present, and the subject_token issuer otherwise.
+
+   *  Removed guidance on merging an actor_token's own act chain, which
+      conflicted with rejecting any actor_token that carries act.
+
+   *  The act.iss rule for AS-issued grants and the privacy guidance on
+      suppressing act.sub_profile now apply only to new actor objects,
+      consistent with inherited-actor immutability.
+
+   *  Aligned the error-response table with the processing rules.
+
+   *  Redrew the cross-domain example diagram and added [RFC8792] line-
+      wrapping headers to folded examples.
+
+   -00
+
+   *  Initial version.
 
 Author's Address
 

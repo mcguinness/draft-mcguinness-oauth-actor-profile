@@ -1417,7 +1417,10 @@ svg {
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.20">
-            <p id="section-toc.1-1.20.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.20.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-document-history" class="internal xref">Document History</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.21">
+            <p id="section-toc.1-1.21.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -2313,7 +2316,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-complete-proof-coverage" class="section-name selfRef">Complete Proof Coverage</a>
         </h3>
 <p id="section-10.2-1">Coverage is structurally complete when all validation succeeds and the proof count equals the visible actor depth.  This suffices when local policy requires only structural completeness.<a href="#section-10.2-1" class="pilcrow">¶</a></p>
-<p id="section-10.2-2">With <code>actor_proofs_complete_required: true</code>, the token or introspection response <span class="bcp14">MUST</span> also carry <code>actor_proofs_complete: true</code>.  Recipients <span class="bcp14">MUST</span> reject tokens that fail the applicable completeness requirement.<a href="#section-10.2-2" class="pilcrow">¶</a></p>
+<p id="section-10.2-2">When Protected Resource Metadata sets <code>actor_proofs_complete_required: true</code>, the token or introspection response <span class="bcp14">MUST</span> also carry <code>actor_proofs_complete: true</code>.  Recipients <span class="bcp14">MUST</span> reject tokens that fail the applicable completeness requirement.<a href="#section-10.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="use-by-resource-servers">
@@ -2361,7 +2364,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         </ul>
 <p id="section-10.4-3">The registered introspection response members are defined in <a href="#introspection-response-members" class="auto internal xref">Section 11.3</a>; introspection-server failure handling is addressed in <a href="#introspection-errors" class="auto internal xref">Section 12.3</a>.<a href="#section-10.4-3" class="pilcrow">¶</a></p>
 <p id="section-10.4-4">For opaque tokens, the issuer stores proofs and returns them to authorized resource servers through introspection.  The same format and consumer rules apply, using the response as the outer token's claim set.<a href="#section-10.4-4" class="pilcrow">¶</a></p>
-<p id="section-10.4-5">An introspection response carrying proofs <span class="bcp14">MUST</span> include <code>sub</code>, <code>act</code>, <code>aud</code>, and <code>iss</code>.  It <span class="bcp14">SHOULD</span> include <code>jti</code> when maintained by the server; without it, the response supplies no instance binding under step 9.  If present, <code>actor_proofs_complete</code> <span class="bcp14">MUST</span> be a boolean.<a href="#section-10.4-5" class="pilcrow">¶</a></p>
+<p id="section-10.4-5">An introspection response carrying proofs <span class="bcp14">MUST</span> include the members needed for <a href="#consumer-processing" class="auto internal xref">Section 10</a>: the token's top-level <code>sub</code>, the visible <code>act</code> chain, the token's <code>aud</code>, and the token's <code>iss</code>.  It <span class="bcp14">SHOULD</span> include <code>jti</code> when maintained by the server; without it, the response supplies no instance binding under step 9.  If present, <code>actor_proofs_complete</code> <span class="bcp14">MUST</span> be a boolean.<a href="#section-10.4-5" class="pilcrow">¶</a></p>
 <p id="section-10.4-6">An RS receiving both inline and introspected proofs <span class="bcp14">MUST</span> select an authoritative source under local policy.  If it consumes both, differing arrays or completeness values <span class="bcp14">MUST</span> cause rejection of proof-based provenance.<a href="#section-10.4-6" class="pilcrow">¶</a></p>
 <p id="section-10.4-7">An introspection server <span class="bcp14">MUST</span> return the full stored array or omit <code>actor_proofs</code>.  Removing an older entry breaks <code>prh</code>; removing the newest breaks hop alignment.  A stored array with partial coverage is returned in full with <code>actor_proofs_complete: false</code>.<a href="#section-10.4-7" class="pilcrow">¶</a></p>
 <p id="section-10.4-8">For an inactive token, the introspection server <span class="bcp14">MUST NOT</span> return <code>actor_proofs</code> or <code>actor_proofs_complete</code>.<a href="#section-10.4-8" class="pilcrow">¶</a></p>
@@ -2651,7 +2654,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-14.3-5.1.1"><strong>Pre-established keys.</strong>  The actor's verification keys are registered with the recipient or its trust framework in advance, for example as the JWKS of a registered OAuth client at the authorization server, or as locally configured keys at a resource server.  This pattern is self-contained and provides the strongest independence properties.  Attestation-based client authentication <span>[<a href="#I-D.ietf-oauth-attestation-based-client-auth" class="cite xref">I-D.ietf-oauth-attestation-based-client-auth</a>]</span> provides an interoperable way to establish such keys, with an attester vouching for the actor's key binding.<a href="#section-14.3-5.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-14.3-5.2">
-            <p id="section-14.3-5.2.1"><strong>Receipt-attested presenter keys.</strong>  If the deployment uses presenter keys to sign proofs, a recipient <span class="bcp14">MAY</span> use the aligned receipt's historical <code>cnf</code> to identify the verification key.  This avoids a separate key registry but provides no independence from that receipt issuer, including the current issuer at the newest hop when that issuer created the newest receipt.<a href="#section-14.3-5.2.1" class="pilcrow">¶</a></p>
+            <p id="section-14.3-5.2.1"><strong>Receipt-attested presenter keys.</strong>  When the aligned receipt carries the historical presenter binding <code>cnf</code> defined in <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> and the deployment uses presenter keys to sign proofs, a recipient <span class="bcp14">MAY</span> use that <code>cnf</code> to identify the verification key.  This avoids a separate key registry but provides no independence from that receipt issuer, including the current issuer at the newest hop when that issuer created the newest receipt.<a href="#section-14.3-5.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-14.3-5.3">
             <p id="section-14.3-5.3.1"><strong>Federation and workload identity systems.</strong>  Deployment-defined resolution through workload identity or federation infrastructure.  The trust and freshness properties are those of the underlying system; this document does not profile them.  OAuth SPIFFE client authentication <span>[<a href="#I-D.ietf-oauth-spiffe-client-auth" class="cite xref">I-D.ietf-oauth-spiffe-client-auth</a>]</span> is an example of workload-identity key establishment that deployments can apply to actor signing keys.<a href="#section-14.3-5.3.1" class="pilcrow">¶</a></p>
@@ -2717,6 +2720,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-14.6-3.2.1">Recipients <span class="bcp14">SHOULD</span> treat the absence of proofs from an issuer that advertises <code>actor_proofs_supported: true</code>, for a resource that requires them, as a signal warranting scrutiny rather than silent acceptance.<a href="#section-14.6-3.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
+<p id="section-14.6-4">Issuers cannot protect recipients that do not ask; the enforcement locus of this profile is the recipient.<a href="#section-14.6-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="actor-key-compromise">
@@ -3451,8 +3455,37 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </div>
 </section>
 </div>
-<div id="authors-addresses">
+<div id="document-history">
 <section id="appendix-B">
+      <h2 id="name-document-history">
+<a href="#name-document-history" class="section-name selfRef">Document History</a>
+      </h2>
+<p id="appendix-B-1">[[ To be removed from the final specification ]]<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+<p id="appendix-B-2">-01<a href="#appendix-B-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-B-3.1">
+          <p id="appendix-B-3.1.1">Consolidated and tightened the text throughout.<a href="#appendix-B-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.2">
+          <p id="appendix-B-3.2.1">An issuer now drops inherited proofs when reissuance exceeds any part of the newest proof's target, not only its audience.<a href="#appendix-B-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.3">
+          <p id="appendix-B-3.3.1">Distinguished a mismatched <code>origin_jti</code>, which consumer processing rejects unless the outer issuer is a trusted reissuer, from an absent one.<a href="#appendix-B-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.4">
+          <p id="appendix-B-3.4.1">Removed an example claim that receipt composition stops a compromised issuer from re-embedding a proof.<a href="#appendix-B-3.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="appendix-B-4">-00<a href="#appendix-B-4" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-B-5.1">
+          <p id="appendix-B-5.1.1">Initial version.<a href="#appendix-B-5.1.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-C">
       <h2 id="name-authors-address">
 <a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
       </h2>

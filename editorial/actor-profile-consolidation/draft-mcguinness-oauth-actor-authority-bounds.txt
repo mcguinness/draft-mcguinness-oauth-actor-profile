@@ -136,6 +136,7 @@ Table of Contents
    Appendix A.  Examples
      A.1.  Example: Two-Hop Chain with Narrowing Bounds
      A.2.  Example: Refresh Widening Recorded as a Bounds Event
+   Document History
    Author's Address
 
 1.  Introduction
@@ -738,8 +739,8 @@ Table of Contents
 
    2.  Check claim types:
 
-       *  bounds and new_bounds are objects with recognized member types
-          from Section 6.
+       *  bounds and new_bounds are objects whose recognized members
+          have the types defined in Section 6.
 
        *  reauthorized contains its required, correctly typed members.
 
@@ -796,9 +797,9 @@ Table of Contents
        determined.
 
    7.  Check authority_bounds_enforced, if present.  Every named
-       dimension MUST be recognized.  For named dimensions with recorded
-       bounds, steps 4 through 6 MUST succeed; inconsistency MUST reject
-       bounds evidence.
+       dimension MUST be recognized.  For each named dimension for which
+       the chain carries any receipt-attested bounds, steps 4 through 6
+       MUST succeed; inconsistency MUST reject bounds evidence.
 
    8.  Enforce dimensions required by authority_bounds_required or local
        policy.  Each required D must appear in
@@ -905,12 +906,15 @@ Table of Contents
    The following parameters are defined for use in Protected Resource
    Metadata [RFC9728]:
 
-   authority_bounds_required:  OPTIONAL.  A non-empty array of dimension
-      names.  Each requires the enforcement in consumer step 8: an
-      issuer attestation, bounds on every receipt, and successful
-      verification.  Naming aud enables audience governance.  This is a
-      deployment policy declaration; clients MAY combine it with
-      authority_bounds_supported to select an AS.
+   authority_bounds_required:  OPTIONAL.  A non-empty array of governed-
+      dimension names.  For each named dimension, the resource server
+      requires the dense receipt-attested enforcement of consumer step
+      8: authority_bounds_enforced naming the dimension, bounds for the
+      dimension on every receipt, and successful verification.  Naming
+      aud enables audience governance (Section 6.2).  This is a
+      deployment policy declaration, satisfied by configuring the
+      authorization servers that serve the resource; clients MAY combine
+      it with authority_bounds_supported to select an AS.
 
    bounds_events_complete_required:  OPTIONAL.  A boolean.  When true,
       the resource server requires bounds_events_complete: true on the
@@ -1677,6 +1681,14 @@ A.2.  Example: Refresh Widening Recorded as a Bounds Event
    receipt[0].bounds.scope.  A recipient whose re-authorization trust
    policy does not accept step_up events from this AS rejects the basis
    change, and with it the refreshed token's bounds evidence.
+
+Document History
+
+   [[ To be removed from the final specification ]]
+
+   -00
+
+   *  Initial version.
 
 Author's Address
 
