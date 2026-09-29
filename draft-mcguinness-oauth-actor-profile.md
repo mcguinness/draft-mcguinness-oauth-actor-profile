@@ -2090,6 +2090,8 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * The `act.iss` rule for AS-issued grants and the privacy guidance on suppressing `act.sub_profile` now apply only to new actor objects, consistent with inherited-actor immutability.
 * Aligned the error-response table with the processing rules.
 * Redrew the cross-domain example diagram and added {{RFC8792}} line-wrapping headers to folded examples.
+* Resolved conflicting requirements on inherited extension members, inner-actor validation, and `req_wl` reconciliation, and pointed Security and Privacy restatements at their normative rules.
+* Removed BCP 14 keywords from operational guidance that no other party can observe.
 
 -00
 

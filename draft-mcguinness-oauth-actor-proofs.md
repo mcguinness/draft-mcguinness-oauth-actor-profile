@@ -1083,6 +1083,7 @@ The single proof covers the outermost hop:
 * An issuer now drops inherited proofs when reissuance exceeds any part of the newest proof's target, not only its audience.
 * Distinguished a mismatched `origin_jti`, which consumer processing rejects unless the outer issuer is a trusted reissuer, from an absent one.
 * Removed an example claim that receipt composition stops a compromised issuer from re-embedding a proof.
+* Reconciled `exp` guidance, aligned expiry handling with {{RFC7519}}, and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
 
 -00
 
