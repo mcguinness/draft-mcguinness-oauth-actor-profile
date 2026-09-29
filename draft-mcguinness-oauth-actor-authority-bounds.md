@@ -288,7 +288,7 @@ The JOSE header of a bounds event:
 *  MUST include an asymmetric digital-signature `alg` value, and MUST NOT use `alg: none` or a MAC-based symmetric algorithm;
 *  MUST include `typ` with the value `bounds-event+jwt`;
 *  SHOULD include `kid` when the event issuer publishes multiple verification keys;
-*  MAY include `crit` per {{RFC7515}}; consumers MUST reject an event whose `crit` header lists an extension header the consumer does not understand.
+*  MAY include `crit`; an event whose `crit` header lists an extension header the consumer does not understand is invalid per {{RFC7515, Section 4.1.11}}.
 
 The JWT payload of a bounds event:
 
@@ -317,7 +317,7 @@ The JWT payload of a bounds event:
 `iat`, `exp`, `jti`:
 : REQUIRED, as defined in {{RFC7519}}.  `exp` MUST cover the expected maximum lifetime of any token that will carry this event, following the sizing rules of receipt `exp` in {{ACTOR-RECEIPTS}}.
 
-An event MAY contain additional claims; consumers MUST ignore unrecognized claims unless a specification or local agreement defines their meaning.
+An event MAY contain additional claims; consumers ignore unrecognized claims unless a specification or local agreement defines their meaning, per {{RFC7519, Section 4}}.
 
 ## Event Lifecycle
 
