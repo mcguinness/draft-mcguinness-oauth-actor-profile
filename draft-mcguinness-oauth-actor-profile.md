@@ -512,8 +512,8 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 1.  The AS MUST validate the assertion per {{RFC7523}}, including signature, `iss`, `sub`, `aud`, `exp`, and `jti`.
 
-    *  **Non-sender-constrained grants**: When neither a DPoP proof ({{RFC9449}}) nor an mTLS client certificate ({{RFC8705}}) is required at the token endpoint, the AS MUST reject any assertion whose `jti` has already been accepted within the assertion's validity window.
-    *  **Sender-constrained grants**: The AS SHOULD additionally apply `jti` replay prevention as defense-in-depth, consistent with {{RFC7523}}.
+    *  **Grants without an enforced grant-level sender constraint**: The AS MUST reject with `invalid_grant` an assertion whose validated (`iss`, `jti`) pair it has already accepted, for as long as the assertion remains acceptable, including any allowed clock skew.  A proof used only for client authentication or to bind the issued access token is not a grant-level sender constraint.
+    *  **Sender-constrained grants**: When the AS validates the request's proof of possession against the assertion's top-level `cnf` as specified in step 6, the AS SHOULD additionally apply replay prevention to the validated (`iss`, `jti`) pair as defense-in-depth.  Any permitted reuse requires validation of that binding on each redemption and remains subject to single-use requirements in [Self-Issued Authorization Grants](#security-self-issued-grants) or the applicable grant profile.
 
 2.  The AS MUST verify that the JWT `iss` is trusted under local policy to assert delegation on behalf of the actor identified by `act.sub`.
 
@@ -1533,7 +1533,7 @@ In the absence of these controls, an attacker can self-assert an arbitrary (`sub
 
 ## Assertion Replay Prevention {#security-assertion-replay}
 
-Replaying a delegated assertion can obtain tokens exercising the subject's authorization and establish an unauthorized delegation chain.  For grants without sender constraint, deployments maintain a `jti` replay cache for each assertion's validity window, as required by [Authorization Grant Processing](#jwt-assertion-grants-processing).  Short assertion lifetimes bound cache retention.  With DPoP or mTLS, [Authorization Grant Processing](#jwt-assertion-grants-processing) still recommends `jti` replay prevention as an additional control.
+Replaying a delegated assertion can obtain tokens exercising the subject's authorization and establish an unauthorized delegation chain.  [Authorization Grant Processing](#jwt-assertion-grants-processing) requires replay prevention for grants without an enforced grant-level sender constraint and recommends it as an additional control when that constraint is enforced.  Replay records identify accepted grants by (`iss`, `jti`) and cover the full acceptance window, including allowed clock skew.  Short assertion lifetimes bound retention.
 
 ## Token Substitution
 
@@ -2096,6 +2096,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Unrecognized but syntactically valid values in a carried-forward top-level `sub_profile` are preserved.
 * Used one set of example identifiers for the travel scenario, matching the cross-domain example's parties.
 * Clarified confirmation members in token actor objects as extension data, including preservation and their distinction from the current presenter's binding.
+* Corrected grant replay requirements to depend on an enforced grant-level sender constraint, with accepted grants identified by (`iss`, `jti`) for their full acceptance window.
 
 -00
 
