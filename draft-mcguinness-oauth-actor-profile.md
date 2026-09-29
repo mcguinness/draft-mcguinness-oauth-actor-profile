@@ -2087,6 +2087,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Redrew the cross-domain example diagram and added {{RFC8792}} line-wrapping headers to folded examples.
 * Resolved conflicting requirements on inherited extension members, inner-actor validation, and `req_wl` reconciliation, and pointed Security and Privacy restatements at their normative rules.
 * Removed BCP 14 keywords from operational guidance that no other party can observe.
+* Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
 
 -00
 

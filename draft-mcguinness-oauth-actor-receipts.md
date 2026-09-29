@@ -1157,6 +1157,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * Defined reissuance divergence as a mismatch between `receipt[0]` and the outer token's `iss` or `jti`.
 * Clarified that the claim-pair naming convention and its metadata apply to companion profiles that define parallel per-hop artifact arrays.
 * Reconciled `exp` guidance, aligned expiry handling with {{RFC7519}}, and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
+* Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
 
 -00
 
