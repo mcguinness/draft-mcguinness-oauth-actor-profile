@@ -500,7 +500,7 @@ This document defines two issuer patterns:
 *  an AS-issued delegated assertion, where JWT `iss` is a trusted AS and `act.sub` identifies the actor (recommended);
 *  an assertion carrying a pre-existing nested `act` chain, where the current JWT `iss` is a trusted AS carrying forward prior actor assertions.
 
-For AS-issued grants, the issuing AS MUST set `act.iss` to the issuer or namespace context in which `act.sub` is to be interpreted; for actors registered in the issuing AS's own namespace, this is often the AS's own issuer URI.
+The issuing AS MUST set a new actor's `act.iss` to the issuer or namespace context in which that actor's `act.sub` is interpreted; for actors registered in the AS's own namespace, this is often the AS's own issuer URI.
 
 A deployment MAY additionally accept a self-issued actor assertion when explicitly enabled by another specification or local policy, but that behavior is outside the scope of this document.  Implementations MUST reject self-issued assertion grants by default; see [Self-Issued Authorization Grants](#security-self-issued-grants) for the security controls any such deployment MUST independently establish.
 
@@ -1614,7 +1614,7 @@ Issuers SHOULD minimize disclosure of prior actors by audience and token-design 
 
 A Transaction Token's `txn` value links service calls in the same transaction and can enable correlation across organizations.  Deployments SHOULD follow the privacy guidance in {{I-D.ietf-oauth-transaction-tokens}} when propagating it across trust domains.
 
-`act.sub_profile` reveals the actor's entity type, including whether it is an AI agent.  In some jurisdictions or deployment contexts, this disclosure may be legally significant or may reveal sensitive information about user behavior and tool composition.  Issuers SHOULD consider audience-specific disclosure constraints when including `act.sub_profile` in cross-domain tokens, and SHOULD omit or suppress actor entity-type values when the recipient does not require them for authorization, audit, or policy enforcement.
+`act.sub_profile` reveals the actor's entity type, including whether it is an AI agent.  In some jurisdictions or deployment contexts, this disclosure may be legally significant or may reveal sensitive information about user behavior and tool composition.  Issuers SHOULD consider audience-specific disclosure constraints and SHOULD omit unnecessary entity classifications when constructing new actor objects.  Inherited actors remain subject to the preservation rules in [Preserve Inbound Chain](#preserve-inbound-chain).
 
 `req_wl` can reveal internal workload topology.  A TTS SHOULD disclose it only where needed for authorization, audit, or policy enforcement, and SHOULD avoid exposing internal workload identifiers across domains unless the deployment requires it.
 
