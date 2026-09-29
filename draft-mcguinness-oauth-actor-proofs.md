@@ -676,8 +676,8 @@ Trust establishment requirements:
 
 *  A recipient needs to establish its trusted actor-key sources before relying on `actor_proofs`, through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.
 *  A recipient MUST NOT treat the presence of a syntactically valid signed proof as sufficient grounds to trust the key that signed it.
-*  A recipient MUST determine that a proof's (`act.iss`, `act.sub`) pair is within the scope of a trusted actor-key source before performing any network retrieval keyed by the proof's content, and MUST NOT dereference key references supplied by the proof itself (such as `jku` or `x5u` header parameters) outside a pre-established trust framework, per {{RFC8725}}.
-*  Key resolution and trust evaluation use the (`act.iss`, `act.sub`) pair.  The bare proof `iss` string MUST NOT be the sole resolution index; actor identifiers are namespaced by `act.iss`, and identical `act.sub` strings under different namespace authorities are different actors.
+*  Step 5 of {{consumer-processing}} checks that a proof's (`act.iss`, `act.sub`) pair is within the scope of a trusted actor-key source before any network retrieval keyed by the proof's content, and a recipient MUST NOT dereference key references supplied by the proof itself (such as `jku` or `x5u` header parameters) outside a pre-established trust framework, per {{RFC8725}}.
+*  Key resolution and trust evaluation use the (`act.iss`, `act.sub`) pair.  The bare proof `iss` string is not a resolution index on its own ({{identity-claims}}); actor identifiers are namespaced by `act.iss`, and identical `act.sub` strings under different namespace authorities are different actors.
 
 This document profiles the following resolution patterns; a deployment may support any subset:
 
@@ -687,7 +687,7 @@ This document profiles the following resolution patterns; a deployment may suppo
 
 The independence requirement follows from the threat model: for the anti-fabrication property against a given issuer to hold at a hop, the recipient MUST resolve the actor's key for that hop through a source independent of that issuer.
 
-Actor keys, like receipt-issuer trust, are not transitive: each proof is validated against the recipient's own actor-key sources, independent of the outer token's issuer and of neighboring proofs.  If any proof in the presented `actor_proofs` array is signed by a key the recipient cannot resolve through a trusted source, the recipient MUST reject the proof chain for the purposes of this profile.
+Actor keys, like receipt-issuer trust, are not transitive: each proof is validated against the recipient's own actor-key sources, independent of the outer token's issuer and of neighboring proofs.  If any proof in the presented `actor_proofs` array is signed by a key the recipient cannot resolve through a trusted source, step 5 of {{consumer-processing}} fails and the proof chain is rejected for the purposes of this profile.
 
 ## Proof-to-Token Binding Limits {#proof-to-token-binding-limits}
 
