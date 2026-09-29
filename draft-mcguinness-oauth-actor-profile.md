@@ -106,38 +106,40 @@ informative:
 
 --- abstract
 
-This document defines a common representation of delegated actors in OAuth JSON Web Token (JWT) assertion grants, JWT access tokens, and Transaction Tokens.  It profiles the `act` claim defined by OAuth 2.0 Token Exchange, requires issuer-scoped actor identifiers, and uses `sub_profile` to classify actor entity types.  It specifies token processing, delegation-chain propagation, sender-constraint handling, and discovery metadata.  Delegation approval and trust policy remain deployment-specific.
+This document defines a common representation of delegated actors in OAuth JSON Web Token (JWT) assertion grants, JWT access tokens, and Transaction Tokens.  It profiles the `act` claim defined by OAuth 2.0 Token Exchange, requires issuer-scoped actor identifiers, and uses `sub_profile` to classify actor entity types.  It specifies token processing, delegation-chain propagation, sender-constraint handling, and discovery metadata, so that issuers and resource servers in different trust domains interpret delegated actors consistently.
 
 --- middle
 
 # Introduction
 
-Delegated requests can pass through several services and trust domains.  Each recipient needs to distinguish the subject whose authorization is exercised, the actor exercising it, and the OAuth client requesting the token.  Without a common profile, deployments face four interoperability gaps:
+Delegated requests can pass through several services and trust domains.  Each recipient needs to distinguish the subject whose authorization is exercised, the actor exercising it, and the OAuth client requesting the token: `sub` identifies the authorizing principal, `act.sub` the actor, and `client_id` the client registration.  This profile makes the actor explicit in the token rather than leaving it to be inferred from client registration, without redefining client identity or subject semantics.
+
+OAuth 2.0 Token Exchange {{RFC8693}} defines the `act` claim for the current actor and prior actors, but leaves "the specifics of representing a composite token" to implementations ({{RFC8693, Section 1.1}}).  It notes that `iss` and `sub` together "might be necessary" to identify an actor ({{RFC8693, Section 4.1}}), but it does not require an identifier context or classify actors.  Its delegation example derives `act` from the subject of the `actor_token` ({{RFC8693, Appendix A.2.5}}), but it does not specify actor validation and derivation rules for each token type, how `act` propagates across JWT assertion grants, JWT access tokens, and Transaction Tokens, or how the actor relates to a sender-constrained presenter.  Without a common profile, deployments face four interoperability gaps:
 
 *  **No standard entity classification.** `sub` is overloaded across end users, service accounts, AI agents, and workloads, with no classification that supports deterministic cross-domain policy.
 *  **Inconsistent actor representation across token types.** Actor context, including actor key material, has no representation that survives transformation among JWT assertion grants, JWT access tokens, and Transaction Tokens.
 *  **Implicit delegation via client identity.** A client registration alone may not identify the actor, particularly when one registration serves several agents or workloads, when requests pass through intermediaries, or when tokens cross trust domains.
 *  **No discovery for actor-profile support.** Neither AS metadata {{RFC8414}} nor Protected Resource Metadata {{RFC9728}} defines parameters for advertising actor-profile support.
 
-OAuth 2.0 Token Exchange {{RFC8693}} defines the `act` claim for representing actors and delegation chains.  This document profiles that claim across JWT assertion grants, JWT access tokens, and Transaction Tokens.  It defines:
+This document profiles `act` to close those gaps.  It defines:
 
 *  Issuer-scoped actor identifiers and entity classification using `sub_profile`.
-*  Rules for validating and preserving actor information across token transformations.
+*  Rules for validating, extending, and preserving actor information when tokens are exchanged or reissued.
 *  Presenter continuation and rebind rules for sender-constrained tokens, including upgrades from bearer tokens.
-*  Resource server processing and metadata for advertising profile support.
+*  Resource server processing based on the (`sub`, outermost `act.sub`) pair, and metadata for advertising profile support.
 *  Extension points for companion profiles that provide additional delegation evidence.
 
 The profile applies to human, service, workload, and AI agent delegation.  The requirements of the underlying specifications, including {{RFC8693}}, {{RFC9068}}, {{RFC9449}}, and {{I-D.ietf-oauth-transaction-tokens}}, continue to apply unless stated otherwise.  [Profile Scope](#profile-scope) describes the supported token paths and the boundary between representation and authorization policy.
 
 ## Illustrative Use Case
 
-Alice authorizes an AI travel agent to book a trip.  The enterprise AS issues a credential with Alice as `sub` and the agent as `act`.  The agent presents it to a booking provider's AS for an access token, and the provider then issues a Transaction Token for an internal booking tool.  Alice remains the subject; the tool becomes the outermost actor, and the agent becomes an inner actor.  [The cross-domain example](#appendix-cross-domain) shows the complete flow.
+Alice authorizes an AI travel agent to book a trip.  The enterprise AS issues a credential with Alice as `sub` and the agent as `act`.  The agent presents it to a booking provider's AS for an access token, and the provider then issues a Transaction Token for an internal booking tool.  Alice remains the subject; the tool becomes the outermost actor, and the agent becomes an inner actor.  Each trust domain reissues the token under its own policy, and the outermost actor changes only when a new presenter is established.  [The cross-domain example](#appendix-cross-domain) shows the complete flow.
 
 ## Relationship to Related Work
 
 *  **OAuth Token Exchange ({{RFC8693}})** defines the `act` claim and exchange mechanism profiled here.
 *  **Identity Chaining ({{I-D.ietf-oauth-identity-chaining}})** propagates subject identity across domains and can be combined with this profile's actor representation.
-*  **Identity Assertion JWT Authorization Grant (ID-JAG, {{I-D.ietf-oauth-identity-assertion-authz-grant}})** defines issuance and consumption of JWT authorization grants.  This document supplies actor-delegation processing through its Token Exchange and JWT assertion-grant rules.
+*  **Identity Assertion JWT Authorization Grant (ID-JAG, {{I-D.ietf-oauth-identity-assertion-authz-grant}})** defines issuance and consumption of JWT authorization grants.  It permits `actor_token` inputs but leaves their processing, and whether the issued grant carries `act`, to future profiles or extensions; this document is one such profile, through its Token Exchange and JWT assertion-grant rules.
 *  **OAuth Entity Profiles ({{I-D.mora-oauth-entity-profiles}})** defines the classification claims, metadata, and registry used by this profile.
 *  **Transaction Tokens ({{I-D.ietf-oauth-transaction-tokens}})** defines the token and service model extended here with actor claims and processing rules.
 *  **WIMSE Workload Identity ({{I-D.ietf-wimse-workload-creds}}{{I-D.ietf-wimse-wpt}})** supplies workload credentials and proofs used in [the cross-domain example](#appendix-cross-domain).  This profile also supports other presenter-authentication mechanisms.
@@ -2097,6 +2099,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Used one set of example identifiers for the travel scenario, matching the cross-domain example's parties.
 * Clarified confirmation members in token actor objects as extension data, including preservation and their distinction from the current presenter's binding.
 * Corrected grant replay requirements to depend on an enforced grant-level sender constraint, with accepted grants identified by (`iss`, `jti`) for their full acceptance window, and aligned the self-issued grant controls with that rule.
+* Revised the Introduction to state what Token Exchange leaves open, restore the profile's design center, and name the ID-JAG extension point it fills.
 
 -00
 
