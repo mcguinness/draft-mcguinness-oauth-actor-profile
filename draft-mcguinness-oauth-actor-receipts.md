@@ -241,12 +241,16 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 
   Historical binding belongs in receipt-level `cnf`.  Other core-profile actor extensions MAY appear unless prohibited here; a receipt containing `act.cnf` is invalid.
 
+  These restrictions apply to the receipt's actor object.  The issuer constructs that object for visible-hop alignment (step 7 of {{consumer-processing}}), separately from the token's `act` chain.  A confirmation member in the token's actor object remains subject to the core profile's extension and preservation rules; creating a receipt does not remove it from the token.
+
 ### Historical Presenter Binding
 
 `cnf`:
 : OPTIONAL.  A confirmation claim as defined in {{RFC7800}}.  When present, it MUST equal the top-level `cnf` claim of the token issued at this hop.
 
   Receipt `cnf` records historical presenter-binding information for the hop represented by the receipt.  It does not create a current proof-of-possession obligation for the current request.
+
+  Its source is the top-level `cnf` of the token issued at that hop, rather than a confirmation member in the token's `act` chain.
 
   Whether an issuer includes `cnf` is governed by {{historical-cnf-disclosure}}; omitting `cnf` does not invalidate the receipt.
 
@@ -1155,6 +1159,8 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 [[ To be removed from the final specification ]]
 
 -01
+
+* Clarified that receipt actor-object restrictions apply separately from the token's actor chain, and that historical binding comes from the issued token's top-level `cnf`.
 
 * Consolidated and tightened the text throughout; the claim-pair naming convention now uses a table.
 * Gathered the receipt instance-binding rules for `origin_jti`, strict mode, and reissuance into one section.

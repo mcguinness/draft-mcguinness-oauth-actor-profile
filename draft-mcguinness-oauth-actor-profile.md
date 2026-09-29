@@ -421,7 +421,9 @@ Per-actor confirmation members and prior-hop key provenance are outside this pro
 
 ### Top-Level `cnf` Governs the Current Presenter
 
-The top-level `cnf` claim of any token identifies the key or certificate of the current presenter.  When delegation is present, that current presenter is the party identified by the outermost `act` claim: when DPoP ({{RFC9449}}) is used, the top-level `cnf.jkt` MUST identify that party's key; when mTLS ({{RFC8705}}) is used, the top-level `cnf.x5t#S256` MUST identify that party's certificate.  The AS or RS MUST validate proof of possession against the top-level `cnf`.  Confirmation-style members that appear inside an `act` object due to another specification do not have standardized proof-of-possession semantics under this document.
+The top-level `cnf` claim of any token identifies the key or certificate of the current presenter.  When delegation is present, that current presenter is the party identified by the outermost `act` claim: when DPoP ({{RFC9449}}) is used, the top-level `cnf.jkt` MUST identify that party's key; when mTLS ({{RFC8705}}) is used, the top-level `cnf.x5t#S256` MUST identify that party's certificate.  The AS or RS MUST validate proof of possession against the top-level `cnf`.
+
+A confirmation member such as `act.cnf` is permitted as extension data under [Actor Object Structure](#actor-object-structure) and has no proof-of-possession semantics under this profile.  It remains unchanged in an inherited actor object under [Preserve Inbound Chain](#preserve-inbound-chain).  After further delegation, an inherited confirmation value can therefore differ from the current token's top-level `cnf`; this profile imposes no equality check between them.  Another specification can define additional checks for its own issuance or processing rules.
 
 ### Token Exchange Continuation
 
@@ -2076,6 +2078,8 @@ The author thanks the OAuth Working Group for the specifications on which this p
 [[ To be removed from the final specification ]]
 
 -01
+
+* Clarified confirmation members in token actor objects as extension data, including preservation and their distinction from the current presenter's binding.
 
 * Consolidated and tightened the text throughout; claim roles, supported token types, and error mappings now use tables.
 * Added hop and visible-hop terminology, and token-size guidance for extensions that attach per-hop signed material.

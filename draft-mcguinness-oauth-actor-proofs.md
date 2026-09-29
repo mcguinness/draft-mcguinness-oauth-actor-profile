@@ -242,6 +242,8 @@ The JWT payload of an actor proof uses the claims defined below, grouped by purp
 
   `act` supplies the namespace context and visible-hop alignment.  A proof is invalid if `iss` differs from `act.sub`.
 
+  These restrictions apply to the proof's actor object.  The token's `act` chain can retain confirmation members as extension data under the core actor profile.  The proof's actor object omits those members while satisfying visible-hop alignment (step 7 of {{consumer-processing}}); this does not modify the token's actor chain.
+
 Proofs define no subject `sub_profile` claim; subject classification remains issuer-asserted.  Actor classification can appear in `act.sub_profile`.
 
 ### Target Binding
@@ -1072,6 +1074,8 @@ The single proof covers the outermost hop:
 [[ To be removed from the final specification ]]
 
 -01
+
+* Clarified that proof actor-object restrictions apply separately from confirmation extensions in the token's actor chain.
 
 * Consolidated and tightened the text throughout.
 * An issuer now drops inherited proofs when reissuance exceeds any part of the newest proof's target, not only its audience.
