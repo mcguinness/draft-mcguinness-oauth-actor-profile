@@ -1158,6 +1158,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * Clarified that the claim-pair naming convention and its metadata apply to companion profiles that define parallel per-hop artifact arrays.
 * Reconciled `exp` guidance, aligned expiry handling with {{RFC7519}}, and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
+* Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, {{RFC8725}} applies except its audience validation, introspection flags known partial coverage, and subject continuity allows namespace-aware matching or trusted mapping.
 
 -00
 

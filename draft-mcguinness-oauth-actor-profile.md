@@ -2089,6 +2089,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Resolved conflicting requirements on inherited extension members, inner-actor validation, and `req_wl` reconciliation, and pointed Security and Privacy restatements at their normative rules.
 * Removed BCP 14 keywords from operational guidance that no other party can observe.
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
+* Resolved the remaining duplicate-rule conflicts: `act` in Transaction Tokens follows Delegation Chains, identifier reconciliation keeps both outcomes under explicit conditions, client identity must not substitute for `act`, inner-actor failures use the shared error mapping, and proof for a new presenter is required for sender-constrained output.
 
 -00
 

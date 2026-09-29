@@ -1080,6 +1080,7 @@ The single proof covers the outermost hop:
 * Removed an example claim that receipt composition stops a compromised issuer from re-embedding a proof.
 * Reconciled `exp` guidance, aligned expiry handling with {{RFC7519}}, and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
+* Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, {{RFC8725}} applies except its audience validation, and Strict Mode governs every divergence.
 
 -00
 
