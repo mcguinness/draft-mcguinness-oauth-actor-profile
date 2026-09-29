@@ -411,7 +411,7 @@ The AS MUST copy the validated inbound chain exactly into the issued token.  The
 
 #### Omit `act` {#omit-act}
 
-When no delegation is present and no actor information should appear in the issued token, the AS MUST NOT include an `act` claim.  The AS MUST NOT silently drop an inbound `act` claim; if it cannot preserve or extend the chain, it MUST reject the request per [Error Responses](#actor-profile-error-responses).
+When no delegation is present and no actor information should appear in the issued token, the AS omits `act`, as required by [Delegation Chains](#delegation-chains).  The AS MUST NOT silently drop an inbound `act` claim; if it cannot preserve or extend the chain, it MUST reject the request per [Error Responses](#actor-profile-error-responses).
 
 ## Sender Constraint and Proof-of-Possession Validation {#delegated-pop-validation}
 
@@ -462,7 +462,7 @@ The following claims are defined for a JWT assertion grant that carries actor-pr
 : Classifies the entity type of `sub`.  MUST conform to the values defined in [Actor Profile for Delegation](#actor-profile).
 
 `act` (REQUIRED when delegation is asserted):
-: The actor object identifying the entity exercising the subject's delegated rights.  MUST conform to the actor object structure defined in [Actor Profile for Delegation](#actor-profile).  MUST include `act.sub` and `act.iss`.
+: The actor object identifying the entity exercising the subject's delegated rights.  MUST conform to the actor object structure defined in [Actor Profile for Delegation](#actor-profile).
 
 `cnf` (REQUIRED when sender-constrained; otherwise OPTIONAL):
 : When the JWT assertion grant is sender-constrained, the assertion MUST carry a top-level `cnf` claim identifying the binding: `cnf.jkt` per {{RFC9449}} when DPoP is used, or `cnf.x5t#S256` per {{RFC8705}} when mTLS is used.  When the assertion is not sender-constrained, top-level `cnf` is OPTIONAL unless required by another profile or local policy.
@@ -587,7 +587,7 @@ The following claims are defined for a JWT access token that carries actor-profi
 : Classifies the entity type of `sub`.  MUST conform to the values defined in [Actor Profile for Delegation](#actor-profile).
 
 `act` (REQUIRED when the token represents delegation per [Delegation Chains](#delegation-chains)):
-: The actor object identifying the entity exercising the subject's delegated rights.  MUST conform to the actor object structure defined in [Actor Profile for Delegation](#actor-profile).  MUST include `act.sub` and `act.iss`.  When the token does not represent delegation, `act` MUST be omitted.
+: The actor object identifying the entity exercising the subject's delegated rights.  MUST conform to the actor object structure defined in [Actor Profile for Delegation](#actor-profile).
 
 `cnf` (REQUIRED when sender-constrained; otherwise OPTIONAL):
 : Binds the access token to the current presenter when a sender-constraining mechanism such as DPoP or mTLS is used.
@@ -919,7 +919,7 @@ For a sender-constrained output, the AS MUST set top-level `cnf` according to [P
 
 If a Token Exchange request explicitly seeks a delegated output, for example by supplying an `actor_token` or by presenting a `subject_token` that already carries `act`, and the AS cannot validate the actor information, it MUST reject the request with `invalid_grant`.  If the AS can validate the actor information but cannot establish or confirm the required delegation basis, or if local policy prohibits the relationship, it MUST reject the request with `actor_unauthorized`.  The AS MUST NOT issue a non-delegated JWT access token in place of the requested delegated output.
 
-1.  When the issued access token represents delegation per [Delegation Chains](#delegation-chains), the AS MUST include an `act` claim.  The AS MUST NOT silently drop actor information.  If the inbound credential carries no `act`, no validated `actor_token` is present, and no independent delegation basis exists, the AS MUST omit `act`.
+1.  The AS includes or omits `act` as required by [Delegation Chains](#delegation-chains), and does not silently drop inbound actor information ([Omit `act`](#omit-act)).
 
 2.  The AS MUST preserve `sub` to refer to the same underlying subject as the inbound token.  If the AS uses a different subject-identifier namespace, it MAY change the `sub` value only to re-express that same subject in the new namespace under a trusted local mapping.  The AS MUST NOT replace `sub` with an identifier for a different subject.  Subject-namespace translation requirements and relying-party consequences are described in [Subject Namespace Translation](#subject-namespace-translation).
 
@@ -1382,7 +1382,7 @@ When an AS receives such an object:
 
 A deployment can migrate in three stages:
 
-1.  Issuers MUST emit `act.iss` for every actor in newly issued profile tokens.  Existing consumers can ignore the additional claim.
+1.  Issuers emit `act.iss` for every actor in newly issued profile tokens, as [Actor Object Structure](#actor-object-structure) requires.  Existing consumers can ignore the additional claim.
 2.  Consumers SHOULD begin validating the actor identifier context once issuers support it.
 3.  Once all token issuers and consumers on a path have been updated, resources SHOULD enforce conformance through local policy and `actor_profile_required: true`.  ASes can also require conformance on updated inbound paths.
 
