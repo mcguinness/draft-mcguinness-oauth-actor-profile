@@ -267,7 +267,7 @@ The current presenter's binding is carried in top-level `cnf`; see [Sender Const
 
 The `client_profile` claim defined in {{I-D.mora-oauth-entity-profiles}} classifies the OAuth client and MUST NOT appear within an `act` object.  Client classification belongs at the top level of the token.  An AS or RS that encounters a `client_profile` member inside an `act` node MAY reject the token or ignore the offending member; it MUST NOT treat it as a valid actor classification.
 
-When an `act` object contains extension members beyond those defined in this document, issuers and consumers MUST ignore unrecognized members unless another specification or local policy defines their meaning.  An issuer that preserves a validated delegation chain copies unrecognized extension members in inherited `act` objects unchanged, as [Preserve Inbound Chain](#preserve-inbound-chain) requires.  However, companion profiles that need independently verifiable provenance, per-hop receipts, or other chain-wide state SHOULD use the top-level extension pattern described in [Companion Profiles and Extension Points](#companion-profile-extensibility) rather than relying on inherited `act`-object extension members.
+When an `act` object contains extension members beyond those defined in this document, issuers and consumers MUST ignore unrecognized members unless another specification or local policy defines their meaning.  An issuer that preserves a validated delegation chain copies unrecognized extension members in inherited `act` objects unchanged, as [Preserve Inbound Chain](#preserve-inbound-chain) requires.  However, [Companion Profiles and Extension Points](#companion-profile-extensibility) recommends that companion profiles needing independently verifiable provenance, per-hop receipts, or other chain-wide state use top-level extensions rather than inherited `act`-object extension members.
 
 
 ## Delegation Chains {#delegation-chains}
@@ -1179,7 +1179,7 @@ When `chain_complete` is `false`:
 *  An RS using any inner actor for authorization, scope determination, or another security decision MUST reject the request.
 *  An RS using inner actors only for audit or information MAY accept the response if it records the incompleteness.  The subject and outermost actor remain available for authorization.
 
-The RS MUST NOT treat a partial chain as complete delegation history.  Companion profiles with data aligned to `act` MUST define their filtering behavior per [Companion Profiles and Extension Points](#companion-profile-extensibility).
+The RS MUST NOT treat a partial chain as complete delegation history.  Companion profiles with data aligned to `act` define their filtering behavior as required by [Companion Profiles and Extension Points](#companion-profile-extensibility).
 
 When an AS supports delegated opaque access tokens through introspection, it MUST return the fields listed above for active delegated tokens.  Support for this compatibility path MUST NOT be inferred solely from `actor_profile_required` metadata; see [Profile Scope](#profile-scope).
 
@@ -1233,7 +1233,7 @@ Authorization servers and resource servers advertise support through these param
 
 {{I-D.ietf-oauth-identity-assertion-authz-grant}} defines `authorization_grant_profiles_supported`, and {{I-D.mora-oauth-entity-profiles}} defines `entity_profiles_supported.actor`.  This document defines the other two in [Authorization Server Metadata](#authorization-server-metadata) and [Protected Resource Metadata](#protected-resource-metadata).
 
-These signals do not guarantee acceptance of a particular request or every combination of advertised capabilities.  Additional constraints require deployment documentation or agreements.  Companion profiles MAY define metadata under [Companion Profiles and Extension Points](#companion-profile-extensibility).
+These signals do not guarantee acceptance of a particular request or every combination of advertised capabilities.  Additional constraints require deployment documentation or agreements.  Companion profiles can define metadata under [Companion Profiles and Extension Points](#companion-profile-extensibility).
 
 ## Authorization Server Metadata {#authorization-server-metadata}
 
@@ -1575,7 +1575,7 @@ Without top-level presenter proof of possession, a leaked token can be replayed 
 *  When a token carries top-level `cnf`, the RS validates the presenter proof against it ([Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation)).  For example, JWT access tokens commonly use DPoP or mTLS, while Transaction Tokens can use the workload proof mechanism defined by their deployment profile.
 *  A sender-constrained delegated token binds the current presenter, the outermost actor, which reduces delegation-token theft risk.
 
-This document does not define per-hop actor-key provenance within the delegation chain.  Deployments that need stronger assurance for prior-hop provenance MUST use an additional mechanism outside the scope of this document, such as signed hop receipts, transparency-log-based recording, or another future extension; they MUST NOT overload `act.iss` or redefine nested `act` semantics to carry that provenance.  Companion profiles that supply such mechanisms MUST follow [Companion Profiles and Extension Points](#companion-profile-extensibility).
+This document does not define per-hop actor-key provenance within the delegation chain.  Deployments that need stronger assurance for prior-hop provenance MUST use an additional mechanism outside the scope of this document, such as signed hop receipts, transparency-log-based recording, or another future extension; they MUST NOT overload `act.iss` or redefine nested `act` semantics to carry that provenance.  Companion profiles that supply such mechanisms are subject to [Companion Profiles and Extension Points](#companion-profile-extensibility).
 
 ## Delegation Depth Limits
 
