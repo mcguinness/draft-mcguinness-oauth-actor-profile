@@ -936,7 +936,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
     *  with `actor_unauthorized` when the actor is categorically unauthorized for the remaining scope, for example because its entity type is prohibited;
     *  with `invalid_scope` for other causes, such as an actor scope ceiling that excludes the requested values.
 
-7.  The AS MAY preserve inbound client identifiers per the output token profile or local policy.  Preserved values MUST retain their client-identity meaning and MUST NOT represent delegation state.  If preserving an optional identifier would create ambiguity about the delegated actor relationship, the AS SHOULD omit it.  JWT access tokens still require `client_id` per {{RFC9068}}; see [Client Identity and Delegation](#client-identity-delegation).
+7.  The AS MAY preserve inbound client identifiers per the output token profile or local policy.  Preserved values MUST retain their client-identity meaning; they do not represent delegation state ([Client Identity and Delegation](#client-identity-delegation)).  If preserving an optional identifier would create ambiguity about the delegated actor relationship, the AS SHOULD omit it.  JWT access tokens still require `client_id` per {{RFC9068}}.
 
 8.  The AS MUST honor resource-indicator constraints ({{RFC8707}}) in delegated token requests.
 
@@ -1535,7 +1535,7 @@ Replaying a delegated assertion can obtain tokens exercising the subject's autho
 
 ## Token Substitution
 
-An attacker who can present a token with a crafted `sub_profile` or delegation chain could attempt to escalate privileges.  ASes MUST validate inbound `sub_profile` values against the syntax requirements of this document, the applicable registry or deployment-specific allowed set where such checks are part of local policy, and the local policy applicable to the token they are issuing.  They MUST preserve unrecognized but syntactically valid values as required by [Actor Object Structure](#actor-object-structure), and they MUST reject values that are malformed or disallowed by local policy.
+An attacker who can present a token with a crafted `sub_profile` or delegation chain could attempt to escalate privileges.  ASes MUST validate inbound `sub_profile` values against the syntax requirements of this document, the applicable registry or deployment-specific allowed set where such checks are part of local policy, and the local policy applicable to the token they are issuing.  They MUST preserve unrecognized but syntactically valid values as required by [Preserve Inbound Chain](#preserve-inbound-chain), and they MUST reject values that are malformed or disallowed by local policy.
 
 ## Confused Deputy
 

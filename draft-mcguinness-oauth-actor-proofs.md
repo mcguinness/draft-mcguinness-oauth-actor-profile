@@ -370,7 +370,7 @@ When an issuer adds a new outermost actor hop and also preserves an inbound `act
 6.  MUST prepend the new proof to the inherited array.
 7.  MUST preserve `actor_proofs_complete: true` when the inbound attestation is valid and the new proof covers the added hop.  Otherwise, the issuer MUST NOT set it to `true` and SHOULD set it to `false`.  This is narrower than the general rule in {{actor-proofs-claim}} because an extending issuer establishes completeness of the inherited hops only through a valid inbound attestation; without one, it does not claim complete coverage even when the proof count equals the visible depth.
 
-An issuer MUST NOT reserialize, resign, normalize, trim, or otherwise alter a prior proof.
+Byte-for-byte preservation ({{proof-chain-linkage}}) rules out reserializing, re-signing, normalizing, trimming, or otherwise altering a prior proof.
 
 The actor must know the newest inbound proof's exact serialization, or its hash and `prh_alg`, before signing.  For JWT inputs it can read `actor_proofs[0]`.  For opaque inputs, the deployment MUST supply that information.  If unavailable, the issuer MUST NOT accept a proof without `prh` as a chain extension; it MAY instead start a new chain under {{accepting-a-proof}} where local policy permits partial coverage ({{partial-coverage-and-full-coverage}}).
 
@@ -488,19 +488,18 @@ Older proofs can carry a different `sub` value from the current outer token when
 Accordingly:
 
 *  only `actor_proofs[0].sub` is required to equal the current outer token `sub`;
-*  older proof `sub` values can differ (step 8 of {{consumer-processing}});
-*  a recipient that applies stronger continuity requirements across older `sub` values MUST do so under explicit trusted local mapping rules.
+*  older proof `sub` values can differ (step 8 of {{consumer-processing}}).
 
-Recipients MUST be aware that permitting differing `sub` values across proofs creates a cross-subject insertion risk: a proof signed by a legitimate actor for an unrelated subject's delegation could satisfy the structural hop-alignment check when the actor identity at that hop matches.  An attacker who compromises any single actor signing key can deliberately sign proofs naming any subject and any target, and graft them onto a downstream chain whose re-expressed `sub` points at a victim subject.
+Recipients need to be aware that permitting differing `sub` values across proofs creates a cross-subject insertion risk: a proof signed by a legitimate actor for an unrelated subject's delegation could satisfy the structural hop-alignment check when the actor identity at that hop matches.  An attacker who compromises any single actor signing key can deliberately sign proofs naming any subject and any target, and graft them onto a downstream chain whose re-expressed `sub` points at a victim subject.
 
 This profile provides no in-band mechanism for cross-namespace subject reconciliation.
 
 Deployments where subject continuity is a security requirement SHOULD adopt one of the following:
 
-*  require consistent `sub` values across all proofs in the chain, rejecting re-expressed chains; or
-*  enforce explicit trusted subject-mapping rules that can positively confirm each distinct `sub` value refers to the same underlying entity.
+*  require exact, namespace-aware matching of subject identifiers across all proofs (the same `sub` under the same namespace authority; see `sub_iss` in {{identity-claims}}), rejecting re-expressed chains; or
+*  enforce explicit trusted subject-mapping rules that can positively confirm each distinct subject identifier refers to the same underlying entity.
 
-When neither condition is met, the recipient MUST treat the differing `sub` values as unverified subject continuity and MUST NOT rely on those older proofs for authorization decisions.
+When neither condition is met, the recipient MUST treat subject continuity as unverified and MUST NOT rely on older proofs whose subject identifiers (`sub` or `sub_iss`) differ to support authorization that requires subject continuity.
 
 ## Complete Proof Coverage
 
@@ -536,7 +535,7 @@ An introspection response carrying proofs MUST include the members needed for {{
 
 An RS receiving both inline and introspected proofs MUST select an authoritative source under local policy.  If it consumes both, differing arrays or completeness values MUST cause rejection of proof-based provenance.
 
-An introspection server MUST return the full stored array or omit `actor_proofs`.  Removing an older entry breaks `prh`; removing the newest breaks hop alignment.  A stored array with partial coverage is returned in full with `actor_proofs_complete: false`.
+An introspection server MUST return the full stored array or omit `actor_proofs`.  Removing an older entry breaks `prh`; removing the newest breaks hop alignment.  When the introspection server returns a stored array that it knows has partial coverage, it MUST include `actor_proofs_complete: false`.
 
 For an inactive token, the introspection server MUST NOT return `actor_proofs` or `actor_proofs_complete`.
 
@@ -630,7 +629,7 @@ Conflict resolution: when a recipient implements multiple companion profiles who
 
 # Security Considerations
 
-Actor proofs strengthen delegation evidence with actor-side signatures, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}} apply to systems implementing this profile.
+Actor proofs strengthen delegation evidence with actor-side signatures, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}}, except its audience validation for proof JWTs (see `aud` in {{proof-claims}}), apply to systems implementing this profile.
 
 ## Threat Model {#threat-model}
 
@@ -1082,6 +1081,7 @@ The single proof covers the outermost hop:
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
 * Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, {{RFC8725}} applies except its audience validation, and Strict Mode governs every divergence.
 * Removed the unconditional recommendation for short proof `exp` in favor of the claim's conditional sizing rule.
+* Aligned subject-continuity handling and the introspection partial-coverage flag with Receipts.
 
 -00
 

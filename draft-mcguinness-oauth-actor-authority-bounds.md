@@ -321,7 +321,7 @@ An event MAY contain additional claims; consumers ignore unrecognized claims unl
 
 ## Event Lifecycle
 
-The re-authorizing authority creates an event and prepends it at the next issuance carrying the array.  Every party that carries, stores, or forwards the array MUST preserve each inherited event string byte-for-byte and keep the inherited events in their inherited order; byte preservation applies to the event strings, not to the encoding of the enclosing JSON array.  Other parties MUST NOT add or remove events.  An issuer unable to preserve the inherited array MUST omit it and `bounds_events_complete` entirely.  Removing entries breaks linkage or conceals a change of bounds.
+The re-authorizing authority creates and signs an event, and the issuer of the next token carrying the array prepends it.  Every party that carries, stores, or forwards the array MUST preserve each inherited event string byte-for-byte and keep the inherited events in their inherited order; byte preservation applies to the event strings, not to the encoding of the enclosing JSON array.  Parties MUST NOT otherwise add events, and MUST NOT remove them.  An issuer unable to preserve the inherited array MUST omit it and `bounds_events_complete` entirely.  Removing entries breaks linkage or conceals a change of bounds.
 
 # Issuer Self-Attestation {#issuer-attestation}
 
@@ -405,7 +405,7 @@ An issuer, resource server, or other recipient relying on this profile MUST perf
 
 7.  Check `authority_bounds_enforced`, if present.  Every named dimension MUST be recognized.  For each named dimension for which the chain carries any receipt-attested bounds, steps 4 through 6 MUST succeed; inconsistency MUST reject bounds evidence.
 
-8.  Enforce dimensions required by `authority_bounds_required` or local policy.  Each required D must appear in `authority_bounds_enforced`, be recorded on every receipt, and pass steps 4 through 6.  Sparse coverage does not satisfy this requirement.  Recipients needing full-chain enforcement SHOULD also require `actor_receipts_complete_required` and `bounds_events_complete_required`.
+8.  Enforce dimensions required by `authority_bounds_required` or local policy.  Each required D must appear in `authority_bounds_enforced`, be recorded on every receipt, and pass steps 4 through 6.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt and event coverage ({{protected-resource-metadata}}).
 
 9.  Apply any additional rules defined by companion profiles whose claims appear in the artifacts ({{extensibility}}).  They can add rejection conditions but cannot relax any requirement needed for conformance to this profile.
 
@@ -792,7 +792,7 @@ The example verifies as follows:
 *  The outer token's scope equals the newest recorded scope.
 *  Audience changes are recorded without comparison under the default audience rules.
 
-The issuer attests enforcement of `scope` and `resource`, consistent with those checks.
+The issuer attests enforcement of `scope` and `resource`, consistent with those checks.  No re-authorization occurred, so the token carries no `bounds_events`; adding `bounds_events_complete: true` would attest that complete, empty history ({{bounds-events}}).
 
 ## Example: Refresh Widening Recorded as a Bounds Event
 
