@@ -440,7 +440,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  older receipts MAY carry differing `sub`, `sub_iss`, or `sub_profile` values; see {{subject-re-expression-across-hops}}.
 9.  Treat each receipt `cnf` value, if present, only as historical provenance for that hop.  A mismatch between the current outer token's top-level `cnf` and the outermost receipt `cnf` MUST NOT by itself invalidate the receipt chain under this profile.
 10.  Receipt `cnf` values MUST NOT replace validation of the current request against the outer token's top-level `cnf`.
-11.  Apply any additional consumer-processing rules defined by companion profiles whose claims appear in the receipt or outer token (see {{extensibility}}).  Companion-profile rules MUST NOT relax any requirement in steps 1 through 10; they MAY add additional rejection conditions.
+11.  Apply any additional consumer-processing rules defined by companion profiles whose claims appear in the receipt or outer token (see {{extensibility}}).  Companion-profile rules can add rejection conditions but cannot relax any requirement needed for conformance to this profile.
 
 If any required check fails, the recipient MUST reject the receipt chain for the purposes of this profile and MUST apply the underlying protocol's error handling for the stage at which the failure occurred.
 
@@ -602,7 +602,7 @@ This profile is designed to compose with sibling companion profiles that build o
 
 Companion profile authoring rules:
 
-*  Companion profiles MAY extend consumer processing under {{consumer-processing}} by adding rejection conditions; they MUST NOT relax any rejection condition defined here.
+*  Companion profiles MAY extend consumer processing under {{consumer-processing}} by adding rejection conditions; they MUST NOT relax any requirement needed for conformance to this profile.  Partial-validation modes remain separately scoped: as {{consumer-processing}} states, they operate under the companion profile's own normative scope and do not constitute conformance with this profile.
 *  Companion-profile claims and discovery metadata MUST be registered with IANA in the registries used by this document.
 *  Companion profiles MAY reuse the `prh` and `prh_alg` chain-linkage construction defined in {{receipt-claims}} when their per-hop signed artifacts form a similar chain structure, so that recipients can apply a single chain-validation routine across companions.
 *  Companions whose artifacts do not form a chain (for example, independent per-hop attestations or recipient acknowledgments that are not linked to one another) MAY define their own integrity structure.
