@@ -709,7 +709,7 @@ Algorithm coordination requirements:
 
 *  All receipts in a single chain carry the same `prh_alg` value or all omit it ({{receipt-claims}}).
 *  Consumers reject chains that mix algorithms or that name an algorithm the recipient does not support (step 6 of {{consumer-processing}}).
-*  An issuer extending an inbound chain MUST preserve the inbound `prh_alg`.
+*  An issuer extending an inbound chain preserves the inbound `prh_alg` or rejects the chain (step 7 of {{extending-an-existing-receipt-chain}}).
 
 Migration is whole-chain, not partial: chains begun under one algorithm remain on that algorithm for their lifetime; new chains can adopt a different algorithm independently.  This profile does not define rehashing of inbound receipts, because rehashing would invalidate prior signers' `prh` values and require re-signing receipts the extending issuer did not originate.
 
