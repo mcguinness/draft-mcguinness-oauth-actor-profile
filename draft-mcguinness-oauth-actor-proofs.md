@@ -109,9 +109,9 @@ Examples in this document are illustrative and omit unrelated claims, signatures
 
 This document is an extension of {{I-D.mcguinness-oauth-actor-profile}}.  A token that uses the `actor_proofs` claim defined here:
 
-*  MUST conform to the actor-chain representation rules of the core actor profile;
-*  MUST use the top-level `cnf` claim, when present, only for the current token presenter;
-*  MUST NOT treat any proof as satisfying a proof-of-possession requirement for the current request.
+*  conforms to the actor-chain representation rules of the core actor profile ({{actor-proofs-claim}});
+*  uses the top-level `cnf` claim, when present, only for the current token presenter, as the core actor profile defines;
+*  gains no proof-of-possession semantics from its proofs for the current request ({{current-presenter-validation}}).
 
 This profile adds signed proofs, processing rules, metadata, and introspection parameters to the core actor representation.  The `actor_proof` request parameter conveys a new proof at issuance.  The underlying Token Exchange and Transaction Token request semantics continue to apply.
 
@@ -194,7 +194,7 @@ If a token carries `actor_proofs`, it MUST also carry an `act` claim conforming 
 
   The attestation is relative to the visible chain at issuance time; it does not attest that the visible chain is itself unfiltered (see `chain_complete` in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}).  Consumer enforcement, including the count-equality check, is defined in step 4 of {{consumer-processing}}.
 
-  Issuers SHOULD set `actor_proofs_complete` to `true` for complete coverage and `false` for partial coverage.  An absent value provides no completeness attestation; consumers requiring the literal value `true` treat absence like `false`.
+  Issuers SHOULD set `actor_proofs_complete` to `true` for complete coverage and `false` for partial coverage; step 7 of {{extending-an-existing-proof-chain}} sets a narrower rule for an issuer that extends an inbound chain.  An absent value provides no completeness attestation; consumers requiring the literal value `true` treat absence like `false`.
 
 This document does not require every delegated token to carry `actor_proofs`.  A deployment that requires actor-signed evidence uses local policy or the metadata defined in {{discovery-capability-signaling}} to express that requirement.
 
@@ -210,9 +210,9 @@ The JOSE header of an actor proof:
 *  MUST NOT use `alg: none` or a MAC-based symmetric algorithm;
 *  MUST include `typ` with the value `actor-proof+jwt`;
 *  SHOULD include `kid` when the actor's key source publishes multiple verification keys;
-*  MAY include `crit` per {{RFC7515}}; consumers MUST reject a proof whose `crit` header lists an extension header the consumer does not understand.
+*  MAY include `crit`; a proof whose `crit` header lists an extension header the consumer does not understand is invalid per {{RFC7515, Section 4.1.11}}.
 
-Actors, issuers, and consumers MUST apply the JWT best practices in {{RFC8725}}.
+Actors, issuers, and consumers MUST apply the JWT best practices in {{RFC8725}} when creating and validating proofs, except for the audience validation of {{RFC8725, Section 3.9}}, from which this profile departs as described for `aud` in {{proof-claims}}.
 
 ## Proof Claims {#proof-claims}
 
@@ -226,10 +226,10 @@ The JWT payload of an actor proof uses the claims defined below, grouped by purp
   Interpret `iss` within the namespace given by `act.iss`.  A bare `iss` MUST NOT serve as the sole key-resolution or trust index; use (`act.iss`, `act.sub`) as specified in {{actor-key-resolution}}.
 
 `sub`:
-: REQUIRED.  The subject identifier on whose behalf the actor authorized the delegation, as known to the actor at signing time.  `actor_proofs[0].sub` MUST equal the outer token's top-level `sub`.  Older proofs MAY carry differing `sub` values when the subject has been re-expressed across issuer namespaces (see {{subject-re-expression-across-hops}}).
+: REQUIRED.  The subject identifier on whose behalf the actor authorized the delegation, as known to the actor at signing time.  `actor_proofs[0].sub` MUST equal the outer token's top-level `sub`.  Older proofs can carry differing `sub` values, which step 8 of {{consumer-processing}} accepts structurally; authorization that depends on subject equivalence across them is subject to the continuity rules of {{subject-re-expression-across-hops}}.
 
 `sub_iss`:
-: OPTIONAL.  The namespace authority under which the proof `sub` value is interpreted, with the semantics defined for the `sub_iss` claim in {{I-D.mcguinness-oauth-actor-receipts}}.  When absent, the subject namespace authority is not independently expressed by this profile and MUST be determined, if needed, from trusted local context for the represented hop.
+: OPTIONAL.  The namespace authority under which the proof `sub` value is interpreted, with the semantics defined for the `sub_iss` claim in {{I-D.mcguinness-oauth-actor-receipts}}.  When absent, the namespace is determined as for an absent receipt `sub_iss`.
 
 `act`:
 : REQUIRED.  A single-hop actor object identifying the signing actor.  This object:
@@ -264,18 +264,14 @@ Proofs define no subject `sub_profile` claim; subject classification remains iss
 ### Chain Linkage
 
 `prh`:
-: OPTIONAL.  Previous proof hash.  When present, `prh` MUST be the base64url encoding without padding ({{RFC7515}}) of the hash of the ASCII octets of the complete compact serialization of the next older proof in the chain, computed using the algorithm identified by `prh_alg` (defaulting to SHA-256 when `prh_alg` is absent).  The oldest proof in the chain, including a single-element chain in which the sole proof is both newest and oldest, MUST omit `prh`.
+: OPTIONAL.  Previous proof hash of the next older proof in the chain; the oldest proof, including the sole proof of a single-element chain, omits it.
 
   The `prh` and `prh_alg` claims are reused from {{I-D.mcguinness-oauth-actor-receipts}} with the same construction, applied to proof JWTs.  The proof chain is linked independently of any receipt chain carried in the same token: each companion's `prh` values hash that companion's own artifacts.
 
 `prh_alg`:
-: OPTIONAL.  Hash algorithm identifier naming the algorithm used to compute `prh`.
+: OPTIONAL.  Hash algorithm identifier naming the algorithm used to compute `prh`.  The value, consistency, and extension rules of the receipt `prh_alg` claim apply to proof chains.
 
-  *  Values MUST be drawn from the IANA "Named Information Hash Algorithm Registry" {{RFC6920}}, which uses lowercase forms such as `sha-256`, `sha-384`, and `sha-512`.
   *  When absent, the default is `sha-256`.
-  *  When present, the value MUST identify a hash algorithm whose collision and preimage resistance is at least equivalent to `sha-256`.
-  *  All proofs in an array MUST carry the same `prh_alg` value or all omit it.  Mixing omission with explicit `sha-256` is invalid even though both select SHA-256.  A single-element chain MAY carry `prh_alg` for later extension.
-  *  An issuer extending an inbound chain MUST either preserve the inbound `prh_alg` or reject the chain.
   *  The proof chain's `prh_alg` is independent of the receipt chain's `prh_alg` in the same token; the two chains MAY use different algorithms.
 
 ### Sibling Receipt Reference
@@ -318,7 +314,7 @@ Proofs define no subject `sub_profile` claim; subject classification remains iss
 
 ### Extension Claims
 
-A proof MAY contain additional claims defined by another specification or by deployment policy.  Consumers MUST ignore unrecognized claims unless another specification or local agreement defines their meaning.
+A proof MAY contain additional claims defined by another specification or by deployment policy.  Consumers ignore unrecognized claims unless another specification or local agreement defines their meaning, per {{RFC7519, Section 4}}.
 
 ## Proof-Chain Linkage {#proof-chain-linkage}
 
@@ -334,7 +330,7 @@ The hash input is the exact compact JWS string, without JSON {{RFC8259}} canonic
 This document defines one token request parameter:
 
 `actor_proof`:
-: OPTIONAL.  The compact serialization of a single actor proof JWT for the new outermost actor hop of the requested token.  A token request MUST NOT include more than one `actor_proof` parameter.
+: OPTIONAL.  The compact serialization of a single actor proof JWT for the new outermost actor hop of the requested token.  A request carries at most one `actor_proof` parameter ({{RFC6749, Section 3.2}}).
 
 The parameter is defined for token endpoint requests that produce delegated tokens under the core actor profile, including OAuth 2.0 Token Exchange {{RFC8693}} requests and JWT assertion grants.  Transaction Token Service deployments convey the proof equivalently in the Transaction Token request, subject to {{I-D.ietf-oauth-transaction-tokens}}.
 
@@ -355,10 +351,10 @@ When an issuer adds a new outermost actor hop and the token request carries `act
 3.  MUST verify that the proof `sub` equals the top-level `sub` of the token being issued.  An issuer that re-expresses the subject at this hop MUST NOT embed the proof; re-expression breaks the alignment between `actor_proofs[0].sub` and the outer token's top-level `sub` that consumers verify under {{consumer-processing}}.
 4.  MUST resolve the actor's verification key through an actor-key source trusted under the issuer's local policy and validate the proof's signature ({{actor-key-resolution}}).
 5.  MUST verify that the proof's `exp` is no earlier than the issued outer token's `exp`, and that `iat` is plausible under the issuer's clock-skew policy.
-6.  MUST NOT issue an outer token whose `aud`, or whose effective resource indicators when the request expresses them, exceed the proof's target binding.  Every audience of the issued token MUST be present in `target.aud`, and every effective resource indicator MUST be within `target.resource` when that member is present.  For Token Exchange requests, an issuer that cannot satisfy the requested target within the proof's target binding SHOULD reject with `invalid_target` per {{RFC8693}} Section 2.2.2.
+6.  MUST NOT issue an outer token whose `aud`, or whose effective resource indicators when the request expresses them, exceed the proof's target binding.  Every audience of the issued token MUST be present in `target.aud`, and every effective resource indicator MUST be within `target.resource` when that member is present.  For Token Exchange requests, {{error-handling}} gives the error to return when the requested target cannot be satisfied within the proof's target binding.
 7.  MUST include the validated proof as `actor_proofs[0]` of the issued token, subject to the chain rules below.
 
-When no inbound `actor_proofs` are being preserved, the proof starts a new chain and MUST omit `prh`.  When the one-element array covers every visible hop (a visible `act` chain of depth 1), the issuer SHOULD set `actor_proofs_complete: true`; when inner visible hops remain uncovered, it SHOULD set `actor_proofs_complete: false`, per {{actor-proofs-claim}}.
+When no inbound `actor_proofs` are being preserved, the proof starts a new chain and MUST omit `prh`.  The one-element array is complete coverage only when the visible `act` chain has depth 1; {{actor-proofs-claim}} governs how the issuer sets `actor_proofs_complete` in each case.
 
 If proof validation fails, the issuer MUST NOT embed the proof.  When local policy or the deployment's resource requirements require actor-signed evidence for the issuance, the issuer MUST fail the request under the error model of {{error-handling}}; otherwise it MAY issue the token without `actor_proofs`.
 
@@ -368,11 +364,11 @@ When an issuer adds a new outermost actor hop and also preserves an inbound `act
 
 1.  MUST validate the inbound proof chain by applying the consumer processing rules in {{consumer-processing}} before relying on it or carrying it forward.
 2.  MUST verify that each inbound proof's `exp` is no earlier than the issued outer token's `exp`.  An inbound proof that fails this check is treated as failing validation under step 1.  Issuers MAY apply a small clock-skew margin to this comparison, consistent with the consumer-side skew tolerance in {{consumer-processing}}, but MUST NOT broadly accept inbound proofs whose `exp` precedes the issued outer token's `exp` by more than a deployment-defined skew bound.
-3.  MUST preserve each inbound proof byte-for-byte unchanged.
+3.  preserves each inbound proof byte-for-byte unchanged, as required by {{proof-chain-linkage}}.
 4.  MUST accept exactly one new proof, conveyed per {{actor-proof-parameter}} and validated per {{accepting-a-proof}}, for the new outermost actor hop.
 5.  MUST verify that the new proof's `prh` equals the hash of the exact compact serialization of the inbound array's newest proof, computed using the algorithm named by the inherited `prh_alg` (defaulting to SHA-256 when absent), and MUST verify that the new proof's `prh_alg` matches the inherited chain's value or is omitted when the chain omits it.  An issuer that does not support the inbound `prh_alg` MUST reject the chain rather than rehash; rehashing would invalidate prior actors' signatures.
 6.  MUST prepend the new proof to the inherited array.
-7.  MUST preserve `actor_proofs_complete: true` when the inbound attestation is valid and the new proof covers the added hop.  Otherwise, the issuer MUST NOT set it to `true` and SHOULD set it to `false`.
+7.  MUST preserve `actor_proofs_complete: true` when the inbound attestation is valid and the new proof covers the added hop.  Otherwise, the issuer MUST NOT set it to `true` and SHOULD set it to `false`.  This is narrower than the general rule in {{actor-proofs-claim}} because an extending issuer establishes completeness of the inherited hops only through a valid inbound attestation; without one, it does not claim complete coverage even when the proof count equals the visible depth.
 
 An issuer MUST NOT reserialize, resign, normalize, trim, or otherwise alter a prior proof.
 
@@ -408,8 +404,8 @@ This document permits partial proof coverage for progressive deployment.  An iss
 
 However:
 
-*  a partial chain MUST still cover a contiguous outermost prefix of the visible actor chain;
-*  an issuer MUST NOT skip an outer visible hop and carry a proof only for an inner visible hop;
+*  a partial chain still covers a contiguous outermost prefix of the visible actor chain, as {{actor-proofs-claim}} requires;
+*  an issuer therefore cannot skip an outer visible hop and carry a proof only for an inner visible hop;
 *  when local policy or resource requirements require full actor-signed evidence, the issuer MUST either emit complete proof coverage or fail the request under the error model of the underlying protocol.
 
 Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop should enable proof support at the origin and its actors first.  Resource servers can require full coverage through `actor_proofs_complete_required` or local policy.
@@ -468,18 +464,18 @@ An issuer, resource server, or other recipient that relies on `actor_proofs` MUS
 8.  Verify subject alignment:
     *  `actor_proofs[0].sub` MUST equal the outer token's top-level `sub`;
     *  when `actor_proofs[0].sub_iss` is present and the recipient has a top-level subject namespace authority for the outer token's `sub` from local configuration, an inbound subject token's claims, or another deployment-defined source, the two MUST identify the same namespace authority, evaluated by case-sensitive string comparison; treating lexically distinct identifiers as the same authority requires explicit trusted local mapping rules;
-    *  older proofs MAY carry differing `sub` or `sub_iss` values; see {{subject-re-expression-across-hops}}.
+    *  older proofs MAY carry differing `sub` or `sub_iss` values.  This acceptance is structural only: authorization that depends on subject equivalence across those proofs is subject to the continuity rules of {{subject-re-expression-across-hops}}.
 9.  Evaluate outer-token binding and target binding:
-    *  when `actor_proofs[0].origin_jti` is present and equals the outer token's `jti`, the proof chain is bound to the current outer-token instance; when it is present and differs, the recipient MUST reject the chain unless local policy designates the outer token issuer as a trusted reissuing issuer per {{target-binding-strict-mode}}, in which case the value is historical provenance;
+    *  when `actor_proofs[0].origin_jti` is present and equals the outer token's `jti`, the proof chain is bound to the current outer-token instance; when it is present and differs, the chain has diverged, {{target-binding-strict-mode}} decides whether the recipient rejects it, and an accepted value is historical provenance;
     *  when `actor_proofs[0].origin_jti` is absent, the proof chain carries no instance binding of its own; this is not by itself a validation failure;
-    *  verify that every audience of the outer token is present in `actor_proofs[0].target.aud`, and, when the outer token's effective resource indicators are determinable from token claims, the introspection response, or trusted local context, that each is within `actor_proofs[0].target.resource` when that member is present.  A recipient MAY accept a token whose audience or resources exceed the newest proof's target binding only under {{target-binding-strict-mode}}, and MUST then treat the chain as participation evidence only, not as actor consent to the current target;
+    *  verify that every audience of the outer token is present in `actor_proofs[0].target.aud`, and, when the outer token's effective resource indicators are determinable from token claims, the introspection response, or trusted local context, that each is within `actor_proofs[0].target.resource` when that member is present.  A token whose audience or resources exceed the newest proof's target binding has also diverged; {{target-binding-strict-mode}} decides whether the recipient rejects the chain and limits an accepted chain to participation evidence, not actor consent to the current target;
     *  target bindings of proofs other than `actor_proofs[0]` are historical consent for their own hops.  The recipient MUST NOT evaluate them against the current outer token's audience or resources.
 10.  Verify sibling references, when the token also carries `actor_receipts` validated under {{I-D.mcguinness-oauth-actor-receipts}}:
      *  for each index i covered by both arrays, when `actor_receipts[i]` carries `proof_jti`, it MUST equal `actor_proofs[i].jti`, and when `actor_proofs[i]` carries `receipt_jti`, it MUST equal `actor_receipts[i].jti`;
      *  a mismatched sibling reference MUST cause the recipient to reject both receipt-based and proof-based provenance for the token;
      *  a sibling reference that names an artifact at an index not covered by the other array is unverifiable; recipients whose policy requires bound siblings MUST reject the token's proof-based provenance, and other recipients MUST treat the reference as informational only;
      *  when receipts are absent or not validated, `receipt_jti` values are informational only.
-11.  Apply any additional consumer-processing rules defined by companion profiles whose claims appear in the proof or outer token (see {{extensibility}}).  Companion-profile rules MUST NOT relax any requirement in steps 1 through 10; they MAY add additional rejection conditions.
+11.  Apply any additional consumer-processing rules defined by companion profiles whose claims appear in the proof or outer token (see {{extensibility}}).  Companion-profile rules can add rejection conditions but cannot relax any requirement needed for conformance to this profile.
 
 If any required check fails, the recipient MUST reject the proof chain for the purposes of this profile and MUST apply the underlying protocol's error handling for the stage at which the failure occurred.
 
@@ -492,7 +488,7 @@ Older proofs can carry a different `sub` value from the current outer token when
 Accordingly:
 
 *  only `actor_proofs[0].sub` is required to equal the current outer token `sub`;
-*  older proof `sub` values MAY differ;
+*  older proof `sub` values can differ (step 8 of {{consumer-processing}});
 *  a recipient that applies stronger continuity requirements across older `sub` values MUST do so under explicit trusted local mapping rules.
 
 Recipients MUST be aware that permitting differing `sub` values across proofs creates a cross-subject insertion risk: a proof signed by a legitimate actor for an unrelated subject's delegation could satisfy the structural hop-alignment check when the actor identity at that hop matches.  An attacker who compromises any single actor signing key can deliberately sign proofs naming any subject and any target, and graft them onto a downstream chain whose re-expressed `sub` points at a victim subject.
@@ -627,11 +623,10 @@ This profile composes with the extensibility framework defined in {{I-D.mcguinne
 
 Companion profile authoring rules:
 
-*  Companion profiles MAY extend consumer processing under {{consumer-processing}} by adding rejection conditions; they MUST NOT relax any rejection condition defined here.
-*  Companion-profile claims and discovery metadata MUST be registered with IANA in the registries used by this document.
+*  Companion profiles MAY extend consumer processing under {{consumer-processing}} by adding rejection conditions; they MUST NOT relax any requirement needed for conformance to this profile.  This does not change the separately scoped partial-validation rule that follows step 11 of {{consumer-processing}}.
 *  Companion profiles that define per-hop signed artifacts SHOULD follow the claim-pair and discovery conventions of {{I-D.mcguinness-oauth-actor-receipts}}, and MAY reuse the `prh` and `prh_alg` chain-linkage construction.
 
-Conflict resolution: when a recipient implements multiple companion profiles whose rules conflict, local policy determines precedence.  Companion profiles SHOULD be designed to add, not contradict, other profiles' rejection conditions.
+Conflict resolution: when a recipient implements multiple companion profiles whose rules conflict, local policy determines precedence.
 
 # Security Considerations
 
@@ -680,8 +675,8 @@ Trust establishment requirements:
 
 *  A recipient needs to establish its trusted actor-key sources before relying on `actor_proofs`, through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.
 *  A recipient MUST NOT treat the presence of a syntactically valid signed proof as sufficient grounds to trust the key that signed it.
-*  A recipient MUST determine that a proof's (`act.iss`, `act.sub`) pair is within the scope of a trusted actor-key source before performing any network retrieval keyed by the proof's content, and MUST NOT dereference key references supplied by the proof itself (such as `jku` or `x5u` header parameters) outside a pre-established trust framework, per {{RFC8725}}.
-*  Key resolution and trust evaluation use the (`act.iss`, `act.sub`) pair.  The bare proof `iss` string MUST NOT be the sole resolution index; actor identifiers are namespaced by `act.iss`, and identical `act.sub` strings under different namespace authorities are different actors.
+*  Step 5 of {{consumer-processing}} checks that a proof's (`act.iss`, `act.sub`) pair is within the scope of a trusted actor-key source before any network retrieval keyed by the proof's content, and a recipient MUST NOT dereference key references supplied by the proof itself (such as `jku` or `x5u` header parameters) outside a pre-established trust framework, per {{RFC8725}}.
+*  Key resolution and trust evaluation use the (`act.iss`, `act.sub`) pair.  The bare proof `iss` string is not a resolution index on its own ({{identity-claims}}); actor identifiers are namespaced by `act.iss`, and identical `act.sub` strings under different namespace authorities are different actors.
 
 This document profiles the following resolution patterns; a deployment may support any subset:
 
@@ -691,7 +686,7 @@ This document profiles the following resolution patterns; a deployment may suppo
 
 The independence requirement follows from the threat model: for the anti-fabrication property against a given issuer to hold at a hop, the recipient MUST resolve the actor's key for that hop through a source independent of that issuer.
 
-Actor keys, like receipt-issuer trust, are not transitive: each proof is validated against the recipient's own actor-key sources, independent of the outer token's issuer and of neighboring proofs.  If any proof in the presented `actor_proofs` array is signed by a key the recipient cannot resolve through a trusted source, the recipient MUST reject the proof chain for the purposes of this profile.
+Actor keys, like receipt-issuer trust, are not transitive: each proof is validated against the recipient's own actor-key sources, independent of the outer token's issuer and of neighboring proofs.  If any proof in the presented `actor_proofs` array is signed by a key the recipient cannot resolve through a trusted source, step 5 of {{consumer-processing}} fails and the proof chain is rejected for the purposes of this profile.
 
 ## Proof-to-Token Binding Limits {#proof-to-token-binding-limits}
 
@@ -708,7 +703,7 @@ Inner proofs have no independent binding to the current token; they are bound to
 
 ### Target-Binding Strict Mode {#target-binding-strict-mode}
 
-Recipients that have not explicitly configured a set of trusted reissuing issuers operate in strict mode by default: per step 9 of {{consumer-processing}}, an outer token whose audience or effective resources exceed `actor_proofs[0]`'s target binding, or whose `jti` differs from a present `actor_proofs[0].origin_jti`, causes the recipient to reject the proof chain.
+An outer token diverges from its proof chain when its audience or effective resources exceed `actor_proofs[0]`'s target binding, or when its `jti` differs from a present `actor_proofs[0].origin_jti`.  A recipient MUST reject a divergent proof chain unless local policy designates the outer token issuer as a trusted reissuing issuer.  Recipients that have not explicitly configured a set of trusted reissuing issuers therefore operate in strict mode by default, rejecting every divergent chain.
 
 Strict mode is the recommended default.  Deployments accepting retargeted reissuance need an explicit set of trusted reissuing issuers, configured through local policy or an out-of-band trust framework.  A recipient accepting divergence MUST treat proofs only as participation evidence and MUST NOT infer consent to the current audience or resources.  With receipts, it SHOULD apply one reissuance-trust decision to both companions.
 
@@ -731,7 +726,7 @@ Issuers cannot protect recipients that do not ask; the enforcement locus of this
 
 If an actor's signing key is compromised, previously signed proofs and newly forged proofs under that key are indistinguishable.  The primary remediation is to remove the compromised key or actor from the recipient's trusted actor-key sources; once removed, consumers will reject all proofs attributed to that actor's key regardless of content.
 
-Deployments SHOULD set short `exp` values on proofs, consistent with the REQUIRED `exp` defined in {{proof-claims}}, to limit the window during which proofs signed with a compromised key remain valid.  When a key compromise is detected, deployments SHOULD treat tokens carrying proofs from the affected actor as lacking trusted actor-signed evidence for those hops and SHOULD require fresh delegation with fresh proofs.
+Proof `exp` is sized under the conditional rule in {{proof-claims}}, which calls for short values without instance binding; a shorter `exp` limits the window during which proofs signed with a compromised key remain valid.  When a key compromise is detected, deployments SHOULD treat tokens carrying proofs from the affected actor as lacking trusted actor-signed evidence for those hops and SHOULD require fresh delegation with fresh proofs.
 
 ## Proof Chain Size
 
@@ -1084,6 +1079,9 @@ The single proof covers the outermost hop:
 * Distinguished a mismatched `origin_jti`, which consumer processing rejects unless the outer issuer is a trusted reissuer, from an absent one.
 * Removed an example claim that receipt composition stops a compromised issuer from re-embedding a proof.
 * Reconciled `exp` guidance, aligned expiry handling with {{RFC7519}}, and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
+* Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
+* Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, {{RFC8725}} applies except its audience validation, and Strict Mode governs every divergence.
+* Removed the unconditional recommendation for short proof `exp` in favor of the claim's conditional sizing rule.
 
 -00
 
