@@ -106,7 +106,7 @@ informative:
 
 --- abstract
 
-This document defines a common representation of delegated actors in OAuth JSON Web Token (JWT) assertion grants, JWT access tokens, and Transaction Tokens.  It profiles the `act` claim defined by OAuth 2.0 Token Exchange, requires issuer-scoped actor identifiers, and uses `sub_profile` to classify actor entity types.  It specifies token processing, delegation-chain propagation, sender-constraint handling, and discovery metadata.  Delegation approval and trust policy remain deployment-specific.
+This document defines a common representation of delegated actors in OAuth JSON Web Token (JWT) assertion grants, JWT access tokens, and Transaction Tokens.  It profiles the `act` claim defined by OAuth 2.0 Token Exchange, requires issuer-scoped actor identifiers, and uses `sub_profile` to classify actor entity types.  It specifies token processing, delegation-chain propagation, sender-constraint handling, and discovery metadata, so that issuers and resource servers in different trust domains interpret delegated actors consistently.
 
 --- middle
 
