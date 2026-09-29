@@ -629,7 +629,7 @@ Conflict resolution: when a recipient implements multiple companion profiles who
 
 # Security Considerations
 
-Actor proofs strengthen delegation evidence with actor-side signatures, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}} apply to systems implementing this profile.
+Actor proofs strengthen delegation evidence with actor-side signatures, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}} apply to systems implementing this profile, except for the `aud` departure described in {{proof-claims}}.
 
 ## Threat Model {#threat-model}
 
