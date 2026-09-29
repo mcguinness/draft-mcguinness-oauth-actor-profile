@@ -321,7 +321,7 @@ An event MAY contain additional claims; consumers ignore unrecognized claims unl
 
 ## Event Lifecycle
 
-The re-authorizing authority creates an event and prepends it at the next issuance carrying the array.  Every party that carries, stores, or forwards the array MUST preserve each inherited event string byte-for-byte and keep the inherited events in their inherited order; byte preservation applies to the event strings, not to the encoding of the enclosing JSON array.  Other parties MUST NOT add or remove events.  An issuer unable to preserve the inherited array MUST omit it and `bounds_events_complete` entirely.  Removing entries breaks linkage or conceals a change of bounds.
+The re-authorizing authority creates and signs an event, and the issuer of the next token carrying the array prepends it.  Every party that carries, stores, or forwards the array MUST preserve each inherited event string byte-for-byte and keep the inherited events in their inherited order; byte preservation applies to the event strings, not to the encoding of the enclosing JSON array.  Parties MUST NOT otherwise add events, and MUST NOT remove them.  An issuer unable to preserve the inherited array MUST omit it and `bounds_events_complete` entirely.  Removing entries breaks linkage or conceals a change of bounds.
 
 # Issuer Self-Attestation {#issuer-attestation}
 
