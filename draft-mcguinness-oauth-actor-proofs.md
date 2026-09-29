@@ -497,9 +497,9 @@ This profile provides no in-band mechanism for cross-namespace subject reconcili
 Deployments where subject continuity is a security requirement SHOULD adopt one of the following:
 
 *  require exact, namespace-aware matching of subject identifiers across all proofs (the same `sub` under the same namespace authority; see `sub_iss` in {{identity-claims}}), rejecting re-expressed chains; or
-*  enforce explicit trusted subject-mapping rules that can positively confirm each distinct `sub` value refers to the same underlying entity.
+*  enforce explicit trusted subject-mapping rules that can positively confirm each distinct subject identifier refers to the same underlying entity.
 
-When neither condition is met, the recipient MUST treat the differing `sub` values as unverified subject continuity and MUST NOT rely on those older proofs to support authorization that requires subject continuity.
+When neither condition is met, the recipient MUST treat subject continuity as unverified and MUST NOT rely on older proofs whose subject identifiers (`sub` or `sub_iss`) differ to support authorization that requires subject continuity.
 
 ## Complete Proof Coverage
 
