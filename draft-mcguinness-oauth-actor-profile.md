@@ -565,7 +565,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 8.  If the AS accepts the assertion, it MUST propagate the actor information into the issued token according to the rules for the output token type being issued.  For JWT access tokens, see [JWT Access Token Output](#jwt-access-token-propagation).  For Transaction Tokens, see [Transaction Token Output Rules](#transaction-token-output-rules).  When the output is another JWT assertion grant profile, the resulting assertion MUST preserve the validated actor information subject to local policy and the chain-depth limit in [Delegation Chains](#delegation-chains).
 
-9.  When constructing a new outermost `act` object using [Extend Chain with New Actor](#extend-chain-with-new-actor), the AS MAY enrich that object with `sub_profile` based on its own knowledge of the actor's entity type.  The AS MAY also set or enrich the top-level `sub_profile` of the issued token based on its knowledge of `sub`.  The AS MUST NOT add, modify, or remove any claim in preserved inner `act` objects; those entries are immutable under [Preserve Inbound Chain](#preserve-inbound-chain).
+9.  When constructing a new outermost `act` object using [Extend Chain with New Actor](#extend-chain-with-new-actor), the AS MAY enrich that object with `sub_profile` based on its own knowledge of the actor's entity type.  The AS MAY also set or enrich the top-level `sub_profile` of the issued token based on its knowledge of `sub`.  Preserved inner `act` objects are immutable under [Preserve Inbound Chain](#preserve-inbound-chain).
 
 # JWT Access Tokens {#jwt-access-tokens}
 
@@ -923,7 +923,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 2.  The AS MUST preserve `sub` to refer to the same underlying subject as the inbound token.  If the AS uses a different subject-identifier namespace, it MAY change the `sub` value only to re-express that same subject in the new namespace under a trusted local mapping.  The AS MUST NOT replace `sub` with an identifier for a different subject.  Subject-namespace translation requirements and relying-party consequences are described in [Subject Namespace Translation](#subject-namespace-translation).
 
-3.  The AS MUST construct the `act` claim using the construction decision order in [Delegation Chain Validation and Construction](#delegation-chain-algorithm): extend with a new actor, preserve an existing chain, or omit `act`, in that order.  Inherited actors MUST NOT be rewritten.  An actor derived from `actor_token` is asserted by the issuing AS; consumers MUST NOT infer that it was present in the `subject_token` or endorsed by its issuer.
+3.  The AS MUST construct the `act` claim using the construction decision order in [Delegation Chain Validation and Construction](#delegation-chain-algorithm): extend with a new actor, preserve an existing chain, or omit `act`, in that order.  Inherited actors are not rewritten, as [Extend Chain with New Actor](#extend-chain-with-new-actor) and [Preserve Inbound Chain](#preserve-inbound-chain) require.  An actor derived from `actor_token` is asserted by the issuing AS; consumers MUST NOT infer that it was present in the `subject_token` or endorsed by its issuer.
 
 4.  The AS MUST reject if actor validation fails or the resulting chain exceeds the depth limit.  It MUST use `invalid_request` for excessive depth or an inbound actor missing `act.sub` or `act.iss`, and `invalid_grant` for validation failures.  It MUST NOT issue a partially preserved chain.
 
@@ -1071,7 +1071,7 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
     *  in presenter-continuation mode, preserve the inbound chain unchanged ([Preserve Inbound Chain](#preserve-inbound-chain));
     *  in presenter-rebind mode, create a new outermost `act` object for the new presenter and nest any inbound chain beneath it ([Extend Chain with New Actor](#extend-chain-with-new-actor)).
 
-    For a new outermost actor, the TTS MUST set `act.sub` to the new presenter's identifier, MUST set `act.iss` to the issuer or namespace context for that identifier, and SHOULD set `act.sub_profile` when known.  Inherited `act` objects MUST NOT be rewritten.
+    For a new outermost actor, the TTS MUST set `act.sub` to the new presenter's identifier, MUST set `act.iss` to the issuer or namespace context for that identifier, and SHOULD set `act.sub_profile` when known.  Inherited `act` objects are not rewritten, as [Extend Chain with New Actor](#extend-chain-with-new-actor) and [Preserve Inbound Chain](#preserve-inbound-chain) require.
 
 7.  When the issued Transaction Token includes a top-level presenter-binding claim such as `cnf`, that binding applies to the current presenter.  The underlying presenter-authentication and proof mechanism is defined by {{I-D.ietf-oauth-transaction-tokens}} and any applicable deployment profile, not by this document.
 
