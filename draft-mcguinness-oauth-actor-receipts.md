@@ -156,7 +156,7 @@ Receipts mitigate a compromised or dishonest *downstream* issuer fabricating pri
 
 # Actor Receipts Overview
 
-An actor receipt records one actor hop.  The issuer that adds a new outermost actor hop signs a receipt describing that hop and, when the issued token is sender-constrained, may copy the token's top-level `cnf` value into the receipt as historical presenter-binding context subject to the disclosure considerations in {{receipt-claims}}.
+An actor receipt records one actor hop.  The issuer that adds a new outermost actor hop signs a receipt describing that hop and, when the issued token is sender-constrained, may copy the token's top-level `cnf` value into the receipt as historical presenter-binding context subject to the disclosure considerations in {{historical-cnf-disclosure}}.
 
 The `actor_receipts` array is ordered newest first and preserves older entries unchanged.  Index 0 corresponds to outermost `act`, index 1 to `act.act`, and so on.  Coverage is either complete or a contiguous outermost prefix; local policy or resource requirements determine whether partial coverage is acceptable.
 
@@ -248,7 +248,7 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 
   Receipt `cnf` records historical presenter-binding information for the hop represented by the receipt.  It does not create a current proof-of-possession obligation for the current request.
 
-  Issuers SHOULD NOT include `cnf` in a receipt unless the relying parties that will receive the token have been evaluated for the associated disclosure risk; omitting `cnf` does not invalidate the receipt.
+  Whether an issuer includes `cnf` is governed by {{historical-cnf-disclosure}}; omitting `cnf` does not invalidate the receipt.
 
 ### Chain Linkage
 
@@ -325,7 +325,7 @@ If it does so, the new receipt:
 *  MUST describe the new outermost actor hop;
 *  MUST set `sub` to the issued token's top-level `sub`;
 *  MUST set `act.sub` and `act.iss` to the new outermost actor;
-*  MAY copy the issued token's top-level `cnf`, if any, into the receipt `cnf`, subject to the disclosure considerations in {{receipt-claims}};
+*  MAY copy the issued token's top-level `cnf`, if any, into the receipt `cnf`, subject to the disclosure considerations in {{historical-cnf-disclosure}};
 *  includes `origin_jti` as recommended in {{receipt-claims}};
 *  omits `prh` ({{receipt-claims}}).
 
@@ -766,7 +766,7 @@ Deployments SHOULD minimize receipt disclosure when full provenance is not requi
 *  Issuers and introspection servers MAY suppress `actor_receipts` entirely when policy does not permit disclosure.
 *  Introspection servers returning a stored partial-coverage chain SHOULD set `actor_receipts_complete` to `false`; disclosure of a stored chain is otherwise all-or-nothing (see {{consumer-introspection}}).
 *  Resource servers SHOULD request or require actor receipts only when they materially improve authorization, audit, or risk controls.
-*  Receipt `cnf` disclosure is limited as described in {{receipt-claims}} and {{historical-cnf-disclosure}}.
+*  Receipt `cnf` disclosure is limited as described in {{historical-cnf-disclosure}}.
 *  Deployments SHOULD prefer per-resource-server policy on receipt requirements over blanket inclusion in every token.
 
 ## Selective Disclosure
@@ -912,7 +912,7 @@ Contributors and reviewers will be acknowledged in future revisions.
 
 The examples in this appendix show decoded receipt contents.  Real receipts are compact-signed JWT strings carried in the `actor_receipts` array.  The `iat` and `exp` values shown are illustrative only; in deployments, receipt `exp` is set per {{receipt-claims}} and {{extending-an-existing-receipt-chain}} so that no inbound receipt expires before the outer token that carries it.
 
-Examples containing `cnf` illustrate explicit disclosure of historical binding.  Whether to include it follows {{receipt-claims}} and {{historical-cnf-disclosure}}.
+Examples containing `cnf` illustrate explicit disclosure of historical binding.  Whether to include it follows {{historical-cnf-disclosure}}.
 
 ## Example: Two-Hop Delegation Chain
 
