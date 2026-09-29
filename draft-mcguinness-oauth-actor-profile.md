@@ -356,7 +356,7 @@ For the outermost `act` object the AS MUST:
 
 #### Validate Inner Actors Used for Decisions {#validate-inner-actors-used-for-decisions}
 
-Interoperable processing under this profile is defined around `sub` and the outermost `act.sub`.  If local policy additionally uses an inner `act` object as an input to issuance decisions, the AS SHOULD apply the same three sub-steps as [Validate Outermost Actor](#validate-outermost-actor) for that entry, including delegation-confirmation only when the current processing path or local policy requires it for that entry.  Such use of inner actors is deployment-specific.
+Interoperable processing under this profile is defined around `sub` and the outermost `act.sub`.  If local policy additionally uses an inner `act` object as an input to issuance decisions, the AS MUST validate that entry's `act.sub` and `act.iss` pair and MUST evaluate its delegation relationship, as in [Validate Outermost Actor](#validate-outermost-actor), before using it as a security input.  Such use of inner actors is deployment-specific.
 
 #### Carry Prior-Actor Context {#carry-prior-actor-context}
 
@@ -1056,7 +1056,7 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
 
     For inner `act` objects in the inbound chain:
 
-    *  **Security-relevant use**: If local policy uses an inner entry as an input to access control or scope decisions, the TTS SHOULD apply the same validation as for the outermost entry.  If the TTS cannot validate it to the required assurance level, it SHOULD reject with `invalid_grant`.
+    *  **Security-relevant use**: If local policy uses an inner entry as an input to access control or scope decisions, the TTS MUST apply the same validation as for the outermost entry.  If the TTS cannot validate it to the required assurance level, it MUST reject with `invalid_grant`.
     *  **Prior-actor context only**: If an inner entry is preserved solely for audit purposes without driving any security decision, apply [Carry Prior-Actor Context](#carry-prior-actor-context).
 
 5.  The TTS MUST determine whether the request is presenter continuation or presenter rebind:
