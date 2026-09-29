@@ -1844,6 +1844,10 @@ Table of Contents
    The AS MUST apply configured mapping rules and MUST NOT infer
    equivalence from naming similarity alone.
 
+   If may_act.iss is present but is not a valid StringOrURI, the AS MUST
+   NOT use that may_act claim to authorize delegation and MUST NOT fall
+   back to subject_token.iss.
+
    Actor identity is established as follows:
 
    *  *With actor_token*: derive (act.iss, act.sub) under the

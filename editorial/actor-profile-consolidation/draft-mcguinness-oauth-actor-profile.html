@@ -2946,17 +2946,18 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
 </li>
         </ol>
 <p id="section-6.4-4">The canonical <code>may_act</code> identifier is (<code>may_act.iss</code>, <code>may_act.sub</code>) when <code>may_act</code> carries <code>iss</code>, and (<code>subject_token.iss</code>, <code>may_act.sub</code>) otherwise.  The AS <span class="bcp14">MUST</span> apply configured mapping rules and <span class="bcp14">MUST NOT</span> infer equivalence from naming similarity alone.<a href="#section-6.4-4" class="pilcrow">¶</a></p>
-<p id="section-6.4-5">Actor identity is established as follows:<a href="#section-6.4-5" class="pilcrow">¶</a></p>
+<p id="section-6.4-5">If <code>may_act.iss</code> is present but is not a valid StringOrURI, the AS <span class="bcp14">MUST NOT</span> use that <code>may_act</code> claim to authorize delegation and <span class="bcp14">MUST NOT</span> fall back to <code>subject_token.iss</code>.<a href="#section-6.4-5" class="pilcrow">¶</a></p>
+<p id="section-6.4-6">Actor identity is established as follows:<a href="#section-6.4-6" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-6.4-6.1">
-            <p id="section-6.4-6.1.1"><strong>With <code>actor_token</code></strong>: derive (<code>act.iss</code>, <code>act.sub</code>) under the credential's type-specific rules and reconcile it with the canonical <code>may_act</code> identifier.  <code>may_act</code> <span class="bcp14">MUST NOT</span> override the derived actor.<a href="#section-6.4-6.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-6.4-7.1">
+            <p id="section-6.4-7.1.1"><strong>With <code>actor_token</code></strong>: derive (<code>act.iss</code>, <code>act.sub</code>) under the credential's type-specific rules and reconcile it with the canonical <code>may_act</code> identifier.  <code>may_act</code> <span class="bcp14">MUST NOT</span> override the derived actor.<a href="#section-6.4-7.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-6.4-6.2">
-            <p id="section-6.4-6.2.1"><strong>Without <code>actor_token</code></strong>: the requesting client <span class="bcp14">MUST</span> be a confidential client that has authenticated in the request; public clients <span class="bcp14">MUST NOT</span> use this path.  Reconcile the authenticated client with the canonical <code>may_act</code> identifier and set <code>act.sub</code> to the client's canonical identifier.  The AS <span class="bcp14">MUST</span> set <code>act.iss</code> to the issuer or namespace context that locally registered the client, typically the AS's own issuer URI.<a href="#section-6.4-6.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-6.4-7.2">
+            <p id="section-6.4-7.2.1"><strong>Without <code>actor_token</code></strong>: the requesting client <span class="bcp14">MUST</span> be a confidential client that has authenticated in the request; public clients <span class="bcp14">MUST NOT</span> use this path.  Reconcile the authenticated client with the canonical <code>may_act</code> identifier and set <code>act.sub</code> to the client's canonical identifier.  The AS <span class="bcp14">MUST</span> set <code>act.iss</code> to the issuer or namespace context that locally registered the client, typically the AS's own issuer URI.<a href="#section-6.4-7.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-6.4-7">The second path supports a token that pre-authorizes a particular client to present it without a separate actor credential.<a href="#section-6.4-7" class="pilcrow">¶</a></p>
-<p id="section-6.4-8">When <code>may_act</code> is absent or the conditions above are not met, the AS <span class="bcp14">MUST</span> satisfy the delegation-authorization check through another recognized basis (pre-registered grant, consent record, or applicable policy rule).  The AS <span class="bcp14">MUST NOT</span> treat the mere presence of <code>may_act</code> as authorization for any actor other than the one whose canonical identity matches it.<a href="#section-6.4-8" class="pilcrow">¶</a></p>
+<p id="section-6.4-8">The second path supports a token that pre-authorizes a particular client to present it without a separate actor credential.<a href="#section-6.4-8" class="pilcrow">¶</a></p>
+<p id="section-6.4-9">When <code>may_act</code> is absent or the conditions above are not met, the AS <span class="bcp14">MUST</span> satisfy the delegation-authorization check through another recognized basis (pre-registered grant, consent record, or applicable policy rule).  The AS <span class="bcp14">MUST NOT</span> treat the mere presence of <code>may_act</code> as authorization for any actor other than the one whose canonical identity matches it.<a href="#section-6.4-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="output-token-rules">
