@@ -33,7 +33,6 @@ normative:
   RFC6749:
   RFC6750:
   RFC6838:
-  RFC6920:
   RFC7515:
   RFC7519:
   RFC7662:
@@ -236,7 +235,6 @@ The JWT payload of an actor proof uses the claims defined below, grouped by purp
 
   *  MUST conform to the core actor profile's actor-object rules;
   *  MUST include `act.sub` and `act.iss`;
-  *  MAY include `act.sub_profile`;
   *  MUST NOT contain `cnf`;
   *  MUST NOT contain a nested `act`.
 
@@ -1081,7 +1079,7 @@ The single proof covers the outermost hop:
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
 * Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, {{RFC8725}} applies except its audience validation, and Strict Mode governs every divergence.
 * Removed the unconditional recommendation for short proof `exp` in favor of the claim's conditional sizing rule.
-* Aligned subject-continuity handling and the introspection partial-coverage flag with Receipts.
+* Aligned subject-continuity handling, the introspection partial-coverage flag, and the proof actor object's `sub_profile` rule with Receipts.
 * Used the base profile's example identifiers for the travel assistant and booking tool.
 
 -00
