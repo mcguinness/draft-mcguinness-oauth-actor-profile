@@ -1392,7 +1392,7 @@ Deployments that infer actors from `client_id`, `azp`, or request context can mi
 *  Issuers SHOULD emit both legacy client identifiers and actor claims during transition when feasible.
 *  Without `act`, deployments MAY retain legacy client-based policy.
 *  When both forms are present, apply [Client Identity and Delegation](#client-identity-delegation) and record mismatches.
-*  Once an RS requires explicit delegation on a path, it MUST NOT accept a token without `act` as a substitute for a delegated token merely because legacy client-based policy permits it.
+*  Once an RS requires explicit delegation on a path, it does not accept a token without `act` as a substitute for a delegated token merely because legacy client-based policy permits it, as [Client Identity and Delegation](#client-identity-delegation) requires.
 
 Deployments that require explicit delegation from the outset can omit the transition.
 
