@@ -293,8 +293,7 @@ Proofs define no subject `sub_profile` claim; subject classification remains iss
 `exp`:
 : REQUIRED.  Expiration time for the proof, as defined in {{RFC7519}}.
 
-  *  `exp` MUST be set to a value that covers the expected maximum token lifetime of any token that will carry or inherit this proof, so that consumer validation of older proofs in a valid chain is not prematurely rejected.
-  *  Actors SHOULD set `exp` to the maximum delegated-token lifetime permitted under local policy for tokens that may inherit this proof.
+  `exp` needs to cover the lifetime of any token that will carry or inherit this proof; otherwise consumers reject older proofs in a valid chain prematurely.
 
   A proof expiring before the issued outer token causes propagation failure ({{extending-an-existing-proof-chain}}).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse ({{proof-to-token-binding-limits}}).
 
