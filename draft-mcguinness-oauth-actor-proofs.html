@@ -1740,13 +1740,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
                   <p id="section-7.2.1-1.8.2.2.1"><span class="bcp14">MUST</span> include <code>act.sub</code> and <code>act.iss</code>;<a href="#section-7.2.1-1.8.2.2.1" class="pilcrow">¶</a></p>
 </li>
                 <li class="normal" id="section-7.2.1-1.8.2.3">
-                  <p id="section-7.2.1-1.8.2.3.1"><span class="bcp14">MAY</span> include <code>act.sub_profile</code>;<a href="#section-7.2.1-1.8.2.3.1" class="pilcrow">¶</a></p>
+                  <p id="section-7.2.1-1.8.2.3.1"><span class="bcp14">MUST NOT</span> contain <code>cnf</code>;<a href="#section-7.2.1-1.8.2.3.1" class="pilcrow">¶</a></p>
 </li>
                 <li class="normal" id="section-7.2.1-1.8.2.4">
-                  <p id="section-7.2.1-1.8.2.4.1"><span class="bcp14">MUST NOT</span> contain <code>cnf</code>;<a href="#section-7.2.1-1.8.2.4.1" class="pilcrow">¶</a></p>
-</li>
-                <li class="normal" id="section-7.2.1-1.8.2.5">
-                  <p id="section-7.2.1-1.8.2.5.1"><span class="bcp14">MUST NOT</span> contain a nested <code>act</code>.<a href="#section-7.2.1-1.8.2.5.1" class="pilcrow">¶</a></p>
+                  <p id="section-7.2.1-1.8.2.4.1"><span class="bcp14">MUST NOT</span> contain a nested <code>act</code>.<a href="#section-7.2.1-1.8.2.4.1" class="pilcrow">¶</a></p>
 </li>
               </ul>
 <p id="section-7.2.1-1.8.3"><code>act</code> supplies the namespace context and visible-hop alignment.  A proof is invalid if <code>iss</code> differs from <code>act.sub</code>.<a href="#section-7.2.1-1.8.3" class="pilcrow">¶</a></p>
@@ -3137,10 +3134,6 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <dd>
 <span class="refAuthor">Freed, N.</span>, <span class="refAuthor">Klensin, J.</span>, and <span class="refAuthor">T. Hansen</span>, <span class="refTitle">"Media Type Specifications and Registration Procedures"</span>, <span class="seriesInfo">BCP 13</span>, <span class="seriesInfo">RFC 6838</span>, <span class="seriesInfo">DOI 10.17487/RFC6838</span>, <time datetime="2013-01" class="refDate">January 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc6838">https://www.rfc-editor.org/info/rfc6838</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC6920">[RFC6920]</dt>
-        <dd>
-<span class="refAuthor">Farrell, S.</span>, <span class="refAuthor">Kutscher, D.</span>, <span class="refAuthor">Dannewitz, C.</span>, <span class="refAuthor">Ohlman, B.</span>, <span class="refAuthor">Keranen, A.</span>, and <span class="refAuthor">P. Hallam-Baker</span>, <span class="refTitle">"Naming Things with Hashes"</span>, <span class="seriesInfo">RFC 6920</span>, <span class="seriesInfo">DOI 10.17487/RFC6920</span>, <time datetime="2013-04" class="refDate">April 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc6920">https://www.rfc-editor.org/info/rfc6920</a>&gt;</span>. </dd>
-<dd class="break"></dd>
 <dt id="RFC7515">[RFC7515]</dt>
         <dd>
 <span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">N. Sakimura</span>, <span class="refTitle">"JSON Web Signature (JWS)"</span>, <span class="seriesInfo">RFC 7515</span>, <span class="seriesInfo">DOI 10.17487/RFC7515</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7515">https://www.rfc-editor.org/info/rfc7515</a>&gt;</span>. </dd>
@@ -3464,7 +3457,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="appendix-B-3.8.1">Removed the unconditional recommendation for short proof <code>exp</code> in favor of the claim's conditional sizing rule.<a href="#appendix-B-3.8.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.9">
-          <p id="appendix-B-3.9.1">Aligned subject-continuity handling and the introspection partial-coverage flag with Receipts.<a href="#appendix-B-3.9.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.9.1">Aligned subject-continuity handling, the introspection partial-coverage flag, and the proof actor object's <code>sub_profile</code> rule with Receipts.<a href="#appendix-B-3.9.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.10">
           <p id="appendix-B-3.10.1">Used the base profile's example identifiers for the travel assistant and booking tool.<a href="#appendix-B-3.10.1" class="pilcrow">¶</a></p>

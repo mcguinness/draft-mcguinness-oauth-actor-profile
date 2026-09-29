@@ -1018,15 +1018,22 @@ Table of Contents
    1.  The AS MUST validate the assertion per [RFC7523], including
        signature, iss, sub, aud, exp, and jti.
 
-       *  *Non-sender-constrained grants*: When neither a DPoP proof
-          ([RFC9449]) nor an mTLS client certificate ([RFC8705]) is
-          required at the token endpoint, the AS MUST reject any
-          assertion whose jti has already been accepted within the
-          assertion's validity window.
+       *  *Grants without an enforced grant-level sender constraint*:
+          The AS MUST reject with invalid_grant an assertion whose
+          validated (iss, jti) pair it has already accepted, for as long
+          as the assertion remains acceptable, including any allowed
+          clock skew.  A proof used only for client authentication or to
+          bind the issued access token is not a grant-level sender
+          constraint.
 
-       *  *Sender-constrained grants*: The AS SHOULD additionally apply
-          jti replay prevention as defense-in-depth, consistent with
-          [RFC7523].
+       *  *Sender-constrained grants*: When the AS validates the
+          request's proof of possession against the assertion's top-
+          level cnf as specified in step 6, the AS SHOULD additionally
+          apply replay prevention to the validated (iss, jti) pair as
+          defense-in-depth.  Any permitted reuse requires validation of
+          that binding on each redemption and remains subject to single-
+          use requirements in Self-Issued Authorization Grants
+          (Section 14.2) or the applicable grant profile.
 
    2.  The AS MUST verify that the JWT iss is trusted under local policy
        to assert delegation on behalf of the actor identified by
@@ -3285,11 +3292,14 @@ Table of Contents
 
    *  Verify the exp, iat, and nbf claims per [RFC7519].
 
-   *  Reject assertions whose jti has already been accepted within the
-      assertion's validity window to prevent replay.
+   *  Reject, to prevent replay, an assertion whose validated (iss, jti)
+      pair has already been accepted, for as long as the assertion
+      remains acceptable, including any allowed clock skew.
 
    *  Verify proof of possession per the token-endpoint mechanism in use
-      (DPoP per [RFC9449] or mTLS per [RFC8705]).
+      (DPoP per [RFC9449] or mTLS per [RFC8705]), and against the
+      assertion's top-level cnf when present, as in step 6 of
+      Authorization Grant Processing (Section 4.2).
 
    *  Apply the actor-profile validation and proof-of-possession
       requirements in Authorization Grant Processing (Section 4.2).
@@ -3311,12 +3321,12 @@ Table of Contents
 
    Replaying a delegated assertion can obtain tokens exercising the
    subject's authorization and establish an unauthorized delegation
-   chain.  For grants without sender constraint, deployments maintain a
-   jti replay cache for each assertion's validity window, as required by
-   Authorization Grant Processing (Section 4.2).  Short assertion
-   lifetimes bound cache retention.  With DPoP or mTLS, Authorization
-   Grant Processing (Section 4.2) still recommends jti replay prevention
-   as an additional control.
+   chain.  Authorization Grant Processing (Section 4.2) requires replay
+   prevention for grants without an enforced grant-level sender
+   constraint and recommends it as an additional control when that
+   constraint is enforced.  Replay records identify accepted grants by
+   (iss, jti) and cover the full acceptance window, including allowed
+   clock skew.  Short assertion lifetimes bound retention.
 
 14.4.  Token Substitution
 
@@ -4371,6 +4381,11 @@ Document History
    *  Clarified confirmation members in token actor objects as extension
       data, including preservation and their distinction from the
       current presenter's binding.
+
+   *  Corrected grant replay requirements to depend on an enforced
+      grant-level sender constraint, with accepted grants identified by
+      (iss, jti) for their full acceptance window, and aligned the self-
+      issued grant controls with that rule.
 
    -00
 

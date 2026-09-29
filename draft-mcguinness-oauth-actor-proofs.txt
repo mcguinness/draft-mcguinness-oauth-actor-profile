@@ -497,8 +497,6 @@ Table of Contents
 
       *  MUST include act.sub and act.iss;
 
-      *  MAY include act.sub_profile;
-
       *  MUST NOT contain cnf;
 
       *  MUST NOT contain a nested act.
@@ -2075,11 +2073,6 @@ Table of Contents
               RFC 6838, DOI 10.17487/RFC6838, January 2013,
               <https://www.rfc-editor.org/info/rfc6838>.
 
-   [RFC6920]  Farrell, S., Kutscher, D., Dannewitz, C., Ohlman, B.,
-              Keranen, A., and P. Hallam-Baker, "Naming Things with
-              Hashes", RFC 6920, DOI 10.17487/RFC6920, April 2013,
-              <https://www.rfc-editor.org/info/rfc6920>.
-
    [RFC7515]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web
               Signature (JWS)", RFC 7515, DOI 10.17487/RFC7515, May
               2015, <https://www.rfc-editor.org/info/rfc7515>.
@@ -2440,8 +2433,9 @@ Document History
    *  Removed the unconditional recommendation for short proof exp in
       favor of the claim's conditional sizing rule.
 
-   *  Aligned subject-continuity handling and the introspection partial-
-      coverage flag with Receipts.
+   *  Aligned subject-continuity handling, the introspection partial-
+      coverage flag, and the proof actor object's sub_profile rule with
+      Receipts.
 
    *  Used the base profile's example identifiers for the travel
       assistant and booking tool.
