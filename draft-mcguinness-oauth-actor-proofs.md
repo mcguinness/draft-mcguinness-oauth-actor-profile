@@ -624,10 +624,9 @@ This profile composes with the extensibility framework defined in {{I-D.mcguinne
 Companion profile authoring rules:
 
 *  Companion profiles MAY extend consumer processing under {{consumer-processing}} by adding rejection conditions; they MUST NOT relax any rejection condition defined here.
-*  Companion-profile claims and discovery metadata MUST be registered with IANA in the registries used by this document.
 *  Companion profiles that define per-hop signed artifacts SHOULD follow the claim-pair and discovery conventions of {{I-D.mcguinness-oauth-actor-receipts}}, and MAY reuse the `prh` and `prh_alg` chain-linkage construction.
 
-Conflict resolution: when a recipient implements multiple companion profiles whose rules conflict, local policy determines precedence.  Companion profiles SHOULD be designed to add, not contradict, other profiles' rejection conditions.
+Conflict resolution: when a recipient implements multiple companion profiles whose rules conflict, local policy determines precedence.
 
 # Security Considerations
 
