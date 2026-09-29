@@ -181,7 +181,7 @@ The `scope` dimension records the space-separated scope string of {{RFC6749}} Se
 *  `scope_a` is within `scope_b` if and only if every token in `scope_a` is also in `scope_b`;
 *  the empty string is the empty set and is within every scope set.
 
-Comparison does not interpret scope semantics: `read:user/*` does not automatically cover `read:user/123`, and preserved strings may acquire broader meanings through configuration changes ({{scope-subsumption-gaps}}).  Issuers MUST emit explicit, narrowest-form scopes rather than rely on grammar-dependent subsumption.
+Comparison does not interpret scope semantics: `read:user/*` does not automatically cover `read:user/123`, and preserved strings may acquire broader meanings through configuration changes ({{scope-subsumption-gaps}}).  Deployments whose scope grammars carry hierarchy or wildcard semantics follow {{scope-subsumption-gaps}} rather than relying on grammar-dependent subsumption.
 
 ## `aud` and Audience Governance {#audience-governance}
 
