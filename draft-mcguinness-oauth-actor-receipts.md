@@ -452,8 +452,10 @@ Consumer step 5 applies the following cases in order to `receipt[0]`:
 
 1.  If its `iss` matches the outer issuer and its `origin_jti` is present and matches the outer token's `jti`, the chain is bound to that token instance.
 2.  If the issuers match but the outer token has no `jti`, the chain supplies provenance without instance binding.  Any `origin_jti` is informational.
-3.  If the issuers match and the outer token has `jti`, but `origin_jti` is absent, the recipient MAY accept provenance under local policy.  It MUST NOT treat the chain as instance-bound, and a recipient that requires instance binding MUST reject the chain.
+3.  If the issuers match and the outer token has `jti`, but `origin_jti` is absent, the recipient MAY accept provenance under local policy.  It MUST NOT treat the chain as instance-bound.
 4.  Otherwise, the recipient MUST reject the chain unless local policy trusts the outer issuer to reissue chains led by this receipt issuer ({{strict-mode-validation}}).
+
+A recipient that requires instance binding MUST reject the chain unless case 1 applies.
 
 ## Subject Re-Expression Across Hops {#subject-re-expression-across-hops}
 
