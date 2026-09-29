@@ -405,7 +405,7 @@ An issuer, resource server, or other recipient relying on this profile MUST perf
 
 7.  Check `authority_bounds_enforced`, if present.  Every named dimension MUST be recognized.  For each named dimension for which the chain carries any receipt-attested bounds, steps 4 through 6 MUST succeed; inconsistency MUST reject bounds evidence.
 
-8.  Enforce dimensions required by `authority_bounds_required` or local policy.  Each required D must appear in `authority_bounds_enforced`, be recorded on every receipt, and pass steps 4 through 6.  Sparse coverage does not satisfy this requirement.  Recipients needing full-chain enforcement SHOULD also require `actor_receipts_complete_required` and `bounds_events_complete_required`.
+8.  Enforce dimensions required by `authority_bounds_required` or local policy.  Each required D must appear in `authority_bounds_enforced`, be recorded on every receipt, and pass steps 4 through 6.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt and event coverage ({{protected-resource-metadata}}).
 
 9.  Apply any additional rules defined by companion profiles whose claims appear in the artifacts ({{extensibility}}).  They can add rejection conditions but cannot relax any requirement needed for conformance to this profile.
 
