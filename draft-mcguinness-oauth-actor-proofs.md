@@ -109,9 +109,9 @@ Examples in this document are illustrative and omit unrelated claims, signatures
 
 This document is an extension of {{I-D.mcguinness-oauth-actor-profile}}.  A token that uses the `actor_proofs` claim defined here:
 
-*  MUST conform to the actor-chain representation rules of the core actor profile;
-*  MUST use the top-level `cnf` claim, when present, only for the current token presenter;
-*  MUST NOT treat any proof as satisfying a proof-of-possession requirement for the current request.
+*  conforms to the actor-chain representation rules of the core actor profile ({{actor-proofs-claim}});
+*  uses the top-level `cnf` claim, when present, only for the current token presenter, as the core actor profile defines;
+*  gains no proof-of-possession semantics from its proofs for the current request ({{current-presenter-validation}}).
 
 This profile adds signed proofs, processing rules, metadata, and introspection parameters to the core actor representation.  The `actor_proof` request parameter conveys a new proof at issuance.  The underlying Token Exchange and Transaction Token request semantics continue to apply.
 
@@ -410,7 +410,7 @@ However:
 
 Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop should enable proof support at the origin and its actors first.  Resource servers can require full coverage through `actor_proofs_complete_required` or local policy.
 
-When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_proofs` covers only the visible filtered chain.  In that case `actor_proofs_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness MUST evaluate `chain_complete` separately.
+When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_proofs` covers only the visible filtered chain.  In that case `actor_proofs_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness evaluate `chain_complete` separately under the core actor profile's introspection rules.
 
 ## Transaction Token Service Rebinding
 
