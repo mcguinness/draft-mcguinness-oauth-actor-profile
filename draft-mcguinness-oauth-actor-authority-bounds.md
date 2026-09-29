@@ -528,7 +528,7 @@ Bounds inherit the receipts companion's per-issuer, non-transitive trust model, 
 
 ## Issuer Self-Attestation Limits {#issuer-attestation-limits}
 
-An issuer can assert `authority_bounds_enforced` without independent evidence.  Recipients MUST NOT accept it as a substitute for receipt-attested verification.  Deployments requiring offline evidence that authority did not expand MUST use receipt-attested bounds; the claim alone supports only coordination and consistency checking.
+An issuer can assert `authority_bounds_enforced` without independent evidence.  It never satisfies a requirement for receipt-attested verification, such as required-dimension enforcement in step 8 of {{consumer-processing}}.  Deployments requiring offline evidence that authority did not expand MUST use receipt-attested bounds; the claim alone supports only coordination and consistency checking.
 
 ## Re-Authorization Abuse {#reauthorization-abuse}
 
