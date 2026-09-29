@@ -344,7 +344,7 @@ When an issuer adds a new outermost actor hop and also preserves an inbound `act
 7.  MUST set the new receipt's `prh_alg` to the inherited value, or omit `prh_alg` if the inherited chain omits it (preserving the SHA-256 default for the chain).  An issuer that does not support the inbound `prh_alg` value MUST reject the chain rather than rehash; rehashing would invalidate prior issuers' signatures.
 8.  MUST preserve `actor_receipts_complete: true` when the inbound attestation is valid and the new receipt covers the added hop.  Otherwise, the issuer MUST NOT set it to `true` and SHOULD set it to `false`.
 
-An issuer MUST NOT reserialize, resign, normalize, trim, or otherwise alter a prior receipt.
+Byte-for-byte preservation ({{receipt-chain-linkage}}) rules out reserializing, re-signing, normalizing, trimming, or otherwise altering a prior receipt.
 
 If inbound receipts fail validation, the issuer MUST NOT propagate them.  It MAY continue without `actor_receipts` only when local policy permits partial coverage; otherwise it MUST fail the request under the error model of the underlying protocol.
 
