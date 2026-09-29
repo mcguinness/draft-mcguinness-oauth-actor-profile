@@ -969,7 +969,7 @@ For this profile, a Transaction Token represents delegation when a condition in 
 
 Claim semantics under this profile:
 
-*  `sub`: identifies the original initiator.  When a Transaction Token is exchanged for a replacement, the new token MUST continue to refer to the same underlying subject.  The issuer MAY change `sub` only to re-express that same subject in a different identifier namespace.
+*  `sub`: identifies the original initiator.  When a Transaction Token is exchanged for a replacement, the new token continues to refer to the same underlying subject, and the issuer can change `sub` only to re-express that subject in another identifier namespace under a trusted local mapping, as step 2 of [JWT Access Token Output](#jwt-access-token-propagation) requires.
 *  `act.sub` (outermost): identifies the immediate acting party.  When a TTS sets both `req_wl` and the new outermost `act.sub` in a single token issuance (presenter-rebind mode), it MUST ensure they identify the same entity under local policy.  When a TTS preserves `req_wl` from an inbound token, the TTS SHOULD perform identifier reconciliation between `req_wl` and the outermost `act.sub`.  When a recipient relies on both and cannot reconcile them under local policy, the recipient MUST reject the token.
 *  Inner `act` objects: identify prior presenters in the delegation path.  `act.sub_profile` at each level classifies the entity type of that presenter.
 
