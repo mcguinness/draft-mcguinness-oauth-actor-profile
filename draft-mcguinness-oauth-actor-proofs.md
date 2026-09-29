@@ -393,7 +393,7 @@ An issuer that reissues, translates, or introspects and re-emits a token without
 
 If such an issuer changes the visible outermost actor, it has added a new hop and MUST follow {{extending-an-existing-proof-chain}}.
 
-If reissuance retargets the audience beyond the newest proof's target, the issuer MUST drop `actor_proofs` unless recipients explicitly accept divergence under {{target-binding-strict-mode}}.  Narrowing or preserving the target leaves the chain valid.
+If reissuance exceeds the newest proof's target, the issuer MUST drop `actor_proofs` unless recipients explicitly accept divergence under {{target-binding-strict-mode}}.  Narrowing or preserving the target leaves the chain valid.
 
 If proofs are dropped while receipts remain, inherited `proof_jti` references become informational.  Recipients requiring bound siblings enforce proof presence through metadata or local policy.
 
