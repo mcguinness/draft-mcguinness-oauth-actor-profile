@@ -330,7 +330,7 @@ The re-authorizing authority creates an event and prepends it at the next issuan
 
 This claim is an unverifiable self-attestation by the same issuer that signed the outer token; it adds no independent evidence, and a compromised issuer can assert it freely ({{issuer-attestation-limits}}).  Its defined uses are:
 
-*  **Consistency check.**  When the token also carries receipt-attested bounds for a named dimension, the chain verification of {{consumer-processing}} MUST succeed for that dimension; an `authority_bounds_enforced` entry whose dimension fails chain verification MUST cause the recipient to reject the token's bounds-based evidence.
+*  **Consistency check.**  When the token also carries receipt-attested bounds for a named dimension, step 7 of {{consumer-processing}} rejects the token's bounds-based evidence unless chain verification succeeds for that dimension.
 *  **Deployment coordination.**  In deployments without receipt-attested bounds, the claim records which dimensions the issuer applied monotonicity to, for recipients whose local policy chooses to rely on issuer trust alone.
 
 Absence of the claim, or of a dimension from it, does not assert that authority expanded; it means the issuer made no attestation for that dimension.
@@ -544,7 +544,7 @@ Set-membership comparison catches verbatim expansion only.  A scope token that i
 
 ## Recorded Values and Token Reality
 
-`bounds` members are attested copies of issued-token values, signed by the issuer that produced both.  An issuer that records values differing from what it actually issued produces either a detectable mismatch (the outer-token comparison at the terminal hop, or the next enforcing issuer's inbound check) or a consistent lie spanning its receipt and its token, which is the intermediate authority expansion case in {{threat-model}}.  Recipients comparing `bounds` against token values MUST use the effective values the token actually carries, not request-time values.
+`bounds` members are attested copies of issued-token values, signed by the issuer that produced both.  An issuer that records values differing from what it actually issued produces either a detectable mismatch (the outer-token comparison at the terminal hop, or the next enforcing issuer's inbound check) or a consistent lie spanning its receipt and its token, which is the intermediate authority expansion case in {{threat-model}}.  Step 6 of {{consumer-processing}} compares `bounds` against the effective values the token actually carries, not request-time values.
 
 ## Event Chain Size and Retention
 
