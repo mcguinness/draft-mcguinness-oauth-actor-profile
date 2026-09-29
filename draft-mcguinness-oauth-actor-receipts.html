@@ -2505,7 +2505,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
       <h2 id="name-security-considerations">
 <a href="#section-13" class="section-number selfRef">13. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
       </h2>
-<p id="section-13-1">Actor receipts strengthen provenance for visible actor hops, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> and the JWT best practices in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> apply to systems implementing this profile.<a href="#section-13-1" class="pilcrow">¶</a></p>
+<p id="section-13-1">Actor receipts strengthen provenance for visible actor hops, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> and the JWT best practices in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>, except its audience validation for receipt JWTs (see <code>aud</code> in <a href="#receipt-claims" class="auto internal xref">Section 7.2</a>), apply to systems implementing this profile.<a href="#section-13-1" class="pilcrow">¶</a></p>
 <div id="threat-model">
 <section id="section-13.1">
         <h3 id="name-threat-model">
@@ -2549,7 +2549,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-13.1.2-1.3.1"><strong>Compromised actor at a hop.</strong>  Receipts attest issuer assertions, not actor non-repudiation.  Companion profiles (<a href="#extensibility" class="auto internal xref">Section 12</a>) can address this with actor-signed proofs.<a href="#section-13.1.2-1.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-13.1.2-1.4">
-              <p id="section-13.1.2-1.4.1"><strong>Cross-namespace subject graft with a compromised upstream issuer.</strong>  An attacker who compromises one upstream issuer can mint receipts for any subject in that issuer's namespace and graft them onto a re-expressed downstream chain.  Mitigation: consistent <code>sub</code> across the chain or trusted out-of-band subject mapping (<a href="#subject-re-expression-across-hops" class="auto internal xref">Section 9.2</a>).<a href="#section-13.1.2-1.4.1" class="pilcrow">¶</a></p>
+              <p id="section-13.1.2-1.4.1"><strong>Cross-namespace subject graft with a compromised upstream issuer.</strong>  An attacker who compromises one upstream issuer can mint receipts for any subject in that issuer's namespace and graft them onto a re-expressed downstream chain.  Mitigation: exact, namespace-aware subject matching across the chain or trusted out-of-band subject mapping (<a href="#subject-re-expression-across-hops" class="auto internal xref">Section 9.2</a>).<a href="#section-13.1.2-1.4.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-13.1.2-1.5">
               <p id="section-13.1.2-1.5.1"><strong>Replay of an entire token plus its receipts.</strong>  This profile does not define replay detection; receipts inherit the outer token's replay characteristics.<a href="#section-13.1.2-1.5.1" class="pilcrow">¶</a></p>

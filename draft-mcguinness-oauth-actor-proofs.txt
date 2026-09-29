@@ -779,8 +779,8 @@ Table of Contents
        one, it does not claim complete coverage even when the proof
        count equals the visible depth.
 
-   An issuer MUST NOT reserialize, resign, normalize, trim, or otherwise
-   alter a prior proof.
+   Byte-for-byte preservation (Section 7.3) rules out reserializing, re-
+   signing, normalizing, trimming, or otherwise altering a prior proof.
 
    The actor must know the newest inbound proof's exact serialization,
    or its hash and prh_alg, before signing.  For JWT inputs it can read
@@ -1117,20 +1117,16 @@ Table of Contents
    *  only actor_proofs[0].sub is required to equal the current outer
       token sub;
 
-   *  older proof sub values can differ (step 8 of Section 10);
+   *  older proof sub values can differ (step 8 of Section 10).
 
-   *  a recipient that applies stronger continuity requirements across
-      older sub values MUST do so under explicit trusted local mapping
-      rules.
-
-   Recipients MUST be aware that permitting differing sub values across
-   proofs creates a cross-subject insertion risk: a proof signed by a
-   legitimate actor for an unrelated subject's delegation could satisfy
-   the structural hop-alignment check when the actor identity at that
-   hop matches.  An attacker who compromises any single actor signing
-   key can deliberately sign proofs naming any subject and any target,
-   and graft them onto a downstream chain whose re-expressed sub points
-   at a victim subject.
+   Recipients need to be aware that permitting differing sub values
+   across proofs creates a cross-subject insertion risk: a proof signed
+   by a legitimate actor for an unrelated subject's delegation could
+   satisfy the structural hop-alignment check when the actor identity at
+   that hop matches.  An attacker who compromises any single actor
+   signing key can deliberately sign proofs naming any subject and any
+   target, and graft them onto a downstream chain whose re-expressed sub
+   points at a victim subject.
 
    This profile provides no in-band mechanism for cross-namespace
    subject reconciliation.
@@ -1138,16 +1134,19 @@ Table of Contents
    Deployments where subject continuity is a security requirement SHOULD
    adopt one of the following:
 
-   *  require consistent sub values across all proofs in the chain,
-      rejecting re-expressed chains; or
+   *  require exact, namespace-aware matching of subject identifiers
+      across all proofs (the same sub under the same namespace
+      authority; see sub_iss in Section 7.2.1), rejecting re-expressed
+      chains; or
 
    *  enforce explicit trusted subject-mapping rules that can positively
-      confirm each distinct sub value refers to the same underlying
-      entity.
+      confirm each distinct subject identifier refers to the same
+      underlying entity.
 
-   When neither condition is met, the recipient MUST treat the differing
-   sub values as unverified subject continuity and MUST NOT rely on
-   those older proofs for authorization decisions.
+   When neither condition is met, the recipient MUST treat subject
+   continuity as unverified and MUST NOT rely on older proofs whose
+   subject identifiers (sub or sub_iss) differ to support authorization
+   that requires subject continuity.
 
 10.2.  Complete Proof Coverage
 
@@ -1222,8 +1221,9 @@ Table of Contents
 
    An introspection server MUST return the full stored array or omit
    actor_proofs.  Removing an older entry breaks prh; removing the
-   newest breaks hop alignment.  A stored array with partial coverage is
-   returned in full with actor_proofs_complete: false.
+   newest breaks hop alignment.  When the introspection server returns a
+   stored array that it knows has partial coverage, it MUST include
+   actor_proofs_complete: false.
 
    For an inactive token, the introspection server MUST NOT return
    actor_proofs or actor_proofs_complete.
@@ -1428,8 +1428,9 @@ Table of Contents
    Actor proofs strengthen delegation evidence with actor-side
    signatures, but they do not replace ordinary token validation.  The
    general OAuth 2.0 Security Best Current Practice [RFC9700] and the
-   JWT best practices in [RFC8725] apply to systems implementing this
-   profile.
+   JWT best practices in [RFC8725], except its audience validation for
+   proof JWTs (see aud in Section 7.2), apply to systems implementing
+   this profile.
 
 14.1.  Threat Model
 
@@ -2433,6 +2434,9 @@ Document History
 
    *  Removed the unconditional recommendation for short proof exp in
       favor of the claim's conditional sizing rule.
+
+   *  Aligned subject-continuity handling and the introspection partial-
+      coverage flag with Receipts.
 
    -00
 

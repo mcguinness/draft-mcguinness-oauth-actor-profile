@@ -1843,7 +1843,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-event-lifecycle">
 <a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-event-lifecycle" class="section-name selfRef">Event Lifecycle</a>
         </h3>
-<p id="section-8.3-1">The re-authorizing authority creates an event and prepends it at the next issuance carrying the array.  Every party that carries, stores, or forwards the array <span class="bcp14">MUST</span> preserve each inherited event string byte-for-byte and keep the inherited events in their inherited order; byte preservation applies to the event strings, not to the encoding of the enclosing JSON array.  Other parties <span class="bcp14">MUST NOT</span> add or remove events.  An issuer unable to preserve the inherited array <span class="bcp14">MUST</span> omit it and <code>bounds_events_complete</code> entirely.  Removing entries breaks linkage or conceals a change of bounds.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
+<p id="section-8.3-1">The re-authorizing authority creates and signs an event, and the issuer of the next token carrying the array prepends it.  Every party that carries, stores, or forwards the array <span class="bcp14">MUST</span> preserve each inherited event string byte-for-byte and keep the inherited events in their inherited order; byte preservation applies to the event strings, not to the encoding of the enclosing JSON array.  Parties <span class="bcp14">MUST NOT</span> otherwise add events, and <span class="bcp14">MUST NOT</span> remove them.  An issuer unable to preserve the inherited array <span class="bcp14">MUST</span> omit it and <code>bounds_events_complete</code> entirely.  Removing entries breaks linkage or conceals a change of bounds.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2026,7 +2026,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="section-11-2.7.1">Check <code>authority_bounds_enforced</code>, if present.  Every named dimension <span class="bcp14">MUST</span> be recognized.  For each named dimension for which the chain carries any receipt-attested bounds, steps 4 through 6 <span class="bcp14">MUST</span> succeed; inconsistency <span class="bcp14">MUST</span> reject bounds evidence.<a href="#section-11-2.7.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-11-2.8">
-          <p id="section-11-2.8.1">Enforce dimensions required by <code>authority_bounds_required</code> or local policy.  Each required D must appear in <code>authority_bounds_enforced</code>, be recorded on every receipt, and pass steps 4 through 6.  Sparse coverage does not satisfy this requirement.  Recipients needing full-chain enforcement <span class="bcp14">SHOULD</span> also require <code>actor_receipts_complete_required</code> and <code>bounds_events_complete_required</code>.<a href="#section-11-2.8.1" class="pilcrow">¶</a></p>
+          <p id="section-11-2.8.1">Enforce dimensions required by <code>authority_bounds_required</code> or local policy.  Each required D must appear in <code>authority_bounds_enforced</code>, be recorded on every receipt, and pass steps 4 through 6.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt and event coverage (<a href="#protected-resource-metadata" class="auto internal xref">Section 12.2</a>).<a href="#section-11-2.8.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-11-2.9">
           <p id="section-11-2.9.1">Apply any additional rules defined by companion profiles whose claims appear in the artifacts (<a href="#extensibility" class="auto internal xref">Section 14</a>).  They can add rejection conditions but cannot relax any requirement needed for conformance to this profile.<a href="#section-11-2.9.1" class="pilcrow">¶</a></p>
@@ -2894,7 +2894,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="appendix-A.1-8.4.1">Audience changes are recorded without comparison under the default audience rules.<a href="#appendix-A.1-8.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="appendix-A.1-9">The issuer attests enforcement of <code>scope</code> and <code>resource</code>, consistent with those checks.<a href="#appendix-A.1-9" class="pilcrow">¶</a></p>
+<p id="appendix-A.1-9">The issuer attests enforcement of <code>scope</code> and <code>resource</code>, consistent with those checks.  No re-authorization occurred, so the token carries no <code>bounds_events</code>; adding <code>bounds_events_complete: true</code> would attest that complete, empty history (<a href="#bounds-events" class="auto internal xref">Section 8</a>).<a href="#appendix-A.1-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="example-refresh-widening-recorded-as-a-bounds-event">

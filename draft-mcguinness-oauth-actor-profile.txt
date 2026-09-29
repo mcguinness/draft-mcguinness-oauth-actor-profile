@@ -1987,11 +1987,11 @@ Table of Contents
 
    7.  The AS MAY preserve inbound client identifiers per the output
        token profile or local policy.  Preserved values MUST retain
-       their client-identity meaning and MUST NOT represent delegation
-       state.  If preserving an optional identifier would create
-       ambiguity about the delegated actor relationship, the AS SHOULD
-       omit it.  JWT access tokens still require client_id per
-       [RFC9068]; see Client Identity and Delegation (Section 14.7).
+       their client-identity meaning; they do not represent delegation
+       state (Client Identity and Delegation (Section 14.7)).  If
+       preserving an optional identifier would create ambiguity about
+       the delegated actor relationship, the AS SHOULD omit it.  JWT
+       access tokens still require client_id per [RFC9068].
 
    8.  The AS MUST honor resource-indicator constraints ([RFC8707]) in
        delegated token requests.
@@ -3314,8 +3314,8 @@ Table of Contents
    of this document, the applicable registry or deployment-specific
    allowed set where such checks are part of local policy, and the local
    policy applicable to the token they are issuing.  They MUST preserve
-   unrecognized but syntactically valid values as required by Actor
-   Object Structure (Section 3.4), and they MUST reject values that are
+   unrecognized but syntactically valid values as required by Preserve
+   Inbound Chain (Section 3.6.3.2), and they MUST reject values that are
    malformed or disallowed by local policy.
 
 14.5.  Confused Deputy
