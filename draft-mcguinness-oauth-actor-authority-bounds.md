@@ -279,7 +279,7 @@ Re-authorization at a new hop is recorded in that hop's receipt.  Between hops, 
   *  is preserved and extended as described in {{event-lifecycle}}.
 
 `bounds_events_complete`:
-: OPTIONAL.  A boolean JWT claim on the outer token.  When `true`, the issuer attests that `bounds_events` contains every non-hop bounds-changing event that occurred during the delegation lifetime as of issuance.  When `false` or absent, coverage may be partial and recipients MUST NOT infer from the absence of events that no re-authorization occurred.  This is the `<name>_complete` member of the receipts companion's claim-pair convention.
+: OPTIONAL.  A boolean JWT claim on the outer token.  When `true`, the issuer attests that `bounds_events` contains every non-hop bounds-changing event that occurred during the delegation lifetime as of issuance.  When `true` and `bounds_events` is absent, the issuer attests that no such event occurred.  When `false` or absent, coverage may be partial and recipients MUST NOT infer from the absence of events that no re-authorization occurred.  This is the `<name>_complete` member of the receipts companion's claim-pair convention.
 
 ## Bounds-Event JWT Format
 
@@ -385,7 +385,7 @@ An issuer, resource server, or other recipient relying on this profile MUST perf
     *  `bounds` and `new_bounds` are objects whose recognized members have the types defined in {{governed-dimensions}}.
     *  `reauthorized` contains its required, correctly typed members.
     *  `authority_bounds_enforced` and `bounds_events`, when present, are non-empty arrays of strings.
-    *  `bounds_events_complete`, when present, is a boolean.  A value of `true` without `bounds_events` is malformed and MUST be treated as a failed required check.
+    *  `bounds_events_complete`, when present, is a boolean.  A value of `true` without `bounds_events` attests a complete history with no events ({{bounds-events}}).
 
 3.  Validate events in array order:
     *  Parse each compact JWT and verify that the event issuer is acceptable under the recipient's re-authorization trust policy ({{reauthorization-abuse}}) before any network retrieval keyed by event content.
@@ -434,7 +434,7 @@ Bounds evidence records non-expansion across covered hops, with explicit re-auth
 
 Receipt-attested bounds travel inside receipts and are returned wherever receipts are returned; the introspection rules of {{ACTOR-RECEIPTS}} apply unchanged, including all-or-nothing receipt disclosure and the requirement list for outer-token members.
 
-An introspection response MAY include `authority_bounds_enforced`, `bounds_events`, and `bounds_events_complete` using their JWT syntax.  It MUST return the full stored event array or omit both event claims.  A subset would break linkage or conceal a change of bounds.
+An introspection response MAY include `authority_bounds_enforced`, `bounds_events`, and `bounds_events_complete` using their JWT syntax.  It MUST return the full stored event array or omit both event claims, except that, for a token whose stored history is complete and contains no events, it MAY return `bounds_events_complete: true` without `bounds_events`.  A subset would break linkage or conceal a change of bounds.
 
 For inactive tokens, introspection servers MUST NOT return `authority_bounds_enforced`, `bounds_events`, or `bounds_events_complete`.
 
@@ -462,9 +462,9 @@ The following parameters are defined for use in Protected Resource Metadata {{RF
 : OPTIONAL.  A non-empty array of governed-dimension names.  For each named dimension, the resource server requires the dense receipt-attested enforcement of consumer step 8: `authority_bounds_enforced` naming the dimension, `bounds` for the dimension on every receipt, and successful verification.  Naming `aud` enables audience governance ({{audience-governance}}).  This is a deployment policy declaration, satisfied by configuring the authorization servers that serve the resource; clients MAY combine it with `authority_bounds_supported` to select an AS.
 
 `bounds_events_complete_required`:
-: OPTIONAL.  A boolean.  When `true`, the resource server requires `bounds_events_complete: true` on the outer token or introspection response whenever bounds evidence is presented, so that the absence of events is itself attested.  This document deliberately defines no `bounds_events_required` parameter: a recipient cannot observe whether unrecorded events occurred, so the only testable requirement is the completeness attestation.
+: OPTIONAL.  A boolean.  When `true`, the resource server requires `bounds_events_complete: true` on the outer token or introspection response whenever bounds evidence is presented, so that the absence of events is itself attested ({{bounds-events}}).  This document deliberately defines no `bounds_events_required` parameter: a recipient cannot observe whether unrecorded events occurred, so the only testable requirement is the completeness attestation.
 
-A resource server SHOULD pair `authority_bounds_required` with the receipts companion's `actor_receipts_complete_required` when it needs full-chain rather than covered-prefix enforcement.
+A resource server that needs full-chain rather than covered-prefix enforcement SHOULD pair `authority_bounds_required` with both the receipts companion's `actor_receipts_complete_required` and `bounds_events_complete_required`.  Neither completeness signal attests that the visible `act` chain is itself unfiltered; that separate assurance is `chain_complete` ({{I-D.mcguinness-oauth-actor-profile}}).
 
 ## Introspection Response Members {#introspection-response-members}
 
