@@ -465,7 +465,7 @@ Consumer step 5 applies the following cases in order to `receipt[0]`:
 
 Only `receipt[0].sub` must match the outer token.  Older receipts MAY carry different subject identifiers.  A recipient requiring continuity across them MUST use explicit trusted local mapping rules.
 
-Matching actors alone do not establish subject continuity.  A receipt from an unrelated subject chain that shares the same actor identity can satisfy the hop-alignment check, whether by accident or because a compromised upstream issuer minted it for insertion.  Recipients MUST account for this cross-subject insertion risk.
+Matching actors alone do not establish subject continuity.  A receipt from an unrelated subject chain that shares the same actor identity can satisfy the hop-alignment check, whether by accident or because a compromised upstream issuer minted it for insertion.  Recipients need to account for this cross-subject insertion risk.
 
 Deployments requiring subject continuity SHOULD either require identical subject identifiers throughout or positively reconcile them through trusted mappings.  When neither applies, recipients MUST treat continuity as unverified and MUST NOT use the differing older receipts for authorization.
 
@@ -517,7 +517,7 @@ This section defines metadata for advertising support for actor receipts.
 The following parameter is defined for use in Authorization Server Metadata {{RFC8414}}:
 
 `actor_receipts_supported`:
-: OPTIONAL.  A boolean.  When `true`, the authorization server advertises that it can validate inbound actor receipts and can originate, preserve, or extend receipt chains according to this document.  This value does not guarantee complete historical coverage for every visible hop in every resulting token.  When `false` or absent, clients and relying parties MUST NOT assume such support.
+: OPTIONAL.  A boolean.  When `true`, the authorization server advertises that it can validate inbound actor receipts and can originate, preserve, or extend receipt chains according to this document.  This value does not guarantee complete historical coverage for every visible hop in every resulting token.  When `false` or absent, the AS makes no claim of such support.
 
 This parameter applies equally to an authorization server that issues delegated JWT outputs and to a Transaction Token Service publishing metadata through the same framework.
 

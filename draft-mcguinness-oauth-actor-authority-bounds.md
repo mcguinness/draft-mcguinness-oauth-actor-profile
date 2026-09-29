@@ -447,7 +447,7 @@ This section defines metadata for advertising authority-bounds support.  It foll
 The following parameters are defined for use in Authorization Server Metadata {{RFC8414}}:
 
 `authority_bounds_supported`:
-: OPTIONAL.  A non-empty array of governed-dimension names.  The authorization server advertises that, for each named dimension, it can record receipt-attested bounds and enforce issuance-time monotonicity per {{recording-bounds}}.  Absence, or absence of a dimension from the array, means no such advertisement; clients and relying parties MUST NOT infer support from omission.
+: OPTIONAL.  A non-empty array of governed-dimension names.  The authorization server advertises that, for each named dimension, it can record receipt-attested bounds and enforce issuance-time monotonicity per {{recording-bounds}}.  Absence, or absence of a dimension from the array, means no such advertisement; omission makes no claim of support.
 
 `bounds_events_supported`:
 : OPTIONAL.  A boolean.  When `true`, the authorization server can create, preserve, and return `bounds_events` per this document.

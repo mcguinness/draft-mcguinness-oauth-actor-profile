@@ -535,7 +535,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 5.  If the inbound assertion's `act` object contains a nested `act` claim (indicating that the asserted actor is itself a delegatee), the AS MUST handle the inner chain as follows:
 
-    *  **Propagation decision**: The AS MUST determine whether to propagate the inner chain into the issued token.  The AS SHOULD propagate it by preserving the nested structure, provided the total resulting chain depth does not exceed the limit in [Delegation Chains](#delegation-chains).  If the AS does not accept pre-chained assertions, it MUST reject the request.
+    *  **Propagation decision**: The AS SHOULD propagate it by preserving the nested structure, provided the total resulting chain depth does not exceed the limit in [Delegation Chains](#delegation-chains).  If the AS does not accept pre-chained assertions, it MUST reject the request.
 
     *  **Entries used by the AS for issuance decisions**: Interoperable processing is defined around `sub` and the outermost `act.sub`.  If local policy additionally uses an inner `act` object for authorization, scope determination, or another issuance decision, [Validate Inner Actors Used for Decisions](#validate-inner-actors-used-for-decisions) applies before the AS uses that entry as a security input.  Such use of inner `act` objects is deployment-specific rather than part of the baseline interoperable behavior of this profile.
 
@@ -697,7 +697,7 @@ When a Token Exchange request ({{RFC8693}}) presents a JWT assertion grant as th
 
 Apply the continuation or rebind rules in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).
 
-The AS MUST apply scope reduction under local policy and then apply [JWT Access Token Output](#jwt-access-token-propagation).
+After any scope reduction under local policy, the AS MUST apply [JWT Access Token Output](#jwt-access-token-propagation).
 
 #### JWT Access Token {#jwt-access-token-as-subject-token}
 
@@ -711,7 +711,7 @@ When a Token Exchange request ({{RFC8693}}) presents a JWT access token as the `
 
 4.  The AS MUST extract `sub`, `sub_profile` (if present), and `act` (if present) from the validated token as the inbound delegation state for [JWT Access Token Output](#jwt-access-token-propagation).
 
-5.  The AS MUST apply scope reduction under local policy.  The effective scope of the issued token MUST NOT exceed the inbound token's effective scope.
+5.  The AS can reduce scope under local policy.  The effective scope of the issued token MUST NOT exceed the inbound token's effective scope.
 
 After completing these steps, the AS MUST apply the propagation rules in [JWT Access Token Output](#jwt-access-token-propagation).
 
@@ -788,7 +788,7 @@ When a Token Exchange request ({{RFC8693}}) presents a refresh token as the `sub
 
 4.  The AS MUST establish the actor from `actor_token` or an independent delegation basis; otherwise, it MUST omit `act`.  If `actor_token` is present, the AS MUST process it under its type-specific rules and use the derived identity as the outermost actor.  That credential also establishes the new presenter for a sender-constrained output.  The refresh token supplies no actor identity or presenter continuity.
 
-5.  The effective scope of the issued token MUST be a subset of the scope authorized by the refresh token.  The AS MUST apply scope reduction under local policy against that ceiling.
+5.  The effective scope of the issued token MUST be a subset of the scope authorized by the refresh token.  The AS can further reduce scope under local policy.
 
 After completing these checks, the AS MUST apply the propagation rules in [JWT Access Token Output](#jwt-access-token-propagation) to determine the remaining claims in the issued token.
 
@@ -909,7 +909,7 @@ The AS MUST:
 *  Set `aud` to the downstream token endpoint, from `resource` or deployment configuration.
 *  Sign the assertion.
 
-The AS MUST NOT issue such a grant unless configured to do so and able to establish the delegation relationship under local policy.
+Issuing such a grant is subject to AS configuration and to [Validate Outermost Actor](#validate-outermost-actor).
 
 ### JWT Access Token Output {#jwt-access-token-propagation}
 
@@ -929,7 +929,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 5.  The AS SHOULD include `sub_profile` in the issued token's top-level claims if it can authoritatively classify the token's `sub` entity type.
 
-6.  The AS MUST apply scope reduction under local policy.  If this reduction, before any actor-based restriction, leaves no effective scope, it MUST reject with `invalid_scope`.
+6.  The AS can reduce scope under local policy.  If this reduction, before any actor-based restriction, leaves no effective scope, it MUST reject with `invalid_scope`.
 
     If the AS also restricts scope using the (`sub`, `act.sub`) pair or `act.sub_profile`, it MUST return the final effective `scope` in the token response.  If this restriction leaves no scope, the AS MUST reject:
 
@@ -1095,7 +1095,7 @@ For Transaction Tokens, the primary policy pair remains (`sub`, `act.sub`).  The
 
 Actor authorization is conditional under this profile.  When an RS accepts a token as satisfying a delegated-access requirement, it MUST NOT ignore the `act` claim and authorize the request solely as if the token were non-delegated.  The RS SHOULD evaluate the (`sub`, outermost `act.sub`) pair according to local policy.  Resource servers that receive delegated tokens should define and document their actor authorization policy.  The following steps describe one approach for resource servers that choose to enforce actor authorization policy:
 
-1.  **Advertise delegated-token requirements**: An RS that wants to signal that delegated requests are expected to carry actor-profile information SHOULD set `actor_profile_required: true` ([Protected Resource Metadata](#protected-resource-metadata)).  An RS MAY still apply actor authorization without advertising it, but clients MUST NOT rely on that behavior.
+1.  **Advertise delegated-token requirements**: An RS that wants to signal that delegated requests are expected to carry actor-profile information SHOULD set `actor_profile_required: true` ([Protected Resource Metadata](#protected-resource-metadata)).  An RS MAY still apply actor authorization without advertising it, but clients cannot rely on that behavior.
 
 2.  **Evaluate subject authorization**: Determine whether `sub` has been granted the requested scope or permission, using the same mechanisms applied to non-delegated tokens.
 
@@ -1111,7 +1111,7 @@ Actor authorization is conditional under this profile.  When an RS accepts a tok
 
 5.  If the RS requires actor authorization but cannot complete it, it MUST reject the request.
 
-Use of nested actors in authorization, including ordering and failure handling, is deployment-specific.  Clients MUST NOT assume such use without a deployment agreement.
+Use of nested actors in authorization, including ordering and failure handling, is deployment-specific.  Clients cannot assume such use without a deployment agreement.
 
 ## JWT Access Token Processing {#jwt-access-token-rs-processing}
 
@@ -1363,7 +1363,7 @@ A companion profile layered on top of this one:
 *  SHOULD define any supplementary provenance, receipt, or chain-wide state in separate top-level claims or equivalent companion mechanisms rather than by overloading members inside inherited `act` objects;
 *  if it defines data that aligns to the visible `act` chain, MUST specify the alignment rules, the behavior when coverage is partial, and the behavior when introspection or privacy filtering suppresses part of the visible chain.
 
-An implementation that conforms only to this core profile MUST ignore unrecognized companion-profile claims, metadata parameters, and introspection response parameters unless another specification or local policy defines their meaning.  A deployment that requires support for a companion profile MUST express that requirement through the companion profile's own metadata, through out-of-band agreement, or through another explicit local-policy mechanism.
+An implementation that conforms only to this core profile MUST ignore unrecognized companion-profile claims, metadata parameters, and introspection response parameters unless another specification or local policy defines their meaning.  A deployment that requires support for a companion profile expresses that requirement through the companion profile's own metadata, through out-of-band agreement, or through another explicit local-policy mechanism.
 
 # Deployment Considerations
 
@@ -1514,7 +1514,7 @@ Because inner `act` objects are set by upstream ASes and not re-signed at each h
 
 Inner `act` objects are prior-actor context under [Carry Prior-Actor Context](#carry-prior-actor-context).  Security policies that rely on inner actor identities for access control are deployment-specific and generally lower-assurance than policies based on `sub` and the outermost `act.sub`.
 
-When a token crosses organizational boundaries, the receiving AS or RS MUST apply appropriate trust evaluation.  ASes performing Token Exchange MUST evaluate cross-domain delegation grants explicitly and SHOULD NOT grant cross-domain actors the same rights as same-domain actors absent an explicit trust decision that makes them equivalent.
+When a token crosses organizational boundaries, the receiving AS or RS needs to apply appropriate trust evaluation.  ASes performing Token Exchange MUST evaluate cross-domain delegation grants explicitly and SHOULD NOT grant cross-domain actors the same rights as same-domain actors absent an explicit trust decision that makes them equivalent.
 
 ## Self-Issued Authorization Grants {#security-self-issued-grants}
 

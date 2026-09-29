@@ -555,7 +555,7 @@ This section defines metadata for advertising support for actor proofs.  It foll
 The following parameter is defined for use in Authorization Server Metadata {{RFC8414}}:
 
 `actor_proofs_supported`:
-: OPTIONAL.  A boolean.  When `true`, the authorization server advertises that it accepts the `actor_proof` token request parameter, validates proofs against actor keys, and embeds, preserves, or extends proof chains according to this document.  This value does not guarantee complete coverage for every visible hop in every resulting token.  When `false` or absent, clients and relying parties MUST NOT assume such support.
+: OPTIONAL.  A boolean.  When `true`, the authorization server advertises that it accepts the `actor_proof` token request parameter, validates proofs against actor keys, and embeds, preserves, or extends proof chains according to this document.  This value does not guarantee complete coverage for every visible hop in every resulting token.  When `false` or absent, the AS makes no claim of such support.
 
 This parameter applies equally to an authorization server that issues delegated JWT outputs and to a Transaction Token Service publishing metadata through the same framework.
 
