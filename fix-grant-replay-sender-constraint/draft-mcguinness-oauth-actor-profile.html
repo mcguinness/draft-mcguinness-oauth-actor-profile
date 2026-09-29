@@ -4036,10 +4036,10 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
             <p id="section-14.2-4.2.1">Verify the <code>exp</code>, <code>iat</code>, and <code>nbf</code> claims per <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-14.2-4.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-14.2-4.3">
-            <p id="section-14.2-4.3.1">Reject assertions whose <code>jti</code> has already been accepted within the assertion's validity window to prevent replay.<a href="#section-14.2-4.3.1" class="pilcrow">¶</a></p>
+            <p id="section-14.2-4.3.1">Reject, to prevent replay, an assertion whose validated (<code>iss</code>, <code>jti</code>) pair has already been accepted, for as long as the assertion remains acceptable, including any allowed clock skew.<a href="#section-14.2-4.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-14.2-4.4">
-            <p id="section-14.2-4.4.1">Verify proof of possession per the token-endpoint mechanism in use (DPoP per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> or mTLS per <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>).<a href="#section-14.2-4.4.1" class="pilcrow">¶</a></p>
+            <p id="section-14.2-4.4.1">Verify proof of possession per the token-endpoint mechanism in use (DPoP per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> or mTLS per <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>), and against the assertion's top-level <code>cnf</code> when present, as in step 6 of <span><a href="#jwt-assertion-grants-processing" class="internal xref">Authorization Grant Processing</a> (<a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a>)</span>.<a href="#section-14.2-4.4.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-14.2-4.5">
             <p id="section-14.2-4.5.1">Apply the actor-profile validation and proof-of-possession requirements in <span><a href="#jwt-assertion-grants-processing" class="internal xref">Authorization Grant Processing</a> (<a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a>)</span>.<a href="#section-14.2-4.5.1" class="pilcrow">¶</a></p>
@@ -5140,7 +5140,7 @@ Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
           <p id="appendix-D-3.17.1">Clarified confirmation members in token actor objects as extension data, including preservation and their distinction from the current presenter's binding.<a href="#appendix-D-3.17.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.18">
-          <p id="appendix-D-3.18.1">Corrected grant replay requirements to depend on an enforced grant-level sender constraint, with accepted grants identified by (<code>iss</code>, <code>jti</code>) for their full acceptance window.<a href="#appendix-D-3.18.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.18.1">Corrected grant replay requirements to depend on an enforced grant-level sender constraint, with accepted grants identified by (<code>iss</code>, <code>jti</code>) for their full acceptance window, and aligned the self-issued grant controls with that rule.<a href="#appendix-D-3.18.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-D-4">-00<a href="#appendix-D-4" class="pilcrow">¶</a></p>

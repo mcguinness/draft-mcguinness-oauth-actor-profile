@@ -3292,11 +3292,14 @@ Table of Contents
 
    *  Verify the exp, iat, and nbf claims per [RFC7519].
 
-   *  Reject assertions whose jti has already been accepted within the
-      assertion's validity window to prevent replay.
+   *  Reject, to prevent replay, an assertion whose validated (iss, jti)
+      pair has already been accepted, for as long as the assertion
+      remains acceptable, including any allowed clock skew.
 
    *  Verify proof of possession per the token-endpoint mechanism in use
-      (DPoP per [RFC9449] or mTLS per [RFC8705]).
+      (DPoP per [RFC9449] or mTLS per [RFC8705]), and against the
+      assertion's top-level cnf when present, as in step 6 of
+      Authorization Grant Processing (Section 4.2).
 
    *  Apply the actor-profile validation and proof-of-possession
       requirements in Authorization Grant Processing (Section 4.2).
@@ -4381,7 +4384,8 @@ Document History
 
    *  Corrected grant replay requirements to depend on an enforced
       grant-level sender constraint, with accepted grants identified by
-      (iss, jti) for their full acceptance window.
+      (iss, jti) for their full acceptance window, and aligned the self-
+      issued grant controls with that rule.
 
    -00
 
