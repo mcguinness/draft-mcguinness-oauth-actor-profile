@@ -222,16 +222,11 @@ Table of Contents
 
    This document is an extension of
    [I-D.mcguinness-oauth-actor-profile].  A token that uses the
-   actor_receipts claim defined here:
-
-   *  MUST conform to the actor-chain representation rules of the core
-      actor profile;
-
-   *  MUST use the top-level cnf claim, when present, only for the
-      current token presenter;
-
-   *  MUST NOT use nested act objects to carry independently trusted
-      prior-hop key history.
+   actor_receipts claim defined here follows that document's rules for
+   companion profiles: its act chain conforms to the core actor profile
+   (Section 6), its top-level cnf identifies only the current token
+   presenter, and its nested act objects carry no independently trusted
+   prior-hop key history.
 
    This profile adds signed receipts, processing rules, metadata, and
    introspection parameters to the core actor representation.  The
@@ -247,15 +242,15 @@ Table of Contents
 
    A deployment may use either, both, or neither:
 
-   *  Receipts MAY be returned via introspection, providing both signals
+   *  Receipts can be returned via introspection, providing both signals
       in a single response (see Section 9.5).
 
-   *  Receipts MAY be carried inline in JWT tokens for deployments where
+   *  Receipts can be carried inline in JWT tokens for deployments where
       introspection is not available or where detached verification is
       required.
 
-   *  Introspection MAY be used for active-status checks even when
-      receipts are not in use.
+   *  Introspection can be used for active-status checks even when
+      receipts are not in use ([RFC7662]).
 
    The choice depends on trust, availability, and audit requirements.
 
@@ -365,7 +360,7 @@ Table of Contents
    outermost actor hop signs a receipt describing that hop and, when the
    issued token is sender-constrained, may copy the token's top-level
    cnf value into the receipt as historical presenter-binding context
-   subject to the disclosure considerations in Section 7.2.
+   subject to the disclosure considerations in Section 13.10.
 
    The actor_receipts array is ordered newest first and preserves older
    entries unchanged.  Index 0 corresponds to outermost act, index 1 to
@@ -441,12 +436,14 @@ Table of Contents
    *  SHOULD include kid when the issuer publishes multiple verification
       keys;
 
-   *  MAY include crit per [RFC7515]; consumers MUST reject a receipt
-      whose crit header lists an extension header the consumer does not
-      understand.
+   *  MAY include crit per [RFC7515], Section 4.1.11; step 5 of
+      Section 9 rejects a receipt whose crit header lists an extension
+      header the consumer does not understand.
 
    Receipt issuers and consumers MUST apply the JWT best practices in
-   [RFC8725].
+   [RFC8725] when creating and validating receipts, except for the
+   audience validation of [RFC8725], Section 3.9, from which this
+   profile departs as described for aud in Section 7.2.
 
 7.2.  Receipt Claims
 
@@ -506,8 +503,6 @@ Table of Contents
 
       *  MUST conform to the core actor profile's actor-object rules;
 
-      *  MUST include act.sub and act.iss;
-
       *  MUST NOT contain cnf;
 
       *  MUST NOT contain a nested act.
@@ -526,10 +521,8 @@ Table of Contents
       the hop represented by the receipt.  It does not create a current
       proof-of-possession obligation for the current request.
 
-      Issuers SHOULD NOT include cnf in a receipt unless the relying
-      parties that will receive the token have been evaluated for the
-      associated disclosure risk; omitting cnf does not invalidate the
-      receipt.
+      Whether an issuer includes cnf is governed by Section 13.10;
+      omitting cnf does not invalidate the receipt.
 
 7.2.3.  Chain Linkage
 
@@ -561,8 +554,8 @@ Table of Contents
          carry prh_alg, but the value has no effect unless a later
          receipt links to it.
 
-      *  An issuer extending an inbound chain MUST either preserve the
-         inbound prh_alg or reject the chain.
+      *  An issuer extending an inbound chain preserves the inbound
+         prh_alg or rejects the chain (step 7 of Section 8.2).
 
 7.2.4.  Time and Uniqueness
 
@@ -598,9 +591,7 @@ Table of Contents
       match that token's iss and jti.
 
       Issuers SHOULD include origin_jti when the issued token has jti.
-      Strict-mode recipients requiring instance binding MUST require
-      origin_jti on receipt[0] when the outer token has jti.  See
-      Section 9.1 and Section 13.4.1 for validation and reissuance
+      See Section 9.1 and Section 13.4.1 for validation and reissuance
       handling.
 
 7.2.6.  Excluded Standard Claims
@@ -618,9 +609,9 @@ Table of Contents
 7.2.7.  Extension Claims
 
    A receipt MAY contain additional claims defined by another
-   specification or by deployment policy.  Consumers MUST ignore
-   unrecognized claims unless another specification or local agreement
-   defines their meaning.
+   specification or by deployment policy.  Consumers ignore unrecognized
+   claims unless another specification or local agreement defines their
+   meaning, per [RFC7519], Section 4.
 
 7.3.  Receipt-Chain Linkage
 
@@ -628,12 +619,11 @@ Table of Contents
    receipt chain:
 
    *  if there is an older receipt immediately following it in the
-      array, the new receipt MUST include prh, and that value MUST be
-      the base64url encoding without padding of the hash of the ASCII
-      octets of the exact compact JWT string of that next receipt;
+      array, the new receipt includes a prh computed over that next
+      receipt (Section 7.2; step 6 of Section 8.2);
 
-   *  if the new receipt is the only receipt in the array, it MUST omit
-      prh.
+   *  if the new receipt is the only receipt in the array, it omits prh
+      (Section 7.2).
 
    The hash input is the exact compact JWS string, without JSON
    [RFC8259] canonicalization.  Systems that carry, store, or forward
@@ -675,18 +665,15 @@ Table of Contents
 
    *  MAY copy the issued token's top-level cnf, if any, into the
       receipt cnf, subject to the disclosure considerations in
-      Section 7.2; when copied, the receipt cnf MUST equal the outer
-      token's cnf value;
+      Section 13.10;
 
-   *  SHOULD set origin_jti to the issued token's jti, if the issued
-      token carries a jti;
+   *  includes origin_jti as recommended in Section 7.2;
 
-   *  MUST omit prh.
+   *  omits prh (Section 7.2).
 
-   When the one-element array covers every visible hop (a visible act
-   chain of depth 1), the issuer SHOULD set actor_receipts_complete:
-   true; when inner visible hops remain uncovered, it SHOULD set
-   actor_receipts_complete: false, per Section 6.
+   A one-element array is complete coverage only when the visible act
+   chain has depth 1; the value of actor_receipts_complete follows
+   Section 6.
 
 8.2.  Extending an Existing Receipt Chain
 
@@ -726,8 +713,9 @@ Table of Contents
        Otherwise, the issuer MUST NOT set it to true and SHOULD set it
        to false.
 
-   An issuer MUST NOT reserialize, resign, normalize, trim, or otherwise
-   alter a prior receipt.
+   Byte-for-byte preservation (Section 7.3) rules out reserializing, re-
+   signing, normalizing, trimming, or otherwise altering a prior
+   receipt.
 
    If inbound receipts fail validation, the issuer MUST NOT propagate
    them.  It MAY continue without actor_receipts only when local policy
@@ -812,11 +800,9 @@ Table of Contents
 
    However:
 
-   *  a partial chain MUST still cover a contiguous outermost prefix of
-      the visible actor chain;
-
-   *  an issuer MUST NOT skip an outer visible hop and receipt only an
-      inner visible hop;
+   *  a partial chain still covers a contiguous outermost prefix of the
+      visible actor chain (Section 6), so an issuer cannot skip an outer
+      visible hop and receipt only an inner visible hop;
 
    *  when local policy or resource requirements require full
       provenance, the issuer MUST either emit complete receipt coverage
@@ -836,6 +822,10 @@ Table of Contents
    describes coverage relative to the visible filtered chain, not the
    unfiltered delegation chain; recipients that need true-chain
    completeness MUST evaluate chain_complete separately.
+
+   Whether or not the chain was filtered, recipients that rely on both
+   signals MUST evaluate chain_complete and actor_receipts_complete
+   independently.
 
    For inline JWT tokens, this document defines no chain_complete JWT
    claim.  A recipient that needs true-chain completeness for inline JWT
@@ -1007,9 +997,9 @@ Table of Contents
 
    11.  Apply any additional consumer-processing rules defined by
         companion profiles whose claims appear in the receipt or outer
-        token (see Section 12).  Companion-profile rules MUST NOT relax
-        any requirement in steps 1 through 10; they MAY add additional
-        rejection conditions.
+        token (see Section 12).  Companion-profile rules can add
+        rejection conditions but cannot relax any requirement needed for
+        conformance to this profile.
 
    If any required check fails, the recipient MUST reject the receipt
    chain for the purposes of this profile and MUST apply the underlying
@@ -1021,9 +1011,9 @@ Table of Contents
    chain for use by companion profiles (for example, applying a
    companion's verification rules to the trusted prefix of an otherwise-
    invalid chain).  The recipient MUST NOT treat such partial validation
-   as conformance with this profile, and MUST NOT relax the rejection
-   requirements defined above.  Companion profiles defining partial-
-   validation modes MUST do so under their own normative scope.
+   as conformance with this profile; the rejection requirements defined
+   above still apply.  Companion profiles defining partial-validation
+   modes MUST do so under their own normative scope.
 
 9.1.  Receipt Instance Binding
 
@@ -1043,13 +1033,15 @@ Table of Contents
 
    4.  Otherwise, the recipient MUST reject the chain unless local
        policy trusts the outer issuer to reissue chains led by this
-       receipt issuer (Section 13.4).
+       receipt issuer (Section 13.4.1).
+
+   A recipient that requires instance binding MUST reject the chain
+   unless case 1 applies.
 
 9.2.  Subject Re-Expression Across Hops
 
-   Only receipt[0].sub must match the outer token.  Older receipts MAY
-   carry different subject identifiers.  A recipient requiring
-   continuity across them MUST use explicit trusted local mapping rules.
+   Only receipt[0].sub must match the outer token.  Older receipts can
+   carry different subject identifiers (step 8 of Section 9).
 
    Matching actors alone do not establish subject continuity.  A receipt
    from an unrelated subject chain that shares the same actor identity
@@ -1057,11 +1049,13 @@ Table of Contents
    compromised upstream issuer minted it for insertion.  Recipients need
    to account for this cross-subject insertion risk.
 
-   Deployments requiring subject continuity SHOULD either require
-   identical subject identifiers throughout or positively reconcile them
-   through trusted mappings.  When neither applies, recipients MUST
-   treat continuity as unverified and MUST NOT use the differing older
-   receipts for authorization.
+   Deployments requiring subject continuity SHOULD establish it either
+   by exact, namespace-aware matching of subject identifiers throughout
+   (the same sub under the same namespace authority; see sub_iss in
+   Section 7.2) or by positive reconciliation through trusted mappings.
+   When neither applies, recipients MUST treat continuity as unverified
+   and MUST NOT use the differing older receipts to support
+   authorization that requires subject continuity.
 
 9.3.  Complete Receipt Coverage
 
@@ -1133,17 +1127,18 @@ Table of Contents
 
    An introspection server MUST return the full stored array or omit
    actor_receipts.  Removing an older entry breaks prh; removing the
-   newest breaks hop alignment.  A stored array with partial coverage is
-   returned in full with actor_receipts_complete: false.
+   newest breaks hop alignment.  When the introspection server returns a
+   stored array that it knows has partial coverage, it MUST include
+   actor_receipts_complete: false.
 
    For an inactive token, the introspection server MUST NOT return
    actor_receipts or actor_receipts_complete.
 
-   Consumers that rely on both signals MUST evaluate chain_complete and
-   actor_receipts_complete independently.  The former describes
-   filtering of the visible act chain; the latter describes receipt
-   coverage of that chain.  Complete receipt coverage therefore does not
-   prove that no actors were filtered.
+   Consumers that rely on both signals evaluate chain_complete and
+   actor_receipts_complete independently (Section 8.4).  The former
+   describes filtering of the visible act chain; the latter describes
+   receipt coverage of that chain.  Complete receipt coverage therefore
+   does not prove that no actors were filtered.
 
 10.  Discovery and Capability Signaling
 
@@ -1220,11 +1215,11 @@ Table of Contents
 
    This document does not define a metadata signal for "this resource
    server requires cnf to be present in receipts."  Issuers default to
-   omitting receipt cnf for privacy reasons (see Section 7.2 and
-   Section 13.10); resource servers that need historical sender-
-   constraint provenance MUST coordinate that requirement with issuers
-   through deployment policy or a future companion profile, rather than
-   through metadata defined here.
+   omitting receipt cnf for privacy reasons (see Section 13.10);
+   resource servers that need historical sender-constraint provenance
+   MUST coordinate that requirement with issuers through deployment
+   policy or a future companion profile, rather than through metadata
+   defined here.
 
 10.5.  Claim-Pair Convention for Sibling Profiles
 
@@ -1349,9 +1344,8 @@ Table of Contents
       actor_receipts*, for per-hop artifacts that need their own
       signature semantics (for example, actor-signed proofs whose threat
       model differs from AS-signed receipts, or recipient-signed
-      acknowledgments).  Profiles that define such claims SHOULD follow
-      the <name> plus <name>_complete claim-pair convention described in
-      Section 10.
+      acknowledgments).  The <name> plus <name>_complete claim-pair
+      convention for such claims is described in Section 10.
 
    *  *New JOSE typ values* for receipt-shaped artifacts that are not
       AS-signed receipts conforming to this document.  The typ value
@@ -1378,8 +1372,11 @@ Table of Contents
    Companion profile authoring rules:
 
    *  Companion profiles MAY extend consumer processing under Section 9
-      by adding rejection conditions; they MUST NOT relax any rejection
-      condition defined here.
+      by adding rejection conditions; they MUST NOT relax any
+      requirement needed for conformance to this profile.  Partial-
+      validation modes remain separately scoped: as Section 9 states,
+      they operate under the companion profile's own normative scope and
+      do not constitute conformance with this profile.
 
    *  Companion-profile claims and discovery metadata MUST be registered
       with IANA in the registries used by this document.
@@ -1502,9 +1499,9 @@ Table of Contents
 
    Receipt cnf values are historical only:
 
-   *  A recipient MUST NOT treat an older receipt cnf value as
-      sufficient proof for the current request, regardless of which
-      proof mechanism the historical cnf was bound to.
+   *  An older receipt cnf value is never sufficient proof for the
+      current request, regardless of which proof mechanism the
+      historical cnf was bound to (step 10 of Section 9).
 
    *  Recipients MUST distinguish receipt JWTs (identified by typ value
       actor-receipt+jwt) from outer tokens that carry cnf for current-
@@ -1531,27 +1528,27 @@ Table of Contents
       bilateral agreement, federation policy, or another explicit trust
       framework.
 
-   *  A recipient MUST NOT treat the presence of a syntactically valid
-      signed receipt as sufficient grounds to trust its issuer.
+   *  A syntactically valid signed receipt is not by itself grounds to
+      trust its issuer; trust comes from the trusted-issuer set checked
+      in step 5 of Section 9.
 
    *  Authorization servers that support this document SHOULD advertise
       actor_receipts_supported: true in their AS metadata [RFC8414].
 
    *  Consumers SHOULD use that metadata signal as one input to trust
-      establishment, but MUST NOT treat metadata advertisement alone as
-      sufficient grounds to trust a receipt issuer; the issuer must also
-      be within the recipient's configured trust boundary.
+      establishment, but metadata advertisement alone is not sufficient
+      grounds to trust a receipt issuer; the issuer must also be within
+      the recipient's configured trust boundary.
 
    Key resolution requirements:
 
-   *  To avoid attacker-controlled key resolution, a recipient MUST
-      determine whether a receipt iss is within its trusted-issuer set
-      before performing any network retrieval for that issuer's metadata
-      or keys.
+   *  To avoid attacker-controlled key resolution, step 5 of Section 9
+      checks whether a receipt iss is within the trusted-issuer set
+      before any network retrieval for that issuer's metadata or keys.
 
-   *  A recipient that uses dynamic discovery for receipt validation
-      MUST do so only within an existing trust framework or equivalent
-      local policy that defines which issuers are permitted.
+   *  Dynamic discovery for receipt validation therefore stays within
+      the trust framework or local policy that defines which issuers are
+      permitted.
 
    Trust is per-issuer and not transitive: each receipt is validated
    against the recipient's own trusted-issuer set, independent of the
@@ -1595,9 +1592,10 @@ Table of Contents
       from receipt[0] through the hash chain.
 
    Inner origin_jti values are historical and cannot independently bind
-   the current request.  Deployments requiring instance binding MUST
-   rely on prh and a verifiable leading origin_jti.  Without that
-   anchor, the chain supplies issuer-signed hop provenance only.
+   the current request.  Instance binding therefore rests on a
+   verifiable leading origin_jti (case 1 of Section 9.1), whose binding
+   prh propagates to the inner receipts.  Without that anchor, the chain
+   supplies issuer-signed hop provenance only.
 
    This construction makes coverage tamper-evident at the structural
    level:
@@ -1644,9 +1642,9 @@ Table of Contents
 13.4.1.  Strict-Mode Validation
 
    Without configured trusted reissuing issuers, recipients use strict
-   mode: issuer or origin_jti divergence causes rejection.  If the outer
-   token has jti, a recipient requiring instance binding also rejects a
-   missing leading origin_jti.
+   mode: issuer or origin_jti divergence causes rejection.  A missing
+   leading origin_jti is not divergence; case 3 of Section 9.1 governs
+   it.
 
    Strict mode is the recommended default.  Deployments that need to
    accept reissued tokens, such as refreshed, re-emitted, or translated
@@ -1662,13 +1660,14 @@ Table of Contents
 
    Algorithm coordination requirements:
 
-   *  All receipts in a single chain MUST use the same algorithm.
+   *  All receipts in a single chain carry the same prh_alg value or all
+      omit it (Section 7.2).
 
-   *  Consumers MUST reject chains that mix algorithms or that name an
-      algorithm the recipient does not support.
+   *  Consumers reject chains that mix algorithms or that name an
+      algorithm the recipient does not support (step 6 of Section 9).
 
-   *  An issuer extending an inbound chain MUST preserve the inbound
-      prh_alg.
+   *  An issuer extending an inbound chain preserves the inbound prh_alg
+      or rejects the chain (step 7 of Section 8.2).
 
    Migration is whole-chain, not partial: chains begun under one
    algorithm remain on that algorithm for their lifetime; new chains can
@@ -1698,9 +1697,9 @@ Table of Contents
 13.7.  Receipt Freshness and Replay
 
    Receipts are historical attestations of past delegation state.  They
-   MAY outlive the validity period of the outer token they were
-   originally issued for, and MAY be carried forward across reissuance
-   and refresh as long as their exp permits (Section 7.2).
+   can outlive the validity period of the outer token they were
+   originally issued for, and can be carried forward across reissuance
+   and refresh (Section 8.3) as long as their exp permits (Section 7.2).
 
    Receipt expiration bounds use of the artifact, not the delegation's
    lifetime.  Reuse of a receipt within its exp window, including in
@@ -1743,9 +1742,9 @@ Table of Contents
 
    Deployments SHOULD verify that the outer token plus its
    actor_receipts array fits within the header-size budget of every
-   component on the request path.  When introspection is available,
-   deployments MAY return receipts via introspection rather than
-   embedding them, to avoid header pressure for bearer-token clients.
+   component on the request path; returning receipts via introspection
+   (Section 9.5) instead of embedding them avoids header pressure for
+   bearer-token clients.
 
 13.10.  Historical cnf Disclosure
 
@@ -1794,17 +1793,15 @@ Table of Contents
    *  Issuers and introspection servers MAY suppress actor_receipts
       entirely when policy does not permit disclosure.
 
-   *  Introspection servers returning a stored partial-coverage chain
-      SHOULD set actor_receipts_complete to false; disclosure of a
-      stored chain is otherwise all-or-nothing (see Section 9.5).
+   *  Introspection servers disclose a stored chain all-or-nothing and
+      flag a known partial-coverage chain with actor_receipts_complete:
+      false (Section 9.5).
 
    *  Resource servers SHOULD request or require actor receipts only
       when they materially improve authorization, audit, or risk
       controls.
 
-   *  Issuers SHOULD omit cnf from receipts by default when relying
-      parties have not been evaluated for historical presenter-key
-      disclosure risk (see Section 13.10).
+   *  Receipt cnf disclosure is limited as described in Section 13.10.
 
    *  Deployments SHOULD prefer per-resource-server policy on receipt
       requirements over blanket inclusion in every token.
@@ -2219,8 +2216,7 @@ Appendix A.  Examples
    it.
 
    Examples containing cnf illustrate explicit disclosure of historical
-   binding.  Issuers SHOULD omit it unless recipient disclosure risk has
-   been evaluated (Section 7.2).
+   binding.  Whether to include it follows Section 13.10.
 
 A.1.  Example: Two-Hop Delegation Chain
 
@@ -2504,6 +2500,19 @@ Document History
    *  Reconciled exp guidance, aligned expiry handling with [RFC7519],
       and removed BCP 14 keywords from storage, trust-setup, and rollout
       guidance.
+
+   *  Consolidated duplicated requirements into single homes and cited
+      dependencies instead of restating them.
+
+   *  Resolved the remaining duplicate-rule conflicts: companion rules
+      cannot relax conformance requirements, [RFC8725] applies except
+      its audience validation, introspection flags known partial
+      coverage, and subject continuity allows namespace-aware matching
+      or trusted mapping.
+
+   *  A recipient that requires instance binding rejects any chain not
+      bound by a matching leading origin_jti, and the completeness
+      assurances share one home.
 
    -00
 
