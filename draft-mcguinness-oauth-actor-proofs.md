@@ -726,7 +726,7 @@ Issuers cannot protect recipients that do not ask; the enforcement locus of this
 
 If an actor's signing key is compromised, previously signed proofs and newly forged proofs under that key are indistinguishable.  The primary remediation is to remove the compromised key or actor from the recipient's trusted actor-key sources; once removed, consumers will reject all proofs attributed to that actor's key regardless of content.
 
-Deployments SHOULD set short `exp` values on proofs, consistent with the REQUIRED `exp` defined in {{proof-claims}}, to limit the window during which proofs signed with a compromised key remain valid.  When a key compromise is detected, deployments SHOULD treat tokens carrying proofs from the affected actor as lacking trusted actor-signed evidence for those hops and SHOULD require fresh delegation with fresh proofs.
+Proof `exp` is sized under the conditional rule in {{proof-claims}}, which calls for short values without instance binding; a shorter `exp` limits the window during which proofs signed with a compromised key remain valid.  When a key compromise is detected, deployments SHOULD treat tokens carrying proofs from the affected actor as lacking trusted actor-signed evidence for those hops and SHOULD require fresh delegation with fresh proofs.
 
 ## Proof Chain Size
 
