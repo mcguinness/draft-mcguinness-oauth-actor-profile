@@ -7,7 +7,7 @@
 <title>OAuth Actor Profile for Delegation</title>
 <meta content="Karl McGuinness" name="author">
 <meta content="
-       This document defines a common representation of delegated actors in OAuth JSON Web Token (JWT) assertion grants, JWT access tokens, and Transaction Tokens.  It profiles the  act  claim defined by OAuth 2.0 Token Exchange, requires issuer-scoped actor identifiers, and uses  sub_profile  to classify actor entity types.  It specifies token processing, delegation-chain propagation, sender-constraint handling, and discovery metadata.  Delegation approval and trust policy remain deployment-specific. 
+       This document defines a common representation of delegated actors in OAuth JSON Web Token (JWT) assertion grants, JWT access tokens, and Transaction Tokens.  It profiles the  act  claim defined by OAuth 2.0 Token Exchange, requires issuer-scoped actor identifiers, and uses  sub_profile  to classify actor entity types.  It specifies token processing, delegation-chain propagation, sender-constraint handling, and discovery metadata, so that issuers and resource servers in different trust domains interpret delegated actors consistently. 
     " name="description">
 <meta content="xml2rfc 3.34.1" name="generator">
 <meta content="oauth" name="keyword">
@@ -1080,7 +1080,7 @@ svg {
 <h1 id="title">OAuth Actor Profile for Delegation</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document defines a common representation of delegated actors in OAuth JSON Web Token (JWT) assertion grants, JWT access tokens, and Transaction Tokens.  It profiles the <code>act</code> claim defined by OAuth 2.0 Token Exchange, requires issuer-scoped actor identifiers, and uses <code>sub_profile</code> to classify actor entity types.  It specifies token processing, delegation-chain propagation, sender-constraint handling, and discovery metadata.  Delegation approval and trust policy remain deployment-specific.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document defines a common representation of delegated actors in OAuth JSON Web Token (JWT) assertion grants, JWT access tokens, and Transaction Tokens.  It profiles the <code>act</code> claim defined by OAuth 2.0 Token Exchange, requires issuer-scoped actor identifiers, and uses <code>sub_profile</code> to classify actor entity types.  It specifies token processing, delegation-chain propagation, sender-constraint handling, and discovery metadata, so that issuers and resource servers in different trust domains interpret delegated actors consistently.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1543,46 +1543,47 @@ svg {
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">Delegated requests can pass through several services and trust domains.  Each recipient needs to distinguish the subject whose authorization is exercised, the actor exercising it, and the OAuth client requesting the token.  Without a common profile, deployments face four interoperability gaps:<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-1">Delegated requests can pass through several services and trust domains.  Each recipient needs to distinguish the subject whose authorization is exercised, the actor exercising it, and the OAuth client requesting the token: <code>sub</code> identifies the authorizing principal, <code>act.sub</code> the actor, and <code>client_id</code> the client registration.  This profile makes the actor explicit in the token rather than leaving it to be inferred from client registration, without redefining client identity or subject semantics.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">OAuth 2.0 Token Exchange <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines the <code>act</code> claim for the current actor and prior actors, but leaves "the specifics of representing a composite token" to implementations (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-1.1" class="relref">Section 1.1</a></span>).  It notes that <code>iss</code> and <code>sub</code> together "might be necessary" to identify an actor (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a></span>), but it does not require an identifier context or classify actors.  Its delegation example derives <code>act</code> from the subject of the <code>actor_token</code> (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#appendix-A.2.5" class="relref">Appendix A.2.5</a></span>), but it does not specify actor validation and derivation rules for each token type, how <code>act</code> propagates across JWT assertion grants, JWT access tokens, and Transaction Tokens, or how the actor relates to a sender-constrained presenter.  Without a common profile, deployments face four interoperability gaps:<a href="#section-1-2" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-1-2.1">
-          <p id="section-1-2.1.1"><strong>No standard entity classification.</strong> <code>sub</code> is overloaded across end users, service accounts, AI agents, and workloads, with no classification that supports deterministic cross-domain policy.<a href="#section-1-2.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-1-3.1">
+          <p id="section-1-3.1.1"><strong>No standard entity classification.</strong> <code>sub</code> is overloaded across end users, service accounts, AI agents, and workloads, with no classification that supports deterministic cross-domain policy.<a href="#section-1-3.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-2.2">
-          <p id="section-1-2.2.1"><strong>Inconsistent actor representation across token types.</strong> Actor context, including actor key material, has no representation that survives transformation among JWT assertion grants, JWT access tokens, and Transaction Tokens.<a href="#section-1-2.2.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-3.2">
+          <p id="section-1-3.2.1"><strong>Inconsistent actor representation across token types.</strong> Actor context, including actor key material, has no representation that survives transformation among JWT assertion grants, JWT access tokens, and Transaction Tokens.<a href="#section-1-3.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-2.3">
-          <p id="section-1-2.3.1"><strong>Implicit delegation via client identity.</strong> A client registration alone may not identify the actor, particularly when one registration serves several agents or workloads, when requests pass through intermediaries, or when tokens cross trust domains.<a href="#section-1-2.3.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-3.3">
+          <p id="section-1-3.3.1"><strong>Implicit delegation via client identity.</strong> A client registration alone may not identify the actor, particularly when one registration serves several agents or workloads, when requests pass through intermediaries, or when tokens cross trust domains.<a href="#section-1-3.3.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-2.4">
-          <p id="section-1-2.4.1"><strong>No discovery for actor-profile support.</strong> Neither AS metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> nor Protected Resource Metadata <span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span> defines parameters for advertising actor-profile support.<a href="#section-1-2.4.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-3.4">
+          <p id="section-1-3.4.1"><strong>No discovery for actor-profile support.</strong> Neither AS metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> nor Protected Resource Metadata <span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span> defines parameters for advertising actor-profile support.<a href="#section-1-3.4.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-1-3">OAuth 2.0 Token Exchange <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines the <code>act</code> claim for representing actors and delegation chains.  This document profiles that claim across JWT assertion grants, JWT access tokens, and Transaction Tokens.  It defines:<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">This document profiles <code>act</code> to close those gaps.  It defines:<a href="#section-1-4" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-1-4.1">
-          <p id="section-1-4.1.1">Issuer-scoped actor identifiers and entity classification using <code>sub_profile</code>.<a href="#section-1-4.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-1-5.1">
+          <p id="section-1-5.1.1">Issuer-scoped actor identifiers and entity classification using <code>sub_profile</code>.<a href="#section-1-5.1.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-4.2">
-          <p id="section-1-4.2.1">Rules for validating and preserving actor information across token transformations.<a href="#section-1-4.2.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-5.2">
+          <p id="section-1-5.2.1">Rules for validating, extending, and preserving actor information when tokens are exchanged or reissued.<a href="#section-1-5.2.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-4.3">
-          <p id="section-1-4.3.1">Presenter continuation and rebind rules for sender-constrained tokens, including upgrades from bearer tokens.<a href="#section-1-4.3.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-5.3">
+          <p id="section-1-5.3.1">Presenter continuation and rebind rules for sender-constrained tokens, including upgrades from bearer tokens.<a href="#section-1-5.3.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-4.4">
-          <p id="section-1-4.4.1">Resource server processing and metadata for advertising profile support.<a href="#section-1-4.4.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-5.4">
+          <p id="section-1-5.4.1">Resource server processing based on the (<code>sub</code>, outermost <code>act.sub</code>) pair, and metadata for advertising profile support.<a href="#section-1-5.4.1" class="pilcrow">¶</a></p>
 </li>
-        <li class="normal" id="section-1-4.5">
-          <p id="section-1-4.5.1">Extension points for companion profiles that provide additional delegation evidence.<a href="#section-1-4.5.1" class="pilcrow">¶</a></p>
+        <li class="normal" id="section-1-5.5">
+          <p id="section-1-5.5.1">Extension points for companion profiles that provide additional delegation evidence.<a href="#section-1-5.5.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-1-5">The profile applies to human, service, workload, and AI agent delegation.  The requirements of the underlying specifications, including <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>, <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>, and <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>, continue to apply unless stated otherwise.  <span><a href="#profile-scope" class="internal xref">Profile Scope</a> (<a href="#profile-scope" class="auto internal xref">Section 3.3</a>)</span> describes the supported token paths and the boundary between representation and authorization policy.<a href="#section-1-5" class="pilcrow">¶</a></p>
+<p id="section-1-6">The profile applies to human, service, workload, and AI agent delegation.  The requirements of the underlying specifications, including <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>, <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>, and <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>, continue to apply unless stated otherwise.  <span><a href="#profile-scope" class="internal xref">Profile Scope</a> (<a href="#profile-scope" class="auto internal xref">Section 3.3</a>)</span> describes the supported token paths and the boundary between representation and authorization policy.<a href="#section-1-6" class="pilcrow">¶</a></p>
 <div id="illustrative-use-case">
 <section id="section-1.1">
         <h3 id="name-illustrative-use-case">
 <a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-illustrative-use-case" class="section-name selfRef">Illustrative Use Case</a>
         </h3>
-<p id="section-1.1-1">Alice authorizes an AI travel agent to book a trip.  The enterprise AS issues a credential with Alice as <code>sub</code> and the agent as <code>act</code>.  The agent presents it to a booking provider's AS for an access token, and the provider then issues a Transaction Token for an internal booking tool.  Alice remains the subject; the tool becomes the outermost actor, and the agent becomes an inner actor.  <span><a href="#appendix-cross-domain" class="internal xref">The cross-domain example</a> (<a href="#appendix-cross-domain" class="auto internal xref">Appendix B</a>)</span> shows the complete flow.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<p id="section-1.1-1">Alice authorizes an AI travel agent to book a trip.  The enterprise AS issues a credential with Alice as <code>sub</code> and the agent as <code>act</code>.  The agent presents it to a booking provider's AS for an access token, and the provider then issues a Transaction Token for an internal booking tool.  Alice remains the subject; the tool becomes the outermost actor, and the agent becomes an inner actor.  Each trust domain reissues the token under its own policy, and the outermost actor changes only when a new presenter is established.  <span><a href="#appendix-cross-domain" class="internal xref">The cross-domain example</a> (<a href="#appendix-cross-domain" class="auto internal xref">Appendix B</a>)</span> shows the complete flow.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="relationship-to-related-work">
@@ -1598,7 +1599,7 @@ svg {
             <p id="section-1.2-1.2.1"><strong>Identity Chaining (<span>[<a href="#I-D.ietf-oauth-identity-chaining" class="cite xref">I-D.ietf-oauth-identity-chaining</a>]</span>)</strong> propagates subject identity across domains and can be combined with this profile's actor representation.<a href="#section-1.2-1.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.2-1.3">
-            <p id="section-1.2-1.3.1"><strong>Identity Assertion JWT Authorization Grant (ID-JAG, <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>)</strong> defines issuance and consumption of JWT authorization grants.  This document supplies actor-delegation processing through its Token Exchange and JWT assertion-grant rules.<a href="#section-1.2-1.3.1" class="pilcrow">¶</a></p>
+            <p id="section-1.2-1.3.1"><strong>Identity Assertion JWT Authorization Grant (ID-JAG, <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>)</strong> defines issuance and consumption of JWT authorization grants.  It permits <code>actor_token</code> inputs but leaves their processing, and whether the issued grant carries <code>act</code>, to future profiles or extensions; this document is one such profile, through its Token Exchange and JWT assertion-grant rules.<a href="#section-1.2-1.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.2-1.4">
             <p id="section-1.2-1.4.1"><strong>OAuth Entity Profiles (<span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>)</strong> defines the classification claims, metadata, and registry used by this profile.<a href="#section-1.2-1.4.1" class="pilcrow">¶</a></p>
@@ -5141,6 +5142,9 @@ Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
 </li>
         <li class="normal" id="appendix-D-3.18">
           <p id="appendix-D-3.18.1">Corrected grant replay requirements to depend on an enforced grant-level sender constraint, with accepted grants identified by (<code>iss</code>, <code>jti</code>) for their full acceptance window, and aligned the self-issued grant controls with that rule.<a href="#appendix-D-3.18.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-D-3.19">
+          <p id="appendix-D-3.19.1">Revised the Introduction to state what Token Exchange leaves open, restore the profile's design center, and name the ID-JAG extension point it fills.<a href="#appendix-D-3.19.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-D-4">-00<a href="#appendix-D-4" class="pilcrow">¶</a></p>
