@@ -831,3 +831,12 @@ The refreshed outer token carries the inherited receipts unchanged, `scope: "tri
 ~~~
 
 Verification: the event validates against the AS's key, its `receipt_jti` resolves to `receipt[0]`, and it is the sole event, so it omits `prh`.  The effective upper bound presented by `receipt[0]` for `scope` becomes `trips:book trips:cancel`, and the refreshed outer token's scope is within it.  Without the event, the refreshed token would fail step 6 of {{consumer-processing}}, since `trips:cancel` is not in `receipt[0].bounds.scope`.  A recipient whose re-authorization trust policy does not accept `step_up` events from this AS rejects the basis change, and with it the refreshed token's bounds evidence.
+
+# Document History
+{:numbered="false"}
+
+[[ To be removed from the final specification ]]
+
+-00
+
+* Initial version.

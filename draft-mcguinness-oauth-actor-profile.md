@@ -2073,3 +2073,24 @@ Key observations:
 {:numbered="false"}
 
 The author thanks the OAuth Working Group for the specifications on which this profile builds.
+
+# Document History
+{:numbered="false"}
+
+[[ To be removed from the final specification ]]
+
+-01
+
+* Consolidated and tightened the text throughout; claim roles, supported token types, and error mappings now use tables.
+* Added hop and visible-hop terminology, and token-size guidance for extensions that attach per-hop signed material.
+* JWT access tokens now require `client_id`, per {{RFC9068}}.
+* Corrected citations: scope reduction and resource indicators are no longer attributed to {{RFC8693}}, and the DPoP key comparison cites Sections 4.3 and 6.1 of {{RFC9449}}.
+* `may_act` now uses `may_act.iss` as the identifier context when present, and the `subject_token` issuer otherwise.
+* Removed guidance on merging an `actor_token`'s own `act` chain, which conflicted with rejecting any `actor_token` that carries `act`.
+* The `act.iss` rule for AS-issued grants and the privacy guidance on suppressing `act.sub_profile` now apply only to new actor objects, consistent with inherited-actor immutability.
+* Aligned the error-response table with the processing rules.
+* Redrew the cross-domain example diagram and added {{RFC8792}} line-wrapping headers to folded examples.
+
+-00
+
+* Initial version.

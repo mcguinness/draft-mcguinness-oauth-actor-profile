@@ -1072,3 +1072,19 @@ The single proof covers the outermost hop:
 ~~~
 
 `prh` is omitted because this is a single-element chain.  `actor_proofs_complete: false` signals to recipients that the inner AI-agent hop carries no actor-signed evidence.  Resource servers that set `actor_proofs_complete_required: true` in their Protected Resource Metadata reject this token; resource servers that accept partial coverage validate the booking tool's signed participation and target consent, and treat the agent hop as carried solely by the visible `act` chain.  Because no receipts are present, the proof chain carries no outer-token instance binding; per {{proof-to-token-binding-limits}}, a recipient requiring instance binding would require the receipts companion or a provisioned `origin_jti`.
+
+# Document History
+{:numbered="false"}
+
+[[ To be removed from the final specification ]]
+
+-01
+
+* Consolidated and tightened the text throughout.
+* An issuer now drops inherited proofs when reissuance exceeds any part of the newest proof's target, not only its audience.
+* Distinguished a mismatched `origin_jti`, which consumer processing rejects unless the outer issuer is a trusted reissuer, from an absent one.
+* Removed an example claim that receipt composition stops a compromised issuer from re-embedding a proof.
+
+-00
+
+* Initial version.

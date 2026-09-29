@@ -1152,3 +1152,19 @@ The receipts are bit-identical to those in the Two-Hop Delegation Chain example.
 *  `outer.jti` is `f4a7b9c2-1d3e-4f5a-8b6c-7d8e9f0a1b2c`, while `receipt[0].origin_jti` remains `d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd` (the original outer token's `jti`).  This divergence is also legitimate.
 
 Under {{receipt-instance-binding}}, `origin_jti` is historical here because the outer issuer and token identifier have changed.  The same rule applies when an AS refreshes its own token with a new `jti`.  In either case, acceptance requires explicit trust in the reissuing issuer ({{receipt-to-token-binding-limits}}).
+
+# Document History
+{:numbered="false"}
+
+[[ To be removed from the final specification ]]
+
+-01
+
+* Consolidated and tightened the text throughout; the claim-pair naming convention now uses a table.
+* Gathered the receipt instance-binding rules for `origin_jti`, strict mode, and reissuance into one section.
+* Defined reissuance divergence as a mismatch between `receipt[0]` and the outer token's `iss` or `jti`.
+* Clarified that the claim-pair naming convention and its metadata apply to companion profiles that define parallel per-hop artifact arrays.
+
+-00
+
+* Initial version.
