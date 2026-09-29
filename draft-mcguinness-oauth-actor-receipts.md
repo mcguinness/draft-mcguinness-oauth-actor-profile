@@ -65,9 +65,13 @@ This document defines OAuth Actor Receipts, an optional companion to the OAuth A
 
 # Introduction
 
-The OAuth Actor Profile for Delegation {{I-D.mcguinness-oauth-actor-profile}} makes actor identity visible in delegated tokens through a common `act` claim.  A relying party can read that chain but cannot, on the basis of the outer token alone, verify prior hops independently of the current token issuer.
+The OAuth Actor Profile for Delegation {{I-D.mcguinness-oauth-actor-profile}} makes actor identity visible in delegated tokens through a common `act` claim.  A relying party can read that chain but cannot, on the basis of the outer token alone, verify prior hops independently of the current token issuer.  The core profile treats inner actors as context whose authenticity rests on the outer token issuer, and leaves per-hop provenance to companion profiles that add top-level claims.
 
-Each issuer adding a covered actor hop signs a receipt.  Receipts travel with the token in `actor_receipts`, linked by hashes and verifiable against the individual issuers' keys.  The visible actor chain remains in `act`; active presenter binding remains in top-level `cnf`.  Receipt `cnf`, when disclosed, records historical binding only.
+This document defines OAuth Actor Receipts, an optional companion profile that adds independently signed per-hop provenance.  Each issuer adding a covered actor hop signs a receipt; receipts travel with the token in `actor_receipts`, linked by hashes and verifiable against the individual issuers' keys.  The design center is:
+
+*  keep the visible actor chain in `act`;
+*  keep active presenter binding in the token's top-level `cnf`;
+*  carry prior-hop provenance, including historical `cnf` values when disclosed, in separately signed receipts.
 
 Deployments enable receipts per resource or trust domain without changing client request flows.  [Design Goals and Non-Goals](#design-goals-and-non-goals) defines the scope.
 
@@ -100,7 +104,12 @@ Examples in this document are illustrative and omit unrelated claims, signatures
 
 This document is an extension of {{I-D.mcguinness-oauth-actor-profile}}.  A token that uses the `actor_receipts` claim defined here follows that document's rules for companion profiles: its `act` chain conforms to the core actor profile ({{actor-receipts-claim}}), its top-level `cnf` identifies only the current token presenter, and its nested `act` objects carry no independently trusted prior-hop key history.
 
-This profile adds signed receipts, processing rules, metadata, and introspection parameters to the core actor representation.  The underlying Token Exchange and Transaction Token request semantics continue to apply.
+This profile does not redefine the request semantics of {{RFC8693}} or of Transaction Tokens.  It defines only:
+
+*  the `actor_receipts` claim;
+*  the signed JWT format of each receipt;
+*  issuer and consumer processing for receipts;
+*  associated metadata and introspection parameters.
 
 ## Relationship to Token Introspection
 
@@ -1170,6 +1179,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * A recipient that requires instance binding rejects any chain not bound by a matching leading `origin_jti`, and the completeness assurances share one home.
 * Used the base profile's example identifiers for the travel assistant and booking tool.
 * Clarified that receipt actor-object restrictions apply separately from the token's actor chain, and that historical binding comes from the issued token's top-level `cnf`.
+* Restored the Introduction's defining sentence and design-center list, and the list of what this document defines.
 
 -00
 

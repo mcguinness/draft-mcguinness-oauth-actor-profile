@@ -69,7 +69,11 @@ This document defines OAuth Actor-Signed Hop Proofs, an optional companion to th
 
 The OAuth Actor Profile for Delegation {{I-D.mcguinness-oauth-actor-profile}} makes actor identity visible in delegated tokens through a common `act` claim.  The OAuth Actor Receipts companion {{I-D.mcguinness-oauth-actor-receipts}} adds authorization-server-signed per-hop provenance.  Both are issuer assertions: an authorization server attests that an actor was added at a hop.  Nothing in either profile requires the actor's own cryptographic participation, so a compromised or dishonest issuer can fabricate the participation of an actor that never authorized the delegation.
 
-At each covered hop, the actor signs its participation and authorized target.  The AS validates the proof and includes it in `actor_proofs`; recipients verify the actor's signature through trusted key sources.  The visible chain remains in `act`, and issuer attestations remain in `actor_receipts` when that companion is used.
+This document defines OAuth Actor-Signed Hop Proofs, an optional companion profile that adds actor-side evidence.  At each covered hop, the actor signs its participation and authorized target; the AS validates the proof and includes it in `actor_proofs`, and recipients verify the actor's signature through trusted key sources.  The design center is:
+
+*  keep the visible actor chain in `act`;
+*  keep authorization-server-signed provenance in `actor_receipts` when the receipts companion is in use;
+*  carry actor-signed participation and hop-time target consent in separately signed proofs.
 
 This profile adds the `actor_proof` request parameter, an output claim, and discovery metadata.  [Design Goals and Non-Goals](#design-goals-and-non-goals) defines the scope.
 
@@ -112,7 +116,13 @@ This document is an extension of {{I-D.mcguinness-oauth-actor-profile}}.  A toke
 *  uses the top-level `cnf` claim, when present, only for the current token presenter, as the core actor profile defines;
 *  gains no proof-of-possession semantics from its proofs for the current request ({{current-presenter-validation}}).
 
-This profile adds signed proofs, processing rules, metadata, and introspection parameters to the core actor representation.  The `actor_proof` request parameter conveys a new proof at issuance.  The underlying Token Exchange and Transaction Token request semantics continue to apply.
+This profile does not redefine the request semantics of {{RFC8693}} or of Transaction Tokens.  It defines only:
+
+*  the `actor_proofs` claim;
+*  the signed JWT format of each proof;
+*  the `actor_proof` token request parameter for conveying a proof at issuance;
+*  issuer and consumer processing for proofs;
+*  associated metadata and introspection parameters.
 
 ## Relationship to the Actor Receipts Companion {#relationship-to-receipts}
 
@@ -1084,6 +1094,7 @@ The single proof covers the outermost hop:
 * Aligned subject-continuity handling, the introspection partial-coverage flag, and the proof actor object's `sub_profile` rule with Receipts.
 * Used the base profile's example identifiers for the travel assistant and booking tool.
 * Clarified that proof actor-object restrictions apply separately from confirmation extensions in the token's actor chain.
+* Restored the Introduction's defining sentence and design-center list, and the list of what this document defines.
 
 -00
 
