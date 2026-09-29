@@ -261,7 +261,7 @@ A receipt MAY omit `bounds` entirely, and a chain MAY mix receipts with and with
   : REQUIRED.  Time of the re-authorization event.
 
   `artifact`:
-  : OPTIONAL.  A URI or token identifier referencing an external artifact evidencing the re-authorization (for example, a consent record or step-up assertion).  Recipients MAY resolve and validate the artifact under local policy; {{reauthorization-abuse}} explains why deployments needing strong re-authorization integrity SHOULD require it.
+  : OPTIONAL.  A URI or token identifier referencing an external artifact evidencing the re-authorization (for example, a consent record or step-up assertion).  Recipients MAY resolve and validate the artifact under local policy; {{reauthorization-abuse}} covers when deployments require it.
 
 When `reauthorized` is present on a receipt, that hop is a new monotonicity basis: the hop's bounds are not compared against older bounds, and newer artifacts are compared against the post-re-authorization bounds ({{consumer-processing}}).  A receipt carrying `reauthorized` MUST also carry `bounds` recording the post-event value for every governed dimension the event expanded, and SHOULD carry `bounds` for every governed dimension in effect at the hop.
 
@@ -524,7 +524,7 @@ Authority bounds strengthen authority provenance for receipt-covered hops, but t
 
 ### Trust Model Summary
 
-Bounds inherit the receipts companion's per-issuer, non-transitive trust model, and add one axis: trust to record re-authorization.  A recipient MAY trust an issuer's receipts while refusing its `reauthorized` claims and events; {{reauthorization-abuse}} defines the posture.  Composition with proofs adds an actor-side check with an independent trust anchor.
+Bounds inherit the receipts companion's per-issuer, non-transitive trust model, and add one axis: trust to record re-authorization.  A recipient can trust an issuer's receipts while refusing its `reauthorized` claims and events ({{reauthorization-abuse}}).  Composition with proofs adds an actor-side check with an independent trust anchor.
 
 ## Issuer Self-Attestation Limits {#issuer-attestation-limits}
 
