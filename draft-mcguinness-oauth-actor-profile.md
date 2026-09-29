@@ -175,7 +175,7 @@ Local Policy:
 : Rules or decisions made by an AS, RS, or organization outside this specification, such as delegation approval, scope reduction, identifier mapping, and entity-profile acceptance.
 
 Identifier Reconciliation:
-: Applying configured mapping rules to determine whether identifiers from different claims or namespaces refer to the same entity.  A recommendation to perform identifier reconciliation means the implementation SHOULD apply those rules.  String similarity or shared naming patterns do not establish equivalence.  If no applicable mapping exists or reconciliation fails, the identifiers MUST be treated as distinct.
+: Applying configured mapping rules to determine whether identifiers from different claims or namespaces refer to the same entity.  A recommendation to perform identifier reconciliation means the implementation SHOULD apply those rules.  String similarity or shared naming patterns do not establish equivalence.  If no applicable mapping exists or reconciliation fails, equivalence is not established: the identifiers MUST be treated as distinct, and an implementation MUST reject a request or token whose processing requires them to identify the same entity.
 
 Examples in this document are illustrative and focus on actor-profile-related claims and processing.  They may omit unrelated claims, parameters, or validation steps required by the underlying specifications for a complete deployment.
 
@@ -561,7 +561,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
     *  The AS MAY use that client identity as an additional authorization input.
     *  The AS SHOULD NOT infer that the client is authorized to act on behalf of the subject solely because the client initiated the request.  Such inference is outside the interoperable behavior defined by this profile.
-    *  When local policy maps the client identity to an actor identifier expected to match `act.sub`, the AS SHOULD perform identifier reconciliation before issuing a token.  If reconciliation cannot be established, the AS MUST either treat the identifiers as distinct or reject the request according to local policy.
+    *  When local policy maps the client identity to an actor identifier expected to match `act.sub`, the AS SHOULD perform identifier reconciliation before issuing a token.  If reconciliation cannot be established, the AS treats the identifiers as distinct and rejects the request when issuance requires them to identify the same entity, as defined for Identifier Reconciliation in [Conventions and Definitions](#conventions).
 
 8.  If the AS accepts the assertion, it MUST propagate the actor information into the issued token according to the rules for the output token type being issued.  For JWT access tokens, see [JWT Access Token Output](#jwt-access-token-propagation).  For Transaction Tokens, see [Transaction Token Output Rules](#transaction-token-output-rules).  When the output is another JWT assertion grant profile, the resulting assertion MUST preserve the validated actor information subject to local policy and the chain-depth limit in [Delegation Chains](#delegation-chains).
 
@@ -598,7 +598,7 @@ The following claims are defined for a JWT access token that carries actor-profi
 `azp` (OPTIONAL):
 : An additional client identifier used by some deployments.  It MUST NOT substitute for `act`.
 
-If an issuer uses `azp` and `act.sub` for the same party, it SHOULD reconcile them through trusted mappings or treat them as distinct.  [Client Identity and Delegation](#client-identity-delegation) defines the common rules; [Migrating from Implicit to Explicit Delegation](#migration-implicit-explicit) describes rollout.
+If an issuer uses `azp` and `act.sub` for the same party, [Client Identity and Delegation](#client-identity-delegation) defines how they are reconciled, along with the other common rules; [Migrating from Implicit to Explicit Delegation](#migration-implicit-explicit) describes rollout.
 
 The following example shows a JWT access token with actor profile claims:
 
@@ -970,7 +970,7 @@ For this profile, a Transaction Token represents delegation when a condition in 
 Claim semantics under this profile:
 
 *  `sub`: identifies the original initiator.  When a Transaction Token is exchanged for a replacement, the new token continues to refer to the same underlying subject, and the issuer can change `sub` only to re-express that subject in another identifier namespace under a trusted local mapping, as step 2 of [JWT Access Token Output](#jwt-access-token-propagation) requires.
-*  `act.sub` (outermost): identifies the immediate acting party.  When a TTS sets both `req_wl` and the new outermost `act.sub` in a single token issuance (presenter-rebind mode), it MUST ensure they identify the same entity under local policy.  When a TTS preserves `req_wl` from an inbound token, the TTS SHOULD perform identifier reconciliation between `req_wl` and the outermost `act.sub`.  When a recipient relies on both and cannot reconcile them under local policy, the recipient MUST reject the token.
+*  `act.sub` (outermost): identifies the immediate acting party.  When a TTS sets both `req_wl` and the new outermost `act.sub` in a single token issuance (presenter-rebind mode), it MUST ensure they identify the same entity under local policy.  When a TTS preserves `req_wl` from an inbound token, the TTS SHOULD perform identifier reconciliation between `req_wl` and the outermost `act.sub`.  A recipient that relies on both to identify the current presenter requires them to identify the same entity, so it rejects the token when it cannot reconcile them ([Conventions and Definitions](#conventions)).
 *  Inner `act` objects: identify prior presenters in the delegation path.  `act.sub_profile` at each level classifies the entity type of that presenter.
 
 The following example shows a Transaction Token after two hops:
@@ -1101,7 +1101,7 @@ Actor authorization is conditional under this profile.  When an RS accepts a tok
     *  the actor's `sub_profile` (e.g., only AI agents from a trusted domain are permitted to act as delegatees),
     *  the token's `scope` claim.
 
-    For Transaction Tokens, the RS SHOULD evaluate `req_wl` as supporting context.  An RS that relies on both `req_wl` and `act.sub` to identify the current presenter cannot treat them as distinct identifiers; if it cannot reconcile them under local policy, it MUST reject the request.
+    For Transaction Tokens, the RS SHOULD evaluate `req_wl` as supporting context.  An RS that relies on both `req_wl` and `act.sub` to identify the current presenter requires them to identify the same entity and rejects the request if it cannot reconcile them, as [Actor Claim in Transaction Tokens](#actor-claim-in-transaction-tokens) specifies.
 
 4.  **Evaluate combined policy**: Apply resource-specific actor authorization policies (e.g., requiring both principals to have agreed to terms of service).
 
@@ -1124,7 +1124,7 @@ When the resource server evaluates a JWT access token as a delegated token under
 
 3.  Extract the `sub` and the outermost `act.sub` as the two principals relevant for authorization policy.
 
-4.  If the token carries `client_id`, `azp`, or both, treat those as client-identity inputs only.  The actor identifier is then `act.sub`, not `client_id` or `azp`.  When local policy expects both to identify the same acting party, the RS SHOULD perform identifier reconciliation; if reconciliation cannot be established, the RS MUST either treat them as distinct identifiers or reject the request according to local policy.  See [Client Identity and Delegation](#client-identity-delegation).
+4.  If the token carries `client_id`, `azp`, or both, treat those as client-identity inputs only.  The actor identifier is then `act.sub`, not `client_id` or `azp`.  When local policy expects both to identify the same acting party, the RS SHOULD perform identifier reconciliation; if reconciliation cannot be established, the RS treats them as distinct and rejects the request when its authorization decision requires them to identify the same party, as defined for Identifier Reconciliation in [Conventions and Definitions](#conventions).  See [Client Identity and Delegation](#client-identity-delegation).
 
 5.  Apply actor authorization per [Actor Authorization](#actor-authorization) when required by local policy or when the token is accepted as satisfying a delegated-access requirement for the request path.  Resource servers that do not require actor authorization SHOULD still evaluate the actor as part of authorization, audit, or trust decisions.
 
@@ -1151,7 +1151,7 @@ When the resource server evaluates a Transaction Token as a delegated token unde
 
 2.  When the token carries a top-level presenter-binding claim such as `cnf`, validate the accompanying proof according to {{I-D.ietf-oauth-transaction-tokens}} and the applicable deployment profile.  The top-level presenter binding applies to the current presenter only.
 
-3.  Extract `sub` and the outermost `act.sub` as the two principals relevant for authorization policy.  If `req_wl` is present, treat it as supporting workload context only.  The RS MUST NOT treat `req_wl` as a substitute for `act.sub`.  When local policy expects `req_wl` and the outermost `act.sub` to identify the same party, the RS SHOULD perform identifier reconciliation; if reconciliation cannot be established, the RS MUST either treat them as distinct identifiers or reject the request according to local policy.
+3.  Extract `sub` and the outermost `act.sub` as the two principals relevant for authorization policy.  If `req_wl` is present, treat it as supporting workload context only.  The RS MUST NOT treat `req_wl` as a substitute for `act.sub`.  When local policy expects `req_wl` and the outermost `act.sub` to identify the same party, the RS SHOULD perform identifier reconciliation; if reconciliation cannot be established, the RS treats them as distinct and rejects the request when its authorization decision requires them to identify the same party, such as when it relies on both to identify the current presenter ([Actor Claim in Transaction Tokens](#actor-claim-in-transaction-tokens)).
 
 4.  Apply actor authorization per [Actor Authorization](#actor-authorization) when required by local policy or when the token is accepted as satisfying a delegated-access requirement for the request path.  Resource servers that do not require actor authorization SHOULD still evaluate the actor as part of authorization, audit, or trust decisions.
 
@@ -1552,7 +1552,7 @@ Client identity, such as `client_id`, `azp`, or authenticated client context, is
 *  When `act` is present, interoperable processing SHOULD use it as the explicit delegated-actor signal rather than substituting `client_id`, `azp`, or other client-identity signals.  Deployments that rely on such substitution are outside the interoperable scope of this profile.
 *  When a single `client_id` registration fronts multiple distinct acting entities (for example, an agent orchestration platform executing requests on behalf of different agent instances), `client_id` alone does not identify the runtime actor.  Each such request SHOULD carry `act.sub` identifying the specific acting principal.
 *  During token issuance, `client_id` and `azp` MUST NOT be rewritten to represent delegation state that belongs in `act`; see [JWT Access Token Output](#jwt-access-token-propagation) for propagation rules.
-*  When both explicit (`act.sub`) and implicit (`client_id`, `azp`) signals are present and local policy expects them to identify the same party, implementations SHOULD apply trusted local mapping rules and either reconcile the identifiers or treat them as distinct according to local policy.
+*  When both explicit (`act.sub`) and implicit (`client_id`, `azp`) signals are present and local policy expects them to identify the same party, implementations SHOULD perform identifier reconciliation; if it fails, the identifiers are treated as distinct, and an operation that requires them to identify the same party is rejected, as defined for Identifier Reconciliation in [Conventions and Definitions](#conventions).
 *  When a protected resource or authorization path enforces explicit delegation under this profile, implementations MUST NOT downgrade to non-`act` processing solely because another token-acquisition path or legacy policy input remains available.
 
 The detailed migration rules and transition patterns are defined in [Migrating from Implicit to Explicit Delegation](#migration-implicit-explicit).
