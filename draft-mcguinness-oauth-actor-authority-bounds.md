@@ -792,7 +792,7 @@ The example verifies as follows:
 *  The outer token's scope equals the newest recorded scope.
 *  Audience changes are recorded without comparison under the default audience rules.
 
-The issuer attests enforcement of `scope` and `resource`, consistent with those checks.
+The issuer attests enforcement of `scope` and `resource`, consistent with those checks.  No re-authorization occurred, so the token carries no `bounds_events`; adding `bounds_events_complete: true` would attest that complete, empty history ({{bounds-events}}).
 
 ## Example: Refresh Widening Recorded as a Bounds Event
 
