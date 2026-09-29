@@ -545,7 +545,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
     *  **DPoP**: When the inbound assertion grant is DPoP-bound, it MUST carry a top-level `cnf.jkt`; reject with `invalid_request` if absent.  The AS MUST:
        *  Verify the DPoP proof is valid per {{RFC9449}} with `htm="POST"` and `htu` equal to the AS token endpoint URI.
-       *  Verify that the `jkt` in the DPoP proof exactly matches the assertion's `cnf.jkt`.
+       *  Verify that the JWK SHA-256 thumbprint of the public key in the DPoP proof matches the assertion's `cnf.jkt` ({{RFC9449, Section 6.1}}), as in the proof checks of {{RFC9449, Section 4.3}}.
        *  Use the assertion's `cnf.jkt` as set by the upstream issuer; MUST NOT substitute a locally registered key.
        *  Reject with `invalid_dpop_proof` or `invalid_grant` if the proof is absent or invalid.
 
@@ -697,7 +697,7 @@ When a Token Exchange request ({{RFC8693}}) presents a JWT assertion grant as th
 
 Apply the continuation or rebind rules in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).
 
-The AS MUST apply scope reduction per {{RFC8693, Section 4}} and then apply [JWT Access Token Output](#jwt-access-token-propagation).
+The AS MUST apply scope reduction under local policy and then apply [JWT Access Token Output](#jwt-access-token-propagation).
 
 #### JWT Access Token {#jwt-access-token-as-subject-token}
 
@@ -711,7 +711,7 @@ When a Token Exchange request ({{RFC8693}}) presents a JWT access token as the `
 
 4.  The AS MUST extract `sub`, `sub_profile` (if present), and `act` (if present) from the validated token as the inbound delegation state for [JWT Access Token Output](#jwt-access-token-propagation).
 
-5.  The AS MUST apply scope reduction per {{RFC8693, Section 4}}.  The effective scope of the issued token MUST NOT exceed the inbound token's effective scope.
+5.  The AS MUST apply scope reduction under local policy.  The effective scope of the issued token MUST NOT exceed the inbound token's effective scope.
 
 After completing these steps, the AS MUST apply the propagation rules in [JWT Access Token Output](#jwt-access-token-propagation).
 
@@ -788,7 +788,7 @@ When a Token Exchange request ({{RFC8693}}) presents a refresh token as the `sub
 
 4.  The AS MUST establish the actor from `actor_token` or an independent delegation basis; otherwise, it MUST omit `act`.  If `actor_token` is present, the AS MUST process it under its type-specific rules and use the derived identity as the outermost actor.  That credential also establishes the new presenter for a sender-constrained output.  The refresh token supplies no actor identity or presenter continuity.
 
-5.  The effective scope of the issued token MUST be a subset of the scope authorized by the refresh token.  The AS MUST apply scope reduction per {{RFC8693, Section 4}} against that ceiling.
+5.  The effective scope of the issued token MUST be a subset of the scope authorized by the refresh token.  The AS MUST apply scope reduction under local policy against that ceiling.
 
 After completing these checks, the AS MUST apply the propagation rules in [JWT Access Token Output](#jwt-access-token-propagation) to determine the remaining claims in the issued token.
 
@@ -927,7 +927,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 5.  The AS SHOULD include `sub_profile` in the issued token's top-level claims if it can authoritatively classify the token's `sub` entity type.
 
-6.  The AS MUST apply scope reduction per {{RFC8693, Section 4}}.  If this reduction, before any actor-based restriction, leaves no effective scope, it MUST reject with `invalid_scope`.
+6.  The AS MUST apply scope reduction under local policy.  If this reduction, before any actor-based restriction, leaves no effective scope, it MUST reject with `invalid_scope`.
 
     If the AS also restricts scope using the (`sub`, `act.sub`) pair or `act.sub_profile`, it MUST return the final effective `scope` in the token response.  If this restriction leaves no scope, the AS MUST reject:
 
@@ -936,7 +936,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 7.  The AS MAY preserve inbound client identifiers per the output token profile or local policy.  Preserved values MUST retain their client-identity meaning and MUST NOT represent delegation state.  If preserving an optional identifier would create ambiguity about the delegated actor relationship, the AS SHOULD omit it.  JWT access tokens still require `client_id` per {{RFC9068}}; see [Client Identity and Delegation](#client-identity-delegation).
 
-8.  Clients SHOULD use `resource` {{RFC8707}} to restrict the token's audience to the intended RS.  The AS MUST honor resource-indicator constraints in delegated token requests per {{RFC8693, Section 4.2}}.  Audience restriction limits where a compromised delegated token can be used.
+8.  Clients SHOULD use `resource` {{RFC8707}} to restrict the token's audience to the intended RS.  The AS MUST honor resource-indicator constraints in delegated token requests.  Audience restriction limits where a compromised delegated token can be used.
 
 # Transaction Token Service Processing {#transaction-token-service}
 
