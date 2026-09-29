@@ -431,7 +431,7 @@ Presenter continuation requires a PoP-capable `subject_token` with top-level `cn
 
 Presenter rebind requires a validated `actor_token` whose top-level `sub` identifies the new presenter, as specified in [Actor Tokens](#actor-tokens).
 
-*  The issuer MUST validate the credential and any proof required by its profile or deployment.
+*  The issuer validates the credential per {{RFC8693, Section 2.1}} and MUST validate any proof required by its profile or deployment.
 *  The issuer MUST validate proof for the new presenter.  A sender-constrained `subject_token` does not, by itself, require proof for its prior presenter during rebind.
 
 Actors that become presenters therefore need a direct credential: a workload credential, JWT client assertion, or non-delegated JWT access token.
@@ -907,7 +907,6 @@ The AS MUST:
 
 *  Construct the chain per [JWT Access Token Output](#jwt-access-token-propagation).
 *  Set `aud` to the downstream token endpoint, from `resource` or deployment configuration.
-*  Sign the assertion.
 
 Issuing such a grant is subject to AS configuration and to [Validate Outermost Actor](#validate-outermost-actor).
 
@@ -1163,7 +1162,7 @@ When the resource server evaluates a Transaction Token as a delegated token unde
 
 When token introspection ({{RFC7662}}) is used for delegated tokens, an AS MUST expose actor-profile information needed for equivalent RS processing.  For an active delegated token whose authorization context includes actor-profile claims, the introspection response MUST include:
 
-*  `active`: REQUIRED.  MUST be `true` for an active token.
+*  `active`: `true`, per {{RFC7662, Section 2.2}}.
 *  `sub`: REQUIRED.  The subject of the delegated token, as defined in {{RFC7662}}.
 *  `act`: REQUIRED.  The actor object conforming to [Actor Object Structure](#actor-object-structure), including `act.sub`, `act.iss`, and any nested `act` chain, structured identically to the JWT form defined in this document.
 *  `sub_profile`: REQUIRED when the token's authorization context includes a top-level `sub_profile`; otherwise SHOULD be included when the AS can authoritatively classify the subject entity type.
@@ -1188,14 +1187,14 @@ An introspecting RS MUST apply the same delegated-token processing as for equiva
 
 If policy, protected resource metadata, or token context indicates delegation or requires actor-profile conformance, a missing `act` is an inconsistency and the RS MUST reject the token.  Otherwise, the RS MAY treat an active response without `act` as non-delegated.
 
-Introspection endpoints for delegated tokens SHOULD be advertised via the `introspection_endpoint` parameter in AS metadata ({{RFC8414}}).  When revocation is integrated, the introspection response for a revoked delegated token MUST return `"active": false` and MUST NOT include `act` or `sub_profile` claims.
+Introspection endpoints for delegated tokens SHOULD be advertised via the `introspection_endpoint` parameter in AS metadata ({{RFC8414}}).  When revocation is integrated, the introspection response for a revoked delegated token returns `"active": false` per {{RFC7662, Section 2.2}} and MUST NOT include `act` or `sub_profile` claims.
 
 Resource servers that cache introspection responses for delegated tokens should use short cache lifetimes consistent with revocation requirements.  An RS using inner actors for security decisions SHOULD NOT cache a response with `"chain_complete": false`.
 
 
 # Error Responses {#actor-profile-error-responses}
 
-When an AS or TTS rejects a request under this profile for reasons related to actor-profile processing, it MUST return an OAuth error response per {{RFC6749, Section 5.2}} and {{RFC8693, Section 2.2}}.  These error codes do not override `invalid_client` when a request fails client authentication per {{RFC6749}} or {{RFC7523}}.
+When an AS or TTS rejects a request under this profile for reasons related to actor-profile processing, its error response follows {{RFC6749, Section 5.2}} and {{RFC8693, Section 2.2}}.  These error codes do not override `invalid_client` when a request fails client authentication per {{RFC6749}} or {{RFC7523}}.
 
 The following errors apply to both AS and TTS endpoints:
 
@@ -1504,9 +1503,9 @@ As described in [Representation and Policy](#representation-and-policy), this do
 
 ## Delegation Chain Integrity and Trust {#delegation-chain-integrity}
 
-An attacker who can inject or forge `act` claims can impersonate an arbitrary actor and exercise a subject's permissions without authorization.  The primary mitigation is to accept `act` claims only in tokens whose issuer is trusted to assert the delegated actor relationship.  RS implementations MUST validate the token signature before extracting actor claims, and MUST verify that the token issuer is trusted to convey the claims it carries.
+An attacker who can inject or forge `act` claims can impersonate an arbitrary actor and exercise a subject's permissions without authorization.  The primary mitigation is to accept `act` claims only in tokens whose issuer is trusted to assert the delegated actor relationship.  RS implementations validate the token signature before extracting actor claims, as the applicable token specification and [Resource Server Processing](#resource-server-processing) require, and MUST verify that the token issuer is trusted to convey the claims it carries.
 
-Because inner `act` objects are set by upstream ASes and not re-signed at each hop, the integrity of the entire delegation chain rests on the outermost token's signature.  Implementations SHOULD use short token lifetimes and MUST reject tokens whose `exp` has passed, regardless of chain depth.
+Because inner `act` objects are set by upstream ASes and not re-signed at each hop, the integrity of the entire delegation chain rests on the outermost token's signature.  Implementations SHOULD use short token lifetimes, and an expired token is rejected per {{RFC7519, Section 4.1.4}} regardless of chain depth.
 
 Inner `act` objects are prior-actor context under [Carry Prior-Actor Context](#carry-prior-actor-context).  Security policies that rely on inner actor identities for access control are deployment-specific and generally lower-assurance than policies based on `sub` and the outermost `act.sub`.
 
