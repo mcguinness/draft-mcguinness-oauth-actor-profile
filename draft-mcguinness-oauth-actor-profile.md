@@ -502,7 +502,7 @@ This document defines two issuer patterns:
 
 The issuing AS sets a new actor's `act.iss` to the issuer or namespace context in which that actor's `act.sub` is interpreted, as required by [Actor Object Structure](#actor-object-structure); for actors registered in the AS's own namespace, this is often the AS's own issuer URI.
 
-A deployment MAY additionally accept a self-issued actor assertion when explicitly enabled by another specification or local policy, but that behavior is outside the scope of this document.  Implementations MUST reject self-issued assertion grants by default; see [Self-Issued Authorization Grants](#security-self-issued-grants) for the security controls any such deployment MUST independently establish.
+A deployment MAY additionally accept a self-issued actor assertion when explicitly enabled by another specification or local policy, but that behavior is outside the scope of this document.  Implementations MUST reject self-issued assertion grants by default; see [Self-Issued Authorization Grants](#security-self-issued-grants) for the security controls any such deployment needs to establish independently.
 
 ## Authorization Grant Processing {#jwt-assertion-grants-processing}
 
@@ -1516,7 +1516,7 @@ When a token crosses organizational boundaries, the receiving AS or RS needs to 
 
 This section addresses self-issued JWT *authorization grants* ([JWT Assertion Grants](#jwt-assertion-grants)); it does not apply to RFC 7523 client assertions used as `actor_token` ([JWT Client Assertion](#jwt-client-assertion-as-actor-token)), where `iss = sub = client_id` is the conformant pattern defined by {{RFC7523}}.
 
-In a self-issued assertion grant, the acting entity is itself the JWT `iss` and directly asserts delegation to itself without any upstream AS having authenticated the actor or pre-validated the delegation relationship.  Self-issued authorization grants are outside the interoperable scope of this document and MUST be rejected by default ([JWT Assertion Grant Structure](#jwt-assertion-grants-structure)).  This section specifies the security controls that a deployment MUST independently establish when another specification or local policy explicitly enables self-issued authorization grant acceptance.
+In a self-issued assertion grant, the acting entity is itself the JWT `iss` and directly asserts delegation to itself without any upstream AS having authenticated the actor or pre-validated the delegation relationship.  Self-issued authorization grants are outside the interoperable scope of this document and are rejected by default, as required by [JWT Assertion Grant Structure](#jwt-assertion-grants-structure).  This section specifies the security controls that a deployment needs to establish independently when another specification or local policy explicitly enables self-issued authorization grant acceptance.
 
 Because no upstream AS vouches for the actor's identity or the delegation relationship, the receiving AS MUST NOT treat the self-asserted delegation claim alone as a sufficient authorization basis.  When a deployment enables self-issued authorization grants, the receiving AS MUST at minimum:
 
@@ -1531,7 +1531,7 @@ In the absence of these controls, an attacker can self-assert an arbitrary (`sub
 
 ## Assertion Replay Prevention {#security-assertion-replay}
 
-Replaying a delegated assertion can obtain tokens exercising the subject's authorization and establish an unauthorized delegation chain.  For grants without sender constraint, deployments MUST maintain a `jti` replay cache for each assertion's validity window, as required by [Authorization Grant Processing](#jwt-assertion-grants-processing).  Short assertion lifetimes bound cache retention.  With DPoP or mTLS, `jti` replay prevention remains RECOMMENDED as an additional control.
+Replaying a delegated assertion can obtain tokens exercising the subject's authorization and establish an unauthorized delegation chain.  For grants without sender constraint, deployments maintain a `jti` replay cache for each assertion's validity window, as required by [Authorization Grant Processing](#jwt-assertion-grants-processing).  Short assertion lifetimes bound cache retention.  With DPoP or mTLS, [Authorization Grant Processing](#jwt-assertion-grants-processing) still recommends `jti` replay prevention as an additional control.
 
 ## Token Substitution
 
@@ -1539,7 +1539,7 @@ An attacker who can present a token with a crafted `sub_profile` or delegation c
 
 ## Confused Deputy
 
-A resource server that evaluates only the subject principal when an `act` claim is present is susceptible to a confused deputy attack: a malicious actor exploits a subject's pre-existing permissions without the subject's ongoing consent simply by presenting a token that names the subject in `sub`.  The mitigation is authorization of the (`sub`, outermost `act.sub`) pair before granting access.  Resource servers SHOULD implement such evaluation for delegated tokens under this document.
+A resource server that evaluates only the subject principal when an `act` claim is present is susceptible to a confused deputy attack: a malicious actor exploits a subject's pre-existing permissions without the subject's ongoing consent simply by presenting a token that names the subject in `sub`.  The mitigation is authorization of the (`sub`, outermost `act.sub`) pair before granting access.  [Actor Authorization](#actor-authorization) defines when resource servers apply that evaluation.
 
 ## Actor-Authorization Bypass
 
