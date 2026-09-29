@@ -802,7 +802,7 @@ The following rules apply to every `actor_token` type in this section:
 2.  After validating the credential, the AS MUST use its `sub` as the new outermost `act.sub` and set `act.iss` to that identifier's issuer or namespace context.
 3.  If `subject_token` carries a chain, the new actor takes precedence over its outermost actor.  Different identities are permitted for presenter rebind.  Local policy MAY require equivalence on paths that only confirm an existing actor; when such a restriction applies and no trusted mapping establishes equivalence, the AS MUST reject with `invalid_grant`.
 
-[Delegation Chain Validation and Construction](#delegation-chain-algorithm) governs nesting of the `subject_token` chain.  Any prior `act` chain in the `actor_token` itself MUST NOT be automatically merged with the `subject_token`'s chain; the AS MUST omit it from the issued token unless local policy defines a single unambiguous ordering, in which case the AS MAY preserve it subject to the chain-depth limit in [Delegation Chains](#delegation-chains).
+[Delegation Chain Validation and Construction](#delegation-chain-algorithm) governs nesting of the `subject_token` chain.  Because `actor_token` cannot carry `act`, it contributes no prior chain to merge.
 
 Deployments supporting sub-delegation SHOULD provision each potential presenter with a direct credential naming itself in `sub`.
 
