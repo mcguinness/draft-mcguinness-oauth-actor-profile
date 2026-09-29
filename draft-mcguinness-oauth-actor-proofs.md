@@ -210,7 +210,7 @@ The JOSE header of an actor proof:
 *  MUST NOT use `alg: none` or a MAC-based symmetric algorithm;
 *  MUST include `typ` with the value `actor-proof+jwt`;
 *  SHOULD include `kid` when the actor's key source publishes multiple verification keys;
-*  MAY include `crit` per {{RFC7515}}; consumers MUST reject a proof whose `crit` header lists an extension header the consumer does not understand.
+*  MAY include `crit`; a proof whose `crit` header lists an extension header the consumer does not understand is invalid per {{RFC7515, Section 4.1.11}}.
 
 Actors, issuers, and consumers MUST apply the JWT best practices in {{RFC8725}}.
 
@@ -314,7 +314,7 @@ Proofs define no subject `sub_profile` claim; subject classification remains iss
 
 ### Extension Claims
 
-A proof MAY contain additional claims defined by another specification or by deployment policy.  Consumers MUST ignore unrecognized claims unless another specification or local agreement defines their meaning.
+A proof MAY contain additional claims defined by another specification or by deployment policy.  Consumers ignore unrecognized claims unless another specification or local agreement defines their meaning, per {{RFC7519, Section 4}}.
 
 ## Proof-Chain Linkage {#proof-chain-linkage}
 
@@ -330,7 +330,7 @@ The hash input is the exact compact JWS string, without JSON {{RFC8259}} canonic
 This document defines one token request parameter:
 
 `actor_proof`:
-: OPTIONAL.  The compact serialization of a single actor proof JWT for the new outermost actor hop of the requested token.  A token request MUST NOT include more than one `actor_proof` parameter.
+: OPTIONAL.  The compact serialization of a single actor proof JWT for the new outermost actor hop of the requested token.  A request carries at most one `actor_proof` parameter ({{RFC6749, Section 3.2}}).
 
 The parameter is defined for token endpoint requests that produce delegated tokens under the core actor profile, including OAuth 2.0 Token Exchange {{RFC8693}} requests and JWT assertion grants.  Transaction Token Service deployments convey the proof equivalently in the Transaction Token request, subject to {{I-D.ietf-oauth-transaction-tokens}}.
 
