@@ -1075,8 +1075,6 @@ The single proof covers the outermost hop:
 
 -01
 
-* Clarified that proof actor-object restrictions apply separately from confirmation extensions in the token's actor chain.
-
 * Consolidated and tightened the text throughout.
 * An issuer now drops inherited proofs when reissuance exceeds any part of the newest proof's target, not only its audience.
 * Distinguished a mismatched `origin_jti`, which consumer processing rejects unless the outer issuer is a trusted reissuer, from an absent one.
@@ -1087,6 +1085,7 @@ The single proof covers the outermost hop:
 * Removed the unconditional recommendation for short proof `exp` in favor of the claim's conditional sizing rule.
 * Aligned subject-continuity handling and the introspection partial-coverage flag with Receipts.
 * Used the base profile's example identifiers for the travel assistant and booking tool.
+* Clarified that proof actor-object restrictions apply separately from confirmation extensions in the token's actor chain.
 
 -00
 

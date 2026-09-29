@@ -1160,8 +1160,6 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 
 -01
 
-* Clarified that receipt actor-object restrictions apply separately from the token's actor chain, and that historical binding comes from the issued token's top-level `cnf`.
-
 * Consolidated and tightened the text throughout; the claim-pair naming convention now uses a table.
 * Gathered the receipt instance-binding rules for `origin_jti`, strict mode, and reissuance into one section.
 * Defined reissuance divergence as a mismatch between `receipt[0]` and the outer token's `iss` or `jti`.
@@ -1171,6 +1169,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, {{RFC8725}} applies except its audience validation, introspection flags known partial coverage, and subject continuity allows namespace-aware matching or trusted mapping.
 * A recipient that requires instance binding rejects any chain not bound by a matching leading `origin_jti`, and the completeness assurances share one home.
 * Used the base profile's example identifiers for the travel assistant and booking tool.
+* Clarified that receipt actor-object restrictions apply separately from the token's actor chain, and that historical binding comes from the issued token's top-level `cnf`.
 
 -00
 
