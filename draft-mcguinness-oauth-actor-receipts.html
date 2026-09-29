@@ -1738,6 +1738,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
               </ul>
 <p id="section-7.2.1-1.10.3">Historical binding belongs in receipt-level <code>cnf</code>.  Other core-profile actor extensions <span class="bcp14">MAY</span> appear unless prohibited here; a receipt containing <code>act.cnf</code> is invalid.<a href="#section-7.2.1-1.10.3" class="pilcrow">¶</a></p>
+<p id="section-7.2.1-1.10.4">These restrictions apply to the receipt's actor object.  The issuer constructs that object for visible-hop alignment (step 7 of <a href="#consumer-processing" class="auto internal xref">Section 9</a>), separately from the token's <code>act</code> chain.  A confirmation member in the token's actor object remains subject to the core profile's extension and preservation rules; creating a receipt does not remove it from the token.<a href="#section-7.2.1-1.10.4" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 </dl>
@@ -1754,7 +1755,8 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <dd style="margin-left: 1.5em" id="section-7.2.2-1.2">
               <p id="section-7.2.2-1.2.1"><span class="bcp14">OPTIONAL</span>.  A confirmation claim as defined in <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>.  When present, it <span class="bcp14">MUST</span> equal the top-level <code>cnf</code> claim of the token issued at this hop.<a href="#section-7.2.2-1.2.1" class="pilcrow">¶</a></p>
 <p id="section-7.2.2-1.2.2">Receipt <code>cnf</code> records historical presenter-binding information for the hop represented by the receipt.  It does not create a current proof-of-possession obligation for the current request.<a href="#section-7.2.2-1.2.2" class="pilcrow">¶</a></p>
-<p id="section-7.2.2-1.2.3">Whether an issuer includes <code>cnf</code> is governed by <a href="#historical-cnf-disclosure" class="auto internal xref">Section 13.10</a>; omitting <code>cnf</code> does not invalidate the receipt.<a href="#section-7.2.2-1.2.3" class="pilcrow">¶</a></p>
+<p id="section-7.2.2-1.2.3">Its source is the top-level <code>cnf</code> of the token issued at that hop, rather than a confirmation member in the token's <code>act</code> chain.<a href="#section-7.2.2-1.2.3" class="pilcrow">¶</a></p>
+<p id="section-7.2.2-1.2.4">Whether an issuer includes <code>cnf</code> is governed by <a href="#historical-cnf-disclosure" class="auto internal xref">Section 13.10</a>; omitting <code>cnf</code> does not invalidate the receipt.<a href="#section-7.2.2-1.2.4" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 </dl>
@@ -3523,6 +3525,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         <li class="normal" id="appendix-B-3.9">
           <p id="appendix-B-3.9.1">Used the base profile's example identifiers for the travel assistant and booking tool.<a href="#appendix-B-3.9.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.10">
+          <p id="appendix-B-3.10.1">Clarified that receipt actor-object restrictions apply separately from the token's actor chain, and that historical binding comes from the issued token's top-level <code>cnf</code>.<a href="#appendix-B-3.10.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-B-4">-00<a href="#appendix-B-4" class="pilcrow">¶</a></p>

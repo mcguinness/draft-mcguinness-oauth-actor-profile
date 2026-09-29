@@ -850,9 +850,17 @@ Table of Contents
    identify that party's key; when mTLS ([RFC8705]) is used, the top-
    level cnf.x5t#S256 MUST identify that party's certificate.  The AS or
    RS MUST validate proof of possession against the top-level cnf.
-   Confirmation-style members that appear inside an act object due to
-   another specification do not have standardized proof-of-possession
-   semantics under this document.
+
+   A confirmation member such as act.cnf is permitted as extension data
+   under Actor Object Structure (Section 3.4) and has no proof-of-
+   possession semantics under this profile.  It remains unchanged in an
+   inherited actor object under Preserve Inbound Chain
+   (Section 3.6.3.2).  After further delegation, an inherited
+   confirmation value can therefore differ from the current token's top-
+   level cnf; this profile imposes no equality check between them.
+   Another specification can define additional checks for its own
+   issuance or processing rules, subject to Companion Profiles and
+   Extension Points (Section 11).
 
 3.7.2.  Token Exchange Continuation
 
@@ -4359,6 +4367,10 @@ Document History
 
    *  Used one set of example identifiers for the travel scenario,
       matching the cross-domain example's parties.
+
+   *  Clarified confirmation members in token actor objects as extension
+      data, including preservation and their distinction from the
+      current presenter's binding.
 
    -00
 

@@ -506,6 +506,12 @@ Table of Contents
       act supplies the namespace context and visible-hop alignment.  A
       proof is invalid if iss differs from act.sub.
 
+      These restrictions apply to the proof's actor object.  The token's
+      act chain can retain confirmation members as extension data under
+      the core actor profile.  The proof's actor object omits those
+      members while satisfying visible-hop alignment (step 7 of
+      Section 10); this does not modify the token's actor chain.
+
    Proofs define no subject sub_profile claim; subject classification
    remains issuer-asserted.  Actor classification can appear in
    act.sub_profile.
@@ -2439,6 +2445,9 @@ Document History
 
    *  Used the base profile's example identifiers for the travel
       assistant and booking tool.
+
+   *  Clarified that proof actor-object restrictions apply separately
+      from confirmation extensions in the token's actor chain.
 
    -00
 
