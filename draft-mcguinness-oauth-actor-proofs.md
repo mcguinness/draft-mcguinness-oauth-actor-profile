@@ -488,19 +488,18 @@ Older proofs can carry a different `sub` value from the current outer token when
 Accordingly:
 
 *  only `actor_proofs[0].sub` is required to equal the current outer token `sub`;
-*  older proof `sub` values can differ (step 8 of {{consumer-processing}});
-*  a recipient that applies stronger continuity requirements across older `sub` values MUST do so under explicit trusted local mapping rules.
+*  older proof `sub` values can differ (step 8 of {{consumer-processing}}).
 
-Recipients MUST be aware that permitting differing `sub` values across proofs creates a cross-subject insertion risk: a proof signed by a legitimate actor for an unrelated subject's delegation could satisfy the structural hop-alignment check when the actor identity at that hop matches.  An attacker who compromises any single actor signing key can deliberately sign proofs naming any subject and any target, and graft them onto a downstream chain whose re-expressed `sub` points at a victim subject.
+Recipients need to be aware that permitting differing `sub` values across proofs creates a cross-subject insertion risk: a proof signed by a legitimate actor for an unrelated subject's delegation could satisfy the structural hop-alignment check when the actor identity at that hop matches.  An attacker who compromises any single actor signing key can deliberately sign proofs naming any subject and any target, and graft them onto a downstream chain whose re-expressed `sub` points at a victim subject.
 
 This profile provides no in-band mechanism for cross-namespace subject reconciliation.
 
 Deployments where subject continuity is a security requirement SHOULD adopt one of the following:
 
-*  require consistent `sub` values across all proofs in the chain, rejecting re-expressed chains; or
+*  require exact, namespace-aware matching of subject identifiers across all proofs (the same `sub` under the same namespace authority; see `sub_iss` in {{identity-claims}}), rejecting re-expressed chains; or
 *  enforce explicit trusted subject-mapping rules that can positively confirm each distinct `sub` value refers to the same underlying entity.
 
-When neither condition is met, the recipient MUST treat the differing `sub` values as unverified subject continuity and MUST NOT rely on those older proofs for authorization decisions.
+When neither condition is met, the recipient MUST treat the differing `sub` values as unverified subject continuity and MUST NOT rely on those older proofs to support authorization that requires subject continuity.
 
 ## Complete Proof Coverage
 
