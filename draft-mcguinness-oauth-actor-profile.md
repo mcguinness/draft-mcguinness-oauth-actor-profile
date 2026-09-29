@@ -1105,7 +1105,7 @@ Actor authorization is conditional under this profile.  When an RS accepts a tok
     *  the actor's `sub_profile` (e.g., only AI agents from a trusted domain are permitted to act as delegatees),
     *  the token's `scope` claim.
 
-    For Transaction Tokens, the RS SHOULD evaluate `req_wl` as supporting context.  If the RS relies on both `req_wl` and `act.sub` to identify the current presenter and cannot reconcile them under local policy, it MUST reject the request.
+    For Transaction Tokens, the RS SHOULD evaluate `req_wl` as supporting context.  An RS that relies on both `req_wl` and `act.sub` to identify the current presenter cannot treat them as distinct identifiers; if it cannot reconcile them under local policy, it MUST reject the request.
 
 4.  **Evaluate combined policy**: Apply resource-specific actor authorization policies (e.g., requiring both principals to have agreed to terms of service).
 
