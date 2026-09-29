@@ -1013,7 +1013,7 @@ The booking tool is the current presenter, identified by `req_wl` and outermost 
 
 The TTS applies the same two presenter-transition modes defined in [Presenter Transition Model](#token-exchange-presenter-model), but only for token-state `subject_token` inputs:
 
-*  **Presenter continuation**: the authenticated requester is the same current presenter as the inbound token.  This mode is available only when the inbound token carries a top-level presenter binding and the TTS validates proof for that binding under {{I-D.ietf-oauth-transaction-tokens}} and the applicable deployment profile.  When the inbound token carries `act`, the authenticated requester MUST correspond to the outermost (`act.iss`, `act.sub`) pair.  In this mode the TTS preserves the inbound `act` chain unchanged and MUST NOT add a new outermost `act`.
+*  **Presenter continuation**: the authenticated requester is the same current presenter as the inbound token.  This mode is available only when the inbound token carries a top-level presenter binding and the TTS validates proof for that binding under {{I-D.ietf-oauth-transaction-tokens}} and the applicable deployment profile.  When the inbound token carries `act`, the authenticated requester corresponds to the outermost (`act.iss`, `act.sub`) pair, as step 5 of [Transaction Token Output Rules](#transaction-token-output-rules) requires.  In this mode the TTS preserves the inbound `act` chain unchanged and MUST NOT add a new outermost `act`.
 *  **Presenter rebind**: a validated `actor_token` direct presenter credential establishes a different current presenter for the issued Transaction Token.  In this mode the TTS creates a new outermost `act` for that presenter and nests any inbound `act` chain beneath it.
 
 A bearer input MAY be upgraded to a sender-constrained Transaction Token through presenter rebind with a validated `actor_token`.
@@ -1038,10 +1038,9 @@ The TTS applies [Delegation Chain Validation and Construction](#delegation-chain
 
 When a TTS receives a token-exchange request to issue or refresh a Transaction Token from an inbound JWT assertion grant, JWT access token, or Transaction Token that carries actor-profile claims, it MUST apply the following rules:
 
-1.  The TTS MUST preserve `sub` from the inbound token to refer to the same underlying subject.
+1.  The TTS preserves `sub` from the inbound token as required by step 2 of [JWT Access Token Output](#jwt-access-token-propagation).
 
-    *  The TTS MAY re-express `sub` in a different identifier namespace only when a trusted local mapping establishes that both identifiers refer to the same underlying subject (for example, when crossing trust-domain boundaries in a federation scenario).
-    *  The TTS MUST NOT replace `sub` with an identifier for a different subject.
+    *  The TTS can re-express `sub` in a different identifier namespace only when a trusted local mapping establishes that both identifiers refer to the same underlying subject (for example, when crossing trust-domain boundaries in a federation scenario).
 
     > Note: Subject-namespace translation requirements and relying-party consequences are described in [Subject Namespace Translation](#subject-namespace-translation).
 
@@ -1049,10 +1048,7 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
 
 3.  The TTS MUST compute the depth of the resulting `act` chain after applying step 6.  If that resulting chain would exceed the limit in [Delegation Chains](#delegation-chains), the TTS MUST reject the request with `invalid_request`.
 
-4.  The TTS MUST validate the inbound token and establish issuer trust before preserving or extending any `act` chain.  For the outermost `act` object in the inbound chain, the TTS MUST:
-
-    *  Verify that the inbound token issuer is trusted under local policy to assert the (`act.iss`, `act.sub`) actor identifier pair, using local trust mechanisms equivalent to [Validate Outermost Actor](#validate-outermost-actor).
-    *  Evaluate the delegation relationship per [Validate Outermost Actor](#validate-outermost-actor), applying the same creation-vs-preservation distinction: MUST evaluate when installing a new outermost actor in presenter-rebind mode; SHOULD evaluate under local policy when preserving an existing chain from a trusted upstream issuer in presenter-continuation mode.
+4.  The TTS validates the inbound token and establishes issuer trust ([Validate Carrier Token](#validate-carrier-token)) before preserving or extending any `act` chain.  For the outermost `act` object in the inbound chain, the TTS applies [Validate Outermost Actor](#validate-outermost-actor), treating presenter rebind as extending the chain and presenter continuation as preserving it.
 
     For inner `act` objects in the inbound chain:
 
@@ -1066,12 +1062,12 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
 
     If the current inputs satisfy neither presenter-continuation nor presenter-rebind requirements, the TTS MUST reject the request with `invalid_grant`.
 
-6.  When the issued Transaction Token carries delegated actor information, the TTS MUST include a top-level `iss` claim identifying itself as the Transaction Token issuer, and it MUST construct the `act` claim using [Delegation Chain Validation and Construction](#delegation-chain-algorithm).  In summary:
+6.  When the issued Transaction Token carries delegated actor information, it includes the top-level `iss` claim required by [Transaction Tokens](#transaction-tokens), identifying the TTS as its issuer, and the TTS MUST construct the `act` claim using [Delegation Chain Validation and Construction](#delegation-chain-algorithm).  In summary:
 
     *  in presenter-continuation mode, preserve the inbound chain unchanged ([Preserve Inbound Chain](#preserve-inbound-chain));
     *  in presenter-rebind mode, create a new outermost `act` object for the new presenter and nest any inbound chain beneath it ([Extend Chain with New Actor](#extend-chain-with-new-actor)).
 
-    For a new outermost actor, the TTS MUST set `act.sub` to the new presenter's identifier, MUST set `act.iss` to the issuer or namespace context for that identifier, and SHOULD set `act.sub_profile` when known.  Inherited `act` objects are not rewritten, as [Extend Chain with New Actor](#extend-chain-with-new-actor) and [Preserve Inbound Chain](#preserve-inbound-chain) require.
+    For a new outermost actor, the TTS sets `act.sub` to the new presenter's identifier and `act.iss` to the issuer or namespace context for that identifier, as in [Extend Chain with New Actor](#extend-chain-with-new-actor), and includes `act.sub_profile` when known, as [Actor Object Structure](#actor-object-structure) recommends.  Inherited `act` objects are not rewritten, as [Extend Chain with New Actor](#extend-chain-with-new-actor) and [Preserve Inbound Chain](#preserve-inbound-chain) require.
 
 7.  When the issued Transaction Token includes a top-level presenter-binding claim such as `cnf`, that binding applies to the current presenter.  The underlying presenter-authentication and proof mechanism is defined by {{I-D.ietf-oauth-transaction-tokens}} and any applicable deployment profile, not by this document.
 
