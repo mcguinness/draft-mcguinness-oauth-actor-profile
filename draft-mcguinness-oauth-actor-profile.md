@@ -884,7 +884,9 @@ Two pre-conditions apply regardless of how the Token Exchange request is structu
 1.  The `subject_token` issuer is trusted under local policy to assert `may_act` on behalf of the subject.
 2.  The canonical `may_act` identifier matches the derived actor identity under Identifier Reconciliation ([Conventions and Definitions](#conventions)).
 
-Because {{RFC8693, Section 4.4}} defines `may_act` with only a `sub` member and no `iss`, the canonical `may_act` identifier is (`subject_token.iss`, `may_act.sub`).  The AS MUST apply configured mapping rules and MUST NOT infer equivalence from naming similarity alone.
+The canonical `may_act` identifier is (`may_act.iss`, `may_act.sub`) when `may_act` carries `iss`, and (`subject_token.iss`, `may_act.sub`) otherwise.  The AS MUST apply configured mapping rules and MUST NOT infer equivalence from naming similarity alone.
+
+If `may_act.iss` is present but is not a valid StringOrURI, the AS MUST NOT use that `may_act` claim to authorize delegation and MUST NOT fall back to `subject_token.iss`.
 
 Actor identity is established as follows:
 
