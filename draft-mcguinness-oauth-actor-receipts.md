@@ -739,7 +739,7 @@ Deployments SHOULD keep receipt `exp` no longer than the delegated-session lifet
 
 Each receipt is a full signed JWT, and the chain grows linearly with delegation depth.  A typical signed receipt is 400 to 800 bytes after JWS compact serialization and base64url encoding (the upper end when `cnf` or larger `act` objects are present).  Chains beyond approximately 10 hops therefore approach the 8 KB Authorization header budget common in HTTP infrastructure; chains beyond approximately 20 hops approach a 16 KB practical ceiling.  Figures are illustrative and depend on the deployment.
 
-The Delegation Depth Limits guidance in the core actor profile {{I-D.mcguinness-oauth-actor-profile}} on token size and introspection applies to the outer token plus its `actor_receipts` array; returning receipts via introspection ({{consumer-introspection}}) instead of embedding them avoids header pressure for bearer-token clients.
+Deployments SHOULD verify that the outer token plus its `actor_receipts` array fits within the header-size budget of every component on the request path; returning receipts via introspection ({{consumer-introspection}}) instead of embedding them avoids header pressure for bearer-token clients.
 
 ## Historical `cnf` Disclosure {#historical-cnf-disclosure}
 

@@ -907,6 +907,7 @@ The AS MUST:
 
 *  Construct the chain per [JWT Access Token Output](#jwt-access-token-propagation).
 *  Set `aud` to the downstream token endpoint, from `resource` or deployment configuration.
+*  Sign the assertion, per {{RFC7523, Section 3}}.
 
 Issuing such a grant is subject to AS configuration and to [Validate Outermost Actor](#validate-outermost-actor).
 

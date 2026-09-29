@@ -410,7 +410,7 @@ However:
 
 Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop should enable proof support at the origin and its actors first.  Resource servers can require full coverage through `actor_proofs_complete_required` or local policy.
 
-When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_proofs` covers only the visible filtered chain.  In that case `actor_proofs_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness evaluate `chain_complete` separately under the core actor profile's introspection rules.
+When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_proofs` covers only the visible filtered chain.  In that case `actor_proofs_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness MUST evaluate `chain_complete` separately.
 
 ## Transaction Token Service Rebinding
 
