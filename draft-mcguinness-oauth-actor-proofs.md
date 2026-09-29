@@ -1081,6 +1081,7 @@ The single proof covers the outermost hop:
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
 * Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, {{RFC8725}} applies except its audience validation, and Strict Mode governs every divergence.
 * Removed the unconditional recommendation for short proof `exp` in favor of the claim's conditional sizing rule.
+* Aligned subject-continuity handling and the introspection partial-coverage flag with Receipts.
 
 -00
 
