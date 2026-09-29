@@ -1206,11 +1206,11 @@ The following errors apply to both AS and TTS endpoints:
 | Error | Condition |
 |-------|-----------|
 | `invalid_request` | Invalid actor structure, missing required claim, or excessive chain depth |
-| `invalid_grant` | Invalid credential, untrusted issuer, or failed actor validation; at the AS, a proof-of-possession check that cannot be confirmed |
-| `invalid_scope` | No effective scope remains for reasons unrelated to actor authorization |
+| `invalid_grant` | Invalid credential, untrusted issuer, failed actor validation, or failed presenter proof |
+| `invalid_scope` | No effective scope remains for reasons other than categorical actor denial |
 | `actor_unauthorized` | Actor policy prohibits the request, rejects the actor type, or cannot confirm the required delegation relationship |
 
-Missing required claims include `act.sub`, `act.iss`, the top-level `cnf.jkt` of a DPoP-bound JWT assertion grant, and top-level `iss` on a delegated Transaction Token.  TTS failures to preserve the subject or validate inbound actor information also use `invalid_grant`.
+Missing required claims include `act.sub`, `act.iss`, the binding claim of a sender-constrained JWT assertion grant, and top-level `iss` on a delegated Transaction Token.  TTS failures to preserve the subject or validate inbound actor information also use `invalid_grant`.  Mechanism-specific proof errors, such as `invalid_dpop_proof`, follow the applicable processing section.
 
 The `error_description` field SHOULD be included and SHOULD describe which aspect of actor-profile processing failed, to the extent permitted by the server's security and privacy policy.  Some `actor_unauthorized` failures are recoverable by using a different actor credential, actor type, or delegation grant; others are definitive local-policy prohibitions.
 
