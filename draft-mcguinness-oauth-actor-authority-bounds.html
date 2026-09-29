@@ -1583,7 +1583,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-6.3-3.3.1">an empty array is the empty set and is within every resource set.<a href="#section-6.3-3.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-6.3-4">URI prefix subsumption (for example, treating <code>https://api.example.com/v1/</code> as covering <code>https://api.example.com/v1/users</code>) is NOT applied.  Issuers wishing to express prefix relationships <span class="bcp14">MUST</span> emit explicit URIs at each hop.<a href="#section-6.3-4" class="pilcrow">¶</a></p>
+<p id="section-6.3-4">URI prefix subsumption (for example, treating <code>https://api.travel-provider.example/v1/</code> as covering <code>https://api.travel-provider.example/v1/users</code>) is NOT applied.  Issuers wishing to express prefix relationships <span class="bcp14">MUST</span> emit explicit URIs at each hop.<a href="#section-6.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="rar-dimension">
@@ -2812,11 +2812,11 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
   "scope": "trips:book",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -2837,7 +2837,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
   "iss": "https://as.enterprise.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://agents.example.com/travel-assistant",
+    "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
     "sub_profile": "ai_agent"
   },
@@ -2862,7 +2862,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
   "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service"
   },

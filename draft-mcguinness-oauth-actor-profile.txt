@@ -593,11 +593,11 @@ Table of Contents
      "sub": "https://idp.enterprise.example/users/alice",
      "sub_profile": "user",
      "act": {
-       "sub": "https://tools.example.com/booking-tool",
+       "sub": "https://tools.travel-provider.example/booking-tool",
        "iss": "https://as.travel-provider.example",
        "sub_profile": "service",
        "act": {
-         "sub": "https://agents.example.com/travel-assistant",
+         "sub": "https://agents.enterprise.example/travel-assistant",
          "iss": "https://as.enterprise.example",
          "sub_profile": "ai_agent"
        }
@@ -962,7 +962,7 @@ Table of Contents
    {
      "iss": "https://as.enterprise.example",
      "sub": "https://idp.enterprise.example/users/alice",
-     "aud": "https://as.resource-domain.example/token",
+     "aud": "https://as.travel-provider.example/token",
      "jti": "a1b2c3d4-...",
      "exp": 1711820400,
      "iat": 1711816800,
@@ -1229,11 +1229,11 @@ Table of Contents
    claims:
 
    {
-     "iss": "https://as.resource-domain.example",
+     "iss": "https://as.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
      "client_id": "travel-assistant-client-id",
-     "azp": "https://agents.example.com/travel-assistant",
-     "aud": "https://api.resource-domain.example",
+     "azp": "https://agents.enterprise.example/travel-assistant",
+     "aud": "https://api.travel-provider.example",
      "jti": "xyz987",
      "exp": 1711820400,
      "iat": 1711816800,
@@ -1243,7 +1243,7 @@ Table of Contents
        "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ"
      },
      "act": {
-       "sub": "https://agents.example.com/travel-assistant",
+       "sub": "https://agents.enterprise.example/travel-assistant",
        "iss": "https://as.enterprise.example",
        "sub_profile": "ai_agent"
      }
@@ -2088,11 +2088,11 @@ Table of Contents
    The following example shows a Transaction Token after two hops:
 
    {
-     "iss": "https://tts.enterprise.example",
+     "iss": "https://tts.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
      "sub_profile": "user",
      "scope": "inventory:check",
-     "req_wl": "https://tools.example.com/booking-tool",
+     "req_wl": "https://tools.travel-provider.example/booking-tool",
      "aud": "https://api.travel-provider.example",
      "txn": "550e8400-e29b-41d4-a716-446655440000",
      "exp": 1711816900,
@@ -2107,11 +2107,11 @@ Table of Contents
        "jkt": "0ZcOCORZNYy9ZhHiZN..."
      },
      "act": {
-       "sub": "https://tools.example.com/booking-tool",
+       "sub": "https://tools.travel-provider.example/booking-tool",
        "iss": "https://as.travel-provider.example",
        "sub_profile": "service",
        "act": {
-         "sub": "https://agents.example.com/travel-assistant",
+         "sub": "https://agents.enterprise.example/travel-assistant",
          "iss": "https://as.enterprise.example",
          "sub_profile": "ai_agent"
        }
@@ -3026,13 +3026,13 @@ Table of Contents
    identify the acting party.  The explicit form adds an act block:
 
    {
-     "iss": "https://as.example.com",
-     "sub": "https://idp.example.com/users/alice",
+     "iss": "https://as.enterprise.example",
+     "sub": "https://idp.enterprise.example/users/alice",
      "client_id": "travel-assistant-client-id",
      "azp": "travel-assistant-client-id",
      "act": {
-       "sub": "https://agents.example.com/travel-assistant",
-       "iss": "https://as.example.com",
+       "sub": "https://agents.enterprise.example/travel-assistant",
+       "iss": "https://as.enterprise.example",
        "sub_profile": "ai_agent"
      },
      "scope": "booking:create"
@@ -3047,8 +3047,8 @@ Table of Contents
    parties:
 
    {
-     "iss": "https://as.example.com",
-     "sub": "https://idp.example.com/users/alice",
+     "iss": "https://as.enterprise.example",
+     "sub": "https://idp.enterprise.example/users/alice",
      "client_id": "travel-assistant-client-id",
      "act": {
        "sub": "https://agents.other-provider.example/concierge-bot",
@@ -4356,6 +4356,9 @@ Document History
 
    *  Unrecognized but syntactically valid values in a carried-forward
       top-level sub_profile are preserved.
+
+   *  Used one set of example identifiers for the travel scenario,
+      matching the cross-domain example's parties.
 
    -00
 

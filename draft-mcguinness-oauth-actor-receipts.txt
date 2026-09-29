@@ -2228,11 +2228,11 @@ A.1.  Example: Two-Hop Delegation Chain
      "iss": "https://as.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
-       "sub": "https://tools.example.com/booking-tool",
+       "sub": "https://tools.travel-provider.example/booking-tool",
        "iss": "https://as.travel-provider.example",
        "sub_profile": "service",
        "act": {
-         "sub": "https://agents.example.com/travel-assistant",
+         "sub": "https://agents.enterprise.example/travel-assistant",
          "iss": "https://as.enterprise.example",
          "sub_profile": "ai_agent"
        }
@@ -2255,7 +2255,7 @@ A.1.  Example: Two-Hop Delegation Chain
      "iss": "https://as.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
-       "sub": "https://tools.example.com/booking-tool",
+       "sub": "https://tools.travel-provider.example/booking-tool",
        "iss": "https://as.travel-provider.example",
        "sub_profile": "service"
      },
@@ -2277,7 +2277,7 @@ A.1.  Example: Two-Hop Delegation Chain
      "sub": "https://idp.enterprise.example/users/alice",
      "sub_iss": "https://idp.enterprise.example",
      "act": {
-       "sub": "https://agents.example.com/travel-assistant",
+       "sub": "https://agents.enterprise.example/travel-assistant",
        "iss": "https://as.enterprise.example",
        "sub_profile": "ai_agent"
      },
@@ -2316,11 +2316,11 @@ A.2.  Example: Transaction Token Service Rebinding
        "iss": "https://tts.travel-provider.example",
        "sub_profile": "service",
        "act": {
-         "sub": "https://tools.example.com/booking-tool",
+         "sub": "https://tools.travel-provider.example/booking-tool",
          "iss": "https://as.travel-provider.example",
          "sub_profile": "service",
          "act": {
-           "sub": "https://agents.example.com/travel-assistant",
+           "sub": "https://agents.enterprise.example/travel-assistant",
            "iss": "https://as.enterprise.example",
            "sub_profile": "ai_agent"
          }
@@ -2377,11 +2377,11 @@ A.3.  Example: Partial Receipt Coverage
      "iss": "https://as.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
-       "sub": "https://tools.example.com/booking-tool",
+       "sub": "https://tools.travel-provider.example/booking-tool",
        "iss": "https://as.travel-provider.example",
        "sub_profile": "service",
        "act": {
-         "sub": "https://agents.example.com/travel-assistant",
+         "sub": "https://agents.enterprise.example/travel-assistant",
          "iss": "https://as.enterprise.example",
          "sub_profile": "ai_agent"
        }
@@ -2401,7 +2401,7 @@ A.3.  Example: Partial Receipt Coverage
      "iss": "https://as.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
-       "sub": "https://tools.example.com/booking-tool",
+       "sub": "https://tools.travel-provider.example/booking-tool",
        "iss": "https://as.travel-provider.example",
        "sub_profile": "service"
      },
@@ -2441,11 +2441,11 @@ A.4.  Example: Reissuance Without a New Actor Hop
      "iss": "https://introspection.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
-       "sub": "https://tools.example.com/booking-tool",
+       "sub": "https://tools.travel-provider.example/booking-tool",
        "iss": "https://as.travel-provider.example",
        "sub_profile": "service",
        "act": {
-         "sub": "https://agents.example.com/travel-assistant",
+         "sub": "https://agents.enterprise.example/travel-assistant",
          "iss": "https://as.enterprise.example",
          "sub_profile": "ai_agent"
        }
@@ -2514,6 +2514,9 @@ Document History
    *  A recipient that requires instance binding rejects any chain not
       bound by a matching leading origin_jti, and the completeness
       assurances share one home.
+
+   *  Used the base profile's example identifiers for the travel
+      assistant and booking tool.
 
    -00
 

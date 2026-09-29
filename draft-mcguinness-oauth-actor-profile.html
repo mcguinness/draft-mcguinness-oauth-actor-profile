@@ -1877,11 +1877,11 @@ act-object = {
   "sub": "https://idp.enterprise.example/users/alice",
   "sub_profile": "user",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -2196,7 +2196,7 @@ PreserveChain(inbound_chain):
 {
   "iss": "https://as.enterprise.example",
   "sub": "https://idp.enterprise.example/users/alice",
-  "aud": "https://as.resource-domain.example/token",
+  "aud": "https://as.travel-provider.example/token",
   "jti": "a1b2c3d4-...",
   "exp": 1711820400,
   "iat": 1711816800,
@@ -2430,11 +2430,11 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-5.1-6">
 <pre>
 {
-  "iss": "https://as.resource-domain.example",
+  "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "client_id": "travel-assistant-client-id",
-  "azp": "https://agents.example.com/travel-assistant",
-  "aud": "https://api.resource-domain.example",
+  "azp": "https://agents.enterprise.example/travel-assistant",
+  "aud": "https://api.travel-provider.example",
   "jti": "xyz987",
   "exp": 1711820400,
   "iat": 1711816800,
@@ -2444,7 +2444,7 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
     "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ"
   },
   "act": {
-    "sub": "https://agents.example.com/travel-assistant",
+    "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
     "sub_profile": "ai_agent"
   }
@@ -3093,11 +3093,11 @@ If the AS also restricts scope using the (<code>sub</code>, <code>act.sub</code>
 <div class="lang-json sourcecode" id="section-7.1.1-6">
 <pre>
 {
-  "iss": "https://tts.enterprise.example",
+  "iss": "https://tts.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "sub_profile": "user",
   "scope": "inventory:check",
-  "req_wl": "https://tools.example.com/booking-tool",
+  "req_wl": "https://tools.travel-provider.example/booking-tool",
   "aud": "https://api.travel-provider.example",
   "txn": "550e8400-e29b-41d4-a716-446655440000",
   "exp": 1711816900,
@@ -3112,11 +3112,11 @@ If the AS also restricts scope using the (<code>sub</code>, <code>act.sub</code>
     "jkt": "0ZcOCORZNYy9ZhHiZN..."
   },
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -3828,13 +3828,13 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <div class="lang-json sourcecode" id="section-12.1.2-5">
 <pre>
 {
-  "iss": "https://as.example.com",
-  "sub": "https://idp.example.com/users/alice",
+  "iss": "https://as.enterprise.example",
+  "sub": "https://idp.enterprise.example/users/alice",
   "client_id": "travel-assistant-client-id",
   "azp": "travel-assistant-client-id",
   "act": {
-    "sub": "https://agents.example.com/travel-assistant",
-    "iss": "https://as.example.com",
+    "sub": "https://agents.enterprise.example/travel-assistant",
+    "iss": "https://as.enterprise.example",
     "sub_profile": "ai_agent"
   },
   "scope": "booking:create"
@@ -3846,8 +3846,8 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <div class="lang-json sourcecode" id="section-12.1.2-8">
 <pre>
 {
-  "iss": "https://as.example.com",
-  "sub": "https://idp.example.com/users/alice",
+  "iss": "https://as.enterprise.example",
+  "sub": "https://idp.enterprise.example/users/alice",
   "client_id": "travel-assistant-client-id",
   "act": {
     "sub": "https://agents.other-provider.example/concierge-bot",
@@ -5131,6 +5131,9 @@ Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
 </li>
         <li class="normal" id="appendix-D-3.15">
           <p id="appendix-D-3.15.1">Unrecognized but syntactically valid values in a carried-forward top-level <code>sub_profile</code> are preserved.<a href="#appendix-D-3.15.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-D-3.16">
+          <p id="appendix-D-3.16.1">Used one set of example identifiers for the travel scenario, matching the cross-domain example's parties.<a href="#appendix-D-3.16.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-D-4">-00<a href="#appendix-D-4" class="pilcrow">¶</a></p>

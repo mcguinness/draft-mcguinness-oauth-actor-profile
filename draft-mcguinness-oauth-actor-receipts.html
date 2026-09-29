@@ -3252,11 +3252,11 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
   "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -3279,7 +3279,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
   "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service"
   },
@@ -3302,7 +3302,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
   "sub": "https://idp.enterprise.example/users/alice",
   "sub_iss": "https://idp.enterprise.example",
   "act": {
-    "sub": "https://agents.example.com/travel-assistant",
+    "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
     "sub_profile": "ai_agent"
   },
@@ -3337,11 +3337,11 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
     "iss": "https://tts.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://tools.example.com/booking-tool",
+      "sub": "https://tools.travel-provider.example/booking-tool",
       "iss": "https://as.travel-provider.example",
       "sub_profile": "service",
       "act": {
-        "sub": "https://agents.example.com/travel-assistant",
+        "sub": "https://agents.enterprise.example/travel-assistant",
         "iss": "https://as.enterprise.example",
         "sub_profile": "ai_agent"
       }
@@ -3398,11 +3398,11 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
   "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -3424,7 +3424,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
   "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service"
   },
@@ -3455,11 +3455,11 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
   "iss": "https://introspection.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -3520,6 +3520,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         <li class="normal" id="appendix-B-3.8">
           <p id="appendix-B-3.8.1">A recipient that requires instance binding rejects any chain not bound by a matching leading <code>origin_jti</code>, and the completeness assurances share one home.<a href="#appendix-B-3.8.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.9">
+          <p id="appendix-B-3.9.1">Used the base profile's example identifiers for the travel assistant and booking tool.<a href="#appendix-B-3.9.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-B-4">-00<a href="#appendix-B-4" class="pilcrow">¶</a></p>

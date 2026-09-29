@@ -2230,11 +2230,11 @@ A.1.  Example: Two-Hop Delegation Chain with Sibling Receipts
      "aud": "https://api.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
-       "sub": "https://tools.example.com/booking-tool",
+       "sub": "https://tools.travel-provider.example/booking-tool",
        "iss": "https://as.travel-provider.example",
        "sub_profile": "service",
        "act": {
-         "sub": "https://agents.example.com/travel-assistant",
+         "sub": "https://agents.enterprise.example/travel-assistant",
          "iss": "https://as.enterprise.example",
          "sub_profile": "ai_agent"
        }
@@ -2259,10 +2259,10 @@ A.1.  Example: Two-Hop Delegation Chain with Sibling Receipts
    token:
 
    {
-     "iss": "https://tools.example.com/booking-tool",
+     "iss": "https://tools.travel-provider.example/booking-tool",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
-       "sub": "https://tools.example.com/booking-tool",
+       "sub": "https://tools.travel-provider.example/booking-tool",
        "iss": "https://as.travel-provider.example",
        "sub_profile": "service"
      },
@@ -2279,11 +2279,11 @@ A.1.  Example: Two-Hop Delegation Chain with Sibling Receipts
    enterprise AS added it as the first actor hop:
 
    {
-     "iss": "https://agents.example.com/travel-assistant",
+     "iss": "https://agents.enterprise.example/travel-assistant",
      "sub": "https://idp.enterprise.example/users/alice",
      "sub_iss": "https://idp.enterprise.example",
      "act": {
-       "sub": "https://agents.example.com/travel-assistant",
+       "sub": "https://agents.enterprise.example/travel-assistant",
        "iss": "https://as.enterprise.example",
        "sub_profile": "ai_agent"
      },
@@ -2308,7 +2308,7 @@ A.1.  Example: Two-Hop Delegation Chain with Sibling Receipts
      "iss": "https://as.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
-       "sub": "https://tools.example.com/booking-tool",
+       "sub": "https://tools.travel-provider.example/booking-tool",
        "iss": "https://as.travel-provider.example",
        "sub_profile": "service"
      },
@@ -2353,11 +2353,11 @@ A.2.  Example: Proofs-Only Partial Coverage
      "aud": "https://api.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
-       "sub": "https://tools.example.com/booking-tool",
+       "sub": "https://tools.travel-provider.example/booking-tool",
        "iss": "https://as.travel-provider.example",
        "sub_profile": "service",
        "act": {
-         "sub": "https://agents.example.com/travel-assistant",
+         "sub": "https://agents.enterprise.example/travel-assistant",
          "iss": "https://as.enterprise.example",
          "sub_profile": "ai_agent"
        }
@@ -2374,10 +2374,10 @@ A.2.  Example: Proofs-Only Partial Coverage
    The single proof covers the outermost hop:
 
    {
-     "iss": "https://tools.example.com/booking-tool",
+     "iss": "https://tools.travel-provider.example/booking-tool",
      "sub": "https://idp.enterprise.example/users/alice",
      "act": {
-       "sub": "https://tools.example.com/booking-tool",
+       "sub": "https://tools.travel-provider.example/booking-tool",
        "iss": "https://as.travel-provider.example",
        "sub_profile": "service"
      },
@@ -2436,6 +2436,9 @@ Document History
 
    *  Aligned subject-continuity handling and the introspection partial-
       coverage flag with Receipts.
+
+   *  Used the base profile's example identifiers for the travel
+      assistant and booking tool.
 
    -00
 
