@@ -370,7 +370,7 @@ When an issuer adds a new outermost actor hop and also preserves an inbound `act
 6.  MUST prepend the new proof to the inherited array.
 7.  MUST preserve `actor_proofs_complete: true` when the inbound attestation is valid and the new proof covers the added hop.  Otherwise, the issuer MUST NOT set it to `true` and SHOULD set it to `false`.  This is narrower than the general rule in {{actor-proofs-claim}} because an extending issuer establishes completeness of the inherited hops only through a valid inbound attestation; without one, it does not claim complete coverage even when the proof count equals the visible depth.
 
-An issuer MUST NOT reserialize, resign, normalize, trim, or otherwise alter a prior proof.
+Byte-for-byte preservation ({{proof-chain-linkage}}) rules out reserializing, re-signing, normalizing, trimming, or otherwise altering a prior proof.
 
 The actor must know the newest inbound proof's exact serialization, or its hash and `prh_alg`, before signing.  For JWT inputs it can read `actor_proofs[0]`.  For opaque inputs, the deployment MUST supply that information.  If unavailable, the issuer MUST NOT accept a proof without `prh` as a chain extension; it MAY instead start a new chain under {{accepting-a-proof}} where local policy permits partial coverage ({{partial-coverage-and-full-coverage}}).
 
