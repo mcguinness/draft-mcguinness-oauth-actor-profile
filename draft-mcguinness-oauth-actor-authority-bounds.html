@@ -1369,9 +1369,20 @@ svg {
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">The OAuth Actor Profile <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span> identifies delegated actors.  Actor Receipts <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span> attest issuer participation, and Actor Proofs <span>[<a href="#ACTOR-PROOFS" class="cite xref">ACTOR-PROOFS</a>]</span> attest actor participation and target consent.  These artifacts do not record all authority changes across the chain, so a recipient can verify the hops without detecting an intermediate expansion of authority.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">This profile records authority in signed receipt claims.  Recipients compare those values across hops and against the current token.  Expansion requires an explicit re-authorization, recorded either in a new receipt or in a signed event between hops.<a href="#section-1-2" class="pilcrow">¶</a></p>
-<p id="section-1-3">The profile uses the existing <code>act</code> and <code>actor_receipts</code> structures, adding bounds claims, an event array, issuer self-attestation, and discovery metadata.  Deployments opt in per resource or trust domain.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-1">The OAuth Actor Profile <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span> identifies delegated actors.  Actor Receipts <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span> attest issuer participation, and Actor Proofs <span>[<a href="#ACTOR-PROOFS" class="cite xref">ACTOR-PROOFS</a>]</span> attest actor participation and target consent.  OAuth 2.0 Token Exchange <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> does not define a record of authority changes across hops, and these profiles do not add one.  Actor Receipts lists historical authority as a non-goal.  An actor proof binds only the target its actor authorized at one hop.  A recipient can therefore verify who participated at every hop without detecting that an intermediate issuer widened the authority flowing through the chain.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">This document defines OAuth Actor Chain Authority Bounds, an optional companion profile that closes that gap for deployments that use actor receipts.  Receipt claims record the authority in effect at each hop; recipients compare those values across hops and against the current token, and expansion requires an explicit re-authorization, recorded either in a new receipt or in a signed event between hops.  The design center is:<a href="#section-1-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1-3.1">
+          <p id="section-1-3.1.1">keep the visible actor chain in <code>act</code> and per-hop provenance in <code>actor_receipts</code>;<a href="#section-1-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-3.2">
+          <p id="section-1-3.2.1">carry per-hop authority as receipt claims, so it inherits the receipt issuer's signature and the chain's integrity;<a href="#section-1-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-3.3">
+          <p id="section-1-3.3.1">make authority expansion an explicit, signed, auditable event rather than a silent change.<a href="#section-1-3.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-1-4">The profile adds bounds claims, an event array, issuer self-attestation, and discovery metadata; deployments opt in per resource or trust domain.<a href="#section-1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conventions-and-definitions">
