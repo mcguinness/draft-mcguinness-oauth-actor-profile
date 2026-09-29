@@ -689,7 +689,7 @@ JWT assertion grants, JWT access tokens, and Transaction Tokens are token-state 
 *  `sub_profile`, if present and trusted, becomes inbound supporting subject state;
 *  `act`, if present, becomes inbound delegation-chain state for [JWT Access Token Output](#jwt-access-token-propagation) or [Transaction Token Output Rules](#transaction-token-output-rules);
 *  top-level `cnf`, if present, makes the input eligible for presenter continuation under [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation);
-*  if top-level `cnf` is absent, the token still MAY be used in presenter-rebind mode for bearer-to-PoP upgrade.
+*  if top-level `cnf` is absent, the token can still be used in presenter-rebind mode for bearer-to-PoP upgrade.
 
 #### JWT Assertion Grant {#jwt-assertion-grant-as-subject-token}
 
@@ -707,7 +707,7 @@ When a Token Exchange request ({{RFC8693}}) presents a JWT access token as the `
 
 2.  The AS MUST verify that the inbound token's `iss` is trusted under local policy to assert the delegation chain it carries.  If not, the AS MUST reject the request with `invalid_grant`.
 
-3.  The AS MUST apply the continuation or rebind rules in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).  Without top-level `cnf`, the input MAY be used for presenter rebind.
+3.  The AS MUST apply the continuation or rebind rules in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).  Without top-level `cnf`, the input can still be used for presenter rebind.
 
 4.  The AS MUST extract `sub`, `sub_profile` (if present), and `act` (if present) from the validated token as the inbound delegation state for [JWT Access Token Output](#jwt-access-token-propagation).
 
@@ -727,7 +727,7 @@ When a Token Exchange request ({{RFC8693}}) presents a Transaction Token as the 
 
 2.  The AS MUST verify that the Transaction Token issuer identified in step 1 is trusted under local policy.  If not, the AS MUST reject the request with `invalid_grant`.
 
-3.  The AS MUST apply [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation), using the mechanism defined by {{I-D.ietf-oauth-transaction-tokens}} and the deployment profile.  Without a top-level presenter binding, the token MAY still be used for presenter rebind.
+3.  The AS MUST apply [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation), using the mechanism defined by {{I-D.ietf-oauth-transaction-tokens}} and the deployment profile.  Without a top-level presenter binding, the token can still be used for presenter rebind.
 
 4.  The AS MUST extract `sub`, `sub_profile` (if present), and `act` (if present) from the validated Transaction Token as the inbound delegation state for [JWT Access Token Output](#jwt-access-token-propagation).
 
@@ -1016,7 +1016,7 @@ The TTS applies the same two presenter-transition modes defined in [Presenter Tr
 *  **Presenter continuation**: the authenticated requester is the same current presenter as the inbound token.  This mode is available only when the inbound token carries a top-level presenter binding and the TTS validates proof for that binding under {{I-D.ietf-oauth-transaction-tokens}} and the applicable deployment profile.  When the inbound token carries `act`, the authenticated requester corresponds to the outermost (`act.iss`, `act.sub`) pair, as step 5 of [Transaction Token Output Rules](#transaction-token-output-rules) requires.  In this mode the TTS preserves the inbound `act` chain unchanged and MUST NOT add a new outermost `act`.
 *  **Presenter rebind**: a validated `actor_token` direct presenter credential establishes a different current presenter for the issued Transaction Token.  In this mode the TTS creates a new outermost `act` for that presenter and nests any inbound `act` chain beneath it.
 
-A bearer input MAY be upgraded to a sender-constrained Transaction Token through presenter rebind with a validated `actor_token`.
+A bearer input can be upgraded to a sender-constrained Transaction Token through presenter rebind with a validated `actor_token`, as in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).
 
 ## Supported Subject Tokens
 
