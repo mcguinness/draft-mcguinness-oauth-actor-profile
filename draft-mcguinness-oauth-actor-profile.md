@@ -500,7 +500,7 @@ This document defines two issuer patterns:
 *  an AS-issued delegated assertion, where JWT `iss` is a trusted AS and `act.sub` identifies the actor (recommended);
 *  an assertion carrying a pre-existing nested `act` chain, where the current JWT `iss` is a trusted AS carrying forward prior actor assertions.
 
-The issuing AS MUST set a new actor's `act.iss` to the issuer or namespace context in which that actor's `act.sub` is interpreted; for actors registered in the AS's own namespace, this is often the AS's own issuer URI.
+The issuing AS sets a new actor's `act.iss` to the issuer or namespace context in which that actor's `act.sub` is interpreted, as required by [Actor Object Structure](#actor-object-structure); for actors registered in the AS's own namespace, this is often the AS's own issuer URI.
 
 A deployment MAY additionally accept a self-issued actor assertion when explicitly enabled by another specification or local policy, but that behavior is outside the scope of this document.  Implementations MUST reject self-issued assertion grants by default; see [Self-Issued Authorization Grants](#security-self-issued-grants) for the security controls any such deployment MUST independently establish.
 
@@ -762,7 +762,7 @@ When a Token Exchange request ({{RFC8693}}) presents an ID token as the `subject
 
 3.  The AS SHOULD set `sub_profile` to `user` in the issued token if it can authoritatively classify the ID token's `sub` as a human user identity and no conflicting subject classification is available under local policy.
 
-4.  The ID token is an identity-only `subject_token` for [Presenter Transition Model](#token-exchange-presenter-model).  It does not establish actor identity or presenter continuity.  If an `actor_token` is present, the AS MUST process it per its type-specific rules and MUST use the derived actor identity as `act.sub`.  If the issued token is sender-constrained, that `actor_token` also establishes the new presenter for presenter-rebind mode.  If no `actor_token` or independent delegation basis is present, the AS MUST NOT include `act` in the issued token.
+4.  The ID token is an identity-only `subject_token` for [Presenter Transition Model](#token-exchange-presenter-model).  It does not establish actor identity or presenter continuity.  If an `actor_token` is present, the AS processes it per its type-specific rules and derives `act.sub` from it as specified in [Actor Tokens](#actor-tokens).  If the issued token is sender-constrained, that `actor_token` also establishes the new presenter for presenter-rebind mode.  If no `actor_token` or independent delegation basis is present, the AS MUST NOT include `act` in the issued token.
 
 5.  The AS MUST apply the propagation rules in [JWT Access Token Output](#jwt-access-token-propagation) to determine the remaining claims in the issued token.  Because an ID token carries no inbound `act` chain and no OAuth scope ceiling, delegation-chain construction and scope determination come from the `actor_token` (if any), {{RFC8693}}, and local policy rather than from the ID token itself.
 
@@ -772,7 +772,7 @@ When a Token Exchange request ({{RFC8693}}) presents an ID token as the `subject
 
 A refresh token authorizes a client to obtain new access tokens.  For this profile, the AS obtains its subject, scope, and authorization state from trusted server state, rather than extracting actor claims from the token.
 
-A refresh token MAY be used as `subject_token` when the AS can validate its state directly or through a trusted back-channel to its issuer.  It MUST NOT be treated as a portable cross-domain delegation artifact or used as `actor_token`.  The actor MUST be established by a separate `actor_token` or an independent delegation basis.
+A refresh token MAY be used as `subject_token` when the AS can validate its state directly or through a trusted back-channel to its issuer.  It MUST NOT be treated as a portable cross-domain delegation artifact or used as `actor_token`.  The actor comes from a separate `actor_token` or an independent delegation basis, as required by step 4 of [Refresh Token Processing](#refresh-token-as-subject-token).
 
 Client binding, cross-client presentation, and cross-AS acceptance policies remain deployment-specific.  Cross-AS presentation without trusted validation is outside this profile's scope.
 
@@ -786,7 +786,7 @@ When a Token Exchange request ({{RFC8693}}) presents a refresh token as the `sub
 
 3.  The AS MUST extract the subject identity and authorized scope associated with the refresh token from its token store or other trusted refresh-token state.  The `sub` of the user associated with the refresh token becomes `sub` in the issued token.  The AS SHOULD set `sub_profile` in the issued token if it can authoritatively classify the subject entity type.
 
-4.  The AS MUST establish the actor from `actor_token` or an independent delegation basis; otherwise, it MUST omit `act`.  If `actor_token` is present, the AS MUST process it under its type-specific rules and use the derived identity as the outermost actor.  That credential also establishes the new presenter for a sender-constrained output.  The refresh token supplies no actor identity or presenter continuity.
+4.  The AS MUST establish the actor from `actor_token` or an independent delegation basis; otherwise, it MUST omit `act`.  If `actor_token` is present, the AS processes it under its type-specific rules and derives the outermost actor from it as specified in [Actor Tokens](#actor-tokens).  That credential also establishes the new presenter for a sender-constrained output.  The refresh token supplies no actor identity or presenter continuity.
 
 5.  The effective scope of the issued token MUST be a subset of the scope authorized by the refresh token.  The AS can further reduce scope under local policy.
 
