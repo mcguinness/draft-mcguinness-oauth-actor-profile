@@ -499,7 +499,7 @@ This profile composes with the extensibility framework of {{ACTOR-RECEIPTS}} and
 *  **Per-type RAR refinement rules**, defined by the specifications that define RAR types; such rules extend {{rar-dimension}} for their types without modifying this document.
 *  **New event types** are NOT added to `bounds_events`; companion profiles defining other non-hop events use their own parallel arrays per the receipts companion's pattern, so that each array has one verification routine and one completeness attestation.
 
-Companion rules MUST NOT relax any rejection condition in {{consumer-processing}}; they MAY add rejection conditions.  Companion claims and metadata MUST be registered in the registries used by this document.
+Companion rules MUST NOT relax any rejection condition in {{consumer-processing}}; they MAY add rejection conditions.
 
 # Security Considerations
 
