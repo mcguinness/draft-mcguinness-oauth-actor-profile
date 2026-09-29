@@ -2327,14 +2327,14 @@ Table of Contents
    token were non-delegated.  Whether or not it requires actor
    authorization, the RS SHOULD evaluate the (sub, outermost act.sub)
    pair according to local policy for authorization, audit, or trust
-   decisions, and enforcing that evaluation on every request is
-   RECOMMENDED for security-sensitive delegated access.  When local
-   policy requires actor authorization, enforcement is mandatory: step 5
-   below rejects a request for which it cannot be completed.  Resource
-   servers that receive delegated tokens should define and document
-   their actor authorization policy.  The following steps describe one
-   approach for resource servers that choose to enforce actor
-   authorization policy:
+   decisions.  For security-sensitive delegated access, the RS SHOULD
+   enforce authorization of the (sub, outermost act.sub) pair on every
+   request.  When local policy requires actor authorization, enforcement
+   is mandatory: step 5 below rejects a request for which it cannot be
+   completed.  Resource servers that receive delegated tokens should
+   define and document their actor authorization policy.  The following
+   steps describe one approach for resource servers that choose to
+   enforce actor authorization policy:
 
    1.  *Advertise delegated-token requirements*: An RS that wants to
        signal that delegated requests are expected to carry actor-
