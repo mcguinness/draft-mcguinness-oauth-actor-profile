@@ -477,7 +477,7 @@ The following example shows an AS-issued assertion grant, which is the recommend
 {
   "iss": "https://as.enterprise.example",
   "sub": "https://idp.enterprise.example/users/alice",
-  "aud": "https://as.resource-domain.example/token",
+  "aud": "https://as.travel-provider.example/token",
   "jti": "a1b2c3d4-...",
   "exp": 1711820400,
   "iat": 1711816800,
@@ -604,11 +604,11 @@ The following example shows a JWT access token with actor profile claims:
 
 ~~~json
 {
-  "iss": "https://as.resource-domain.example",
+  "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "client_id": "travel-assistant-client-id",
   "azp": "https://agents.enterprise.example/travel-assistant",
-  "aud": "https://api.resource-domain.example",
+  "aud": "https://api.travel-provider.example",
   "jti": "xyz987",
   "exp": 1711820400,
   "iat": 1711816800,
@@ -977,7 +977,7 @@ The following example shows a Transaction Token after two hops:
 
 ~~~json
 {
-  "iss": "https://tts.enterprise.example",
+  "iss": "https://tts.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "sub_profile": "user",
   "scope": "inventory:check",
@@ -1400,13 +1400,13 @@ The legacy form carries only `client_id` (and optionally `azp`) to identify the 
 
 ~~~json
 {
-  "iss": "https://as.example.com",
-  "sub": "https://idp.example.com/users/alice",
+  "iss": "https://as.enterprise.example",
+  "sub": "https://idp.enterprise.example/users/alice",
   "client_id": "travel-assistant-client-id",
   "azp": "travel-assistant-client-id",
   "act": {
     "sub": "https://agents.enterprise.example/travel-assistant",
-    "iss": "https://as.example.com",
+    "iss": "https://as.enterprise.example",
     "sub_profile": "ai_agent"
   },
   "scope": "booking:create"
@@ -1419,8 +1419,8 @@ Mismatch example, where the client and actor identify different parties:
 
 ~~~json
 {
-  "iss": "https://as.example.com",
-  "sub": "https://idp.example.com/users/alice",
+  "iss": "https://as.enterprise.example",
+  "sub": "https://idp.enterprise.example/users/alice",
   "client_id": "travel-assistant-client-id",
   "act": {
     "sub": "https://agents.other-provider.example/concierge-bot",
