@@ -288,11 +288,11 @@ This document uses the following terminology consistently:
   "sub": "https://idp.enterprise.example/users/alice",
   "sub_profile": "user",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -477,7 +477,7 @@ The following example shows an AS-issued assertion grant, which is the recommend
 {
   "iss": "https://as.enterprise.example",
   "sub": "https://idp.enterprise.example/users/alice",
-  "aud": "https://as.resource-domain.example/token",
+  "aud": "https://as.travel-provider.example/token",
   "jti": "a1b2c3d4-...",
   "exp": 1711820400,
   "iat": 1711816800,
@@ -604,11 +604,11 @@ The following example shows a JWT access token with actor profile claims:
 
 ~~~json
 {
-  "iss": "https://as.resource-domain.example",
+  "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "client_id": "travel-assistant-client-id",
-  "azp": "https://agents.example.com/travel-assistant",
-  "aud": "https://api.resource-domain.example",
+  "azp": "https://agents.enterprise.example/travel-assistant",
+  "aud": "https://api.travel-provider.example",
   "jti": "xyz987",
   "exp": 1711820400,
   "iat": 1711816800,
@@ -618,7 +618,7 @@ The following example shows a JWT access token with actor profile claims:
     "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ"
   },
   "act": {
-    "sub": "https://agents.example.com/travel-assistant",
+    "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
     "sub_profile": "ai_agent"
   }
@@ -977,11 +977,11 @@ The following example shows a Transaction Token after two hops:
 
 ~~~json
 {
-  "iss": "https://tts.enterprise.example",
+  "iss": "https://tts.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "sub_profile": "user",
   "scope": "inventory:check",
-  "req_wl": "https://tools.example.com/booking-tool",
+  "req_wl": "https://tools.travel-provider.example/booking-tool",
   "aud": "https://api.travel-provider.example",
   "txn": "550e8400-e29b-41d4-a716-446655440000",
   "exp": 1711816900,
@@ -996,11 +996,11 @@ The following example shows a Transaction Token after two hops:
     "jkt": "0ZcOCORZNYy9ZhHiZN..."
   },
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -1400,13 +1400,13 @@ The legacy form carries only `client_id` (and optionally `azp`) to identify the 
 
 ~~~json
 {
-  "iss": "https://as.example.com",
-  "sub": "https://idp.example.com/users/alice",
+  "iss": "https://as.enterprise.example",
+  "sub": "https://idp.enterprise.example/users/alice",
   "client_id": "travel-assistant-client-id",
   "azp": "travel-assistant-client-id",
   "act": {
-    "sub": "https://agents.example.com/travel-assistant",
-    "iss": "https://as.example.com",
+    "sub": "https://agents.enterprise.example/travel-assistant",
+    "iss": "https://as.enterprise.example",
     "sub_profile": "ai_agent"
   },
   "scope": "booking:create"
@@ -1419,8 +1419,8 @@ Mismatch example, where the client and actor identify different parties:
 
 ~~~json
 {
-  "iss": "https://as.example.com",
-  "sub": "https://idp.example.com/users/alice",
+  "iss": "https://as.enterprise.example",
+  "sub": "https://idp.enterprise.example/users/alice",
   "client_id": "travel-assistant-client-id",
   "act": {
     "sub": "https://agents.other-provider.example/concierge-bot",
@@ -2092,6 +2092,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Resolved the remaining duplicate-rule conflicts: `act` in Transaction Tokens follows Delegation Chains, identifier reconciliation keeps both outcomes under explicit conditions, client identity must not substitute for `act`, inner-actor failures use the shared error mapping, and proof for a new presenter is required for sender-constrained output while any proof the credential's own profile requires is always validated.
 * Actor `sub_profile` is recommended when the issuer can authoritatively classify the actor, and Transaction Token `sub` re-expression requires a trusted mapping.
 * Unrecognized but syntactically valid values in a carried-forward top-level `sub_profile` are preserved.
+* Used one set of example identifiers for the travel scenario, matching the cross-domain example's parties.
 
 -00
 
