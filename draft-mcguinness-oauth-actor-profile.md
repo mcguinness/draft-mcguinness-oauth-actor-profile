@@ -592,8 +592,11 @@ The following claims are defined for a JWT access token that carries actor-profi
 `cnf` (REQUIRED when sender-constrained; otherwise OPTIONAL):
 : Binds the access token to the current presenter when a sender-constraining mechanism such as DPoP or mTLS is used.
 
-`client_id` and `azp` (OPTIONAL):
-: OAuth client identifiers.  They MUST NOT substitute for `act`.
+`client_id` (REQUIRED):
+: Identifies the OAuth client that requested the token, per {{RFC9068}}.  It MUST NOT substitute for `act`.
+
+`azp` (OPTIONAL):
+: An additional client identifier used by some deployments.  It MUST NOT substitute for `act`.
 
 If an issuer uses `azp` and `act.sub` for the same party, it SHOULD reconcile them through trusted mappings or treat them as distinct.  [Client Identity and Delegation](#client-identity-delegation) defines the common rules; [Migrating from Implicit to Explicit Delegation](#migration-implicit-explicit) describes rollout.
 
@@ -931,7 +934,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
     *  with `actor_unauthorized` when the actor is categorically unauthorized for the remaining scope, for example because its entity type is prohibited;
     *  with `invalid_scope` for other causes, such as an actor scope ceiling that excludes the requested values.
 
-7.  The AS MAY preserve inbound client identifiers per the output token profile or local policy.  Preserved values MUST retain their client-identity meaning and MUST NOT represent delegation state.  If preserving them would create ambiguity about the delegated actor relationship, the AS SHOULD omit them.  See [Client Identity and Delegation](#client-identity-delegation).
+7.  The AS MAY preserve inbound client identifiers per the output token profile or local policy.  Preserved values MUST retain their client-identity meaning and MUST NOT represent delegation state.  If preserving an optional identifier would create ambiguity about the delegated actor relationship, the AS SHOULD omit it.  JWT access tokens still require `client_id` per {{RFC9068}}; see [Client Identity and Delegation](#client-identity-delegation).
 
 8.  Clients SHOULD use `resource` {{RFC8707}} to restrict the token's audience to the intended RS.  The AS MUST honor resource-indicator constraints in delegated token requests per {{RFC8693, Section 4.2}}.  Audience restriction limits where a compromised delegated token can be used.
 
