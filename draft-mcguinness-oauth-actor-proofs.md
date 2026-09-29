@@ -212,7 +212,7 @@ The JOSE header of an actor proof:
 *  SHOULD include `kid` when the actor's key source publishes multiple verification keys;
 *  MAY include `crit`; a proof whose `crit` header lists an extension header the consumer does not understand is invalid per {{RFC7515, Section 4.1.11}}.
 
-Actors, issuers, and consumers MUST apply the JWT best practices in {{RFC8725}}.
+Actors, issuers, and consumers MUST apply the JWT best practices in {{RFC8725}} when creating and validating proofs, except for the audience validation of {{RFC8725, Section 3.9}}, from which this profile departs as described for `aud` in {{proof-claims}}.
 
 ## Proof Claims {#proof-claims}
 

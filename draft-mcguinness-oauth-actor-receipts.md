@@ -199,7 +199,7 @@ The JOSE header of an actor receipt:
 *  SHOULD include `kid` when the issuer publishes multiple verification keys;
 *  MAY include `crit` per {{RFC7515, Section 4.1.11}}; step 5 of {{consumer-processing}} rejects a receipt whose `crit` header lists an extension header the consumer does not understand.
 
-Receipt issuers and consumers MUST apply the JWT best practices in {{RFC8725}}.
+Receipt issuers and consumers MUST apply the JWT best practices in {{RFC8725}} when creating and validating receipts, except for the audience validation of {{RFC8725, Section 3.9}}, from which this profile departs as described for `aud` in {{receipt-claims}}.
 
 ## Receipt Claims
 
