@@ -1745,7 +1745,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
                 <p id="section-8.1-1.2.2.2.1"><span class="bcp14">MUST</span> be ordered from newest event to oldest event;<a href="#section-8.1-1.2.2.2.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-8.1-1.2.2.3">
-                <p id="section-8.1-1.2.2.3.1"><span class="bcp14">MUST</span> be preserved byte-for-byte by every party that carries, stores, or forwards it, following the same preservation rule as <code>actor_receipts</code>.<a href="#section-8.1-1.2.2.3.1" class="pilcrow">¶</a></p>
+                <p id="section-8.1-1.2.2.3.1">is preserved and extended as described in <a href="#event-lifecycle" class="auto internal xref">Section 8.3</a>.<a href="#section-8.1-1.2.2.3.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 </dd>
@@ -1753,7 +1753,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <dt id="section-8.1-1.3">
 <code>bounds_events_complete</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-8.1-1.4">
-            <p id="section-8.1-1.4.1"><span class="bcp14">OPTIONAL</span>.  A boolean JWT claim on the outer token.  When <code>true</code>, the issuer attests that <code>bounds_events</code> contains every non-hop bounds-changing event that occurred during the delegation lifetime as of issuance.  When <code>false</code> or absent, coverage may be partial and recipients <span class="bcp14">MUST NOT</span> infer from the absence of events that no re-authorization occurred.  This is the <code>&lt;name&gt;_complete</code> member of the receipts companion's claim-pair convention.<a href="#section-8.1-1.4.1" class="pilcrow">¶</a></p>
+            <p id="section-8.1-1.4.1"><span class="bcp14">OPTIONAL</span>.  A boolean JWT claim on the outer token.  When <code>true</code>, the issuer attests that <code>bounds_events</code> contains every non-hop bounds-changing event that occurred during the delegation lifetime as of issuance.  When <code>true</code> and <code>bounds_events</code> is absent, the issuer attests that no such event occurred.  When <code>false</code> or absent, coverage may be partial and recipients <span class="bcp14">MUST NOT</span> infer from the absence of events that no re-authorization occurred.  This is the <code>&lt;name&gt;_complete</code> member of the receipts companion's claim-pair convention, except that <code>true</code> without <code>bounds_events</code> attests a complete history with no events.<a href="#section-8.1-1.4.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -1831,7 +1831,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <dt id="section-8.2-4.13">
 <code>iat</code>, <code>exp</code>, <code>jti</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-8.2-4.14">
-            <p id="section-8.2-4.14.1"><span class="bcp14">REQUIRED</span>, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.  <code>exp</code> <span class="bcp14">MUST</span> cover the expected maximum lifetime of any token that will carry this event, following the sizing rules of receipt <code>exp</code> in <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>.<a href="#section-8.2-4.14.1" class="pilcrow">¶</a></p>
+            <p id="section-8.2-4.14.1"><span class="bcp14">REQUIRED</span>, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.  <code>exp</code> <span class="bcp14">MUST</span> cover the expected maximum lifetime of any token that will carry this event.<a href="#section-8.2-4.14.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -1843,7 +1843,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-event-lifecycle">
 <a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-event-lifecycle" class="section-name selfRef">Event Lifecycle</a>
         </h3>
-<p id="section-8.3-1">The re-authorizing authority creates an event and prepends it at the next issuance carrying the array.  Other parties <span class="bcp14">MUST NOT</span> add, remove, reorder, or reserialize events.  An issuer unable to preserve the inherited array <span class="bcp14">MUST</span> omit it and <code>bounds_events_complete</code> entirely.  Removing entries breaks linkage or conceals a change of bounds.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
+<p id="section-8.3-1">The re-authorizing authority creates an event and prepends it at the next issuance carrying the array.  Every party that carries, stores, or forwards the array <span class="bcp14">MUST</span> preserve each inherited event string byte-for-byte and keep the inherited events in their inherited order; byte preservation applies to the event strings, not to the encoding of the enclosing JSON array.  Other parties <span class="bcp14">MUST NOT</span> add or remove events.  An issuer unable to preserve the inherited array <span class="bcp14">MUST</span> omit it and <code>bounds_events_complete</code> entirely.  Removing entries breaks linkage or conceals a change of bounds.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1978,7 +1978,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-11-2.2.2.3.1"><code>authority_bounds_enforced</code> and <code>bounds_events</code>, when present, are non-empty arrays of strings.<a href="#section-11-2.2.2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-11-2.2.2.4">
-              <p id="section-11-2.2.2.4.1"><code>bounds_events_complete</code>, when present, is a boolean.  A value of <code>true</code> without <code>bounds_events</code> is malformed and <span class="bcp14">MUST</span> be treated as a failed required check.<a href="#section-11-2.2.2.4.1" class="pilcrow">¶</a></p>
+              <p id="section-11-2.2.2.4.1"><code>bounds_events_complete</code>, when present, is a boolean.  A value of <code>true</code> without <code>bounds_events</code> attests a complete history with no events (<a href="#bounds-events" class="auto internal xref">Section 8</a>).<a href="#section-11-2.2.2.4.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </li>
@@ -2029,7 +2029,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="section-11-2.8.1">Enforce dimensions required by <code>authority_bounds_required</code> or local policy.  Each required D must appear in <code>authority_bounds_enforced</code>, be recorded on every receipt, and pass steps 4 through 6.  Sparse coverage does not satisfy this requirement.  Recipients needing full-chain enforcement <span class="bcp14">SHOULD</span> also require <code>actor_receipts_complete_required</code> and <code>bounds_events_complete_required</code>.<a href="#section-11-2.8.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-11-2.9">
-          <p id="section-11-2.9.1">Apply any additional rules defined by companion profiles whose claims appear in the artifacts (<a href="#extensibility" class="auto internal xref">Section 14</a>).  They <span class="bcp14">MAY</span> add rejection conditions but <span class="bcp14">MUST NOT</span> relax steps 1 through 8.<a href="#section-11-2.9.1" class="pilcrow">¶</a></p>
+          <p id="section-11-2.9.1">Apply any additional rules defined by companion profiles whose claims appear in the artifacts (<a href="#extensibility" class="auto internal xref">Section 14</a>).  They can add rejection conditions but cannot relax any requirement needed for conformance to this profile.<a href="#section-11-2.9.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
 <p id="section-11-3">If any required check fails, the recipient <span class="bcp14">MUST</span> reject the token's bounds-based evidence and <span class="bcp14">MUST</span> apply the underlying protocol's error handling for the stage at which the failure occurred.  Rejection of bounds-based evidence does not by itself invalidate the receipt chain under <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span>; whether the token remains acceptable without bounds evidence is local policy, except where step 8 applies.<a href="#section-11-3" class="pilcrow">¶</a></p>
@@ -2076,7 +2076,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <a href="#section-11.3" class="section-number selfRef">11.3. </a><a href="#name-introspection" class="section-name selfRef">Introspection</a>
         </h3>
 <p id="section-11.3-1">Receipt-attested bounds travel inside receipts and are returned wherever receipts are returned; the introspection rules of <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span> apply unchanged, including all-or-nothing receipt disclosure and the requirement list for outer-token members.<a href="#section-11.3-1" class="pilcrow">¶</a></p>
-<p id="section-11.3-2">An introspection response <span class="bcp14">MAY</span> include <code>authority_bounds_enforced</code>, <code>bounds_events</code>, and <code>bounds_events_complete</code> using their JWT syntax.  It <span class="bcp14">MUST</span> return the full stored event array or omit both event claims.  A subset would break linkage or conceal a change of bounds.<a href="#section-11.3-2" class="pilcrow">¶</a></p>
+<p id="section-11.3-2">An introspection response <span class="bcp14">MAY</span> include <code>authority_bounds_enforced</code>, <code>bounds_events</code>, and <code>bounds_events_complete</code> using their JWT syntax.  It <span class="bcp14">MUST</span> return the full stored event array or omit both event claims, except that, for a token whose stored history is complete and contains no events, it <span class="bcp14">MAY</span> return <code>bounds_events_complete: true</code> without <code>bounds_events</code>.  A subset would break linkage or conceal a change of bounds.<a href="#section-11.3-2" class="pilcrow">¶</a></p>
 <p id="section-11.3-3">For inactive tokens, introspection servers <span class="bcp14">MUST NOT</span> return <code>authority_bounds_enforced</code>, <code>bounds_events</code>, or <code>bounds_events_complete</code>.<a href="#section-11.3-3" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2127,11 +2127,11 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <dt id="section-12.2-2.3">
 <code>bounds_events_complete_required</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-12.2-2.4">
-            <p id="section-12.2-2.4.1"><span class="bcp14">OPTIONAL</span>.  A boolean.  When <code>true</code>, the resource server requires <code>bounds_events_complete: true</code> on the outer token or introspection response whenever bounds evidence is presented, so that the absence of events is itself attested.  This document deliberately defines no <code>bounds_events_required</code> parameter: a recipient cannot observe whether unrecorded events occurred, so the only testable requirement is the completeness attestation.<a href="#section-12.2-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-12.2-2.4.1"><span class="bcp14">OPTIONAL</span>.  A boolean.  When <code>true</code>, the resource server requires <code>bounds_events_complete: true</code> on the outer token or introspection response whenever bounds evidence is presented, so that the absence of events is itself attested (<a href="#bounds-events" class="auto internal xref">Section 8</a>).  This document deliberately defines no <code>bounds_events_required</code> parameter: a recipient cannot observe whether unrecorded events occurred, so the only testable requirement is the completeness attestation.<a href="#section-12.2-2.4.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
-<p id="section-12.2-3">A resource server <span class="bcp14">SHOULD</span> pair <code>authority_bounds_required</code> with the receipts companion's <code>actor_receipts_complete_required</code> when it needs full-chain rather than covered-prefix enforcement.<a href="#section-12.2-3" class="pilcrow">¶</a></p>
+<p id="section-12.2-3">A resource server that needs full-chain rather than covered-prefix enforcement <span class="bcp14">SHOULD</span> pair <code>authority_bounds_required</code> with both the receipts companion's <code>actor_receipts_complete_required</code> and <code>bounds_events_complete_required</code>.  Neither completeness signal attests that the visible <code>act</code> chain is itself unfiltered; that separate assurance is <code>chain_complete</code> (<span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>).<a href="#section-12.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="introspection-response-members">
@@ -2210,7 +2210,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="section-14-2.4.1"><strong>New event types</strong> are NOT added to <code>bounds_events</code>; companion profiles defining other non-hop events use their own parallel arrays per the receipts companion's pattern, so that each array has one verification routine and one completeness attestation.<a href="#section-14-2.4.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-14-3">Companion rules <span class="bcp14">MUST NOT</span> relax any rejection condition in <a href="#consumer-processing" class="auto internal xref">Section 11</a>; they <span class="bcp14">MAY</span> add rejection conditions.<a href="#section-14-3" class="pilcrow">¶</a></p>
+<p id="section-14-3">Companion rules <span class="bcp14">MUST NOT</span> relax any requirement needed for conformance to this profile; they <span class="bcp14">MAY</span> add rejection conditions.  A companion's partial-validation mode, defined under its own normative scope as <span>[<a href="#ACTOR-RECEIPTS" class="cite xref">ACTOR-RECEIPTS</a>]</span> requires, is not conformance to this profile.<a href="#section-14-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-considerations">

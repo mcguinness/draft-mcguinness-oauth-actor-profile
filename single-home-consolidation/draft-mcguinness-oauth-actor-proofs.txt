@@ -425,9 +425,10 @@ Table of Contents
       Section 10.
 
       Issuers SHOULD set actor_proofs_complete to true for complete
-      coverage and false for partial coverage.  An absent value provides
-      no completeness attestation; consumers requiring the literal value
-      true treat absence like false.
+      coverage and false for partial coverage; step 7 of Section 9.2
+      sets a narrower rule for an issuer that extends an inbound chain.
+      An absent value provides no completeness attestation; consumers
+      requiring the literal value true treat absence like false.
 
    This document does not require every delegated token to carry
    actor_proofs.  A deployment that requires actor-signed evidence uses
@@ -457,7 +458,9 @@ Table of Contents
       Section 4.1.11.
 
    Actors, issuers, and consumers MUST apply the JWT best practices in
-   [RFC8725].
+   [RFC8725] when creating and validating proofs, except for the
+   audience validation of [RFC8725], Section 3.9, from which this
+   profile departs as described for aud in Section 7.2.
 
 7.2.  Proof Claims
 
@@ -476,8 +479,10 @@ Table of Contents
    sub:  REQUIRED.  The subject identifier on whose behalf the actor
       authorized the delegation, as known to the actor at signing time.
       actor_proofs[0].sub MUST equal the outer token's top-level sub.
-      Older proofs MAY carry differing sub values when the subject has
-      been re-expressed across issuer namespaces (see Section 10.1).
+      Older proofs can carry differing sub values, which step 8 of
+      Section 10 accepts structurally; authorization that depends on
+      subject equivalence across them is subject to the continuity rules
+      of Section 10.1.
 
    sub_iss:  OPTIONAL.  The namespace authority under which the proof
       sub value is interpreted, with the semantics defined for the
@@ -768,7 +773,11 @@ Table of Contents
    7.  MUST preserve actor_proofs_complete: true when the inbound
        attestation is valid and the new proof covers the added hop.
        Otherwise, the issuer MUST NOT set it to true and SHOULD set it
-       to false.
+       to false.  This is narrower than the general rule in Section 6
+       because an extending issuer establishes completeness of the
+       inherited hops only through a valid inbound attestation; without
+       one, it does not claim complete coverage even when the proof
+       count equals the visible depth.
 
    An issuer MUST NOT reserialize, resign, normalize, trim, or otherwise
    alter a prior proof.
@@ -1023,18 +1032,19 @@ Table of Contents
            identifiers as the same authority requires explicit trusted
            local mapping rules;
 
-        *  older proofs MAY carry differing sub or sub_iss values; see
-           Section 10.1.
+        *  older proofs MAY carry differing sub or sub_iss values.  This
+           acceptance is structural only: authorization that depends on
+           subject equivalence across those proofs is subject to the
+           continuity rules of Section 10.1.
 
    9.   Evaluate outer-token binding and target binding:
 
         *  when actor_proofs[0].origin_jti is present and equals the
            outer token's jti, the proof chain is bound to the current
            outer-token instance; when it is present and differs, the
-           recipient MUST reject the chain unless local policy
-           designates the outer token issuer as a trusted reissuing
-           issuer per Section 14.4.1, in which case the value is
-           historical provenance;
+           chain has diverged, Section 14.4.1 decides whether the
+           recipient rejects it, and an accepted value is historical
+           provenance;
 
         *  when actor_proofs[0].origin_jti is absent, the proof chain
            carries no instance binding of its own; this is not by itself
@@ -1045,11 +1055,11 @@ Table of Contents
            effective resource indicators are determinable from token
            claims, the introspection response, or trusted local context,
            that each is within actor_proofs[0].target.resource when that
-           member is present.  A recipient MAY accept a token whose
-           audience or resources exceed the newest proof's target
-           binding only under Section 14.4.1, and MUST then treat the
-           chain as participation evidence only, not as actor consent to
-           the current target;
+           member is present.  A token whose audience or resources
+           exceed the newest proof's target binding has also diverged;
+           Section 14.4.1 decides whether the recipient rejects the
+           chain and limits an accepted chain to participation evidence,
+           not actor consent to the current target;
 
         *  target bindings of proofs other than actor_proofs[0] are
            historical consent for their own hops.  The recipient MUST
@@ -1080,9 +1090,9 @@ Table of Contents
 
    11.  Apply any additional consumer-processing rules defined by
         companion profiles whose claims appear in the proof or outer
-        token (see Section 13).  Companion-profile rules MUST NOT relax
-        any requirement in steps 1 through 10; they MAY add additional
-        rejection conditions.
+        token (see Section 13).  Companion-profile rules can add
+        rejection conditions but cannot relax any requirement needed for
+        conformance to this profile.
 
    If any required check fails, the recipient MUST reject the proof
    chain for the purposes of this profile and MUST apply the underlying
@@ -1400,8 +1410,10 @@ Table of Contents
    Companion profile authoring rules:
 
    *  Companion profiles MAY extend consumer processing under Section 10
-      by adding rejection conditions; they MUST NOT relax any rejection
-      condition defined here.
+      by adding rejection conditions; they MUST NOT relax any
+      requirement needed for conformance to this profile.  This does not
+      change the separately scoped partial-validation rule that follows
+      step 11 of Section 10.
 
    *  Companion profiles that define per-hop signed artifacts SHOULD
       follow the claim-pair and discovery conventions of
@@ -1632,12 +1644,14 @@ Table of Contents
 
 14.4.1.  Target-Binding Strict Mode
 
+   An outer token diverges from its proof chain when its audience or
+   effective resources exceed actor_proofs[0]'s target binding, or when
+   its jti differs from a present actor_proofs[0].origin_jti.  A
+   recipient MUST reject a divergent proof chain unless local policy
+   designates the outer token issuer as a trusted reissuing issuer.
    Recipients that have not explicitly configured a set of trusted
-   reissuing issuers operate in strict mode by default: per step 9 of
-   Section 10, an outer token whose audience or effective resources
-   exceed actor_proofs[0]'s target binding, or whose jti differs from a
-   present actor_proofs[0].origin_jti, causes the recipient to reject
-   the proof chain.
+   reissuing issuers therefore operate in strict mode by default,
+   rejecting every divergent chain.
 
    Strict mode is the recommended default.  Deployments accepting
    retargeted reissuance need an explicit set of trusted reissuing
@@ -1689,13 +1703,13 @@ Table of Contents
    will reject all proofs attributed to that actor's key regardless of
    content.
 
-   Deployments SHOULD set short exp values on proofs, consistent with
-   the REQUIRED exp defined in Section 7.2, to limit the window during
-   which proofs signed with a compromised key remain valid.  When a key
-   compromise is detected, deployments SHOULD treat tokens carrying
-   proofs from the affected actor as lacking trusted actor-signed
-   evidence for those hops and SHOULD require fresh delegation with
-   fresh proofs.
+   Proof exp is sized under the conditional rule in Section 7.2, which
+   calls for short values without instance binding; a shorter exp limits
+   the window during which proofs signed with a compromised key remain
+   valid.  When a key compromise is detected, deployments SHOULD treat
+   tokens carrying proofs from the affected actor as lacking trusted
+   actor-signed evidence for those hops and SHOULD require fresh
+   delegation with fresh proofs.
 
 14.8.  Proof Chain Size
 
@@ -2412,6 +2426,13 @@ Document History
 
    *  Consolidated duplicated requirements into single homes and cited
       dependencies instead of restating them.
+
+   *  Resolved the remaining duplicate-rule conflicts: companion rules
+      cannot relax conformance requirements, [RFC8725] applies except
+      its audience validation, and Strict Mode governs every divergence.
+
+   *  Removed the unconditional recommendation for short proof exp in
+      favor of the claim's conditional sizing rule.
 
    -00
 

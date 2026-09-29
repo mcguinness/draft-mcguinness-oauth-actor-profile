@@ -514,18 +514,18 @@ Table of Contents
 
       *  MUST be ordered from newest event to oldest event;
 
-      *  MUST be preserved byte-for-byte by every party that carries,
-         stores, or forwards it, following the same preservation rule as
-         actor_receipts.
+      *  is preserved and extended as described in Section 8.3.
 
    bounds_events_complete:  OPTIONAL.  A boolean JWT claim on the outer
       token.  When true, the issuer attests that bounds_events contains
       every non-hop bounds-changing event that occurred during the
-      delegation lifetime as of issuance.  When false or absent,
-      coverage may be partial and recipients MUST NOT infer from the
-      absence of events that no re-authorization occurred.  This is the
-      <name>_complete member of the receipts companion's claim-pair
-      convention.
+      delegation lifetime as of issuance.  When true and bounds_events
+      is absent, the issuer attests that no such event occurred.  When
+      false or absent, coverage may be partial and recipients MUST NOT
+      infer from the absence of events that no re-authorization
+      occurred.  This is the <name>_complete member of the receipts
+      companion's claim-pair convention, except that true without
+      bounds_events attests a complete history with no events.
 
 8.2.  Bounds-Event JWT Format
 
@@ -583,8 +583,7 @@ Table of Contents
 
    iat, exp, jti:  REQUIRED, as defined in [RFC7519].  exp MUST cover
       the expected maximum lifetime of any token that will carry this
-      event, following the sizing rules of receipt exp in
-      [ACTOR-RECEIPTS].
+      event.
 
    An event MAY contain additional claims; consumers ignore unrecognized
    claims unless a specification or local agreement defines their
@@ -593,10 +592,14 @@ Table of Contents
 8.3.  Event Lifecycle
 
    The re-authorizing authority creates an event and prepends it at the
-   next issuance carrying the array.  Other parties MUST NOT add,
-   remove, reorder, or reserialize events.  An issuer unable to preserve
-   the inherited array MUST omit it and bounds_events_complete entirely.
-   Removing entries breaks linkage or conceals a change of bounds.
+   next issuance carrying the array.  Every party that carries, stores,
+   or forwards the array MUST preserve each inherited event string byte-
+   for-byte and keep the inherited events in their inherited order; byte
+   preservation applies to the event strings, not to the encoding of the
+   enclosing JSON array.  Other parties MUST NOT add or remove events.
+   An issuer unable to preserve the inherited array MUST omit it and
+   bounds_events_complete entirely.  Removing entries breaks linkage or
+   conceals a change of bounds.
 
 9.  Issuer Self-Attestation
 
@@ -747,8 +750,8 @@ Table of Contents
           non-empty arrays of strings.
 
        *  bounds_events_complete, when present, is a boolean.  A value
-          of true without bounds_events is malformed and MUST be treated
-          as a failed required check.
+          of true without bounds_events attests a complete history with
+          no events (Section 8).
 
    3.  Validate events in array order:
 
@@ -809,8 +812,9 @@ Table of Contents
        bounds_events_complete_required.
 
    9.  Apply any additional rules defined by companion profiles whose
-       claims appear in the artifacts (Section 14).  They MAY add
-       rejection conditions but MUST NOT relax steps 1 through 8.
+       claims appear in the artifacts (Section 14).  They can add
+       rejection conditions but cannot relax any requirement needed for
+       conformance to this profile.
 
    If any required check fails, the recipient MUST reject the token's
    bounds-based evidence and MUST apply the underlying protocol's error
@@ -867,8 +871,11 @@ Table of Contents
 
    An introspection response MAY include authority_bounds_enforced,
    bounds_events, and bounds_events_complete using their JWT syntax.  It
-   MUST return the full stored event array or omit both event claims.  A
-   subset would break linkage or conceal a change of bounds.
+   MUST return the full stored event array or omit both event claims,
+   except that, for a token whose stored history is complete and
+   contains no events, it MAY return bounds_events_complete: true
+   without bounds_events.  A subset would break linkage or conceal a
+   change of bounds.
 
    For inactive tokens, introspection servers MUST NOT return
    authority_bounds_enforced, bounds_events, or bounds_events_complete.
@@ -917,14 +924,18 @@ Table of Contents
    bounds_events_complete_required:  OPTIONAL.  A boolean.  When true,
       the resource server requires bounds_events_complete: true on the
       outer token or introspection response whenever bounds evidence is
-      presented, so that the absence of events is itself attested.  This
-      document deliberately defines no bounds_events_required parameter:
-      a recipient cannot observe whether unrecorded events occurred, so
-      the only testable requirement is the completeness attestation.
+      presented, so that the absence of events is itself attested
+      (Section 8).  This document deliberately defines no
+      bounds_events_required parameter: a recipient cannot observe
+      whether unrecorded events occurred, so the only testable
+      requirement is the completeness attestation.
 
-   A resource server SHOULD pair authority_bounds_required with the
-   receipts companion's actor_receipts_complete_required when it needs
-   full-chain rather than covered-prefix enforcement.
+   A resource server that needs full-chain rather than covered-prefix
+   enforcement SHOULD pair authority_bounds_required with both the
+   receipts companion's actor_receipts_complete_required and
+   bounds_events_complete_required.  Neither completeness signal attests
+   that the visible act chain is itself unfiltered; that separate
+   assurance is chain_complete ([I-D.mcguinness-oauth-actor-profile]).
 
 12.3.  Introspection Response Members
 
@@ -1003,8 +1014,10 @@ Table of Contents
       arrays per the receipts companion's pattern, so that each array
       has one verification routine and one completeness attestation.
 
-   Companion rules MUST NOT relax any rejection condition in Section 11;
-   they MAY add rejection conditions.
+   Companion rules MUST NOT relax any requirement needed for conformance
+   to this profile; they MAY add rejection conditions.  A companion's
+   partial-validation mode, defined under its own normative scope as
+   [ACTOR-RECEIPTS] requires, is not conformance to this profile.
 
 15.  Security Considerations
 
