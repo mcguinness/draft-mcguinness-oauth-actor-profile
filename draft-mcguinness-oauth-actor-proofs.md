@@ -293,8 +293,7 @@ Proofs define no subject `sub_profile` claim; subject classification remains iss
 `exp`:
 : REQUIRED.  Expiration time for the proof, as defined in {{RFC7519}}.
 
-  *  `exp` MUST be set to a value that covers the expected maximum token lifetime of any token that will carry or inherit this proof, so that consumer validation of older proofs in a valid chain is not prematurely rejected.
-  *  Actors SHOULD set `exp` to the maximum delegated-token lifetime permitted under local policy for tokens that may inherit this proof.
+  `exp` needs to cover the lifetime of any token that will carry or inherit this proof; otherwise consumers reject older proofs in a valid chain prematurely.
 
   A proof expiring before the issued outer token causes propagation failure ({{extending-an-existing-proof-chain}}).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse ({{proof-to-token-binding-limits}}).
 
@@ -399,7 +398,7 @@ If proofs are dropped while receipts remain, inherited `proof_jti` references be
 
 An AS that supports refresh tokens for delegated access tokens carrying proofs:
 
-*  MUST retain the `actor_proofs` array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.
+*  needs to retain the `actor_proofs` array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.
 *  MUST rely on proof `exp` values set per {{proof-claims}} to accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under {{extending-an-existing-proof-chain}} as proofs approach expiry, and refresh loses actor-signed evidence.
 *  When that bounded lifetime would be exceeded, MUST either obtain fresh delegation state with fresh proofs or stop emitting `actor_proofs`, unless local policy permits partial or absent coverage.
 
@@ -413,7 +412,7 @@ However:
 *  an issuer MUST NOT skip an outer visible hop and carry a proof only for an inner visible hop;
 *  when local policy or resource requirements require full actor-signed evidence, the issuer MUST either emit complete proof coverage or fail the request under the error model of the underlying protocol.
 
-Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop SHOULD enable proof support at the origin and its actors first.  Resource servers can require full coverage through `actor_proofs_complete_required` or local policy.
+Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop should enable proof support at the origin and its actors first.  Resource servers can require full coverage through `actor_proofs_complete_required` or local policy.
 
 When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_proofs` covers only the visible filtered chain.  In that case `actor_proofs_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness MUST evaluate `chain_complete` separately.
 
@@ -453,7 +452,7 @@ An issuer, resource server, or other recipient that relies on `actor_proofs` MUS
     *  verify that all REQUIRED proof claims are present and have the expected JSON types, including `iss`, `sub`, `act`, `target` with `target.aud`, `iat`, `exp`, and `jti`;
     *  verify that OPTIONAL claims used by this profile have the expected JSON types when present, including `sub_iss`, `target.resource`, `prh`, `prh_alg`, `receipt_jti`, and `origin_jti`;
     *  verify that the proof `act` object is single-hop, contains no nested `act`, and contains no `cnf`, and that the proof `iss` equals the proof `act.sub`;
-    *  enforce `exp`, `iat`, and other JWT validity rules.  Because `exp` is REQUIRED on proofs and MUST cover the expected outer token lifetime, an expired proof SHOULD be treated as invalid even for older hops.  Local policy MAY permit continued use of a proof that is expired by a small clock-skew margin, but MUST NOT relax `exp` enforcement broadly as a workaround for actors that failed to set adequate `exp` values.
+    *  enforce `exp`, `iat`, and other JWT validity rules.  An expired proof is invalid even for an older hop; only the small clock-skew leeway of {{RFC7519, Section 4.1.4}} applies.
 6.  Verify proof-chain linkage:
     *  each proof other than the oldest MUST include `prh`;
     *  each non-oldest proof's `prh` MUST hash the next older proof using the algorithm named by `prh_alg`, defaulting to `sha-256` when `prh_alg` is absent;
@@ -556,7 +555,7 @@ This section defines metadata for advertising support for actor proofs.  It foll
 The following parameter is defined for use in Authorization Server Metadata {{RFC8414}}:
 
 `actor_proofs_supported`:
-: OPTIONAL.  A boolean.  When `true`, the authorization server advertises that it accepts the `actor_proof` token request parameter, validates proofs against actor keys, and embeds, preserves, or extends proof chains according to this document.  This value does not guarantee complete coverage for every visible hop in every resulting token.  When `false` or absent, clients and relying parties MUST NOT assume such support.
+: OPTIONAL.  A boolean.  When `true`, the authorization server advertises that it accepts the `actor_proof` token request parameter, validates proofs against actor keys, and embeds, preserves, or extends proof chains according to this document.  This value does not guarantee complete coverage for every visible hop in every resulting token.  When `false` or absent, the AS makes no claim of such support.
 
 This parameter applies equally to an authorization server that issues delegated JWT outputs and to a Transaction Token Service publishing metadata through the same framework.
 
@@ -679,7 +678,7 @@ Proof validation is meaningful only if the recipient resolves actor verification
 
 Trust establishment requirements:
 
-*  A recipient MUST establish its trusted actor-key sources before relying on `actor_proofs`.  Trust MUST be established through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.
+*  A recipient needs to establish its trusted actor-key sources before relying on `actor_proofs`, through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.
 *  A recipient MUST NOT treat the presence of a syntactically valid signed proof as sufficient grounds to trust the key that signed it.
 *  A recipient MUST determine that a proof's (`act.iss`, `act.sub`) pair is within the scope of a trusted actor-key source before performing any network retrieval keyed by the proof's content, and MUST NOT dereference key references supplied by the proof itself (such as `jku` or `x5u` header parameters) outside a pre-established trust framework, per {{RFC8725}}.
 *  Key resolution and trust evaluation use the (`act.iss`, `act.sub`) pair.  The bare proof `iss` string MUST NOT be the sole resolution index; actor identifiers are namespaced by `act.iss`, and identical `act.sub` strings under different namespace authorities are different actors.
@@ -711,7 +710,7 @@ Inner proofs have no independent binding to the current token; they are bound to
 
 Recipients that have not explicitly configured a set of trusted reissuing issuers operate in strict mode by default: per step 9 of {{consumer-processing}}, an outer token whose audience or effective resources exceed `actor_proofs[0]`'s target binding, or whose `jti` differs from a present `actor_proofs[0].origin_jti`, causes the recipient to reject the proof chain.
 
-Strict mode is the recommended default.  Deployments accepting retargeted reissuance MUST configure an explicit set of trusted reissuing issuers through local policy or an out-of-band trust framework.  A recipient accepting divergence MUST treat proofs only as participation evidence and MUST NOT infer consent to the current audience or resources.  With receipts, it SHOULD apply one reissuance-trust decision to both companions.
+Strict mode is the recommended default.  Deployments accepting retargeted reissuance need an explicit set of trusted reissuing issuers, configured through local policy or an out-of-band trust framework.  A recipient accepting divergence MUST treat proofs only as participation evidence and MUST NOT infer consent to the current audience or resources.  With receipts, it SHOULD apply one reissuance-trust decision to both companions.
 
 ## Hash Algorithm Agility
 
@@ -1084,6 +1083,7 @@ The single proof covers the outermost hop:
 * An issuer now drops inherited proofs when reissuance exceeds any part of the newest proof's target, not only its audience.
 * Distinguished a mismatched `origin_jti`, which consumer processing rejects unless the outer issuer is a trusted reissuer, from an absent one.
 * Removed an example claim that receipt composition stops a compromised issuer from re-embedding a proof.
+* Reconciled `exp` guidance, aligned expiry handling with {{RFC7519}}, and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
 
 -00
 

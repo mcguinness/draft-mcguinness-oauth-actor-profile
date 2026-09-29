@@ -181,7 +181,7 @@ The `scope` dimension records the space-separated scope string of {{RFC6749}} Se
 *  `scope_a` is within `scope_b` if and only if every token in `scope_a` is also in `scope_b`;
 *  the empty string is the empty set and is within every scope set.
 
-Comparison does not interpret scope semantics: `read:user/*` does not automatically cover `read:user/123`, and preserved strings may acquire broader meanings through configuration changes ({{scope-subsumption-gaps}}).  Issuers MUST emit explicit, narrowest-form scopes rather than rely on grammar-dependent subsumption.
+Comparison does not interpret scope semantics: `read:user/*` does not automatically cover `read:user/123`, and preserved strings may acquire broader meanings through configuration changes ({{scope-subsumption-gaps}}).  Deployments whose scope grammars carry hierarchy or wildcard semantics follow {{scope-subsumption-gaps}} rather than relying on grammar-dependent subsumption.
 
 ## `aud` and Audience Governance {#audience-governance}
 
@@ -357,7 +357,7 @@ Reissuance without a new actor hop creates no receipt, so recorded bounds cannot
 *  when a broader value is authorized (for example, a refresh grant following step-up or an approver widening a governing authority object), MUST record the expansion as a `bounds_reauth` event in `bounds_events`, anchored to the inherited `receipt[0]` by its `jti`, signed by the authority that captured the re-authorization, and prepended per {{bounds-events}}; the issued token's values are then measured against the event's `new_bounds`;
 *  when it can neither stay within the effective upper bound nor record a covering event, MUST NOT carry the bounds-bearing receipt chain forward while claiming enforcement: it MUST fail the request, or issue without `authority_bounds_enforced` for the expanded dimension where local policy and resource requirements permit.
 
-An AS that supports refresh tokens for bounds-bearing delegated tokens MUST retain, in the same issuer-controlled state that the receipts companion requires for `actor_receipts`, the inherited `bounds_events` array and enough state to compute the effective upper bound at refresh time.
+An AS that supports refresh tokens for bounds-bearing delegated tokens needs to retain, in the same issuer-controlled state that the receipts companion requires for `actor_receipts`, the inherited `bounds_events` array and enough state to compute the effective upper bound at refresh time.
 
 ## Domain Transitions {#domain-transitions}
 
@@ -447,7 +447,7 @@ This section defines metadata for advertising authority-bounds support.  It foll
 The following parameters are defined for use in Authorization Server Metadata {{RFC8414}}:
 
 `authority_bounds_supported`:
-: OPTIONAL.  A non-empty array of governed-dimension names.  The authorization server advertises that, for each named dimension, it can record receipt-attested bounds and enforce issuance-time monotonicity per {{recording-bounds}}.  Absence, or absence of a dimension from the array, means no such advertisement; clients and relying parties MUST NOT infer support from omission.
+: OPTIONAL.  A non-empty array of governed-dimension names.  The authorization server advertises that, for each named dimension, it can record receipt-attested bounds and enforce issuance-time monotonicity per {{recording-bounds}}.  Absence, or absence of a dimension from the array, means no such advertisement; omission makes no claim of support.
 
 `bounds_events_supported`:
 : OPTIONAL.  A boolean.  When `true`, the authorization server can create, preserve, and return `bounds_events` per this document.
@@ -528,7 +528,7 @@ Bounds inherit the receipts companion's per-issuer, non-transitive trust model, 
 
 ## Issuer Self-Attestation Limits {#issuer-attestation-limits}
 
-An issuer can assert `authority_bounds_enforced` without independent evidence.  Recipients MUST NOT accept it as a substitute for receipt-attested verification.  Deployments requiring offline evidence that authority did not expand MUST use receipt-attested bounds; the claim alone supports only coordination and consistency checking.
+An issuer can assert `authority_bounds_enforced` without independent evidence.  It never satisfies a requirement for receipt-attested verification, such as required-dimension enforcement in step 8 of {{consumer-processing}}.  Deployments requiring offline evidence that authority did not expand MUST use receipt-attested bounds; the claim alone supports only coordination and consistency checking.
 
 ## Re-Authorization Abuse {#reauthorization-abuse}
 

@@ -241,7 +241,6 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 
   *  MUST conform to the core actor profile's actor-object rules;
   *  MUST include `act.sub` and `act.iss`;
-  *  MAY include `act.sub_profile`;
   *  MUST NOT contain `cnf`;
   *  MUST NOT contain a nested `act`.
 
@@ -278,8 +277,7 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 `exp`:
 : REQUIRED.  Expiration time for the receipt, as defined in {{RFC7519}}.
 
-  *  `exp` MUST be set to a value that covers the expected maximum token lifetime of any token that will carry or inherit this receipt, so that consumer validation of older receipts in a valid chain is not prematurely rejected.
-  *  Issuers SHOULD set `exp` to the maximum delegated-token lifetime permitted under local policy for tokens that may inherit this receipt.
+  The `exp` of a newly created receipt MUST NOT be earlier than the `exp` of the outer token issued with it.  Beyond that floor, `exp` needs to cover the lifetime of any token that will carry or inherit this receipt; otherwise consumers reject older receipts in a valid chain prematurely.
 
   Downstream issuers reject receipts that expire before the issued outer token.  Deployments typically coordinate a bounded delegated-session lifetime to avoid propagation failure while limiting signing-key exposure; see {{reissuance-without-a-new-actor-hop}}.
 
@@ -380,8 +378,8 @@ Refresh-token reissuance is a special case of reissuance under this section.  Re
 
 An AS that supports refresh tokens for delegated access tokens:
 
-*  MUST retain the `actor_receipts` array associated with the original access token in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the receipts forward unchanged.
-*  MUST set receipt `exp` values under {{receipt-claims}} to accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under {{extending-an-existing-receipt-chain}} as receipts approach expiry, and refresh loses receipt-based provenance.
+*  needs to retain the `actor_receipts` array associated with the original access token in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the receipts forward unchanged.
+*  needs receipt `exp` values ({{receipt-claims}}) that accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under {{extending-an-existing-receipt-chain}} as receipts approach expiry, and refresh loses receipt-based provenance.
 *  When that bounded lifetime would be exceeded, MUST either obtain fresh delegation state and start a new receipt chain or stop emitting `actor_receipts`, unless local policy permits partial or absent receipt coverage.
 
 ## Partial Coverage and Full Coverage
@@ -394,7 +392,7 @@ However:
 *  an issuer MUST NOT skip an outer visible hop and receipt only an inner visible hop;
 *  when local policy or resource requirements require full provenance, the issuer MUST either emit complete receipt coverage or fail the request under the error model of the underlying protocol.
 
-Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop SHOULD enable receipt support at the origin issuer first.  Resource servers can require full coverage through `actor_receipts_complete_required` or local policy.
+Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop should enable receipt support at the origin issuer first.  Resource servers can require full coverage through `actor_receipts_complete_required` or local policy.
 
 When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_receipts` covers only the visible filtered chain.  In that case `actor_receipts_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness MUST evaluate `chain_complete` separately.
 
@@ -425,7 +423,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  verify that all REQUIRED receipt claims are present and have the expected JSON types, including `iss`, `sub`, `act`, `iat`, `exp`, and `jti`;
     *  verify that OPTIONAL claims used by this profile have the expected JSON types when present, including `sub_iss`, `sub_profile`, `cnf`, `prh`, `prh_alg`, and `origin_jti`;
     *  verify that the receipt `act` object is single-hop, contains no nested `act`, and contains no `cnf`;
-    *  enforce `exp`, `iat`, and other JWT validity rules.  Because `exp` is REQUIRED on receipts and MUST cover the expected outer token lifetime, an expired receipt SHOULD be treated as invalid even for older hops.  Local policy MAY permit continued use of a receipt that is expired by a small clock-skew margin, but MUST NOT relax `exp` enforcement broadly as a workaround for issuers that failed to set adequate `exp` values.
+    *  enforce `exp`, `iat`, and other JWT validity rules.  An expired receipt is invalid even for an older hop; only the small clock-skew leeway of {{RFC7519, Section 4.1.4}} applies.
     *  for `receipt[0]`, apply {{receipt-instance-binding}}.  For older receipts, `origin_jti` is historical information only.
 6.  Verify receipt-chain linkage:
     *  each receipt other than the oldest MUST include `prh`;
@@ -467,7 +465,7 @@ Consumer step 5 applies the following cases in order to `receipt[0]`:
 
 Only `receipt[0].sub` must match the outer token.  Older receipts MAY carry different subject identifiers.  A recipient requiring continuity across them MUST use explicit trusted local mapping rules.
 
-Matching actors alone do not establish subject continuity.  A receipt from an unrelated subject chain that shares the same actor identity can satisfy the hop-alignment check, whether by accident or because a compromised upstream issuer minted it for insertion.  Recipients MUST account for this cross-subject insertion risk.
+Matching actors alone do not establish subject continuity.  A receipt from an unrelated subject chain that shares the same actor identity can satisfy the hop-alignment check, whether by accident or because a compromised upstream issuer minted it for insertion.  Recipients need to account for this cross-subject insertion risk.
 
 Deployments requiring subject continuity SHOULD either require identical subject identifiers throughout or positively reconcile them through trusted mappings.  When neither applies, recipients MUST treat continuity as unverified and MUST NOT use the differing older receipts for authorization.
 
@@ -519,7 +517,7 @@ This section defines metadata for advertising support for actor receipts.
 The following parameter is defined for use in Authorization Server Metadata {{RFC8414}}:
 
 `actor_receipts_supported`:
-: OPTIONAL.  A boolean.  When `true`, the authorization server advertises that it can validate inbound actor receipts and can originate, preserve, or extend receipt chains according to this document.  This value does not guarantee complete historical coverage for every visible hop in every resulting token.  When `false` or absent, clients and relying parties MUST NOT assume such support.
+: OPTIONAL.  A boolean.  When `true`, the authorization server advertises that it can validate inbound actor receipts and can originate, preserve, or extend receipt chains according to this document.  This value does not guarantee complete historical coverage for every visible hop in every resulting token.  When `false` or absent, the AS makes no claim of such support.
 
 This parameter applies equally to an authorization server that issues delegated JWT outputs and to a Transaction Token Service publishing metadata through the same framework.
 
@@ -664,7 +662,7 @@ Receipt validation is meaningful only if the recipient trusts the issuers that s
 
 Trust establishment requirements:
 
-*  A recipient MUST establish which issuers it trusts for receipt validation before relying on `actor_receipts`.
+*  A recipient needs to establish which issuers it trusts for receipt validation before relying on `actor_receipts`.
 *  Trust MUST be established through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.
 *  A recipient MUST NOT treat the presence of a syntactically valid signed receipt as sufficient grounds to trust its issuer.
 *  Authorization servers that support this document SHOULD advertise `actor_receipts_supported: true` in their AS metadata {{RFC8414}}.
@@ -675,7 +673,7 @@ Key resolution requirements:
 *  To avoid attacker-controlled key resolution, a recipient MUST determine whether a receipt `iss` is within its trusted-issuer set before performing any network retrieval for that issuer's metadata or keys.
 *  A recipient that uses dynamic discovery for receipt validation MUST do so only within an existing trust framework or equivalent local policy that defines which issuers are permitted.
 
-Trust is per-issuer and not transitive: each receipt is validated against the recipient's own trusted-issuer set, independent of the outer token's issuer or neighboring receipts.  If any receipt in the presented `actor_receipts` array is signed by an issuer that is not trusted for receipt validation, the recipient MUST reject the receipt chain for the purposes of this profile.  This document does not define trusted-prefix validation across an untrusted inner receipt.  Deployments needing uniform trust across an extended chain MUST establish trust explicitly with every receipt issuer that may appear in tokens they accept.
+Trust is per-issuer and not transitive: each receipt is validated against the recipient's own trusted-issuer set, independent of the outer token's issuer or neighboring receipts.  If any receipt in the presented `actor_receipts` array is signed by an issuer that is not trusted for receipt validation, the recipient MUST reject the receipt chain for the purposes of this profile.  This document does not define trusted-prefix validation across an untrusted inner receipt.  Deployments needing uniform trust across an extended chain need to establish trust explicitly with every receipt issuer that may appear in tokens they accept.
 
 The trust evaluation in this section covers receipt signers (the `iss` claim of each receipt).  Recipients separately evaluate trust in each receipt's `act.iss` as the namespace authority for `act.sub` as described in {{receipt-claims}}; that evaluation is independent of receipt-signer trust, even when the same entity holds both roles.
 
@@ -699,7 +697,7 @@ Coverage is therefore truthful within the limits of the trusted-issuer set: a co
 
 Divergence in issuer or token identifier removes current-instance binding.  {{receipt-instance-binding}} rejects such chains unless local policy explicitly trusts the outer issuer to reissue them.  This profile cannot distinguish legitimate reissuance from malicious rewrapping in band.
 
-Recipients accepting reissuance MUST configure that trust locally or through an out-of-band framework and SHOULD investigate unexpected divergence.  Outside the originating-issuance case, protection against non-issuer transplantation depends on the outer signature.  A compromised outer issuer can create a replacement token; see {{compromised-outer-issuer}}.
+Recipients accepting reissuance configure that trust locally or through an out-of-band framework, and unexpected divergence warrants investigation.  Outside the originating-issuance case, protection against non-issuer transplantation depends on the outer signature.  A compromised outer issuer can create a replacement token; see {{compromised-outer-issuer}}.
 
 Companion profiles MAY define additional outer-token binding claims following the `origin_jti` pattern: each records an identifier from the outer token at receipt creation, with consumer verifiability conditioned on issuer alignment and equality with the current outer-token field.  Such claims provide parallel anchors against other outer-token fields and do not weaken the `origin_jti` anchor.
 
@@ -707,7 +705,7 @@ Companion profiles MAY define additional outer-token binding claims following th
 
 Without configured trusted reissuing issuers, recipients use strict mode: issuer or `origin_jti` divergence causes rejection.  If the outer token has `jti`, a recipient requiring instance binding also rejects a missing leading `origin_jti`.
 
-Strict mode is the recommended default.  Deployments that need to accept reissued tokens, such as refreshed, re-emitted, or translated tokens, MUST explicitly configure the trusted reissuing issuers through local policy or an out-of-band trust framework.
+Strict mode is the recommended default.  Deployments that need to accept reissued tokens, such as refreshed, re-emitted, or translated tokens, need to configure the trusted reissuing issuers explicitly, through local policy or an out-of-band trust framework.
 
 ## Hash Algorithm Agility
 
@@ -741,7 +739,7 @@ Deployments needing freshness signals beyond receipt `exp`, such as active deleg
 
 If a receipt issuer's signing key is compromised, previously issued receipts signed with that key cannot be individually revoked.  The primary remediation is to remove the compromised issuer from the trusted-issuer set; once removed, consumers will reject all receipts signed by that issuer regardless of their content.
 
-Deployments SHOULD set short `exp` values on receipts, consistent with the REQUIRED `exp` defined in {{receipt-claims}}, to limit the window during which receipts signed with a compromised key remain valid.  When a key compromise is detected, deployments SHOULD treat all tokens carrying receipts from the affected issuer as lacking trusted provenance for those hops and SHOULD require re-issuance through a trusted issuer.
+Deployments SHOULD keep receipt `exp` no longer than the delegated-session lifetime it needs to cover ({{receipt-claims}}), to limit the window during which receipts signed with a compromised key remain valid.  When a key compromise is detected, deployments SHOULD treat all tokens carrying receipts from the affected issuer as lacking trusted provenance for those hops and SHOULD require re-issuance through a trusted issuer.
 
 ## Receipt Chain Size
 
@@ -1164,6 +1162,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * Gathered the receipt instance-binding rules for `origin_jti`, strict mode, and reissuance into one section.
 * Defined reissuance divergence as a mismatch between `receipt[0]` and the outer token's `iss` or `jti`.
 * Clarified that the claim-pair naming convention and its metadata apply to companion profiles that define parallel per-hop artifact arrays.
+* Reconciled `exp` guidance, aligned expiry handling with {{RFC7519}}, and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
 
 -00
 
