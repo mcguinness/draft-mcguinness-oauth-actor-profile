@@ -108,9 +108,9 @@ Introspection {{RFC7662}} returns the AS's current view of token status and clai
 
 A deployment may use either, both, or neither:
 
-*  Receipts MAY be returned via introspection, providing both signals in a single response (see {{consumer-introspection}}).
-*  Receipts MAY be carried inline in JWT tokens for deployments where introspection is not available or where detached verification is required.
-*  Introspection MAY be used for active-status checks even when receipts are not in use.
+*  Receipts can be returned via introspection, providing both signals in a single response (see {{consumer-introspection}}).
+*  Receipts can be carried inline in JWT tokens for deployments where introspection is not available or where detached verification is required.
+*  Introspection can be used for active-status checks even when receipts are not in use ({{RFC7662}}).
 
 The choice depends on trust, availability, and audit requirements.
 
@@ -723,7 +723,7 @@ A compromised current outer token issuer is a different threat.  Such an issuer 
 
 ## Receipt Freshness and Replay {#receipt-freshness}
 
-Receipts are historical attestations of past delegation state.  They MAY outlive the validity period of the outer token they were originally issued for, and MAY be carried forward across reissuance and refresh as long as their `exp` permits ({{receipt-claims}}).
+Receipts are historical attestations of past delegation state.  They can outlive the validity period of the outer token they were originally issued for, and can be carried forward across reissuance and refresh ({{reissuance-without-a-new-actor-hop}}) as long as their `exp` permits ({{receipt-claims}}).
 
 Receipt expiration bounds use of the artifact, not the delegation's lifetime.  Reuse of a receipt within its `exp` window, including in extended, fanned-out, and reissued tokens, is not in itself an attack; replay protection for the whole token follows its token type.  Current authorization and revocation checks remain separate.
 
