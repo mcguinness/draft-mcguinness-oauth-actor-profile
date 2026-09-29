@@ -133,7 +133,7 @@ The profile applies to human, service, workload, and AI agent delegation.  The r
 
 ## Illustrative Use Case
 
-Alice authorizes an AI travel agent to book a trip.  The enterprise AS issues a credential with Alice as `sub` and the agent as `act`.  The agent presents it to a booking provider's AS for an access token, and the provider then issues a Transaction Token for an internal booking tool.  Alice remains the subject; the tool becomes the outermost actor, and the agent becomes an inner actor.  [The cross-domain example](#appendix-cross-domain) shows the complete flow.
+Alice authorizes an AI travel agent to book a trip.  The enterprise AS issues a credential with Alice as `sub` and the agent as `act`.  The agent presents it to a booking provider's AS for an access token, and the provider then issues a Transaction Token for an internal booking tool.  Alice remains the subject; the tool becomes the outermost actor, and the agent becomes an inner actor.  Each trust domain reissues the token under its own policy, and the outermost actor changes only when a new presenter is established.  [The cross-domain example](#appendix-cross-domain) shows the complete flow.
 
 ## Relationship to Related Work
 
