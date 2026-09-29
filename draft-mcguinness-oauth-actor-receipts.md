@@ -444,7 +444,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
 
 If any required check fails, the recipient MUST reject the receipt chain for the purposes of this profile and MUST apply the underlying protocol's error handling for the stage at which the failure occurred.
 
-A recipient that has rejected a receipt chain under this profile MAY, under explicit local policy, extract structural information from the chain for use by companion profiles (for example, applying a companion's verification rules to the trusted prefix of an otherwise-invalid chain).  The recipient MUST NOT treat such partial validation as conformance with this profile, and MUST NOT relax the rejection requirements defined above.  Companion profiles defining partial-validation modes MUST do so under their own normative scope.
+A recipient that has rejected a receipt chain under this profile MAY, under explicit local policy, extract structural information from the chain for use by companion profiles (for example, applying a companion's verification rules to the trusted prefix of an otherwise-invalid chain).  The recipient MUST NOT treat such partial validation as conformance with this profile; the rejection requirements defined above still apply.  Companion profiles defining partial-validation modes MUST do so under their own normative scope.
 
 ## Receipt Instance Binding {#receipt-instance-binding}
 
@@ -457,7 +457,7 @@ Consumer step 5 applies the following cases in order to `receipt[0]`:
 
 ## Subject Re-Expression Across Hops {#subject-re-expression-across-hops}
 
-Only `receipt[0].sub` must match the outer token.  Older receipts MAY carry different subject identifiers.  A recipient requiring continuity across them MUST use explicit trusted local mapping rules.
+Only `receipt[0].sub` must match the outer token.  Older receipts can carry different subject identifiers (step 8 of {{consumer-processing}}).  A recipient requiring continuity across them MUST use explicit trusted local mapping rules.
 
 Matching actors alone do not establish subject continuity.  A receipt from an unrelated subject chain that shares the same actor identity can satisfy the hop-alignment check, whether by accident or because a compromised upstream issuer minted it for insertion.  Recipients need to account for this cross-subject insertion risk.
 
@@ -645,7 +645,7 @@ The current request is always validated against the outer token's top-level `cnf
 
 Receipt `cnf` values are historical only:
 
-*  A recipient MUST NOT treat an older receipt `cnf` value as sufficient proof for the current request, regardless of which proof mechanism the historical `cnf` was bound to.
+*  An older receipt `cnf` value is never sufficient proof for the current request, regardless of which proof mechanism the historical `cnf` was bound to (step 10 of {{consumer-processing}}).
 *  Recipients MUST distinguish receipt JWTs (identified by `typ` value `actor-receipt+jwt`) from outer tokens that carry `cnf` for current-request proof-of-possession; receipt `cnf` records historical binding and never satisfies a current-request PoP requirement under {{RFC7800}}, {{RFC9449}}, or {{RFC8705}}.
 
 The current top-level `cnf` can differ from the outermost receipt `cnf` after a later reissuance or key rotation that does not add a new actor hop.  That difference does not by itself invalidate the receipt chain under this profile.
@@ -658,14 +658,14 @@ Trust establishment requirements:
 
 *  A recipient needs to establish which issuers it trusts for receipt validation before relying on `actor_receipts`.
 *  Trust MUST be established through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.
-*  A recipient MUST NOT treat the presence of a syntactically valid signed receipt as sufficient grounds to trust its issuer.
+*  A syntactically valid signed receipt is not by itself grounds to trust its issuer; trust comes from the trusted-issuer set checked in step 5 of {{consumer-processing}}.
 *  Authorization servers that support this document SHOULD advertise `actor_receipts_supported: true` in their AS metadata {{RFC8414}}.
-*  Consumers SHOULD use that metadata signal as one input to trust establishment, but MUST NOT treat metadata advertisement alone as sufficient grounds to trust a receipt issuer; the issuer must also be within the recipient's configured trust boundary.
+*  Consumers SHOULD use that metadata signal as one input to trust establishment, but metadata advertisement alone is not sufficient grounds to trust a receipt issuer; the issuer must also be within the recipient's configured trust boundary.
 
 Key resolution requirements:
 
-*  To avoid attacker-controlled key resolution, a recipient MUST determine whether a receipt `iss` is within its trusted-issuer set before performing any network retrieval for that issuer's metadata or keys.
-*  A recipient that uses dynamic discovery for receipt validation MUST do so only within an existing trust framework or equivalent local policy that defines which issuers are permitted.
+*  To avoid attacker-controlled key resolution, step 5 of {{consumer-processing}} checks whether a receipt `iss` is within the trusted-issuer set before any network retrieval for that issuer's metadata or keys.
+*  Dynamic discovery for receipt validation therefore stays within the trust framework or local policy that defines which issuers are permitted.
 
 Trust is per-issuer and not transitive: each receipt is validated against the recipient's own trusted-issuer set, independent of the outer token's issuer or neighboring receipts.  If any receipt in the presented `actor_receipts` array is signed by an issuer that is not trusted for receipt validation, the recipient MUST reject the receipt chain for the purposes of this profile.  This document does not define trusted-prefix validation across an untrusted inner receipt.  Deployments needing uniform trust across an extended chain need to establish trust explicitly with every receipt issuer that may appear in tokens they accept.
 
