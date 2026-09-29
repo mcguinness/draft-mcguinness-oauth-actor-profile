@@ -139,7 +139,7 @@ Alice authorizes an AI travel agent to book a trip.  The enterprise AS issues a 
 
 *  **OAuth Token Exchange ({{RFC8693}})** defines the `act` claim and exchange mechanism profiled here.
 *  **Identity Chaining ({{I-D.ietf-oauth-identity-chaining}})** propagates subject identity across domains and can be combined with this profile's actor representation.
-*  **Identity Assertion JWT Authorization Grant (ID-JAG, {{I-D.ietf-oauth-identity-assertion-authz-grant}})** defines issuance and consumption of JWT authorization grants.  This document supplies actor-delegation processing through its Token Exchange and JWT assertion-grant rules.
+*  **Identity Assertion JWT Authorization Grant (ID-JAG, {{I-D.ietf-oauth-identity-assertion-authz-grant}})** defines issuance and consumption of JWT authorization grants.  It permits `actor_token` inputs but leaves their processing, and whether the issued grant carries `act`, to future profiles or extensions; this document is one such profile, through its Token Exchange and JWT assertion-grant rules.
 *  **OAuth Entity Profiles ({{I-D.mora-oauth-entity-profiles}})** defines the classification claims, metadata, and registry used by this profile.
 *  **Transaction Tokens ({{I-D.ietf-oauth-transaction-tokens}})** defines the token and service model extended here with actor claims and processing rules.
 *  **WIMSE Workload Identity ({{I-D.ietf-wimse-workload-creds}}{{I-D.ietf-wimse-wpt}})** supplies workload credentials and proofs used in [the cross-domain example](#appendix-cross-domain).  This profile also supports other presenter-authentication mechanisms.
