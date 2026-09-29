@@ -1535,7 +1535,7 @@ Replaying a delegated assertion can obtain tokens exercising the subject's autho
 
 ## Token Substitution
 
-An attacker who can present a token with a crafted `sub_profile` or delegation chain could attempt to escalate privileges.  ASes MUST validate inbound `sub_profile` values against the syntax requirements of this document, the applicable registry or deployment-specific allowed set where such checks are part of local policy, and the local policy applicable to the token they are issuing.  They MUST preserve unrecognized but syntactically valid values as required by [Actor Object Structure](#actor-object-structure), and they MUST reject values that are malformed or disallowed by local policy.
+An attacker who can present a token with a crafted `sub_profile` or delegation chain could attempt to escalate privileges.  ASes MUST validate inbound `sub_profile` values against the syntax requirements of this document, the applicable registry or deployment-specific allowed set where such checks are part of local policy, and the local policy applicable to the token they are issuing.  They MUST preserve unrecognized but syntactically valid values as required by [Preserve Inbound Chain](#preserve-inbound-chain), and they MUST reject values that are malformed or disallowed by local policy.
 
 ## Confused Deputy
 
