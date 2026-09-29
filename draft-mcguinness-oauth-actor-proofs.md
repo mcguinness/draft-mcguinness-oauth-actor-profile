@@ -229,7 +229,7 @@ The JWT payload of an actor proof uses the claims defined below, grouped by purp
 : REQUIRED.  The subject identifier on whose behalf the actor authorized the delegation, as known to the actor at signing time.  `actor_proofs[0].sub` MUST equal the outer token's top-level `sub`.  Older proofs MAY carry differing `sub` values when the subject has been re-expressed across issuer namespaces (see {{subject-re-expression-across-hops}}).
 
 `sub_iss`:
-: OPTIONAL.  The namespace authority under which the proof `sub` value is interpreted, with the semantics defined for the `sub_iss` claim in {{I-D.mcguinness-oauth-actor-receipts}}.  When absent, the subject namespace authority is not independently expressed by this profile and MUST be determined, if needed, from trusted local context for the represented hop.
+: OPTIONAL.  The namespace authority under which the proof `sub` value is interpreted, with the semantics defined for the `sub_iss` claim in {{I-D.mcguinness-oauth-actor-receipts}}.  When absent, the namespace is determined as for an absent receipt `sub_iss`.
 
 `act`:
 : REQUIRED.  A single-hop actor object identifying the signing actor.  This object:
@@ -264,18 +264,14 @@ Proofs define no subject `sub_profile` claim; subject classification remains iss
 ### Chain Linkage
 
 `prh`:
-: OPTIONAL.  Previous proof hash.  When present, `prh` MUST be the base64url encoding without padding ({{RFC7515}}) of the hash of the ASCII octets of the complete compact serialization of the next older proof in the chain, computed using the algorithm identified by `prh_alg` (defaulting to SHA-256 when `prh_alg` is absent).  The oldest proof in the chain, including a single-element chain in which the sole proof is both newest and oldest, MUST omit `prh`.
+: OPTIONAL.  Previous proof hash of the next older proof in the chain; the oldest proof, including the sole proof of a single-element chain, omits it.
 
   The `prh` and `prh_alg` claims are reused from {{I-D.mcguinness-oauth-actor-receipts}} with the same construction, applied to proof JWTs.  The proof chain is linked independently of any receipt chain carried in the same token: each companion's `prh` values hash that companion's own artifacts.
 
 `prh_alg`:
-: OPTIONAL.  Hash algorithm identifier naming the algorithm used to compute `prh`.
+: OPTIONAL.  Hash algorithm identifier naming the algorithm used to compute `prh`.  The value, consistency, and extension rules of the receipt `prh_alg` claim apply to proof chains.
 
-  *  Values MUST be drawn from the IANA "Named Information Hash Algorithm Registry" {{RFC6920}}, which uses lowercase forms such as `sha-256`, `sha-384`, and `sha-512`.
   *  When absent, the default is `sha-256`.
-  *  When present, the value MUST identify a hash algorithm whose collision and preimage resistance is at least equivalent to `sha-256`.
-  *  All proofs in an array MUST carry the same `prh_alg` value or all omit it.  Mixing omission with explicit `sha-256` is invalid even though both select SHA-256.  A single-element chain MAY carry `prh_alg` for later extension.
-  *  An issuer extending an inbound chain MUST either preserve the inbound `prh_alg` or reject the chain.
   *  The proof chain's `prh_alg` is independent of the receipt chain's `prh_alg` in the same token; the two chains MAY use different algorithms.
 
 ### Sibling Receipt Reference
