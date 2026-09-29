@@ -404,8 +404,8 @@ This document permits partial proof coverage for progressive deployment.  An iss
 
 However:
 
-*  a partial chain MUST still cover a contiguous outermost prefix of the visible actor chain;
-*  an issuer MUST NOT skip an outer visible hop and carry a proof only for an inner visible hop;
+*  a partial chain still covers a contiguous outermost prefix of the visible actor chain, as {{actor-proofs-claim}} requires;
+*  an issuer therefore cannot skip an outer visible hop and carry a proof only for an inner visible hop;
 *  when local policy or resource requirements require full actor-signed evidence, the issuer MUST either emit complete proof coverage or fail the request under the error model of the underlying protocol.
 
 Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop should enable proof support at the origin and its actors first.  Resource servers can require full coverage through `actor_proofs_complete_required` or local policy.
@@ -488,7 +488,7 @@ Older proofs can carry a different `sub` value from the current outer token when
 Accordingly:
 
 *  only `actor_proofs[0].sub` is required to equal the current outer token `sub`;
-*  older proof `sub` values MAY differ;
+*  older proof `sub` values can differ (step 8 of {{consumer-processing}});
 *  a recipient that applies stronger continuity requirements across older `sub` values MUST do so under explicit trusted local mapping rules.
 
 Recipients MUST be aware that permitting differing `sub` values across proofs creates a cross-subject insertion risk: a proof signed by a legitimate actor for an unrelated subject's delegation could satisfy the structural hop-alignment check when the actor identity at that hop matches.  An attacker who compromises any single actor signing key can deliberately sign proofs naming any subject and any target, and graft them onto a downstream chain whose re-expressed `sub` points at a victim subject.
