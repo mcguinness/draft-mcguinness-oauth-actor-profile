@@ -572,7 +572,9 @@ Table of Contents
    exp:  REQUIRED.  Expiration time for the receipt, as defined in
       [RFC7519].
 
-      exp needs to cover the lifetime of any token that will carry or
+      The exp of a newly created receipt MUST NOT be earlier than the
+      exp of the outer token issued with it.  Beyond that floor, exp
+      needs to cover the lifetime of any token that will carry or
       inherit this receipt; otherwise consumers reject older receipts in
       a valid chain prematurely.
 

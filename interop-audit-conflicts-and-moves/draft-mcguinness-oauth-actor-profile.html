@@ -1999,7 +1999,7 @@ act-object = {
             <h5 id="name-validate-inner-actors-used-">
 <a href="#section-3.6.2.3" class="section-number selfRef">3.6.2.3. </a><a href="#name-validate-inner-actors-used-" class="section-name selfRef">Validate Inner Actors Used for Decisions</a>
             </h5>
-<p id="section-3.6.2.3-1">Interoperable processing under this profile is defined around <code>sub</code> and the outermost <code>act.sub</code>.  If local policy additionally uses an inner <code>act</code> object as an input to issuance decisions, the AS <span class="bcp14">SHOULD</span> apply the same three sub-steps as <span><a href="#validate-outermost-actor" class="internal xref">Validate Outermost Actor</a> (<a href="#validate-outermost-actor" class="auto internal xref">Section 3.6.2.2</a>)</span> for that entry, including delegation-confirmation only when the current processing path or local policy requires it for that entry.  Such use of inner actors is deployment-specific.<a href="#section-3.6.2.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.6.2.3-1">Interoperable processing under this profile is defined around <code>sub</code> and the outermost <code>act.sub</code>.  If local policy additionally uses an inner <code>act</code> object as an input to issuance decisions, the AS <span class="bcp14">MUST</span> validate that entry's <code>act.sub</code> and <code>act.iss</code> pair and <span class="bcp14">MUST</span> evaluate its delegation relationship, as in <span><a href="#validate-outermost-actor" class="internal xref">Validate Outermost Actor</a> (<a href="#validate-outermost-actor" class="auto internal xref">Section 3.6.2.2</a>)</span>, before using it as a security input.  Such use of inner actors is deployment-specific.<a href="#section-3.6.2.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="carry-prior-actor-context">
@@ -3233,7 +3233,7 @@ If the AS also restricts scope using the (<code>sub</code>, <code>act.sub</code>
 For inner <code>act</code> objects in the inbound chain:<a href="#section-7.4-3.4.3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-7.4-3.4.4.1">
-                <p id="section-7.4-3.4.4.1.1"><strong>Security-relevant use</strong>: If local policy uses an inner entry as an input to access control or scope decisions, the TTS <span class="bcp14">SHOULD</span> apply the same validation as for the outermost entry.  If the TTS cannot validate it to the required assurance level, it <span class="bcp14">SHOULD</span> reject with <code>invalid_grant</code>.<a href="#section-7.4-3.4.4.1.1" class="pilcrow">¶</a></p>
+                <p id="section-7.4-3.4.4.1.1"><strong>Security-relevant use</strong>: If local policy uses an inner entry as an input to access control or scope decisions, the TTS <span class="bcp14">MUST</span> apply the same validation as for the outermost entry.  If the TTS cannot validate it to the required assurance level, it <span class="bcp14">MUST</span> reject with <code>invalid_grant</code>.<a href="#section-7.4-3.4.4.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-7.4-3.4.4.2">
                 <p id="section-7.4-3.4.4.2.1"><strong>Prior-actor context only</strong>: If an inner entry is preserved solely for audit purposes without driving any security decision, apply <span><a href="#carry-prior-actor-context" class="internal xref">Carry Prior-Actor Context</a> (<a href="#carry-prior-actor-context" class="auto internal xref">Section 3.6.2.4</a>)</span>.<a href="#section-7.4-3.4.4.2.1" class="pilcrow">¶</a></p>

@@ -1828,7 +1828,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <code>exp</code>:</dt>
             <dd style="margin-left: 1.5em" id="section-7.2.4-1.4">
               <p id="section-7.2.4-1.4.1"><span class="bcp14">REQUIRED</span>.  Expiration time for the receipt, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-7.2.4-1.4.1" class="pilcrow">¶</a></p>
-<p id="section-7.2.4-1.4.2"><code>exp</code> needs to cover the lifetime of any token that will carry or inherit this receipt; otherwise consumers reject older receipts in a valid chain prematurely.<a href="#section-7.2.4-1.4.2" class="pilcrow">¶</a></p>
+<p id="section-7.2.4-1.4.2">The <code>exp</code> of a newly created receipt <span class="bcp14">MUST NOT</span> be earlier than the <code>exp</code> of the outer token issued with it.  Beyond that floor, <code>exp</code> needs to cover the lifetime of any token that will carry or inherit this receipt; otherwise consumers reject older receipts in a valid chain prematurely.<a href="#section-7.2.4-1.4.2" class="pilcrow">¶</a></p>
 <p id="section-7.2.4-1.4.3">Downstream issuers reject receipts that expire before the issued outer token.  Deployments typically coordinate a bounded delegated-session lifetime to avoid propagation failure while limiting signing-key exposure; see <a href="#reissuance-without-a-new-actor-hop" class="auto internal xref">Section 8.3</a>.<a href="#section-7.2.4-1.4.3" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
