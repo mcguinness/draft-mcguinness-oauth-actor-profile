@@ -144,12 +144,11 @@ Table of Contents
    The OAuth Actor Profile [I-D.mcguinness-oauth-actor-profile]
    identifies delegated actors.  Actor Receipts [ACTOR-RECEIPTS] attest
    issuer participation, and Actor Proofs [ACTOR-PROOFS] attest actor
-   participation and target consent.  None of them records how authority
-   changes across hops: OAuth 2.0 Token Exchange [RFC8693] leaves the
-   scope, audience, and resources of each issued token to the issuing
-   authorization server's policy, Actor Receipts lists historical
-   authority as a non-goal, and an actor proof binds only the target its
-   actor authorized at one hop.  A recipient can therefore verify who
+   participation and target consent.  OAuth 2.0 Token Exchange [RFC8693]
+   does not define a record of authority changes across hops, and these
+   profiles do not add one.  Actor Receipts lists historical authority
+   as a non-goal.  An actor proof binds only the target its actor
+   authorized at one hop.  A recipient can therefore verify who
    participated at every hop without detecting that an intermediate
    issuer widened the authority flowing through the chain.
 
