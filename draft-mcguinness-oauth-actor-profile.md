@@ -927,7 +927,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 4.  The AS MUST reject if actor validation fails or the resulting chain exceeds the depth limit.  It MUST use `invalid_request` for excessive depth or an inbound actor missing `act.sub` or `act.iss`, and `invalid_grant` for validation failures.  It MUST NOT issue a partially preserved chain.
 
-5.  Top-level `sub_profile` follows [Actor Object Structure](#actor-object-structure), which recommends it when the AS can authoritatively classify the token's `sub` entity type.
+5.  Top-level `sub_profile` follows [Actor Object Structure](#actor-object-structure), which recommends it when the AS can authoritatively classify the token's `sub` entity type.  When the AS carries a trusted inbound top-level `sub_profile` into the issued token, it MUST preserve its unrecognized but syntactically valid values, because dropping a value can remove a classification that a downstream recipient restricts on.
 
 6.  The AS can reduce scope under local policy.  If this reduction, before any actor-based restriction, leaves no effective scope, it MUST reject with `invalid_scope`.
 
@@ -1535,7 +1535,7 @@ Replaying a delegated assertion can obtain tokens exercising the subject's autho
 
 ## Token Substitution
 
-An attacker who can present a token with a crafted `sub_profile` or delegation chain could attempt to escalate privileges.  ASes MUST validate inbound `sub_profile` values against the syntax requirements of this document, the applicable registry or deployment-specific allowed set where such checks are part of local policy, and the local policy applicable to the token they are issuing.  They MUST preserve unrecognized but syntactically valid values as required by [Preserve Inbound Chain](#preserve-inbound-chain), and they MUST reject values that are malformed or disallowed by local policy.
+An attacker who can present a token with a crafted `sub_profile` or delegation chain could attempt to escalate privileges.  ASes MUST validate inbound `sub_profile` values against the syntax requirements of this document, the applicable registry or deployment-specific allowed set where such checks are part of local policy, and the local policy applicable to the token they are issuing.  They MUST preserve unrecognized but syntactically valid values, as required by [Preserve Inbound Chain](#preserve-inbound-chain) for inherited actor objects and by step 5 of [JWT Access Token Output](#jwt-access-token-propagation) for a carried-forward top-level `sub_profile`, and they MUST reject values that are malformed or disallowed by local policy.
 
 ## Confused Deputy
 
@@ -2091,6 +2091,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
 * Resolved the remaining duplicate-rule conflicts: `act` in Transaction Tokens follows Delegation Chains, identifier reconciliation keeps both outcomes under explicit conditions, client identity must not substitute for `act`, inner-actor failures use the shared error mapping, and proof for a new presenter is required for sender-constrained output while any proof the credential's own profile requires is always validated.
 * Actor `sub_profile` is recommended when the issuer can authoritatively classify the actor, and Transaction Token `sub` re-expression requires a trusted mapping.
+* Unrecognized but syntactically valid values in a carried-forward top-level `sub_profile` are preserved.
 
 -00
 
