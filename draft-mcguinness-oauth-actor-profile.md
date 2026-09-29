@@ -392,7 +392,7 @@ AddOutermostActor(inbound_chain, new_actor):
   return outermost
 ~~~
 
-The AS MUST set the new actor's `act.iss` and MUST NOT change any inherited actor field.  It MUST preserve the entire inbound chain and reject with `invalid_request` if the resulting depth exceeds the local maximum.  With no inbound chain, the new chain has depth 1.
+The AS MUST set the new actor's `act.iss` and MUST NOT change any inherited actor field.  It MUST preserve the entire inbound chain; [Enforce Depth Limit](#enforce-depth-limit) rejects a resulting chain that exceeds the local maximum.  With no inbound chain, the new chain has depth 1.
 
 If the new actor has the same (`act.iss`, `act.sub`) pair as the inbound outermost actor, the AS MAY instead apply [Preserve Inbound Chain](#preserve-inbound-chain) to avoid a duplicate entry.
 
@@ -1046,7 +1046,7 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
 
 2.  The `req_wl` field and any Transaction Token fields other than actor-profile claims remain governed by {{I-D.ietf-oauth-transaction-tokens}} and local policy.  Under this profile, `req_wl` is supporting workload context and MUST NOT be treated as a substitute for the outermost `act.sub`.
 
-3.  The TTS MUST compute the depth of the resulting `act` chain after applying step 6.  If that resulting chain would exceed the limit in [Delegation Chains](#delegation-chains), the TTS MUST reject the request with `invalid_request`.
+3.  The TTS applies [Enforce Depth Limit](#enforce-depth-limit) to the `act` chain that results from step 6.
 
 4.  The TTS validates the inbound token and establishes issuer trust ([Validate Carrier Token](#validate-carrier-token)) before preserving or extending any `act` chain.  For the outermost `act` object in the inbound chain, the TTS applies [Validate Outermost Actor](#validate-outermost-actor), treating presenter rebind as extending the chain and presenter continuation as preserving it.
 
@@ -1580,7 +1580,7 @@ This document does not define per-hop actor-key provenance within the delegation
 
 ## Delegation Depth Limits
 
-Unbounded delegation chains increase attack surface and complicate policy evaluation.  Depth support and interoperability requirements are defined in [Delegation Chains](#delegation-chains).  Implementations that encounter chains exceeding their configured local maximum MUST reject the token to prevent denial-of-service through chain parsing.
+Unbounded delegation chains increase attack surface and complicate policy evaluation.  Depth support and interoperability requirements are defined in [Delegation Chains](#delegation-chains).  Rejecting chains that exceed the configured local maximum, as that section requires, also prevents denial-of-service through chain parsing.
 
 Token size grows in proportion to chain depth when extensions to this profile attach per-hop signed material to a delegated token.  Deployments that combine the reference chain depth with one or more such per-hop mechanisms SHOULD measure realistic token sizes against their transport limits (HTTP header limits are often 8 KB) and consider using token introspection ({{RFC7662}}) where inline carriage exceeds those limits.
 
