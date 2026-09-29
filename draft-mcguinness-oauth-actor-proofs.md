@@ -475,7 +475,7 @@ An issuer, resource server, or other recipient that relies on `actor_proofs` MUS
      *  a mismatched sibling reference MUST cause the recipient to reject both receipt-based and proof-based provenance for the token;
      *  a sibling reference that names an artifact at an index not covered by the other array is unverifiable; recipients whose policy requires bound siblings MUST reject the token's proof-based provenance, and other recipients MUST treat the reference as informational only;
      *  when receipts are absent or not validated, `receipt_jti` values are informational only.
-11.  Apply any additional consumer-processing rules defined by companion profiles whose claims appear in the proof or outer token (see {{extensibility}}).  Companion-profile rules MUST NOT relax any requirement in steps 1 through 10; they MAY add additional rejection conditions.
+11.  Apply any additional consumer-processing rules defined by companion profiles whose claims appear in the proof or outer token (see {{extensibility}}).  Companion-profile rules can add rejection conditions but cannot relax any requirement needed for conformance to this profile.
 
 If any required check fails, the recipient MUST reject the proof chain for the purposes of this profile and MUST apply the underlying protocol's error handling for the stage at which the failure occurred.
 
@@ -623,7 +623,7 @@ This profile composes with the extensibility framework defined in {{I-D.mcguinne
 
 Companion profile authoring rules:
 
-*  Companion profiles MAY extend consumer processing under {{consumer-processing}} by adding rejection conditions; they MUST NOT relax any rejection condition defined here.
+*  Companion profiles MAY extend consumer processing under {{consumer-processing}} by adding rejection conditions; they MUST NOT relax any requirement needed for conformance to this profile.  This does not change the separately scoped partial-validation rule that follows step 11 of {{consumer-processing}}.
 *  Companion profiles that define per-hop signed artifacts SHOULD follow the claim-pair and discovery conventions of {{I-D.mcguinness-oauth-actor-receipts}}, and MAY reuse the `prh` and `prh_alg` chain-linkage construction.
 
 Conflict resolution: when a recipient implements multiple companion profiles whose rules conflict, local policy determines precedence.
