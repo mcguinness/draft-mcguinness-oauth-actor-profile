@@ -338,8 +338,9 @@ Table of Contents
    Comparison does not interpret scope semantics: read:user/* does not
    automatically cover read:user/123, and preserved strings may acquire
    broader meanings through configuration changes (Section 15.4).
-   Issuers MUST emit explicit, narrowest-form scopes rather than rely on
-   grammar-dependent subsumption.
+   Deployments whose scope grammars carry hierarchy or wildcard
+   semantics follow Section 15.4 rather than relying on grammar-
+   dependent subsumption.
 
 6.2.  aud and Audience Governance
 
@@ -692,7 +693,7 @@ Table of Contents
       permit.
 
    An AS that supports refresh tokens for bounds-bearing delegated
-   tokens MUST retain, in the same issuer-controlled state that the
+   tokens needs to retain, in the same issuer-controlled state that the
    receipts companion requires for actor_receipts, the inherited
    bounds_events array and enough state to compute the effective upper
    bound at refresh time.
@@ -891,8 +892,7 @@ Table of Contents
       that, for each named dimension, it can record receipt-attested
       bounds and enforce issuance-time monotonicity per Section 10.1.
       Absence, or absence of a dimension from the array, means no such
-      advertisement; clients and relying parties MUST NOT infer support
-      from omission.
+      advertisement; omission makes no claim of support.
 
    bounds_events_supported:  OPTIONAL.  A boolean.  When true, the
       authorization server can create, preserve, and return
@@ -1078,10 +1078,11 @@ Table of Contents
 15.2.  Issuer Self-Attestation Limits
 
    An issuer can assert authority_bounds_enforced without independent
-   evidence.  Recipients MUST NOT accept it as a substitute for receipt-
-   attested verification.  Deployments requiring offline evidence that
-   authority did not expand MUST use receipt-attested bounds; the claim
-   alone supports only coordination and consistency checking.
+   evidence.  It never satisfies a requirement for receipt-attested
+   verification, such as required-dimension enforcement in step 8 of
+   Section 11.  Deployments requiring offline evidence that authority
+   did not expand MUST use receipt-attested bounds; the claim alone
+   supports only coordination and consistency checking.
 
 15.3.  Re-Authorization Abuse
 

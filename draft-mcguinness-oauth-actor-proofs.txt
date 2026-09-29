@@ -597,14 +597,9 @@ Table of Contents
    exp:  REQUIRED.  Expiration time for the proof, as defined in
       [RFC7519].
 
-      *  exp MUST be set to a value that covers the expected maximum
-         token lifetime of any token that will carry or inherit this
-         proof, so that consumer validation of older proofs in a valid
-         chain is not prematurely rejected.
-
-      *  Actors SHOULD set exp to the maximum delegated-token lifetime
-         permitted under local policy for tokens that may inherit this
-         proof.
+      exp needs to cover the lifetime of any token that will carry or
+      inherit this proof; otherwise consumers reject older proofs in a
+      valid chain prematurely.
 
       A proof expiring before the issued outer token causes propagation
       failure (Section 9.2).  Longer validity supports delegated
@@ -845,7 +840,7 @@ Table of Contents
    An AS that supports refresh tokens for delegated access tokens
    carrying proofs:
 
-   *  MUST retain the actor_proofs array in issuer-controlled state
+   *  needs to retain the actor_proofs array in issuer-controlled state
       across refresh, either in durable storage (for example, a token-
       state database or refresh-token state) or embedded in a self-
       contained refresh token, so each refreshed access token can carry
@@ -882,7 +877,7 @@ Table of Contents
 
    Partial coverage leaves the oldest hops uncovered, including the
    original subject-to-actor delegation.  Deployments needing evidence
-   for that hop SHOULD enable proof support at the origin and its actors
+   for that hop should enable proof support at the origin and its actors
    first.  Resource servers can require full coverage through
    actor_proofs_complete_required or local policy.
 
@@ -991,13 +986,9 @@ Table of Contents
            nested act, and contains no cnf, and that the proof iss
            equals the proof act.sub;
 
-        *  enforce exp, iat, and other JWT validity rules.  Because exp
-           is REQUIRED on proofs and MUST cover the expected outer token
-           lifetime, an expired proof SHOULD be treated as invalid even
-           for older hops.  Local policy MAY permit continued use of a
-           proof that is expired by a small clock-skew margin, but MUST
-           NOT relax exp enforcement broadly as a workaround for actors
-           that failed to set adequate exp values.
+        *  enforce exp, iat, and other JWT validity rules.  An expired
+           proof is invalid even for an older hop; only the small clock-
+           skew leeway of [RFC7519], Section 4.1.4 applies.
 
    6.   Verify proof-chain linkage:
 
@@ -1270,7 +1261,7 @@ Table of Contents
       embeds, preserves, or extends proof chains according to this
       document.  This value does not guarantee complete coverage for
       every visible hop in every resulting token.  When false or absent,
-      clients and relying parties MUST NOT assume such support.
+      the AS makes no claim of such support.
 
    This parameter applies equally to an authorization server that issues
    delegated JWT outputs and to a Transaction Token Service publishing
@@ -1562,10 +1553,10 @@ Table of Contents
 
    Trust establishment requirements:
 
-   *  A recipient MUST establish its trusted actor-key sources before
-      relying on actor_proofs.  Trust MUST be established through
-      explicit pre-configuration, bilateral agreement, federation
-      policy, or another explicit trust framework.
+   *  A recipient needs to establish its trusted actor-key sources
+      before relying on actor_proofs, through explicit pre-
+      configuration, bilateral agreement, federation policy, or another
+      explicit trust framework.
 
    *  A recipient MUST NOT treat the presence of a syntactically valid
       signed proof as sufficient grounds to trust the key that signed
@@ -1673,8 +1664,8 @@ Table of Contents
    the proof chain.
 
    Strict mode is the recommended default.  Deployments accepting
-   retargeted reissuance MUST configure an explicit set of trusted
-   reissuing issuers through local policy or an out-of-band trust
+   retargeted reissuance need an explicit set of trusted reissuing
+   issuers, configured through local policy or an out-of-band trust
    framework.  A recipient accepting divergence MUST treat proofs only
    as participation evidence and MUST NOT infer consent to the current
    audience or resources.  With receipts, it SHOULD apply one
@@ -2438,6 +2429,10 @@ Document History
 
    *  Removed an example claim that receipt composition stops a
       compromised issuer from re-embedding a proof.
+
+   *  Reconciled exp guidance, aligned expiry handling with [RFC7519],
+      and removed BCP 14 keywords from storage, trust-setup, and rollout
+      guidance.
 
    -00
 

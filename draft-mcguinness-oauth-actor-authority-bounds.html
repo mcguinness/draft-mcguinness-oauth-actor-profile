@@ -1552,7 +1552,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-6.1-2.3.1">the empty string is the empty set and is within every scope set.<a href="#section-6.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-6.1-3">Comparison does not interpret scope semantics: <code>read:user/*</code> does not automatically cover <code>read:user/123</code>, and preserved strings may acquire broader meanings through configuration changes (<a href="#scope-subsumption-gaps" class="auto internal xref">Section 15.4</a>).  Issuers <span class="bcp14">MUST</span> emit explicit, narrowest-form scopes rather than rely on grammar-dependent subsumption.<a href="#section-6.1-3" class="pilcrow">¶</a></p>
+<p id="section-6.1-3">Comparison does not interpret scope semantics: <code>read:user/*</code> does not automatically cover <code>read:user/123</code>, and preserved strings may acquire broader meanings through configuration changes (<a href="#scope-subsumption-gaps" class="auto internal xref">Section 15.4</a>).  Deployments whose scope grammars carry hierarchy or wildcard semantics follow <a href="#scope-subsumption-gaps" class="auto internal xref">Section 15.4</a> rather than relying on grammar-dependent subsumption.<a href="#section-6.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="audience-governance">
@@ -1921,7 +1921,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-10.2-2.3.1">when it can neither stay within the effective upper bound nor record a covering event, <span class="bcp14">MUST NOT</span> carry the bounds-bearing receipt chain forward while claiming enforcement: it <span class="bcp14">MUST</span> fail the request, or issue without <code>authority_bounds_enforced</code> for the expanded dimension where local policy and resource requirements permit.<a href="#section-10.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-10.2-3">An AS that supports refresh tokens for bounds-bearing delegated tokens <span class="bcp14">MUST</span> retain, in the same issuer-controlled state that the receipts companion requires for <code>actor_receipts</code>, the inherited <code>bounds_events</code> array and enough state to compute the effective upper bound at refresh time.<a href="#section-10.2-3" class="pilcrow">¶</a></p>
+<p id="section-10.2-3">An AS that supports refresh tokens for bounds-bearing delegated tokens needs to retain, in the same issuer-controlled state that the receipts companion requires for <code>actor_receipts</code>, the inherited <code>bounds_events</code> array and enough state to compute the effective upper bound at refresh time.<a href="#section-10.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="domain-transitions">
@@ -2098,7 +2098,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <dt id="section-12.1-2.1">
 <code>authority_bounds_supported</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-12.1-2.2">
-            <p id="section-12.1-2.2.1"><span class="bcp14">OPTIONAL</span>.  A non-empty array of governed-dimension names.  The authorization server advertises that, for each named dimension, it can record receipt-attested bounds and enforce issuance-time monotonicity per <a href="#recording-bounds" class="auto internal xref">Section 10.1</a>.  Absence, or absence of a dimension from the array, means no such advertisement; clients and relying parties <span class="bcp14">MUST NOT</span> infer support from omission.<a href="#section-12.1-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-12.1-2.2.1"><span class="bcp14">OPTIONAL</span>.  A non-empty array of governed-dimension names.  The authorization server advertises that, for each named dimension, it can record receipt-attested bounds and enforce issuance-time monotonicity per <a href="#recording-bounds" class="auto internal xref">Section 10.1</a>.  Absence, or absence of a dimension from the array, means no such advertisement; omission makes no claim of support.<a href="#section-12.1-2.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-12.1-2.3">
@@ -2284,7 +2284,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-issuer-self-attestation-lim">
 <a href="#section-15.2" class="section-number selfRef">15.2. </a><a href="#name-issuer-self-attestation-lim" class="section-name selfRef">Issuer Self-Attestation Limits</a>
         </h3>
-<p id="section-15.2-1">An issuer can assert <code>authority_bounds_enforced</code> without independent evidence.  Recipients <span class="bcp14">MUST NOT</span> accept it as a substitute for receipt-attested verification.  Deployments requiring offline evidence that authority did not expand <span class="bcp14">MUST</span> use receipt-attested bounds; the claim alone supports only coordination and consistency checking.<a href="#section-15.2-1" class="pilcrow">¶</a></p>
+<p id="section-15.2-1">An issuer can assert <code>authority_bounds_enforced</code> without independent evidence.  It never satisfies a requirement for receipt-attested verification, such as required-dimension enforcement in step 8 of <a href="#consumer-processing" class="auto internal xref">Section 11</a>.  Deployments requiring offline evidence that authority did not expand <span class="bcp14">MUST</span> use receipt-attested bounds; the claim alone supports only coordination and consistency checking.<a href="#section-15.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="reauthorization-abuse">

@@ -1862,14 +1862,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <code>exp</code>:</dt>
             <dd style="margin-left: 1.5em" id="section-7.2.5-1.4">
               <p id="section-7.2.5-1.4.1"><span class="bcp14">REQUIRED</span>.  Expiration time for the proof, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-7.2.5-1.4.1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-7.2.5-1.4.2.1">
-                  <p id="section-7.2.5-1.4.2.1.1"><code>exp</code> <span class="bcp14">MUST</span> be set to a value that covers the expected maximum token lifetime of any token that will carry or inherit this proof, so that consumer validation of older proofs in a valid chain is not prematurely rejected.<a href="#section-7.2.5-1.4.2.1.1" class="pilcrow">¶</a></p>
-</li>
-                <li class="normal" id="section-7.2.5-1.4.2.2">
-                  <p id="section-7.2.5-1.4.2.2.1">Actors <span class="bcp14">SHOULD</span> set <code>exp</code> to the maximum delegated-token lifetime permitted under local policy for tokens that may inherit this proof.<a href="#section-7.2.5-1.4.2.2.1" class="pilcrow">¶</a></p>
-</li>
-              </ul>
+<p id="section-7.2.5-1.4.2"><code>exp</code> needs to cover the lifetime of any token that will carry or inherit this proof; otherwise consumers reject older proofs in a valid chain prematurely.<a href="#section-7.2.5-1.4.2" class="pilcrow">¶</a></p>
 <p id="section-7.2.5-1.4.3">A proof expiring before the issued outer token causes propagation failure (<a href="#extending-an-existing-proof-chain" class="auto internal xref">Section 9.2</a>).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse (<a href="#proof-to-token-binding-limits" class="auto internal xref">Section 14.4</a>).<a href="#section-7.2.5-1.4.3" class="pilcrow">¶</a></p>
 <p id="section-7.2.5-1.4.4">With instance binding through receipts in strict mode or a provisioned <code>origin_jti</code> (<a href="#proof-to-token-binding-limits" class="auto internal xref">Section 14.4</a>), <code>exp</code> <span class="bcp14">MAY</span> cover the delegated session.  Without instance binding, <code>exp</code> <span class="bcp14">SHOULD</span> be short to limit proof reuse.<a href="#section-7.2.5-1.4.4" class="pilcrow">¶</a></p>
 </dd>
@@ -2065,7 +2058,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-9.3-6">An AS that supports refresh tokens for delegated access tokens carrying proofs:<a href="#section-9.3-6" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-9.3-7.1">
-            <p id="section-9.3-7.1.1"><span class="bcp14">MUST</span> retain the <code>actor_proofs</code> array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.<a href="#section-9.3-7.1.1" class="pilcrow">¶</a></p>
+            <p id="section-9.3-7.1.1">needs to retain the <code>actor_proofs</code> array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.<a href="#section-9.3-7.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-9.3-7.2">
             <p id="section-9.3-7.2.1"><span class="bcp14">MUST</span> rely on proof <code>exp</code> values set per <a href="#proof-claims" class="auto internal xref">Section 7.2</a> to accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under <a href="#extending-an-existing-proof-chain" class="auto internal xref">Section 9.2</a> as proofs approach expiry, and refresh loses actor-signed evidence.<a href="#section-9.3-7.2.1" class="pilcrow">¶</a></p>
@@ -2094,7 +2087,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-9.4-3.3.1">when local policy or resource requirements require full actor-signed evidence, the issuer <span class="bcp14">MUST</span> either emit complete proof coverage or fail the request under the error model of the underlying protocol.<a href="#section-9.4-3.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-9.4-4">Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop <span class="bcp14">SHOULD</span> enable proof support at the origin and its actors first.  Resource servers can require full coverage through <code>actor_proofs_complete_required</code> or local policy.<a href="#section-9.4-4" class="pilcrow">¶</a></p>
+<p id="section-9.4-4">Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop should enable proof support at the origin and its actors first.  Resource servers can require full coverage through <code>actor_proofs_complete_required</code> or local policy.<a href="#section-9.4-4" class="pilcrow">¶</a></p>
 <p id="section-9.4-5">When the issuer also filters the visible <code>act</code> chain (see the <code>chain_complete</code> introspection member defined in the core actor profile <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>), <code>actor_proofs</code> covers only the visible filtered chain.  In that case <code>actor_proofs_complete</code> describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness <span class="bcp14">MUST</span> evaluate <code>chain_complete</code> separately.<a href="#section-9.4-5" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2180,7 +2173,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-10-2.5.2.10.1">verify that the proof <code>act</code> object is single-hop, contains no nested <code>act</code>, and contains no <code>cnf</code>, and that the proof <code>iss</code> equals the proof <code>act.sub</code>;<a href="#section-10-2.5.2.10.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-10-2.5.2.11">
-              <p id="section-10-2.5.2.11.1">enforce <code>exp</code>, <code>iat</code>, and other JWT validity rules.  Because <code>exp</code> is <span class="bcp14">REQUIRED</span> on proofs and <span class="bcp14">MUST</span> cover the expected outer token lifetime, an expired proof <span class="bcp14">SHOULD</span> be treated as invalid even for older hops.  Local policy <span class="bcp14">MAY</span> permit continued use of a proof that is expired by a small clock-skew margin, but <span class="bcp14">MUST NOT</span> relax <code>exp</code> enforcement broadly as a workaround for actors that failed to set adequate <code>exp</code> values.<a href="#section-10-2.5.2.11.1" class="pilcrow">¶</a></p>
+              <p id="section-10-2.5.2.11.1">enforce <code>exp</code>, <code>iat</code>, and other JWT validity rules.  An expired proof is invalid even for an older hop; only the small clock-skew leeway of <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>], <a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.4" class="relref">Section 4.1.4</a></span> applies.<a href="#section-10-2.5.2.11.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </li>
@@ -2389,7 +2382,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <dt id="section-11.1-2.1">
 <code>actor_proofs_supported</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-11.1-2.2">
-            <p id="section-11.1-2.2.1"><span class="bcp14">OPTIONAL</span>.  A boolean.  When <code>true</code>, the authorization server advertises that it accepts the <code>actor_proof</code> token request parameter, validates proofs against actor keys, and embeds, preserves, or extends proof chains according to this document.  This value does not guarantee complete coverage for every visible hop in every resulting token.  When <code>false</code> or absent, clients and relying parties <span class="bcp14">MUST NOT</span> assume such support.<a href="#section-11.1-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-11.1-2.2.1"><span class="bcp14">OPTIONAL</span>.  A boolean.  When <code>true</code>, the authorization server advertises that it accepts the <code>actor_proof</code> token request parameter, validates proofs against actor keys, and embeds, preserves, or extends proof chains according to this document.  This value does not guarantee complete coverage for every visible hop in every resulting token.  When <code>false</code> or absent, the AS makes no claim of such support.<a href="#section-11.1-2.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -2636,7 +2629,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-14.3-2">Trust establishment requirements:<a href="#section-14.3-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-14.3-3.1">
-            <p id="section-14.3-3.1.1">A recipient <span class="bcp14">MUST</span> establish its trusted actor-key sources before relying on <code>actor_proofs</code>.  Trust <span class="bcp14">MUST</span> be established through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.<a href="#section-14.3-3.1.1" class="pilcrow">¶</a></p>
+            <p id="section-14.3-3.1.1">A recipient needs to establish its trusted actor-key sources before relying on <code>actor_proofs</code>, through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.<a href="#section-14.3-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-14.3-3.2">
             <p id="section-14.3-3.2.1">A recipient <span class="bcp14">MUST NOT</span> treat the presence of a syntactically valid signed proof as sufficient grounds to trust the key that signed it.<a href="#section-14.3-3.2.1" class="pilcrow">¶</a></p>
@@ -2692,7 +2685,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <a href="#section-14.4.1" class="section-number selfRef">14.4.1. </a><a href="#name-target-binding-strict-mode" class="section-name selfRef">Target-Binding Strict Mode</a>
           </h4>
 <p id="section-14.4.1-1">Recipients that have not explicitly configured a set of trusted reissuing issuers operate in strict mode by default: per step 9 of <a href="#consumer-processing" class="auto internal xref">Section 10</a>, an outer token whose audience or effective resources exceed <code>actor_proofs[0]</code>'s target binding, or whose <code>jti</code> differs from a present <code>actor_proofs[0].origin_jti</code>, causes the recipient to reject the proof chain.<a href="#section-14.4.1-1" class="pilcrow">¶</a></p>
-<p id="section-14.4.1-2">Strict mode is the recommended default.  Deployments accepting retargeted reissuance <span class="bcp14">MUST</span> configure an explicit set of trusted reissuing issuers through local policy or an out-of-band trust framework.  A recipient accepting divergence <span class="bcp14">MUST</span> treat proofs only as participation evidence and <span class="bcp14">MUST NOT</span> infer consent to the current audience or resources.  With receipts, it <span class="bcp14">SHOULD</span> apply one reissuance-trust decision to both companions.<a href="#section-14.4.1-2" class="pilcrow">¶</a></p>
+<p id="section-14.4.1-2">Strict mode is the recommended default.  Deployments accepting retargeted reissuance need an explicit set of trusted reissuing issuers, configured through local policy or an out-of-band trust framework.  A recipient accepting divergence <span class="bcp14">MUST</span> treat proofs only as participation evidence and <span class="bcp14">MUST NOT</span> infer consent to the current audience or resources.  With receipts, it <span class="bcp14">SHOULD</span> apply one reissuance-trust decision to both companions.<a href="#section-14.4.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3474,6 +3467,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         <li class="normal" id="appendix-B-3.4">
           <p id="appendix-B-3.4.1">Removed an example claim that receipt composition stops a compromised issuer from re-embedding a proof.<a href="#appendix-B-3.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.5">
+          <p id="appendix-B-3.5.1">Reconciled <code>exp</code> guidance, aligned expiry handling with <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>, and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.<a href="#appendix-B-3.5.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-B-4">-00<a href="#appendix-B-4" class="pilcrow">¶</a></p>
