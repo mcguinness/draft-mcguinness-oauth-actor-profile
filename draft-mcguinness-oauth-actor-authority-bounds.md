@@ -407,7 +407,7 @@ An issuer, resource server, or other recipient relying on this profile MUST perf
 
 8.  Enforce dimensions required by `authority_bounds_required` or local policy.  Each required D must appear in `authority_bounds_enforced`, be recorded on every receipt, and pass steps 4 through 6.  Sparse coverage does not satisfy this requirement.  Recipients needing full-chain enforcement SHOULD also require `actor_receipts_complete_required` and `bounds_events_complete_required`.
 
-9.  Apply any additional rules defined by companion profiles whose claims appear in the artifacts ({{extensibility}}).  They MAY add rejection conditions but MUST NOT relax steps 1 through 8.
+9.  Apply any additional rules defined by companion profiles whose claims appear in the artifacts ({{extensibility}}).  They can add rejection conditions but cannot relax any requirement needed for conformance to this profile.
 
 If any required check fails, the recipient MUST reject the token's bounds-based evidence and MUST apply the underlying protocol's error handling for the stage at which the failure occurred.  Rejection of bounds-based evidence does not by itself invalidate the receipt chain under {{ACTOR-RECEIPTS}}; whether the token remains acceptable without bounds evidence is local policy, except where step 8 applies.
 
@@ -499,7 +499,7 @@ This profile composes with the extensibility framework of {{ACTOR-RECEIPTS}} and
 *  **Per-type RAR refinement rules**, defined by the specifications that define RAR types; such rules extend {{rar-dimension}} for their types without modifying this document.
 *  **New event types** are NOT added to `bounds_events`; companion profiles defining other non-hop events use their own parallel arrays per the receipts companion's pattern, so that each array has one verification routine and one completeness attestation.
 
-Companion rules MUST NOT relax any rejection condition in {{consumer-processing}}; they MAY add rejection conditions.
+Companion rules MUST NOT relax any requirement needed for conformance to this profile; they MAY add rejection conditions.  A companion's partial-validation mode, defined under its own normative scope as {{ACTOR-RECEIPTS}} requires, is not conformance to this profile.
 
 # Security Considerations
 
