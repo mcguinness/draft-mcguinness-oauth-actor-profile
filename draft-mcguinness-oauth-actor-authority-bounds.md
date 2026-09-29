@@ -357,7 +357,7 @@ Reissuance without a new actor hop creates no receipt, so recorded bounds cannot
 *  when a broader value is authorized (for example, a refresh grant following step-up or an approver widening a governing authority object), MUST record the expansion as a `bounds_reauth` event in `bounds_events`, anchored to the inherited `receipt[0]` by its `jti`, signed by the authority that captured the re-authorization, and prepended per {{bounds-events}}; the issued token's values are then measured against the event's `new_bounds`;
 *  when it can neither stay within the effective upper bound nor record a covering event, MUST NOT carry the bounds-bearing receipt chain forward while claiming enforcement: it MUST fail the request, or issue without `authority_bounds_enforced` for the expanded dimension where local policy and resource requirements permit.
 
-An AS that supports refresh tokens for bounds-bearing delegated tokens MUST retain, in the same issuer-controlled state that the receipts companion requires for `actor_receipts`, the inherited `bounds_events` array and enough state to compute the effective upper bound at refresh time.
+An AS that supports refresh tokens for bounds-bearing delegated tokens needs to retain, in the same issuer-controlled state that the receipts companion requires for `actor_receipts`, the inherited `bounds_events` array and enough state to compute the effective upper bound at refresh time.
 
 ## Domain Transitions {#domain-transitions}
 

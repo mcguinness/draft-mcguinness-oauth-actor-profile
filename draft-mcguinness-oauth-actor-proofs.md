@@ -398,7 +398,7 @@ If proofs are dropped while receipts remain, inherited `proof_jti` references be
 
 An AS that supports refresh tokens for delegated access tokens carrying proofs:
 
-*  MUST retain the `actor_proofs` array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.
+*  needs to retain the `actor_proofs` array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.
 *  MUST rely on proof `exp` values set per {{proof-claims}} to accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under {{extending-an-existing-proof-chain}} as proofs approach expiry, and refresh loses actor-signed evidence.
 *  When that bounded lifetime would be exceeded, MUST either obtain fresh delegation state with fresh proofs or stop emitting `actor_proofs`, unless local policy permits partial or absent coverage.
 
@@ -678,7 +678,7 @@ Proof validation is meaningful only if the recipient resolves actor verification
 
 Trust establishment requirements:
 
-*  A recipient MUST establish its trusted actor-key sources before relying on `actor_proofs`.  Trust MUST be established through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.
+*  A recipient needs to establish its trusted actor-key sources before relying on `actor_proofs`, through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.
 *  A recipient MUST NOT treat the presence of a syntactically valid signed proof as sufficient grounds to trust the key that signed it.
 *  A recipient MUST determine that a proof's (`act.iss`, `act.sub`) pair is within the scope of a trusted actor-key source before performing any network retrieval keyed by the proof's content, and MUST NOT dereference key references supplied by the proof itself (such as `jku` or `x5u` header parameters) outside a pre-established trust framework, per {{RFC8725}}.
 *  Key resolution and trust evaluation use the (`act.iss`, `act.sub`) pair.  The bare proof `iss` string MUST NOT be the sole resolution index; actor identifiers are namespaced by `act.iss`, and identical `act.sub` strings under different namespace authorities are different actors.
@@ -710,7 +710,7 @@ Inner proofs have no independent binding to the current token; they are bound to
 
 Recipients that have not explicitly configured a set of trusted reissuing issuers operate in strict mode by default: per step 9 of {{consumer-processing}}, an outer token whose audience or effective resources exceed `actor_proofs[0]`'s target binding, or whose `jti` differs from a present `actor_proofs[0].origin_jti`, causes the recipient to reject the proof chain.
 
-Strict mode is the recommended default.  Deployments accepting retargeted reissuance MUST configure an explicit set of trusted reissuing issuers through local policy or an out-of-band trust framework.  A recipient accepting divergence MUST treat proofs only as participation evidence and MUST NOT infer consent to the current audience or resources.  With receipts, it SHOULD apply one reissuance-trust decision to both companions.
+Strict mode is the recommended default.  Deployments accepting retargeted reissuance need an explicit set of trusted reissuing issuers, configured through local policy or an out-of-band trust framework.  A recipient accepting divergence MUST treat proofs only as participation evidence and MUST NOT infer consent to the current audience or resources.  With receipts, it SHOULD apply one reissuance-trust decision to both companions.
 
 ## Hash Algorithm Agility
 

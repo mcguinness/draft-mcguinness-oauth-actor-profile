@@ -378,7 +378,7 @@ Refresh-token reissuance is a special case of reissuance under this section.  Re
 
 An AS that supports refresh tokens for delegated access tokens:
 
-*  MUST retain the `actor_receipts` array associated with the original access token in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the receipts forward unchanged.
+*  needs to retain the `actor_receipts` array associated with the original access token in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the receipts forward unchanged.
 *  MUST set receipt `exp` values under {{receipt-claims}} to accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under {{extending-an-existing-receipt-chain}} as receipts approach expiry, and refresh loses receipt-based provenance.
 *  When that bounded lifetime would be exceeded, MUST either obtain fresh delegation state and start a new receipt chain or stop emitting `actor_receipts`, unless local policy permits partial or absent receipt coverage.
 
@@ -662,7 +662,7 @@ Receipt validation is meaningful only if the recipient trusts the issuers that s
 
 Trust establishment requirements:
 
-*  A recipient MUST establish which issuers it trusts for receipt validation before relying on `actor_receipts`.
+*  A recipient needs to establish which issuers it trusts for receipt validation before relying on `actor_receipts`.
 *  Trust MUST be established through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.
 *  A recipient MUST NOT treat the presence of a syntactically valid signed receipt as sufficient grounds to trust its issuer.
 *  Authorization servers that support this document SHOULD advertise `actor_receipts_supported: true` in their AS metadata {{RFC8414}}.
@@ -673,7 +673,7 @@ Key resolution requirements:
 *  To avoid attacker-controlled key resolution, a recipient MUST determine whether a receipt `iss` is within its trusted-issuer set before performing any network retrieval for that issuer's metadata or keys.
 *  A recipient that uses dynamic discovery for receipt validation MUST do so only within an existing trust framework or equivalent local policy that defines which issuers are permitted.
 
-Trust is per-issuer and not transitive: each receipt is validated against the recipient's own trusted-issuer set, independent of the outer token's issuer or neighboring receipts.  If any receipt in the presented `actor_receipts` array is signed by an issuer that is not trusted for receipt validation, the recipient MUST reject the receipt chain for the purposes of this profile.  This document does not define trusted-prefix validation across an untrusted inner receipt.  Deployments needing uniform trust across an extended chain MUST establish trust explicitly with every receipt issuer that may appear in tokens they accept.
+Trust is per-issuer and not transitive: each receipt is validated against the recipient's own trusted-issuer set, independent of the outer token's issuer or neighboring receipts.  If any receipt in the presented `actor_receipts` array is signed by an issuer that is not trusted for receipt validation, the recipient MUST reject the receipt chain for the purposes of this profile.  This document does not define trusted-prefix validation across an untrusted inner receipt.  Deployments needing uniform trust across an extended chain need to establish trust explicitly with every receipt issuer that may appear in tokens they accept.
 
 The trust evaluation in this section covers receipt signers (the `iss` claim of each receipt).  Recipients separately evaluate trust in each receipt's `act.iss` as the namespace authority for `act.sub` as described in {{receipt-claims}}; that evaluation is independent of receipt-signer trust, even when the same entity holds both roles.
 
@@ -697,7 +697,7 @@ Coverage is therefore truthful within the limits of the trusted-issuer set: a co
 
 Divergence in issuer or token identifier removes current-instance binding.  {{receipt-instance-binding}} rejects such chains unless local policy explicitly trusts the outer issuer to reissue them.  This profile cannot distinguish legitimate reissuance from malicious rewrapping in band.
 
-Recipients accepting reissuance MUST configure that trust locally or through an out-of-band framework and SHOULD investigate unexpected divergence.  Outside the originating-issuance case, protection against non-issuer transplantation depends on the outer signature.  A compromised outer issuer can create a replacement token; see {{compromised-outer-issuer}}.
+Recipients accepting reissuance configure that trust locally or through an out-of-band framework, and unexpected divergence warrants investigation.  Outside the originating-issuance case, protection against non-issuer transplantation depends on the outer signature.  A compromised outer issuer can create a replacement token; see {{compromised-outer-issuer}}.
 
 Companion profiles MAY define additional outer-token binding claims following the `origin_jti` pattern: each records an identifier from the outer token at receipt creation, with consumer verifiability conditioned on issuer alignment and equality with the current outer-token field.  Such claims provide parallel anchors against other outer-token fields and do not weaken the `origin_jti` anchor.
 
@@ -705,7 +705,7 @@ Companion profiles MAY define additional outer-token binding claims following th
 
 Without configured trusted reissuing issuers, recipients use strict mode: issuer or `origin_jti` divergence causes rejection.  If the outer token has `jti`, a recipient requiring instance binding also rejects a missing leading `origin_jti`.
 
-Strict mode is the recommended default.  Deployments that need to accept reissued tokens, such as refreshed, re-emitted, or translated tokens, MUST explicitly configure the trusted reissuing issuers through local policy or an out-of-band trust framework.
+Strict mode is the recommended default.  Deployments that need to accept reissued tokens, such as refreshed, re-emitted, or translated tokens, need to configure the trusted reissuing issuers explicitly, through local policy or an out-of-band trust framework.
 
 ## Hash Algorithm Agility
 
