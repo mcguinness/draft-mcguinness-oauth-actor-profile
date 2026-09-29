@@ -467,7 +467,7 @@ The following claims are defined for a JWT assertion grant that carries actor-pr
 `cnf` (REQUIRED when sender-constrained; otherwise OPTIONAL):
 : When the JWT assertion grant is sender-constrained, the assertion MUST carry a top-level `cnf` claim identifying the binding: `cnf.jkt` per {{RFC9449}} when DPoP is used, or `cnf.x5t#S256` per {{RFC8705}} when mTLS is used.  When the assertion is not sender-constrained, top-level `cnf` is OPTIONAL unless required by another profile or local policy.
 
-When the assertion or request context also identifies an OAuth client via `client_id`, `azp`, or an authenticated client credential, interoperable processing SHOULD use `act.sub` rather than treating that client identity as a substitute for it (see [Client Identity and Delegation](#client-identity-delegation) and [Authorization Grant Processing](#jwt-assertion-grants-processing)).
+When the assertion or request context also identifies an OAuth client via `client_id`, `azp`, or an authenticated client credential, that client identity does not substitute for `act.sub`, as required by [Client Identity and Delegation](#client-identity-delegation) (see also [Authorization Grant Processing](#jwt-assertion-grants-processing)).
 
 Before sending JWT assertion grants carrying actor-profile claims, a client needs to confirm the AS's support for the actor-determination model through deployment documentation, prior agreement, or discovery; for ID-JAG, that includes support for the actor-delegation extension model defined by this document.
 
@@ -593,10 +593,10 @@ The following claims are defined for a JWT access token that carries actor-profi
 : Binds the access token to the current presenter when a sender-constraining mechanism such as DPoP or mTLS is used.
 
 `client_id` (REQUIRED):
-: Identifies the OAuth client that requested the token, per {{RFC9068}}.  It MUST NOT substitute for `act`.
+: Identifies the OAuth client that requested the token, per {{RFC9068}}.  It does not substitute for `act`; see [Client Identity and Delegation](#client-identity-delegation).
 
 `azp` (OPTIONAL):
-: An additional client identifier used by some deployments.  It MUST NOT substitute for `act`.
+: An additional client identifier used by some deployments.  It does not substitute for `act`; see [Client Identity and Delegation](#client-identity-delegation).
 
 If an issuer uses `azp` and `act.sub` for the same party, [Client Identity and Delegation](#client-identity-delegation) defines how they are reconciled, along with the other common rules; [Migrating from Implicit to Explicit Delegation](#migration-implicit-explicit) describes rollout.
 
@@ -1549,7 +1549,7 @@ A resource server that accepts delegated tokens but fails to enforce the (`sub`,
 
 Client identity, such as `client_id`, `azp`, or authenticated client context, is widely used in deployed systems as an authorization input.  Under this document, those values remain auxiliary client-identity signals, while the outermost `act.sub` is the explicit delegated-actor signal when present.  The following normative rules apply:
 
-*  When `act` is present, interoperable processing SHOULD use it as the explicit delegated-actor signal rather than substituting `client_id`, `azp`, or other client-identity signals.  Deployments that rely on such substitution are outside the interoperable scope of this profile.
+*  When `act` is present, implementations MUST NOT substitute `client_id`, `azp`, or other client-identity signals for it as the delegated-actor signal.  A trusted local mapping can establish that a client identifier and `act.sub` identify the same entity without changing the meaning of either claim.
 *  When a single `client_id` registration fronts multiple distinct acting entities (for example, an agent orchestration platform executing requests on behalf of different agent instances), `client_id` alone does not identify the runtime actor.  Each such request SHOULD carry `act.sub` identifying the specific acting principal.
 *  During token issuance, `client_id` and `azp` MUST NOT be rewritten to represent delegation state that belongs in `act`; see [JWT Access Token Output](#jwt-access-token-propagation) for propagation rules.
 *  When both explicit (`act.sub`) and implicit (`client_id`, `azp`) signals are present and local policy expects them to identify the same party, implementations SHOULD perform identifier reconciliation; if it fails, the identifiers are treated as distinct, and an operation that requires them to identify the same party is rejected, as defined for Identifier Reconciliation in [Conventions and Definitions](#conventions).
