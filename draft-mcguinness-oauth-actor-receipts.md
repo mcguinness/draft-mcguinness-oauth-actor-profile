@@ -241,7 +241,6 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 
   *  MUST conform to the core actor profile's actor-object rules;
   *  MUST include `act.sub` and `act.iss`;
-  *  MAY include `act.sub_profile`;
   *  MUST NOT contain `cnf`;
   *  MUST NOT contain a nested `act`.
 
