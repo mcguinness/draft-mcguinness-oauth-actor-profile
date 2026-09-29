@@ -262,7 +262,7 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
   *  When absent, the default is `sha-256`.
   *  When present, the value MUST identify a hash algorithm whose collision and preimage resistance is at least equivalent to `sha-256`.
   *  All receipts in an array MUST carry the same `prh_alg` value or all omit it.  Mixing omission with explicit `sha-256` is invalid even though both select SHA-256.  A single-element chain MAY carry `prh_alg`, but the value has no effect unless a later receipt links to it.
-  *  An issuer extending an inbound chain MUST either preserve the inbound `prh_alg` or reject the chain.
+  *  An issuer extending an inbound chain preserves the inbound `prh_alg` or rejects the chain (step 7 of {{extending-an-existing-receipt-chain}}).
 
 ### Time and Uniqueness
 
@@ -303,8 +303,8 @@ A receipt MAY contain additional claims defined by another specification or by d
 
 When the issuer creates a new receipt and prepends it to an inherited receipt chain:
 
-*  if there is an older receipt immediately following it in the array, the new receipt MUST include `prh`, and that value MUST be the base64url encoding without padding of the hash of the ASCII octets of the exact compact JWT string of that next receipt;
-*  if the new receipt is the only receipt in the array, it MUST omit `prh`.
+*  if there is an older receipt immediately following it in the array, the new receipt includes a `prh` computed over that next receipt ({{receipt-claims}}; step 6 of {{extending-an-existing-receipt-chain}});
+*  if the new receipt is the only receipt in the array, it omits `prh` ({{receipt-claims}}).
 
 The hash input is the exact compact JWS string, without JSON {{RFC8259}} canonicalization.  Systems that carry, store, or forward `actor_receipts` arrays MUST preserve each receipt byte-for-byte.  Re-encoding changes the hash even if the claims remain equivalent.
 
@@ -327,7 +327,7 @@ If it does so, the new receipt:
 *  MUST set `act.sub` and `act.iss` to the new outermost actor;
 *  MAY copy the issued token's top-level `cnf`, if any, into the receipt `cnf`, subject to the disclosure considerations in {{receipt-claims}}; when copied, the receipt `cnf` MUST equal the outer token's `cnf` value;
 *  SHOULD set `origin_jti` to the issued token's `jti`, if the issued token carries a `jti`;
-*  MUST omit `prh`.
+*  omits `prh` ({{receipt-claims}}).
 
 When the one-element array covers every visible hop (a visible `act` chain of depth 1), the issuer SHOULD set `actor_receipts_complete: true`; when inner visible hops remain uncovered, it SHOULD set `actor_receipts_complete: false`, per {{actor-receipts-claim}}.
 
@@ -708,8 +708,8 @@ Strict mode is the recommended default.  Deployments that need to accept reissue
 
 Algorithm coordination requirements:
 
-*  All receipts in a single chain MUST use the same algorithm.
-*  Consumers MUST reject chains that mix algorithms or that name an algorithm the recipient does not support.
+*  All receipts in a single chain carry the same `prh_alg` value or all omit it ({{receipt-claims}}).
+*  Consumers reject chains that mix algorithms or that name an algorithm the recipient does not support (step 6 of {{consumer-processing}}).
 *  An issuer extending an inbound chain MUST preserve the inbound `prh_alg`.
 
 Migration is whole-chain, not partial: chains begun under one algorithm remain on that algorithm for their lifetime; new chains can adopt a different algorithm independently.  This profile does not define rehashing of inbound receipts, because rehashing would invalidate prior signers' `prh` values and require re-signing receipts the extending issuer did not originate.
