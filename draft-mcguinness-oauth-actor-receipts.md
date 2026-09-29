@@ -545,7 +545,7 @@ Consumer use of these members is described in {{consumer-introspection}}; intros
 
 ## Out-of-Scope Discovery Signals
 
-This document does not define a metadata signal for "this resource server requires `cnf` to be present in receipts."  Issuers default to omitting receipt `cnf` for privacy reasons (see {{receipt-claims}} and {{historical-cnf-disclosure}}); resource servers that need historical sender-constraint provenance MUST coordinate that requirement with issuers through deployment policy or a future companion profile, rather than through metadata defined here.
+This document does not define a metadata signal for "this resource server requires `cnf` to be present in receipts."  Issuers default to omitting receipt `cnf` for privacy reasons (see {{historical-cnf-disclosure}}); resource servers that need historical sender-constraint provenance MUST coordinate that requirement with issuers through deployment policy or a future companion profile, rather than through metadata defined here.
 
 ## Claim-Pair Convention for Sibling Profiles
 

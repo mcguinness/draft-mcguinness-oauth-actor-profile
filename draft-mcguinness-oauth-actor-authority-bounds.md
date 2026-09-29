@@ -279,7 +279,7 @@ Re-authorization at a new hop is recorded in that hop's receipt.  Between hops, 
   *  is preserved and extended as described in {{event-lifecycle}}.
 
 `bounds_events_complete`:
-: OPTIONAL.  A boolean JWT claim on the outer token.  When `true`, the issuer attests that `bounds_events` contains every non-hop bounds-changing event that occurred during the delegation lifetime as of issuance.  When `true` and `bounds_events` is absent, the issuer attests that no such event occurred.  When `false` or absent, coverage may be partial and recipients MUST NOT infer from the absence of events that no re-authorization occurred.  This is the `<name>_complete` member of the receipts companion's claim-pair convention.
+: OPTIONAL.  A boolean JWT claim on the outer token.  When `true`, the issuer attests that `bounds_events` contains every non-hop bounds-changing event that occurred during the delegation lifetime as of issuance.  When `true` and `bounds_events` is absent, the issuer attests that no such event occurred.  When `false` or absent, coverage may be partial and recipients MUST NOT infer from the absence of events that no re-authorization occurred.  This is the `<name>_complete` member of the receipts companion's claim-pair convention, except that `true` without `bounds_events` attests a complete history with no events.
 
 ## Bounds-Event JWT Format
 
