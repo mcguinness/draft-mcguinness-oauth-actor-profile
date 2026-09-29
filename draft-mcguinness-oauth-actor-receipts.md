@@ -618,7 +618,7 @@ Conflict resolution: when a recipient implements multiple companion profiles who
 
 # Security Considerations
 
-Actor receipts strengthen provenance for visible actor hops, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}}, except its audience validation (see `aud` in {{receipt-claims}}), apply to systems implementing this profile.
+Actor receipts strengthen provenance for visible actor hops, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}}, except its audience validation for receipt JWTs (see `aud` in {{receipt-claims}}), apply to systems implementing this profile.
 
 ## Threat Model {#threat-model}
 
