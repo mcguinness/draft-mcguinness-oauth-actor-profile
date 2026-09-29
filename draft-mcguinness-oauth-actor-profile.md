@@ -431,8 +431,8 @@ Presenter continuation requires a PoP-capable `subject_token` with top-level `cn
 
 Presenter rebind requires a validated `actor_token` whose top-level `sub` identifies the new presenter, as specified in [Actor Tokens](#actor-tokens).
 
-*  The issuer validates the credential per {{RFC8693, Section 2.1}} and MUST validate any proof required by its profile or deployment.
-*  The issuer MUST validate proof for the new presenter.  A sender-constrained `subject_token` does not, by itself, require proof for its prior presenter during rebind.
+*  The issuer validates the credential per {{RFC8693, Section 2.1}} and MUST validate any proof required by its profile or deployment, whether or not the output token is sender-constrained.
+*  When the output token is sender-constrained, the issuer MUST validate proof of possession for the new presenter.  A bearer output does not waive validation of the credential or of any proof its profile requires.  A sender-constrained `subject_token` does not, by itself, require proof for its prior presenter during rebind.
 
 Actors that become presenters therefore need a direct credential: a workload credential, JWT client assertion, or non-delegated JWT access token.
 
