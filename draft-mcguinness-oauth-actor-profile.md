@@ -936,7 +936,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
     *  with `actor_unauthorized` when the actor is categorically unauthorized for the remaining scope, for example because its entity type is prohibited;
     *  with `invalid_scope` for other causes, such as an actor scope ceiling that excludes the requested values.
 
-7.  The AS MAY preserve inbound client identifiers per the output token profile or local policy.  Preserved values MUST retain their client-identity meaning and MUST NOT represent delegation state.  If preserving an optional identifier would create ambiguity about the delegated actor relationship, the AS SHOULD omit it.  JWT access tokens still require `client_id` per {{RFC9068}}; see [Client Identity and Delegation](#client-identity-delegation).
+7.  The AS MAY preserve inbound client identifiers per the output token profile or local policy.  Preserved values MUST retain their client-identity meaning; they do not represent delegation state ([Client Identity and Delegation](#client-identity-delegation)).  If preserving an optional identifier would create ambiguity about the delegated actor relationship, the AS SHOULD omit it.  JWT access tokens still require `client_id` per {{RFC9068}}; see [Client Identity and Delegation](#client-identity-delegation).
 
 8.  The AS MUST honor resource-indicator constraints ({{RFC8707}}) in delegated token requests.
 
