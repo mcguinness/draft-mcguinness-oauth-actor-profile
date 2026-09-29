@@ -412,7 +412,7 @@ However:
 *  an issuer MUST NOT skip an outer visible hop and carry a proof only for an inner visible hop;
 *  when local policy or resource requirements require full actor-signed evidence, the issuer MUST either emit complete proof coverage or fail the request under the error model of the underlying protocol.
 
-Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop SHOULD enable proof support at the origin and its actors first.  Resource servers can require full coverage through `actor_proofs_complete_required` or local policy.
+Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop should enable proof support at the origin and its actors first.  Resource servers can require full coverage through `actor_proofs_complete_required` or local policy.
 
 When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_proofs` covers only the visible filtered chain.  In that case `actor_proofs_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness MUST evaluate `chain_complete` separately.
 

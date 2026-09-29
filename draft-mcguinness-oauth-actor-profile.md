@@ -303,7 +303,7 @@ Alice (`sub`) authorized the travel assistant (inner `act`), which delegated to 
 
 Delegation depth is defined as the number of `act` objects in the chain, counting from the outermost.  A token with a single `act` object and no nested `act` within it has depth 1; each additional level of nesting adds 1.  Depth is counted on the resulting chain after any new outermost `act` is added, not on the inbound token.
 
-Depth 1 is the minimum interoperable depth.  Implementations for cross-domain multi-hop use SHOULD support at least depth 4 and SHOULD document their maximum.  Depth-1 implementations are conformant but cannot support multi-hop chains.  Same-domain deployments MAY use a shallower maximum when sufficient for their architecture.
+Depth 1 is the minimum interoperable depth.  Implementations for cross-domain multi-hop use SHOULD support at least depth 4, and should document their maximum.  Depth-1 implementations are conformant but cannot support multi-hop chains.  Same-domain deployments can use a shallower maximum when sufficient for their architecture.
 
 Implementations MUST define and enforce a local maximum delegation depth.  Implementations that receive a token exceeding their configured local maximum MUST reject it with `invalid_request`.  When a request would result in a chain exceeding that limit, the AS MUST reject with `invalid_request`; it MUST NOT silently truncate the chain.
 
@@ -469,7 +469,7 @@ The following claims are defined for a JWT assertion grant that carries actor-pr
 
 When the assertion or request context also identifies an OAuth client via `client_id`, `azp`, or an authenticated client credential, interoperable processing SHOULD use `act.sub` rather than treating that client identity as a substitute for it (see [Client Identity and Delegation](#client-identity-delegation) and [Authorization Grant Processing](#jwt-assertion-grants-processing)).
 
-Clients SHOULD use JWT assertion grants carrying actor-profile claims only when the AS's support for the actor-determination model has been confirmed via deployment documentation, prior agreement, or discovery.  For ID-JAG specifically, that confirmation SHOULD include whether the AS supports the actor-delegation extension model defined by this document.
+Before sending JWT assertion grants carrying actor-profile claims, a client needs to confirm the AS's support for the actor-determination model through deployment documentation, prior agreement, or discovery; for ID-JAG, that includes support for the actor-delegation extension model defined by this document.
 
 The following example shows an AS-issued assertion grant, which is the recommended pattern.  The Enterprise IdP AS performed Token Exchange, authenticated the agent as the OAuth client, established the delegation relationship under local policy, and signed the assertion.  `act.iss` equals the token `iss` here because the enterprise AS's issuer identifier is also the actor identifier context for the agent:
 
@@ -938,7 +938,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 7.  The AS MAY preserve inbound client identifiers per the output token profile or local policy.  Preserved values MUST retain their client-identity meaning and MUST NOT represent delegation state.  If preserving an optional identifier would create ambiguity about the delegated actor relationship, the AS SHOULD omit it.  JWT access tokens still require `client_id` per {{RFC9068}}; see [Client Identity and Delegation](#client-identity-delegation).
 
-8.  Clients SHOULD use `resource` {{RFC8707}} to restrict the token's audience to the intended RS.  The AS MUST honor resource-indicator constraints in delegated token requests.  Audience restriction limits where a compromised delegated token can be used.
+8.  The AS MUST honor resource-indicator constraints ({{RFC8707}}) in delegated token requests.
 
 # Transaction Token Service Processing {#transaction-token-service}
 
@@ -1093,7 +1093,7 @@ When a token contains both `sub` and an `act` claim, a resource server has two i
 
 For Transaction Tokens, the primary policy pair remains (`sub`, `act.sub`).  The `req_wl` claim provides workload context from the TTS and is not a replacement for `act.sub`.  Nested `act` objects provide prior-actor context for audit or other deployment-specific processing; this document does not standardize their authorization use.
 
-Actor authorization is conditional under this profile.  When an RS accepts a token as satisfying a delegated-access requirement, it MUST NOT ignore the `act` claim and authorize the request solely as if the token were non-delegated.  The RS SHOULD evaluate the (`sub`, outermost `act.sub`) pair according to local policy.  Resource servers that receive delegated tokens SHOULD define and document their actor authorization policy.  The following steps describe one approach for resource servers that choose to enforce actor authorization policy:
+Actor authorization is conditional under this profile.  When an RS accepts a token as satisfying a delegated-access requirement, it MUST NOT ignore the `act` claim and authorize the request solely as if the token were non-delegated.  The RS SHOULD evaluate the (`sub`, outermost `act.sub`) pair according to local policy.  Resource servers that receive delegated tokens should define and document their actor authorization policy.  The following steps describe one approach for resource servers that choose to enforce actor authorization policy:
 
 1.  **Advertise delegated-token requirements**: An RS that wants to signal that delegated requests are expected to carry actor-profile information SHOULD set `actor_profile_required: true` ([Protected Resource Metadata](#protected-resource-metadata)).  An RS MAY still apply actor authorization without advertising it, but clients MUST NOT rely on that behavior.
 
@@ -1194,7 +1194,7 @@ If policy, protected resource metadata, or token context indicates delegation or
 
 Introspection endpoints for delegated tokens SHOULD be advertised via the `introspection_endpoint` parameter in AS metadata ({{RFC8414}}).  When revocation is integrated, the introspection response for a revoked delegated token MUST return `"active": false` and MUST NOT include `act` or `sub_profile` claims.
 
-Resource servers that cache introspection responses for delegated tokens SHOULD use short cache lifetimes consistent with revocation requirements.  An RS using inner actors for security decisions SHOULD NOT cache a response with `"chain_complete": false`.
+Resource servers that cache introspection responses for delegated tokens should use short cache lifetimes consistent with revocation requirements.  An RS using inner actors for security decisions SHOULD NOT cache a response with `"chain_complete": false`.
 
 
 # Error Responses {#actor-profile-error-responses}
@@ -1575,7 +1575,7 @@ This profile provides neither portable subject-equivalence proofs nor a general 
 
 ## Presenter Binding
 
-Without top-level presenter proof of possession, a leaked token can be replayed by any party.
+Without top-level presenter proof of possession, a leaked token can be replayed by any party.  Clients should also use `resource` ({{RFC8707}}) when requesting delegated tokens, because audience restriction limits where a leaked token can be used.
 
 *  When a token carries top-level `cnf`, the RS validates the presenter proof against it ([Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation)).  For example, JWT access tokens commonly use DPoP or mTLS, while Transaction Tokens can use the workload proof mechanism defined by their deployment profile.
 *  A sender-constrained delegated token binds the current presenter, the outermost actor, which reduces delegation-token theft risk.

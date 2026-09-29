@@ -379,7 +379,7 @@ Refresh-token reissuance is a special case of reissuance under this section.  Re
 An AS that supports refresh tokens for delegated access tokens:
 
 *  needs to retain the `actor_receipts` array associated with the original access token in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the receipts forward unchanged.
-*  MUST set receipt `exp` values under {{receipt-claims}} to accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under {{extending-an-existing-receipt-chain}} as receipts approach expiry, and refresh loses receipt-based provenance.
+*  needs receipt `exp` values ({{receipt-claims}}) that accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under {{extending-an-existing-receipt-chain}} as receipts approach expiry, and refresh loses receipt-based provenance.
 *  When that bounded lifetime would be exceeded, MUST either obtain fresh delegation state and start a new receipt chain or stop emitting `actor_receipts`, unless local policy permits partial or absent receipt coverage.
 
 ## Partial Coverage and Full Coverage
@@ -392,7 +392,7 @@ However:
 *  an issuer MUST NOT skip an outer visible hop and receipt only an inner visible hop;
 *  when local policy or resource requirements require full provenance, the issuer MUST either emit complete receipt coverage or fail the request under the error model of the underlying protocol.
 
-Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop SHOULD enable receipt support at the origin issuer first.  Resource servers can require full coverage through `actor_receipts_complete_required` or local policy.
+Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop should enable receipt support at the origin issuer first.  Resource servers can require full coverage through `actor_receipts_complete_required` or local policy.
 
 When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_receipts` covers only the visible filtered chain.  In that case `actor_receipts_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness MUST evaluate `chain_complete` separately.
 
