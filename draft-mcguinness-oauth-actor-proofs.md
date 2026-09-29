@@ -194,7 +194,7 @@ If a token carries `actor_proofs`, it MUST also carry an `act` claim conforming 
 
   The attestation is relative to the visible chain at issuance time; it does not attest that the visible chain is itself unfiltered (see `chain_complete` in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}).  Consumer enforcement, including the count-equality check, is defined in step 4 of {{consumer-processing}}.
 
-  Issuers SHOULD set `actor_proofs_complete` to `true` for complete coverage and `false` for partial coverage.  An absent value provides no completeness attestation; consumers requiring the literal value `true` treat absence like `false`.
+  Issuers SHOULD set `actor_proofs_complete` to `true` for complete coverage and `false` for partial coverage; step 7 of {{extending-an-existing-proof-chain}} sets a narrower rule for an issuer that extends an inbound chain.  An absent value provides no completeness attestation; consumers requiring the literal value `true` treat absence like `false`.
 
 This document does not require every delegated token to carry `actor_proofs`.  A deployment that requires actor-signed evidence uses local policy or the metadata defined in {{discovery-capability-signaling}} to express that requirement.
 
@@ -368,7 +368,7 @@ When an issuer adds a new outermost actor hop and also preserves an inbound `act
 4.  MUST accept exactly one new proof, conveyed per {{actor-proof-parameter}} and validated per {{accepting-a-proof}}, for the new outermost actor hop.
 5.  MUST verify that the new proof's `prh` equals the hash of the exact compact serialization of the inbound array's newest proof, computed using the algorithm named by the inherited `prh_alg` (defaulting to SHA-256 when absent), and MUST verify that the new proof's `prh_alg` matches the inherited chain's value or is omitted when the chain omits it.  An issuer that does not support the inbound `prh_alg` MUST reject the chain rather than rehash; rehashing would invalidate prior actors' signatures.
 6.  MUST prepend the new proof to the inherited array.
-7.  MUST preserve `actor_proofs_complete: true` when the inbound attestation is valid and the new proof covers the added hop.  Otherwise, the issuer MUST NOT set it to `true` and SHOULD set it to `false`.
+7.  MUST preserve `actor_proofs_complete: true` when the inbound attestation is valid and the new proof covers the added hop.  Otherwise, the issuer MUST NOT set it to `true` and SHOULD set it to `false`.  This is narrower than the general rule in {{actor-proofs-claim}} because an extending issuer establishes completeness of the inherited hops only through a valid inbound attestation; without one, it does not claim complete coverage even when the proof count equals the visible depth.
 
 An issuer MUST NOT reserialize, resign, normalize, trim, or otherwise alter a prior proof.
 
