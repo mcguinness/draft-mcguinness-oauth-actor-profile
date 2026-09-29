@@ -201,7 +201,7 @@ Comparison:
 *  `resource_a` is within `resource_b` if and only if every canonical URI in `resource_a` is also in `resource_b`;
 *  an empty array is the empty set and is within every resource set.
 
-URI prefix subsumption (for example, treating `https://api.example.com/v1/` as covering `https://api.example.com/v1/users`) is NOT applied.  Issuers wishing to express prefix relationships MUST emit explicit URIs at each hop.
+URI prefix subsumption (for example, treating `https://api.travel-provider.example/v1/` as covering `https://api.travel-provider.example/v1/users`) is NOT applied.  Issuers wishing to express prefix relationships MUST emit explicit URIs at each hop.
 
 ## `authorization_details` {#rar-dimension}
 
