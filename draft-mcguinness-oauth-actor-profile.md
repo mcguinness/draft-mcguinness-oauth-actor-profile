@@ -2099,6 +2099,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Used one set of example identifiers for the travel scenario, matching the cross-domain example's parties.
 * Clarified confirmation members in token actor objects as extension data, including preservation and their distinction from the current presenter's binding.
 * Corrected grant replay requirements to depend on an enforced grant-level sender constraint, with accepted grants identified by (`iss`, `jti`) for their full acceptance window, and aligned the self-issued grant controls with that rule.
+* Revised the Introduction to state what Token Exchange leaves open, restore the profile's design center, and name the ID-JAG extension point it fills.
 
 -00
 
