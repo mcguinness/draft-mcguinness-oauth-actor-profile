@@ -421,7 +421,9 @@ Per-actor confirmation members and prior-hop key provenance are outside this pro
 
 ### Top-Level `cnf` Governs the Current Presenter
 
-The top-level `cnf` claim of any token identifies the key or certificate of the current presenter.  When delegation is present, that current presenter is the party identified by the outermost `act` claim: when DPoP ({{RFC9449}}) is used, the top-level `cnf.jkt` MUST identify that party's key; when mTLS ({{RFC8705}}) is used, the top-level `cnf.x5t#S256` MUST identify that party's certificate.  The AS or RS MUST validate proof of possession against the top-level `cnf`.  Confirmation-style members that appear inside an `act` object due to another specification do not have standardized proof-of-possession semantics under this document.
+The top-level `cnf` claim of any token identifies the key or certificate of the current presenter.  When delegation is present, that current presenter is the party identified by the outermost `act` claim: when DPoP ({{RFC9449}}) is used, the top-level `cnf.jkt` MUST identify that party's key; when mTLS ({{RFC8705}}) is used, the top-level `cnf.x5t#S256` MUST identify that party's certificate.  The AS or RS MUST validate proof of possession against the top-level `cnf`.
+
+A confirmation member such as `act.cnf` is permitted as extension data under [Actor Object Structure](#actor-object-structure) and has no proof-of-possession semantics under this profile.  It remains unchanged in an inherited actor object under [Preserve Inbound Chain](#preserve-inbound-chain).  After further delegation, an inherited confirmation value can therefore differ from the current token's top-level `cnf`; this profile imposes no equality check between them.  Another specification can define additional checks for its own issuance or processing rules, subject to [Companion Profiles and Extension Points](#companion-profile-extensibility).
 
 ### Token Exchange Continuation
 
@@ -2093,6 +2095,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Actor `sub_profile` is recommended when the issuer can authoritatively classify the actor, and Transaction Token `sub` re-expression requires a trusted mapping.
 * Unrecognized but syntactically valid values in a carried-forward top-level `sub_profile` are preserved.
 * Used one set of example identifiers for the travel scenario, matching the cross-domain example's parties.
+* Clarified confirmation members in token actor objects as extension data, including preservation and their distinction from the current presenter's binding.
 
 -00
 

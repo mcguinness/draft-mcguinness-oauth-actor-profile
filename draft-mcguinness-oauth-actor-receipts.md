@@ -241,12 +241,16 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 
   Historical binding belongs in receipt-level `cnf`.  Other core-profile actor extensions MAY appear unless prohibited here; a receipt containing `act.cnf` is invalid.
 
+  These restrictions apply to the receipt's actor object.  The issuer constructs that object for visible-hop alignment (step 7 of {{consumer-processing}}), separately from the token's `act` chain.  A confirmation member in the token's actor object remains subject to the core profile's extension and preservation rules; creating a receipt does not remove it from the token.
+
 ### Historical Presenter Binding
 
 `cnf`:
 : OPTIONAL.  A confirmation claim as defined in {{RFC7800}}.  When present, it MUST equal the top-level `cnf` claim of the token issued at this hop.
 
   Receipt `cnf` records historical presenter-binding information for the hop represented by the receipt.  It does not create a current proof-of-possession obligation for the current request.
+
+  Its source is the top-level `cnf` of the token issued at that hop, rather than a confirmation member in the token's `act` chain.
 
   Whether an issuer includes `cnf` is governed by {{historical-cnf-disclosure}}; omitting `cnf` does not invalidate the receipt.
 
@@ -1165,6 +1169,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, {{RFC8725}} applies except its audience validation, introspection flags known partial coverage, and subject continuity allows namespace-aware matching or trusted mapping.
 * A recipient that requires instance binding rejects any chain not bound by a matching leading `origin_jti`, and the completeness assurances share one home.
 * Used the base profile's example identifiers for the travel assistant and booking tool.
+* Clarified that receipt actor-object restrictions apply separately from the token's actor chain, and that historical binding comes from the issued token's top-level `cnf`.
 
 -00
 

@@ -242,6 +242,8 @@ The JWT payload of an actor proof uses the claims defined below, grouped by purp
 
   `act` supplies the namespace context and visible-hop alignment.  A proof is invalid if `iss` differs from `act.sub`.
 
+  These restrictions apply to the proof's actor object.  The token's `act` chain can retain confirmation members as extension data under the core actor profile.  The proof's actor object omits those members while satisfying visible-hop alignment (step 7 of {{consumer-processing}}); this does not modify the token's actor chain.
+
 Proofs define no subject `sub_profile` claim; subject classification remains issuer-asserted.  Actor classification can appear in `act.sub_profile`.
 
 ### Target Binding
@@ -1083,6 +1085,7 @@ The single proof covers the outermost hop:
 * Removed the unconditional recommendation for short proof `exp` in favor of the claim's conditional sizing rule.
 * Aligned subject-continuity handling and the introspection partial-coverage flag with Receipts.
 * Used the base profile's example identifiers for the travel assistant and booking tool.
+* Clarified that proof actor-object restrictions apply separately from confirmation extensions in the token's actor chain.
 
 -00
 
