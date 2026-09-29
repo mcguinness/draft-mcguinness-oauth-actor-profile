@@ -197,7 +197,7 @@ The JOSE header of an actor receipt:
 *  MUST NOT use `alg: none` or a MAC-based symmetric algorithm;
 *  MUST include `typ` with the value `actor-receipt+jwt`;
 *  SHOULD include `kid` when the issuer publishes multiple verification keys;
-*  MAY include `crit` per {{RFC7515}}; consumers MUST reject a receipt whose `crit` header lists an extension header the consumer does not understand.
+*  MAY include `crit` per {{RFC7515, Section 4.1.11}}; step 5 of {{consumer-processing}} rejects a receipt whose `crit` header lists an extension header the consumer does not understand.
 
 Receipt issuers and consumers MUST apply the JWT best practices in {{RFC8725}}.
 
@@ -297,7 +297,7 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 
 ### Extension Claims
 
-A receipt MAY contain additional claims defined by another specification or by deployment policy.  Consumers MUST ignore unrecognized claims unless another specification or local agreement defines their meaning.
+A receipt MAY contain additional claims defined by another specification or by deployment policy.  Consumers ignore unrecognized claims unless another specification or local agreement defines their meaning, per {{RFC7519, Section 4}}.
 
 ## Receipt-Chain Linkage
 
