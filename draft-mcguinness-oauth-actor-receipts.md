@@ -325,11 +325,11 @@ If it does so, the new receipt:
 *  MUST describe the new outermost actor hop;
 *  MUST set `sub` to the issued token's top-level `sub`;
 *  MUST set `act.sub` and `act.iss` to the new outermost actor;
-*  MAY copy the issued token's top-level `cnf`, if any, into the receipt `cnf`, subject to the disclosure considerations in {{receipt-claims}}; when copied, the receipt `cnf` MUST equal the outer token's `cnf` value;
-*  SHOULD set `origin_jti` to the issued token's `jti`, if the issued token carries a `jti`;
+*  MAY copy the issued token's top-level `cnf`, if any, into the receipt `cnf`, subject to the disclosure considerations in {{receipt-claims}};
+*  includes `origin_jti` as recommended in {{receipt-claims}};
 *  omits `prh` ({{receipt-claims}}).
 
-When the one-element array covers every visible hop (a visible `act` chain of depth 1), the issuer SHOULD set `actor_receipts_complete: true`; when inner visible hops remain uncovered, it SHOULD set `actor_receipts_complete: false`, per {{actor-receipts-claim}}.
+A one-element array is complete coverage only when the visible `act` chain has depth 1; the value of `actor_receipts_complete` follows {{actor-receipts-claim}}.
 
 ## Extending an Existing Receipt Chain
 
@@ -383,8 +383,7 @@ This document permits partial receipt coverage for progressive deployment.  An i
 
 However:
 
-*  a partial chain MUST still cover a contiguous outermost prefix of the visible actor chain;
-*  an issuer MUST NOT skip an outer visible hop and receipt only an inner visible hop;
+*  a partial chain still covers a contiguous outermost prefix of the visible actor chain ({{actor-receipts-claim}}), so an issuer cannot skip an outer visible hop and receipt only an inner visible hop;
 *  when local policy or resource requirements require full provenance, the issuer MUST either emit complete receipt coverage or fail the request under the error model of the underlying protocol.
 
 Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop should enable receipt support at the origin issuer first.  Resource servers can require full coverage through `actor_receipts_complete_required` or local policy.
