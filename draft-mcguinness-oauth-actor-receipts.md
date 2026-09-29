@@ -928,11 +928,11 @@ The outer token carries the following visible actor chain:
   "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -955,7 +955,7 @@ The outer token carries the following visible actor chain:
   "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service"
   },
@@ -978,7 +978,7 @@ The outer token carries the following visible actor chain:
   "sub": "https://idp.enterprise.example/users/alice",
   "sub_iss": "https://idp.enterprise.example",
   "act": {
-    "sub": "https://agents.example.com/travel-assistant",
+    "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
     "sub_profile": "ai_agent"
   },
@@ -1010,11 +1010,11 @@ The resulting Transaction Token can carry:
     "iss": "https://tts.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://tools.example.com/booking-tool",
+      "sub": "https://tools.travel-provider.example/booking-tool",
       "iss": "https://as.travel-provider.example",
       "sub_profile": "service",
       "act": {
-        "sub": "https://agents.example.com/travel-assistant",
+        "sub": "https://agents.enterprise.example/travel-assistant",
         "iss": "https://as.enterprise.example",
         "sub_profile": "ai_agent"
       }
@@ -1068,11 +1068,11 @@ The resulting access token carries:
   "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -1094,7 +1094,7 @@ The single receipt covers the outermost hop:
   "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service"
   },
@@ -1122,11 +1122,11 @@ The re-emitted token's claims:
   "iss": "https://introspection.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }

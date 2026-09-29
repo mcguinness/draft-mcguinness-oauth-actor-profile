@@ -288,11 +288,11 @@ This document uses the following terminology consistently:
   "sub": "https://idp.enterprise.example/users/alice",
   "sub_profile": "user",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -607,7 +607,7 @@ The following example shows a JWT access token with actor profile claims:
   "iss": "https://as.resource-domain.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "client_id": "travel-assistant-client-id",
-  "azp": "https://agents.example.com/travel-assistant",
+  "azp": "https://agents.enterprise.example/travel-assistant",
   "aud": "https://api.resource-domain.example",
   "jti": "xyz987",
   "exp": 1711820400,
@@ -618,7 +618,7 @@ The following example shows a JWT access token with actor profile claims:
     "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ"
   },
   "act": {
-    "sub": "https://agents.example.com/travel-assistant",
+    "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
     "sub_profile": "ai_agent"
   }
@@ -981,7 +981,7 @@ The following example shows a Transaction Token after two hops:
   "sub": "https://idp.enterprise.example/users/alice",
   "sub_profile": "user",
   "scope": "inventory:check",
-  "req_wl": "https://tools.example.com/booking-tool",
+  "req_wl": "https://tools.travel-provider.example/booking-tool",
   "aud": "https://api.travel-provider.example",
   "txn": "550e8400-e29b-41d4-a716-446655440000",
   "exp": 1711816900,
@@ -996,11 +996,11 @@ The following example shows a Transaction Token after two hops:
     "jkt": "0ZcOCORZNYy9ZhHiZN..."
   },
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -1405,7 +1405,7 @@ The legacy form carries only `client_id` (and optionally `azp`) to identify the 
   "client_id": "travel-assistant-client-id",
   "azp": "travel-assistant-client-id",
   "act": {
-    "sub": "https://agents.example.com/travel-assistant",
+    "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.example.com",
     "sub_profile": "ai_agent"
   },

@@ -915,11 +915,11 @@ The outer token carries both companions:
   "aud": "https://api.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -944,10 +944,10 @@ The outer token carries both companions:
 
 ~~~json
 {
-  "iss": "https://tools.example.com/booking-tool",
+  "iss": "https://tools.travel-provider.example/booking-tool",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service"
   },
@@ -965,11 +965,11 @@ The outer token carries both companions:
 
 ~~~json
 {
-  "iss": "https://agents.example.com/travel-assistant",
+  "iss": "https://agents.enterprise.example/travel-assistant",
   "sub": "https://idp.enterprise.example/users/alice",
   "sub_iss": "https://idp.enterprise.example",
   "act": {
-    "sub": "https://agents.example.com/travel-assistant",
+    "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
     "sub_profile": "ai_agent"
   },
@@ -989,7 +989,7 @@ The sibling receipts follow the same construction as the examples of {{I-D.mcgui
   "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service"
   },
@@ -1024,11 +1024,11 @@ Suppose the enterprise AS has not yet deployed proof support, so no proof exists
   "aud": "https://api.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -1047,10 +1047,10 @@ The single proof covers the outermost hop:
 
 ~~~json
 {
-  "iss": "https://tools.example.com/booking-tool",
+  "iss": "https://tools.travel-provider.example/booking-tool",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service"
   },

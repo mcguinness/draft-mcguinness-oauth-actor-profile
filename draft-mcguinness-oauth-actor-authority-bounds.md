@@ -718,11 +718,11 @@ The outer token:
   "scope": "trips:book",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service",
     "act": {
-      "sub": "https://agents.example.com/travel-assistant",
+      "sub": "https://agents.enterprise.example/travel-assistant",
       "iss": "https://as.enterprise.example",
       "sub_profile": "ai_agent"
     }
@@ -743,7 +743,7 @@ The outer token:
   "iss": "https://as.enterprise.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://agents.example.com/travel-assistant",
+    "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
     "sub_profile": "ai_agent"
   },
@@ -768,7 +768,7 @@ The outer token:
   "iss": "https://as.travel-provider.example",
   "sub": "https://idp.enterprise.example/users/alice",
   "act": {
-    "sub": "https://tools.example.com/booking-tool",
+    "sub": "https://tools.travel-provider.example/booking-tool",
     "iss": "https://as.travel-provider.example",
     "sub_profile": "service"
   },
