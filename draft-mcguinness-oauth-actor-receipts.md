@@ -286,7 +286,7 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 
   It identifies the originating token.  It binds to the current token only when both `receipt[0].iss` and `receipt[0].origin_jti` match that token's `iss` and `jti`.
 
-  Issuers SHOULD include `origin_jti` when the issued token has `jti`.  Strict-mode recipients requiring instance binding MUST require `origin_jti` on `receipt[0]` when the outer token has `jti`.  See {{receipt-instance-binding}} and {{strict-mode-validation}} for validation and reissuance handling.
+  Issuers SHOULD include `origin_jti` when the issued token has `jti`.  See {{receipt-instance-binding}} and {{strict-mode-validation}} for validation and reissuance handling.
 
 ### Excluded Standard Claims
 
@@ -452,8 +452,8 @@ Consumer step 5 applies the following cases in order to `receipt[0]`:
 
 1.  If its `iss` matches the outer issuer and its `origin_jti` is present and matches the outer token's `jti`, the chain is bound to that token instance.
 2.  If the issuers match but the outer token has no `jti`, the chain supplies provenance without instance binding.  Any `origin_jti` is informational.
-3.  If the issuers match and the outer token has `jti`, but `origin_jti` is absent, the recipient MAY accept provenance under local policy.  It MUST NOT treat the chain as instance-bound.
-4.  Otherwise, the recipient MUST reject the chain unless local policy trusts the outer issuer to reissue chains led by this receipt issuer ({{receipt-to-token-binding-limits}}).
+3.  If the issuers match and the outer token has `jti`, but `origin_jti` is absent, the recipient MAY accept provenance under local policy.  It MUST NOT treat the chain as instance-bound, and a recipient that requires instance binding MUST reject the chain.
+4.  Otherwise, the recipient MUST reject the chain unless local policy trusts the outer issuer to reissue chains led by this receipt issuer ({{strict-mode-validation}}).
 
 ## Subject Re-Expression Across Hops {#subject-re-expression-across-hops}
 
@@ -680,7 +680,7 @@ In the originating-issuance case, receipt-chain integrity rests on two anchors w
 *  `receipt[0].origin_jti`, when present, signed by the same issuer that signed the outer token, and equal to the outer token's `jti`, binds `receipt[0]` to the specific outer-token instance and prevents transplantation from a different token whose visible `act` structure happens to match.
 *  `prh` chains each receipt cryptographically to its older neighbor, so all inner receipts inherit the originating-issuance binding from `receipt[0]` through the hash chain.
 
-Inner `origin_jti` values are historical and cannot independently bind the current request.  Deployments requiring instance binding MUST rely on `prh` and a verifiable leading `origin_jti`.  Without that anchor, the chain supplies issuer-signed hop provenance only.
+Inner `origin_jti` values are historical and cannot independently bind the current request.  Instance binding therefore rests on a verifiable leading `origin_jti` (case 1 of {{receipt-instance-binding}}), whose binding `prh` propagates to the inner receipts.  Without that anchor, the chain supplies issuer-signed hop provenance only.
 
 This construction makes coverage tamper-evident at the structural level:
 
@@ -697,7 +697,7 @@ Companion profiles MAY define additional outer-token binding claims following th
 
 ### Strict-Mode Validation {#strict-mode-validation}
 
-Without configured trusted reissuing issuers, recipients use strict mode: issuer or `origin_jti` divergence causes rejection.  If the outer token has `jti`, a recipient requiring instance binding also rejects a missing leading `origin_jti`.
+Without configured trusted reissuing issuers, recipients use strict mode: issuer or `origin_jti` divergence causes rejection.  A missing leading `origin_jti` is not divergence; case 3 of {{receipt-instance-binding}} governs it.
 
 Strict mode is the recommended default.  Deployments that need to accept reissued tokens, such as refreshed, re-emitted, or translated tokens, need to configure the trusted reissuing issuers explicitly, through local policy or an out-of-band trust framework.
 
