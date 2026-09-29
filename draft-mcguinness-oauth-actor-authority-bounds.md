@@ -315,7 +315,7 @@ The JWT payload of a bounds event:
   *  Recipients MUST use chain order, not `iat`, to order events.
 
 `iat`, `exp`, `jti`:
-: REQUIRED, as defined in {{RFC7519}}.  `exp` MUST cover the expected maximum lifetime of any token that will carry this event, following the sizing rules of receipt `exp` in {{ACTOR-RECEIPTS}}.
+: REQUIRED, as defined in {{RFC7519}}.  `exp` MUST cover the expected maximum lifetime of any token that will carry this event.
 
 An event MAY contain additional claims; consumers ignore unrecognized claims unless a specification or local agreement defines their meaning, per {{RFC7519, Section 4}}.
 
