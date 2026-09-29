@@ -767,7 +767,7 @@ Deployments SHOULD minimize receipt disclosure when full provenance is not requi
 *  Issuers and introspection servers MAY suppress `actor_receipts` entirely when policy does not permit disclosure.
 *  Introspection servers returning a stored partial-coverage chain SHOULD set `actor_receipts_complete` to `false`; disclosure of a stored chain is otherwise all-or-nothing (see {{consumer-introspection}}).
 *  Resource servers SHOULD request or require actor receipts only when they materially improve authorization, audit, or risk controls.
-*  Issuers SHOULD omit `cnf` from receipts by default when relying parties have not been evaluated for historical presenter-key disclosure risk (see {{historical-cnf-disclosure}}).
+*  Receipt `cnf` disclosure is limited as described in {{receipt-claims}} and {{historical-cnf-disclosure}}.
 *  Deployments SHOULD prefer per-resource-server policy on receipt requirements over blanket inclusion in every token.
 
 ## Selective Disclosure
@@ -913,7 +913,7 @@ Contributors and reviewers will be acknowledged in future revisions.
 
 The examples in this appendix show decoded receipt contents.  Real receipts are compact-signed JWT strings carried in the `actor_receipts` array.  The `iat` and `exp` values shown are illustrative only; in deployments, receipt `exp` is set per {{receipt-claims}} and {{extending-an-existing-receipt-chain}} so that no inbound receipt expires before the outer token that carries it.
 
-Examples containing `cnf` illustrate explicit disclosure of historical binding.  Issuers SHOULD omit it unless recipient disclosure risk has been evaluated ({{receipt-claims}}).
+Examples containing `cnf` illustrate explicit disclosure of historical binding.  Whether to include it follows {{receipt-claims}} and {{historical-cnf-disclosure}}.
 
 ## Example: Two-Hop Delegation Chain
 
