@@ -1428,8 +1428,9 @@ Table of Contents
    Actor proofs strengthen delegation evidence with actor-side
    signatures, but they do not replace ordinary token validation.  The
    general OAuth 2.0 Security Best Current Practice [RFC9700] and the
-   JWT best practices in [RFC8725], except its audience validation (see
-   aud in Section 7.2), apply to systems implementing this profile.
+   JWT best practices in [RFC8725], except its audience validation for
+   proof JWTs (see aud in Section 7.2), apply to systems implementing
+   this profile.
 
 14.1.  Threat Model
 
