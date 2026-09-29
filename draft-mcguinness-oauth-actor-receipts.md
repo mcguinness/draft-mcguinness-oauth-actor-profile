@@ -496,7 +496,7 @@ An introspection response carrying receipts MUST include the members needed for 
 
 An RS receiving both inline and introspected receipts MUST select an authoritative source under local policy.  If it consumes both, differing arrays or completeness values MUST cause rejection of receipt-based provenance.
 
-An introspection server MUST return the full stored array or omit `actor_receipts`.  Removing an older entry breaks `prh`; removing the newest breaks hop alignment.  A stored array with partial coverage is returned in full with `actor_receipts_complete: false`.
+An introspection server MUST return the full stored array or omit `actor_receipts`.  Removing an older entry breaks `prh`; removing the newest breaks hop alignment.  When the introspection server returns a stored array that it knows has partial coverage, it MUST include `actor_receipts_complete: false`.
 
 For an inactive token, the introspection server MUST NOT return `actor_receipts` or `actor_receipts_complete`.
 
@@ -764,7 +764,7 @@ Receipts can expose, to any party that receives the token or introspection respo
 Deployments SHOULD minimize receipt disclosure when full provenance is not required:
 
 *  Issuers and introspection servers MAY suppress `actor_receipts` entirely when policy does not permit disclosure.
-*  Introspection servers returning a stored partial-coverage chain SHOULD set `actor_receipts_complete` to `false`; disclosure of a stored chain is otherwise all-or-nothing (see {{consumer-introspection}}).
+*  Introspection servers disclose a stored chain all-or-nothing and flag a known partial-coverage chain with `actor_receipts_complete: false` ({{consumer-introspection}}).
 *  Resource servers SHOULD request or require actor receipts only when they materially improve authorization, audit, or risk controls.
 *  Receipt `cnf` disclosure is limited as described in {{historical-cnf-disclosure}}.
 *  Deployments SHOULD prefer per-resource-server policy on receipt requirements over blanket inclusion in every token.
