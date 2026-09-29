@@ -112,19 +112,21 @@ This document defines a common representation of delegated actors in OAuth JSON 
 
 # Introduction
 
-Delegated requests can pass through several services and trust domains.  Each recipient needs to distinguish the subject whose authorization is exercised, the actor exercising it, and the OAuth client requesting the token.  Without a common profile, deployments face four interoperability gaps:
+Delegated requests can pass through several services and trust domains.  Each recipient needs to distinguish the subject whose authorization is exercised, the actor exercising it, and the OAuth client requesting the token: `sub` identifies the authorizing principal, `act.sub` the actor, and `client_id` the client registration.  This profile makes the actor explicit in the token rather than leaving it to be inferred from client registration, without redefining client identity or subject semantics.
+
+OAuth 2.0 Token Exchange {{RFC8693}} defines the `act` claim for the current actor and prior actors, but leaves "the specifics of representing a composite token" to implementations ({{RFC8693, Section 1.1}}).  It notes that `iss` and `sub` together "might be necessary" to identify an actor ({{RFC8693, Section 4.1}}), but it does not require an identifier context or classify actors.  It also does not define how `act` is validated and propagated across JWT assertion grants, JWT access tokens, and Transaction Tokens, how Token Exchange inputs such as `actor_token` populate it, or how the actor relates to a sender-constrained presenter.  Without a common profile, deployments face four interoperability gaps:
 
 *  **No standard entity classification.** `sub` is overloaded across end users, service accounts, AI agents, and workloads, with no classification that supports deterministic cross-domain policy.
 *  **Inconsistent actor representation across token types.** Actor context, including actor key material, has no representation that survives transformation among JWT assertion grants, JWT access tokens, and Transaction Tokens.
 *  **Implicit delegation via client identity.** A client registration alone may not identify the actor, particularly when one registration serves several agents or workloads, when requests pass through intermediaries, or when tokens cross trust domains.
 *  **No discovery for actor-profile support.** Neither AS metadata {{RFC8414}} nor Protected Resource Metadata {{RFC9728}} defines parameters for advertising actor-profile support.
 
-OAuth 2.0 Token Exchange {{RFC8693}} defines the `act` claim for representing actors and delegation chains.  This document profiles that claim across JWT assertion grants, JWT access tokens, and Transaction Tokens.  It defines:
+This document profiles `act` to close those gaps.  It defines:
 
 *  Issuer-scoped actor identifiers and entity classification using `sub_profile`.
-*  Rules for validating and preserving actor information across token transformations.
+*  Rules for validating, extending, and preserving actor information when tokens are exchanged or reissued.
 *  Presenter continuation and rebind rules for sender-constrained tokens, including upgrades from bearer tokens.
-*  Resource server processing and metadata for advertising profile support.
+*  Resource server processing based on the (`sub`, outermost `act.sub`) pair, and metadata for advertising profile support.
 *  Extension points for companion profiles that provide additional delegation evidence.
 
 The profile applies to human, service, workload, and AI agent delegation.  The requirements of the underlying specifications, including {{RFC8693}}, {{RFC9068}}, {{RFC9449}}, and {{I-D.ietf-oauth-transaction-tokens}}, continue to apply unless stated otherwise.  [Profile Scope](#profile-scope) describes the supported token paths and the boundary between representation and authorization policy.
