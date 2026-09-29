@@ -1524,8 +1524,8 @@ Because no upstream AS vouches for the actor's identity or the delegation relati
 
 *  Validate the JWT signature using the key identified in the JWT header, obtained from a pre-registered or otherwise independently trusted source for the self-issuing party.
 *  Verify the `exp`, `iat`, and `nbf` claims per {{RFC7519}}.
-*  Reject assertions whose `jti` has already been accepted within the assertion's validity window to prevent replay.
-*  Verify proof of possession per the token-endpoint mechanism in use (DPoP per {{RFC9449}} or mTLS per {{RFC8705}}).
+*  Reject, to prevent replay, an assertion whose validated (`iss`, `jti`) pair has already been accepted, for as long as the assertion remains acceptable, including any allowed clock skew.
+*  Verify proof of possession per the token-endpoint mechanism in use (DPoP per {{RFC9449}} or mTLS per {{RFC8705}}), and against the assertion's top-level `cnf` when present, as in step 6 of [Authorization Grant Processing](#jwt-assertion-grants-processing).
 *  Apply the actor-profile validation and proof-of-possession requirements in [Authorization Grant Processing](#jwt-assertion-grants-processing).
 *  Establish the delegation relationship from an independent authorization basis such as a pre-registered grant, explicit consent record, or equivalent deployment-specific artifact.
 
@@ -2096,7 +2096,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Unrecognized but syntactically valid values in a carried-forward top-level `sub_profile` are preserved.
 * Used one set of example identifiers for the travel scenario, matching the cross-domain example's parties.
 * Clarified confirmation members in token actor objects as extension data, including preservation and their distinction from the current presenter's binding.
-* Corrected grant replay requirements to depend on an enforced grant-level sender constraint, with accepted grants identified by (`iss`, `jti`) for their full acceptance window.
+* Corrected grant replay requirements to depend on an enforced grant-level sender constraint, with accepted grants identified by (`iss`, `jti`) for their full acceptance window, and aligned the self-issued grant controls with that rule.
 
 -00
 
