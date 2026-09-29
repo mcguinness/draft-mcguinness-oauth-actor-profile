@@ -98,11 +98,7 @@ Examples in this document are illustrative and omit unrelated claims, signatures
 
 # Relationship to the Core Actor Profile
 
-This document is an extension of {{I-D.mcguinness-oauth-actor-profile}}.  A token that uses the `actor_receipts` claim defined here:
-
-*  MUST conform to the actor-chain representation rules of the core actor profile;
-*  MUST use the top-level `cnf` claim, when present, only for the current token presenter;
-*  MUST NOT use nested `act` objects to carry independently trusted prior-hop key history.
+This document is an extension of {{I-D.mcguinness-oauth-actor-profile}}.  A token that uses the `actor_receipts` claim defined here follows that document's rules for companion profiles: its `act` chain conforms to the core actor profile ({{actor-receipts-claim}}), its top-level `cnf` identifies only the current token presenter, and its nested `act` objects carry no independently trusted prior-hop key history.
 
 This profile adds signed receipts, processing rules, metadata, and introspection parameters to the core actor representation.  The underlying Token Exchange and Transaction Token request semantics continue to apply.
 
@@ -240,7 +236,6 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 : REQUIRED.  A single-hop actor object.  This object:
 
   *  MUST conform to the core actor profile's actor-object rules;
-  *  MUST include `act.sub` and `act.iss`;
   *  MUST NOT contain `cnf`;
   *  MUST NOT contain a nested `act`.
 
@@ -745,7 +740,7 @@ Deployments SHOULD keep receipt `exp` no longer than the delegated-session lifet
 
 Each receipt is a full signed JWT, and the chain grows linearly with delegation depth.  A typical signed receipt is 400 to 800 bytes after JWS compact serialization and base64url encoding (the upper end when `cnf` or larger `act` objects are present).  Chains beyond approximately 10 hops therefore approach the 8 KB Authorization header budget common in HTTP infrastructure; chains beyond approximately 20 hops approach a 16 KB practical ceiling.  Figures are illustrative and depend on the deployment.
 
-Deployments SHOULD verify that the outer token plus its `actor_receipts` array fits within the header-size budget of every component on the request path.  When introspection is available, deployments MAY return receipts via introspection rather than embedding them, to avoid header pressure for bearer-token clients.
+The Delegation Depth Limits guidance in the core actor profile {{I-D.mcguinness-oauth-actor-profile}} on token size and introspection applies to the outer token plus its `actor_receipts` array; returning receipts via introspection ({{consumer-introspection}}) instead of embedding them avoids header pressure for bearer-token clients.
 
 ## Historical `cnf` Disclosure {#historical-cnf-disclosure}
 
