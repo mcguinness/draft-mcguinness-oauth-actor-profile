@@ -671,7 +671,7 @@ Token Exchange under this profile runs in exactly one of two presenter-transitio
 *  **Presenter continuation**: no validated `actor_token` establishing a new presenter is supplied.  The issued token keeps the presenter of a PoP-capable token-state `subject_token`.
 *  **Presenter rebind**: a validated `actor_token` establishes a new presenter for the issued token.  When the output token is sender-constrained, its top-level `cnf` is bound to that new presenter.
 
-Presenter rebind requires a **direct presenter credential**: an `actor_token` whose top-level `sub` names the new presenter.  The request proves possession as required by that credential profile when establishing a sender-constrained output.  Other means of installing a presenter are deployment-specific.
+Presenter rebind requires a **direct presenter credential**: an `actor_token` whose top-level `sub` names the new presenter.  The request proves possession as required by that credential profile whether or not the output is sender-constrained, and proves possession for the new presenter binding when establishing a sender-constrained output.  Other means of installing a presenter are deployment-specific.
 
 Bearer and identity-only inputs cannot support continuation.  To upgrade them to sender-constrained tokens, present the existing credential as `subject_token` and a direct presenter credential as `actor_token`.  To preserve a delegation chain while changing presenters, deployments SHOULD likewise present the delegated credential as `subject_token` and a separate direct credential as `actor_token`.
 
@@ -854,7 +854,7 @@ When a Token Exchange request ({{RFC8693}}) includes an `actor_token` that is a 
 
 3.  The AS MUST derive the outermost actor and handle any inbound chain as specified in [Actor Tokens](#actor-tokens).
 
-4.  When the request uses this workload credential to establish a sender-constrained output token in presenter-rebind mode, the AS MUST validate the proof required by the workload-credential profile: a WIMSE Workload Proof Token (WPT, {{I-D.ietf-wimse-wpt}}) per its specification, or a DPoP proof ({{RFC9449}}) over the token endpoint URI when the credential carries `cnf.jkt`.  If the required proof is absent or invalid, the AS MUST reject the request with `invalid_grant`.
+4.  The AS MUST validate any proof the workload-credential profile requires, such as a WIMSE Workload Proof Token (WPT, {{I-D.ietf-wimse-wpt}}) per its specification, whether or not the output token is sender-constrained.  When the request uses this credential to establish a sender-constrained output token in presenter-rebind mode, the AS MUST also validate proof for the new presenter binding: the WPT, or a DPoP proof ({{RFC9449}}) over the token endpoint URI when the credential carries `cnf.jkt`.  If a required proof is absent or invalid, the AS MUST reject the request with `invalid_grant`.
 
 
 ### JWT Access Token {#jwt-access-token-as-actor-token}
@@ -873,7 +873,7 @@ When a Token Exchange request includes an `actor_token` that is a JWT access tok
 
 3.  The AS MUST derive the outermost actor and handle any inbound chain as specified in [Actor Tokens](#actor-tokens), including rejecting an `actor_token` that carries `act`.
 
-4.  When establishing a sender-constrained output in presenter-rebind mode and the credential carries top-level `cnf`, the AS MUST validate proof for that binding per [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).
+4.  When the credential carries top-level `cnf`, the AS MUST validate proof for that binding per [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation), whether or not the output token is sender-constrained.
 
 ## `may_act` {#may-act}
 
