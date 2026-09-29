@@ -565,7 +565,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 8.  If the AS accepts the assertion, it MUST propagate the actor information into the issued token according to the rules for the output token type being issued.  For JWT access tokens, see [JWT Access Token Output](#jwt-access-token-propagation).  For Transaction Tokens, see [Transaction Token Output Rules](#transaction-token-output-rules).  When the output is another JWT assertion grant profile, the resulting assertion MUST preserve the validated actor information subject to local policy and the chain-depth limit in [Delegation Chains](#delegation-chains).
 
-9.  When constructing a new outermost `act` object using [Extend Chain with New Actor](#extend-chain-with-new-actor), the AS MAY enrich that object with `sub_profile` based on its own knowledge of the actor's entity type.  The AS MAY also set or enrich the top-level `sub_profile` of the issued token based on its knowledge of `sub`.  Preserved inner `act` objects are immutable under [Preserve Inbound Chain](#preserve-inbound-chain).
+9.  When constructing a new outermost `act` object using [Extend Chain with New Actor](#extend-chain-with-new-actor), the AS includes `sub_profile` in that object when it can authoritatively classify the actor's entity type, as [Actor Object Structure](#actor-object-structure) recommends.  The same section recommends a top-level `sub_profile` in the issued token when the AS can authoritatively classify `sub`.  Preserved inner `act` objects are immutable under [Preserve Inbound Chain](#preserve-inbound-chain).
 
 # JWT Access Tokens {#jwt-access-tokens}
 
