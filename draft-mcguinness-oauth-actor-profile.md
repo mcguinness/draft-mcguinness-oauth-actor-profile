@@ -2092,6 +2092,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Resolved the remaining duplicate-rule conflicts: `act` in Transaction Tokens follows Delegation Chains, identifier reconciliation keeps both outcomes under explicit conditions, client identity must not substitute for `act`, inner-actor failures use the shared error mapping, and proof for a new presenter is required for sender-constrained output while any proof the credential's own profile requires is always validated.
 * Actor `sub_profile` is recommended when the issuer can authoritatively classify the actor, and Transaction Token `sub` re-expression requires a trusted mapping.
 * Unrecognized but syntactically valid values in a carried-forward top-level `sub_profile` are preserved.
+* Used one set of example identifiers for the travel scenario, matching the cross-domain example's parties.
 
 -00
 

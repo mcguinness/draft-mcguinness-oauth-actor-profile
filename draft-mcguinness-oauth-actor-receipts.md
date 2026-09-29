@@ -1164,6 +1164,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
 * Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, {{RFC8725}} applies except its audience validation, introspection flags known partial coverage, and subject continuity allows namespace-aware matching or trusted mapping.
 * A recipient that requires instance binding rejects any chain not bound by a matching leading `origin_jti`, and the completeness assurances share one home.
+* Used the base profile's example identifiers for the travel assistant and booking tool.
 
 -00
 
