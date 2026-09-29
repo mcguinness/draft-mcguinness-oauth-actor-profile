@@ -434,7 +434,7 @@ Bounds evidence records non-expansion across covered hops, with explicit re-auth
 
 Receipt-attested bounds travel inside receipts and are returned wherever receipts are returned; the introspection rules of {{ACTOR-RECEIPTS}} apply unchanged, including all-or-nothing receipt disclosure and the requirement list for outer-token members.
 
-An introspection response MAY include `authority_bounds_enforced`, `bounds_events`, and `bounds_events_complete` using their JWT syntax.  A response that cannot disclose the full stored event array MUST omit both event claims.  A subset would break linkage or conceal a change of bounds.
+An introspection response MAY include `authority_bounds_enforced`, `bounds_events`, and `bounds_events_complete` using their JWT syntax.  It MUST return the full stored event array or omit both event claims.  A subset would break linkage or conceal a change of bounds.
 
 For inactive tokens, introspection servers MUST NOT return `authority_bounds_enforced`, `bounds_events`, or `bounds_events_complete`.
 
