@@ -452,7 +452,7 @@ An issuer, resource server, or other recipient that relies on `actor_proofs` MUS
     *  verify that all REQUIRED proof claims are present and have the expected JSON types, including `iss`, `sub`, `act`, `target` with `target.aud`, `iat`, `exp`, and `jti`;
     *  verify that OPTIONAL claims used by this profile have the expected JSON types when present, including `sub_iss`, `target.resource`, `prh`, `prh_alg`, `receipt_jti`, and `origin_jti`;
     *  verify that the proof `act` object is single-hop, contains no nested `act`, and contains no `cnf`, and that the proof `iss` equals the proof `act.sub`;
-    *  enforce `exp`, `iat`, and other JWT validity rules.  Because `exp` is REQUIRED on proofs and MUST cover the expected outer token lifetime, an expired proof SHOULD be treated as invalid even for older hops.  Local policy MAY permit continued use of a proof that is expired by a small clock-skew margin, but MUST NOT relax `exp` enforcement broadly as a workaround for actors that failed to set adequate `exp` values.
+    *  enforce `exp`, `iat`, and other JWT validity rules.  An expired proof is invalid even for an older hop; only the small clock-skew leeway of {{RFC7519, Section 4.1.4}} applies.
 6.  Verify proof-chain linkage:
     *  each proof other than the oldest MUST include `prh`;
     *  each non-oldest proof's `prh` MUST hash the next older proof using the algorithm named by `prh_alg`, defaulting to `sha-256` when `prh_alg` is absent;
