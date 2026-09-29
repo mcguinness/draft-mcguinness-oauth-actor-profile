@@ -82,11 +82,15 @@ This document defines OAuth Actor Chain Authority Bounds, an optional companion 
 
 # Introduction
 
-The OAuth Actor Profile {{I-D.mcguinness-oauth-actor-profile}} identifies delegated actors.  Actor Receipts {{ACTOR-RECEIPTS}} attest issuer participation, and Actor Proofs {{ACTOR-PROOFS}} attest actor participation and target consent.  These artifacts do not record all authority changes across the chain, so a recipient can verify the hops without detecting an intermediate expansion of authority.
+The OAuth Actor Profile {{I-D.mcguinness-oauth-actor-profile}} identifies delegated actors.  Actor Receipts {{ACTOR-RECEIPTS}} attest issuer participation, and Actor Proofs {{ACTOR-PROOFS}} attest actor participation and target consent.  None of them records how authority changes across hops: OAuth 2.0 Token Exchange {{RFC8693}} leaves the `scope`, audience, and resources of each issued token to the issuing authorization server's policy, Actor Receipts lists historical authority as a non-goal, and an actor proof binds only the target its actor authorized at one hop.  A recipient can therefore verify who participated at every hop without detecting that an intermediate issuer widened the authority flowing through the chain.
 
-This profile records authority in signed receipt claims.  Recipients compare those values across hops and against the current token.  Expansion requires an explicit re-authorization, recorded either in a new receipt or in a signed event between hops.
+This document defines OAuth Actor Chain Authority Bounds, an optional companion profile that closes that gap for deployments that use actor receipts.  Receipt claims record the authority in effect at each hop; recipients compare those values across hops and against the current token, and expansion requires an explicit re-authorization, recorded either in a new receipt or in a signed event between hops.  The design center is:
 
-The profile uses the existing `act` and `actor_receipts` structures, adding bounds claims, an event array, issuer self-attestation, and discovery metadata.  Deployments opt in per resource or trust domain.
+*  keep the visible actor chain in `act` and per-hop provenance in `actor_receipts`;
+*  carry per-hop authority as receipt claims, so it inherits the receipt issuer's signature and the chain's integrity;
+*  make authority expansion an explicit, signed, auditable event rather than a silent change.
+
+The profile adds bounds claims, an event array, issuer self-attestation, and discovery metadata; deployments opt in per resource or trust domain.
 
 # Conventions and Definitions
 
