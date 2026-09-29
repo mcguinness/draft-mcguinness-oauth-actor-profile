@@ -859,7 +859,8 @@ Table of Contents
    confirmation value can therefore differ from the current token's top-
    level cnf; this profile imposes no equality check between them.
    Another specification can define additional checks for its own
-   issuance or processing rules.
+   issuance or processing rules, subject to Companion Profiles and
+   Extension Points (Section 11).
 
 3.7.2.  Token Exchange Continuation
 
@@ -4312,10 +4313,6 @@ Document History
 
    -01
 
-   *  Clarified confirmation members in token actor objects as extension
-      data, including preservation and their distinction from the
-      current presenter's binding.
-
    *  Consolidated and tightened the text throughout; claim roles,
       supported token types, and error mappings now use tables.
 
@@ -4370,6 +4367,10 @@ Document History
 
    *  Used one set of example identifiers for the travel scenario,
       matching the cross-domain example's parties.
+
+   *  Clarified confirmation members in token actor objects as extension
+      data, including preservation and their distinction from the
+      current presenter's binding.
 
    -00
 

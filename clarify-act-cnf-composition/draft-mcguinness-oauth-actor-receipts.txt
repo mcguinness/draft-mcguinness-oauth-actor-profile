@@ -2495,10 +2495,6 @@ Document History
 
    -01
 
-   *  Clarified that receipt actor-object restrictions apply separately
-      from the token's actor chain, and that historical binding comes
-      from the issued token's top-level cnf.
-
    *  Consolidated and tightened the text throughout; the claim-pair
       naming convention now uses a table.
 
@@ -2531,6 +2527,10 @@ Document History
 
    *  Used the base profile's example identifiers for the travel
       assistant and booking tool.
+
+   *  Clarified that receipt actor-object restrictions apply separately
+      from the token's actor chain, and that historical binding comes
+      from the issued token's top-level cnf.
 
    -00
 

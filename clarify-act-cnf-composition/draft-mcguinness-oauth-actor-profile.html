@@ -2103,7 +2103,7 @@ PreserveChain(inbound_chain):
 <a href="#section-3.7.1" class="section-number selfRef">3.7.1. </a><a href="#name-top-level-cnf-governs-the-c" class="section-name selfRef">Top-Level <code>cnf</code> Governs the Current Presenter</a>
           </h4>
 <p id="section-3.7.1-1">The top-level <code>cnf</code> claim of any token identifies the key or certificate of the current presenter.  When delegation is present, that current presenter is the party identified by the outermost <code>act</code> claim: when DPoP (<span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>) is used, the top-level <code>cnf.jkt</code> <span class="bcp14">MUST</span> identify that party's key; when mTLS (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>) is used, the top-level <code>cnf.x5t#S256</code> <span class="bcp14">MUST</span> identify that party's certificate.  The AS or RS <span class="bcp14">MUST</span> validate proof of possession against the top-level <code>cnf</code>.<a href="#section-3.7.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.7.1-2">A confirmation member such as <code>act.cnf</code> is permitted as extension data under <span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span> and has no proof-of-possession semantics under this profile.  It remains unchanged in an inherited actor object under <span><a href="#preserve-inbound-chain" class="internal xref">Preserve Inbound Chain</a> (<a href="#preserve-inbound-chain" class="auto internal xref">Section 3.6.3.2</a>)</span>.  After further delegation, an inherited confirmation value can therefore differ from the current token's top-level <code>cnf</code>; this profile imposes no equality check between them.  Another specification can define additional checks for its own issuance or processing rules.<a href="#section-3.7.1-2" class="pilcrow">¶</a></p>
+<p id="section-3.7.1-2">A confirmation member such as <code>act.cnf</code> is permitted as extension data under <span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span> and has no proof-of-possession semantics under this profile.  It remains unchanged in an inherited actor object under <span><a href="#preserve-inbound-chain" class="internal xref">Preserve Inbound Chain</a> (<a href="#preserve-inbound-chain" class="auto internal xref">Section 3.6.3.2</a>)</span>.  After further delegation, an inherited confirmation value can therefore differ from the current token's top-level <code>cnf</code>; this profile imposes no equality check between them.  Another specification can define additional checks for its own issuance or processing rules, subject to <span><a href="#companion-profile-extensibility" class="internal xref">Companion Profiles and Extension Points</a> (<a href="#companion-profile-extensibility" class="auto internal xref">Section 11</a>)</span>.<a href="#section-3.7.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="token-exchange-continuation">
@@ -5089,55 +5089,55 @@ Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
 <p id="appendix-D-2">-01<a href="#appendix-D-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-D-3.1">
-          <p id="appendix-D-3.1.1">Clarified confirmation members in token actor objects as extension data, including preservation and their distinction from the current presenter's binding.<a href="#appendix-D-3.1.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.1.1">Consolidated and tightened the text throughout; claim roles, supported token types, and error mappings now use tables.<a href="#appendix-D-3.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.2">
-          <p id="appendix-D-3.2.1">Consolidated and tightened the text throughout; claim roles, supported token types, and error mappings now use tables.<a href="#appendix-D-3.2.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.2.1">Added hop and visible-hop terminology, and token-size guidance for extensions that attach per-hop signed material.<a href="#appendix-D-3.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.3">
-          <p id="appendix-D-3.3.1">Added hop and visible-hop terminology, and token-size guidance for extensions that attach per-hop signed material.<a href="#appendix-D-3.3.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.3.1">JWT access tokens now require <code>client_id</code>, per <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>.<a href="#appendix-D-3.3.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.4">
-          <p id="appendix-D-3.4.1">JWT access tokens now require <code>client_id</code>, per <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>.<a href="#appendix-D-3.4.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.4.1">Corrected citations: scope reduction and resource indicators are no longer attributed to <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, and the DPoP key comparison cites Sections 4.3 and 6.1 of <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>.<a href="#appendix-D-3.4.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.5">
-          <p id="appendix-D-3.5.1">Corrected citations: scope reduction and resource indicators are no longer attributed to <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, and the DPoP key comparison cites Sections 4.3 and 6.1 of <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>.<a href="#appendix-D-3.5.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.5.1"><code>may_act</code> now uses <code>may_act.iss</code> as the identifier context when present, and the <code>subject_token</code> issuer otherwise.<a href="#appendix-D-3.5.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.6">
-          <p id="appendix-D-3.6.1"><code>may_act</code> now uses <code>may_act.iss</code> as the identifier context when present, and the <code>subject_token</code> issuer otherwise.<a href="#appendix-D-3.6.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.6.1">Removed guidance on merging an <code>actor_token</code>'s own <code>act</code> chain, which conflicted with rejecting any <code>actor_token</code> that carries <code>act</code>.<a href="#appendix-D-3.6.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.7">
-          <p id="appendix-D-3.7.1">Removed guidance on merging an <code>actor_token</code>'s own <code>act</code> chain, which conflicted with rejecting any <code>actor_token</code> that carries <code>act</code>.<a href="#appendix-D-3.7.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.7.1">The <code>act.iss</code> rule for AS-issued grants and the privacy guidance on suppressing <code>act.sub_profile</code> now apply only to new actor objects, consistent with inherited-actor immutability.<a href="#appendix-D-3.7.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.8">
-          <p id="appendix-D-3.8.1">The <code>act.iss</code> rule for AS-issued grants and the privacy guidance on suppressing <code>act.sub_profile</code> now apply only to new actor objects, consistent with inherited-actor immutability.<a href="#appendix-D-3.8.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.8.1">Aligned the error-response table with the processing rules.<a href="#appendix-D-3.8.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.9">
-          <p id="appendix-D-3.9.1">Aligned the error-response table with the processing rules.<a href="#appendix-D-3.9.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.9.1">Redrew the cross-domain example diagram and added <span>[<a href="#RFC8792" class="cite xref">RFC8792</a>]</span> line-wrapping headers to folded examples.<a href="#appendix-D-3.9.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.10">
-          <p id="appendix-D-3.10.1">Redrew the cross-domain example diagram and added <span>[<a href="#RFC8792" class="cite xref">RFC8792</a>]</span> line-wrapping headers to folded examples.<a href="#appendix-D-3.10.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.10.1">Resolved conflicting requirements on inherited extension members, inner-actor validation, and <code>req_wl</code> reconciliation, and pointed Security and Privacy restatements at their normative rules.<a href="#appendix-D-3.10.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.11">
-          <p id="appendix-D-3.11.1">Resolved conflicting requirements on inherited extension members, inner-actor validation, and <code>req_wl</code> reconciliation, and pointed Security and Privacy restatements at their normative rules.<a href="#appendix-D-3.11.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.11.1">Removed BCP 14 keywords from operational guidance that no other party can observe.<a href="#appendix-D-3.11.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.12">
-          <p id="appendix-D-3.12.1">Removed BCP 14 keywords from operational guidance that no other party can observe.<a href="#appendix-D-3.12.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.12.1">Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.<a href="#appendix-D-3.12.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.13">
-          <p id="appendix-D-3.13.1">Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.<a href="#appendix-D-3.13.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.13.1">Resolved the remaining duplicate-rule conflicts: <code>act</code> in Transaction Tokens follows Delegation Chains, identifier reconciliation keeps both outcomes under explicit conditions, client identity must not substitute for <code>act</code>, inner-actor failures use the shared error mapping, and proof for a new presenter is required for sender-constrained output while any proof the credential's own profile requires is always validated.<a href="#appendix-D-3.13.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.14">
-          <p id="appendix-D-3.14.1">Resolved the remaining duplicate-rule conflicts: <code>act</code> in Transaction Tokens follows Delegation Chains, identifier reconciliation keeps both outcomes under explicit conditions, client identity must not substitute for <code>act</code>, inner-actor failures use the shared error mapping, and proof for a new presenter is required for sender-constrained output while any proof the credential's own profile requires is always validated.<a href="#appendix-D-3.14.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.14.1">Actor <code>sub_profile</code> is recommended when the issuer can authoritatively classify the actor, and Transaction Token <code>sub</code> re-expression requires a trusted mapping.<a href="#appendix-D-3.14.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.15">
-          <p id="appendix-D-3.15.1">Actor <code>sub_profile</code> is recommended when the issuer can authoritatively classify the actor, and Transaction Token <code>sub</code> re-expression requires a trusted mapping.<a href="#appendix-D-3.15.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.15.1">Unrecognized but syntactically valid values in a carried-forward top-level <code>sub_profile</code> are preserved.<a href="#appendix-D-3.15.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.16">
-          <p id="appendix-D-3.16.1">Unrecognized but syntactically valid values in a carried-forward top-level <code>sub_profile</code> are preserved.<a href="#appendix-D-3.16.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.16.1">Used one set of example identifiers for the travel scenario, matching the cross-domain example's parties.<a href="#appendix-D-3.16.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.17">
-          <p id="appendix-D-3.17.1">Used one set of example identifiers for the travel scenario, matching the cross-domain example's parties.<a href="#appendix-D-3.17.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.17.1">Clarified confirmation members in token actor objects as extension data, including preservation and their distinction from the current presenter's binding.<a href="#appendix-D-3.17.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-D-4">-00<a href="#appendix-D-4" class="pilcrow">¶</a></p>

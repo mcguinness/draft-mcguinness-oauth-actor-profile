@@ -2414,9 +2414,6 @@ Document History
 
    -01
 
-   *  Clarified that proof actor-object restrictions apply separately
-      from confirmation extensions in the token's actor chain.
-
    *  Consolidated and tightened the text throughout.
 
    *  An issuer now drops inherited proofs when reissuance exceeds any
@@ -2448,6 +2445,9 @@ Document History
 
    *  Used the base profile's example identifiers for the travel
       assistant and booking tool.
+
+   *  Clarified that proof actor-object restrictions apply separately
+      from confirmation extensions in the token's actor chain.
 
    -00
 
