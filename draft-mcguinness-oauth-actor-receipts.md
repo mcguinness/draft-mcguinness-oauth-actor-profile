@@ -457,11 +457,11 @@ Consumer step 5 applies the following cases in order to `receipt[0]`:
 
 ## Subject Re-Expression Across Hops {#subject-re-expression-across-hops}
 
-Only `receipt[0].sub` must match the outer token.  Older receipts can carry different subject identifiers (step 8 of {{consumer-processing}}).  A recipient requiring continuity across them MUST use explicit trusted local mapping rules.
+Only `receipt[0].sub` must match the outer token.  Older receipts can carry different subject identifiers (step 8 of {{consumer-processing}}).
 
 Matching actors alone do not establish subject continuity.  A receipt from an unrelated subject chain that shares the same actor identity can satisfy the hop-alignment check, whether by accident or because a compromised upstream issuer minted it for insertion.  Recipients need to account for this cross-subject insertion risk.
 
-Deployments requiring subject continuity SHOULD either require identical subject identifiers throughout or positively reconcile them through trusted mappings.  When neither applies, recipients MUST treat continuity as unverified and MUST NOT use the differing older receipts for authorization.
+Deployments requiring subject continuity SHOULD establish it either by exact, namespace-aware matching of subject identifiers throughout (the same `sub` under the same namespace authority; see `sub_iss` in {{receipt-claims}}) or by positive reconciliation through trusted mappings.  When neither applies, recipients MUST treat continuity as unverified and MUST NOT use the differing older receipts to support authorization that requires subject continuity.
 
 ## Complete Receipt Coverage
 
