@@ -277,7 +277,7 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 `exp`:
 : REQUIRED.  Expiration time for the receipt, as defined in {{RFC7519}}.
 
-  `exp` needs to cover the lifetime of any token that will carry or inherit this receipt; otherwise consumers reject older receipts in a valid chain prematurely.
+  The `exp` of a newly created receipt MUST NOT be earlier than the `exp` of the outer token issued with it.  Beyond that floor, `exp` needs to cover the lifetime of any token that will carry or inherit this receipt; otherwise consumers reject older receipts in a valid chain prematurely.
 
   Downstream issuers reject receipts that expire before the issued outer token.  Deployments typically coordinate a bounded delegated-session lifetime to avoid propagation failure while limiting signing-key exposure; see {{reissuance-without-a-new-actor-hop}}.
 
