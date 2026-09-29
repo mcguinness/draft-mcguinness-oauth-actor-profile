@@ -233,7 +233,7 @@ For worked examples of same-domain service delegation and cross-domain delegatio
 
 ## Actor Object Structure {#actor-object-structure}
 
-An actor object conforming to this profile is a JSON object that is the value of the `act` claim.  In addition to the `sub` claim required by {{RFC8693}}, a profile-conformant actor object MUST contain an `iss` claim and SHOULD contain a `sub_profile` claim.  An `act` object that omits `iss` conforms to {{RFC8693}} but does not conform to this profile; handling of such objects is specified in [Migration and Adoption](#migration-and-adoption).
+An actor object conforming to this profile is a JSON object that is the value of the `act` claim.  In addition to the `sub` claim required by {{RFC8693}}, a profile-conformant actor object MUST contain an `iss` claim and SHOULD contain a `sub_profile` claim when the issuer can authoritatively classify the actor's entity type.  An `act` object that omits `iss` conforms to {{RFC8693}} but does not conform to this profile; handling of such objects is specified in [Migration and Adoption](#migration-and-adoption).
 
 ~~~
 act-object = {
@@ -382,7 +382,7 @@ When a new actor is identified, the AS creates a new outermost `act` object and 
 AddOutermostActor(inbound_chain, new_actor):
   outermost.sub = new_actor.sub  // REQUIRED
   outermost.iss = new_actor.iss  // REQUIRED: identifier context
-  // RECOMMENDED when known:
+  // RECOMMENDED when authoritatively known:
   outermost.sub_profile = new_actor.sub_profile
 
   if inbound_chain is present:
@@ -1067,7 +1067,7 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
     *  in presenter-continuation mode, preserve the inbound chain unchanged ([Preserve Inbound Chain](#preserve-inbound-chain));
     *  in presenter-rebind mode, create a new outermost `act` object for the new presenter and nest any inbound chain beneath it ([Extend Chain with New Actor](#extend-chain-with-new-actor)).
 
-    For a new outermost actor, the TTS sets `act.sub` to the new presenter's identifier and `act.iss` to the issuer or namespace context for that identifier, as in [Extend Chain with New Actor](#extend-chain-with-new-actor), and includes `act.sub_profile` when known, as [Actor Object Structure](#actor-object-structure) recommends.  Inherited `act` objects are not rewritten, as [Extend Chain with New Actor](#extend-chain-with-new-actor) and [Preserve Inbound Chain](#preserve-inbound-chain) require.
+    For a new outermost actor, the TTS sets `act.sub` to the new presenter's identifier and `act.iss` to the issuer or namespace context for that identifier, as in [Extend Chain with New Actor](#extend-chain-with-new-actor), and includes `act.sub_profile` when it can authoritatively classify the actor, as [Actor Object Structure](#actor-object-structure) recommends.  Inherited `act` objects are not rewritten, as [Extend Chain with New Actor](#extend-chain-with-new-actor) and [Preserve Inbound Chain](#preserve-inbound-chain) require.
 
 7.  When the issued Transaction Token includes a top-level presenter-binding claim such as `cnf`, that binding applies to the current presenter.  The underlying presenter-authentication and proof mechanism is defined by {{I-D.ietf-oauth-transaction-tokens}} and any applicable deployment profile, not by this document.
 
