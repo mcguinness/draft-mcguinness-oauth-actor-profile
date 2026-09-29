@@ -1136,8 +1136,7 @@ Table of Contents
 
    *  require exact, namespace-aware matching of subject identifiers
       across all proofs (the same sub under the same namespace
-      authority; see sub_iss in Section 7.2.1), rejecting re-expressed
-      chains; or
+      authority; see sub_iss in Section 7.2.1); or
 
    *  enforce explicit trusted subject-mapping rules that can positively
       confirm each distinct subject identifier refers to the same

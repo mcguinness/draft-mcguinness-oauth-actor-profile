@@ -3008,7 +3008,7 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
               <p id="section-6.5.2-4.4.1">The AS <span class="bcp14">MUST</span> reject if actor validation fails or the resulting chain exceeds the depth limit.  It <span class="bcp14">MUST</span> use <code>invalid_request</code> for excessive depth or an inbound actor missing <code>act.sub</code> or <code>act.iss</code>, and <code>invalid_grant</code> for validation failures.  It <span class="bcp14">MUST NOT</span> issue a partially preserved chain.<a href="#section-6.5.2-4.4.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-6.5.2-4.5">
-              <p id="section-6.5.2-4.5.1">Top-level <code>sub_profile</code> follows <span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span>, which recommends it when the AS can authoritatively classify the token's <code>sub</code> entity type.<a href="#section-6.5.2-4.5.1" class="pilcrow">¶</a></p>
+              <p id="section-6.5.2-4.5.1">Top-level <code>sub_profile</code> follows <span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span>, which recommends it when the AS can authoritatively classify the token's <code>sub</code> entity type.  When the AS carries a trusted inbound top-level <code>sub_profile</code> into the issued token, it <span class="bcp14">MUST</span> preserve its unrecognized but syntactically valid values, because dropping a value can remove a classification that a downstream recipient restricts on.<a href="#section-6.5.2-4.5.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-6.5.2-4.6">
               <p id="section-6.5.2-4.6.1">The AS can reduce scope under local policy.  If this reduction, before any actor-based restriction, leaves no effective scope, it <span class="bcp14">MUST</span> reject with <code>invalid_scope</code>.<a href="#section-6.5.2-4.6.1" class="pilcrow">¶</a></p>
@@ -4063,7 +4063,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
         <h3 id="name-token-substitution">
 <a href="#section-14.4" class="section-number selfRef">14.4. </a><a href="#name-token-substitution" class="section-name selfRef">Token Substitution</a>
         </h3>
-<p id="section-14.4-1">An attacker who can present a token with a crafted <code>sub_profile</code> or delegation chain could attempt to escalate privileges.  ASes <span class="bcp14">MUST</span> validate inbound <code>sub_profile</code> values against the syntax requirements of this document, the applicable registry or deployment-specific allowed set where such checks are part of local policy, and the local policy applicable to the token they are issuing.  They <span class="bcp14">MUST</span> preserve unrecognized but syntactically valid values as required by <span><a href="#preserve-inbound-chain" class="internal xref">Preserve Inbound Chain</a> (<a href="#preserve-inbound-chain" class="auto internal xref">Section 3.6.3.2</a>)</span>, and they <span class="bcp14">MUST</span> reject values that are malformed or disallowed by local policy.<a href="#section-14.4-1" class="pilcrow">¶</a></p>
+<p id="section-14.4-1">An attacker who can present a token with a crafted <code>sub_profile</code> or delegation chain could attempt to escalate privileges.  ASes <span class="bcp14">MUST</span> validate inbound <code>sub_profile</code> values against the syntax requirements of this document, the applicable registry or deployment-specific allowed set where such checks are part of local policy, and the local policy applicable to the token they are issuing.  They <span class="bcp14">MUST</span> preserve unrecognized but syntactically valid values, as required by <span><a href="#preserve-inbound-chain" class="internal xref">Preserve Inbound Chain</a> (<a href="#preserve-inbound-chain" class="auto internal xref">Section 3.6.3.2</a>)</span> for inherited actor objects and by step 5 of <span><a href="#jwt-access-token-propagation" class="internal xref">JWT Access Token Output</a> (<a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.5.2</a>)</span> for a carried-forward top-level <code>sub_profile</code>, and they <span class="bcp14">MUST</span> reject values that are malformed or disallowed by local policy.<a href="#section-14.4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="confused-deputy">
@@ -5128,6 +5128,9 @@ Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
 </li>
         <li class="normal" id="appendix-D-3.14">
           <p id="appendix-D-3.14.1">Actor <code>sub_profile</code> is recommended when the issuer can authoritatively classify the actor, and Transaction Token <code>sub</code> re-expression requires a trusted mapping.<a href="#appendix-D-3.14.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-D-3.15">
+          <p id="appendix-D-3.15.1">Unrecognized but syntactically valid values in a carried-forward top-level <code>sub_profile</code> are preserved.<a href="#appendix-D-3.15.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-D-4">-00<a href="#appendix-D-4" class="pilcrow">¶</a></p>

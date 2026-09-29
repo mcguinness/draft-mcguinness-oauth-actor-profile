@@ -1967,7 +1967,11 @@ Table of Contents
 
    5.  Top-level sub_profile follows Actor Object Structure
        (Section 3.4), which recommends it when the AS can
-       authoritatively classify the token's sub entity type.
+       authoritatively classify the token's sub entity type.  When the
+       AS carries a trusted inbound top-level sub_profile into the
+       issued token, it MUST preserve its unrecognized but syntactically
+       valid values, because dropping a value can remove a
+       classification that a downstream recipient restricts on.
 
    6.  The AS can reduce scope under local policy.  If this reduction,
        before any actor-based restriction, leaves no effective scope, it
@@ -3314,8 +3318,10 @@ Table of Contents
    of this document, the applicable registry or deployment-specific
    allowed set where such checks are part of local policy, and the local
    policy applicable to the token they are issuing.  They MUST preserve
-   unrecognized but syntactically valid values as required by Preserve
-   Inbound Chain (Section 3.6.3.2), and they MUST reject values that are
+   unrecognized but syntactically valid values, as required by Preserve
+   Inbound Chain (Section 3.6.3.2) for inherited actor objects and by
+   step 5 of JWT Access Token Output (Section 6.5.2) for a carried-
+   forward top-level sub_profile, and they MUST reject values that are
    malformed or disallowed by local policy.
 
 14.5.  Confused Deputy
@@ -4347,6 +4353,9 @@ Document History
    *  Actor sub_profile is recommended when the issuer can
       authoritatively classify the actor, and Transaction Token sub re-
       expression requires a trusted mapping.
+
+   *  Unrecognized but syntactically valid values in a carried-forward
+      top-level sub_profile are preserved.
 
    -00
 
