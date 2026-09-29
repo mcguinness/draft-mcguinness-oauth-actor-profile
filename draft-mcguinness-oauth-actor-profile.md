@@ -958,12 +958,12 @@ Transaction Token claims are defined in {{I-D.ietf-oauth-transaction-tokens}}.  
 `req_wl`:
 : This claim provides TTS-level workload context and is not a substitute for `act.sub`; see [Actor Claim in Transaction Tokens](#actor-claim-in-transaction-tokens).
 
-`act` (REQUIRED when delegated; OPTIONAL otherwise):
+`act` (REQUIRED when the token represents delegation per [Delegation Chains](#delegation-chains); omitted otherwise):
 : Represents the current acting party and any prior delegation steps, conforming to [Actor Object Structure](#actor-object-structure).  See [Actor Claim in Transaction Tokens](#actor-claim-in-transaction-tokens) for delegation semantics and the relationship between `act.sub` and `req_wl`.
 
 ### Actor Claim in Transaction Tokens {#actor-claim-in-transaction-tokens}
 
-For this profile, a Transaction Token is delegated when an `actor_token` or an inbound `act` chain establishes that the workload acts for `sub`.  It MUST then carry `act` and top-level `iss` as specified in [Transaction Token Output Rules](#transaction-token-output-rules).  For a workload acting under its own grant without an explicit actor credential, `act` is OPTIONAL.  The TTS MUST NOT infer delegation solely because `sub` and `req_wl` differ.
+For this profile, a Transaction Token represents delegation when a condition in [Delegation Chains](#delegation-chains) holds, typically because an `actor_token` or an inbound `act` chain establishes that the workload acts for `sub`.  It then carries `act`, as [Delegation Chains](#delegation-chains) requires, and top-level `iss`, as [Transaction Tokens](#transaction-tokens) requires.  When no such condition holds, including for a workload acting under its own grant without any delegation basis, `act` is omitted.  The TTS MUST NOT infer delegation solely because `sub` and `req_wl` differ.
 
 `req_wl` identifies the workload that requested the token from the TTS.  `act.sub` identifies the immediate acting party in the subject identifier namespace used by this profile.  The authoritative actor identifier for authorization decisions under this document is the outermost `act.sub`; `req_wl` is supporting workload context.
 
