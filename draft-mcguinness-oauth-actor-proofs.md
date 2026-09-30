@@ -676,7 +676,7 @@ The following threats and limits assume the trust and validation rules in this d
 
 ### Trust Model Summary
 
-Trust is per-actor-key and per-deployment, and not transitive across the chain.  A proof chain breaks at the first proof whose signing key cannot be resolved through an actor-key source the recipient trusts, even when the outer token's issuer and other proofs are trusted.  Proofs and receipts have independent trust anchors; validating both yields evidence that survives compromise of either the issuer side or the actor side, but not simultaneous compromise of both.
+Trust is per-actor-key and per-deployment, and not transitive across the chain.  A proof chain fails validation if any proof's signing key cannot be resolved through an actor-key source the recipient trusts, even when the outer token's issuer and other proofs are trusted.  Proofs and receipts have independent trust anchors; validating both yields evidence that survives compromise of either the issuer side or the actor side, but not simultaneous compromise of both.
 
 ## Current Presenter Validation
 
