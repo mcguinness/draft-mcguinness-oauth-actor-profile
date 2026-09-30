@@ -1534,17 +1534,14 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-resource">
 <a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-resource" class="section-name selfRef"><code>resource</code></a>
         </h3>
-<p id="section-6.3-1"><code>bounds.resource</code> records the effective resource-indicator set applied by the issuer: an array of absolute URIs using <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span> semantics.  It records the set even when the token has no corresponding claim.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
+<p id="section-6.3-1"><code>bounds.resource</code> records the effective resource-indicator set applied by the issuer: an array of absolute URIs using <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span> semantics.  It records the set even when the token has no corresponding claim.  An issuer that applied no resource indicator omits <code>bounds.resource</code> rather than recording an empty array; where a resource server requires <code>resource</code> (<a href="#protected-resource-metadata" class="auto internal xref">Section 10.2</a>), the omission fails that dimension.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
 <p id="section-6.3-2">Comparison:<a href="#section-6.3-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-6.3-3.1">
-            <p id="section-6.3-3.1.1">compare URIs by canonical form per <span>[<a href="#RFC3986" class="cite xref">RFC3986</a>]</span> Section 6.2; implementations <span class="bcp14">SHOULD</span> apply case normalization for scheme and host, percent-encoding normalization, and path-segment normalization before comparison;<a href="#section-6.3-3.1.1" class="pilcrow">¶</a></p>
+            <p id="section-6.3-3.1.1">compare URIs by simple string comparison (<span>[<a href="#RFC3986" class="cite xref">RFC3986</a>], <a href="https://rfc-editor.org/rfc/rfc3986#section-6.2.1" class="relref">Section 6.2.1</a></span>); issuers need to record each resource indicator in the same form at every hop;<a href="#section-6.3-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.3-3.2">
-            <p id="section-6.3-3.2.1"><code>resource_a</code> is within <code>resource_b</code> if and only if every canonical URI in <code>resource_a</code> is also in <code>resource_b</code>;<a href="#section-6.3-3.2.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-6.3-3.3">
-            <p id="section-6.3-3.3.1">an empty array is the empty set and is within every resource set.<a href="#section-6.3-3.3.1" class="pilcrow">¶</a></p>
+            <p id="section-6.3-3.2.1"><code>resource_a</code> is within <code>resource_b</code> if and only if every URI in <code>resource_a</code> is also in <code>resource_b</code>;<a href="#section-6.3-3.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-6.3-4">URI prefix subsumption (for example, treating <code>https://api.travel-provider.example/v1/</code> as covering <code>https://api.travel-provider.example/v1/users</code>) is NOT applied.  Issuers wishing to express prefix relationships <span class="bcp14">MUST</span> emit explicit URIs at each hop.<a href="#section-6.3-4" class="pilcrow">¶</a></p>
@@ -1828,12 +1825,13 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         </ul>
 <p id="section-9.1-3">A failed comparison means the issuer recorded authority broader than the actor consented to at that hop; recipients validating both companions <span class="bcp14">MUST</span> treat it as a failed required check for both artifacts' evidence.<a href="#section-9.1-3" class="pilcrow">¶</a></p>
-<p id="section-9.1-4">This document defines one extension member for the proof <code>target</code> object, under the constraining-extension rule of <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span>:<a href="#section-9.1-4" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-9.1-5">
-          <dt id="section-9.1-5.1">
+<p id="section-9.1-4">An issuer that supports this profile and accepts a proof carrying <code>target.scope</code> <span class="bcp14">MUST NOT</span> embed that proof in a token whose scope exceeds <code>target.scope</code>.  A recipient that supports this profile and relies on the proof chain <span class="bcp14">MUST</span> verify, independently of receipt coverage, that the current token's effective scope is within <code>actor_proofs[0].target.scope</code> when that member is present, under <a href="#scope-dimension" class="auto internal xref">Section 6.1</a>; a token whose scope exceeds it has diverged from the proof chain, and the target-binding strict mode of <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span> decides whether the recipient rejects the chain.  A recipient that cannot determine the token's effective scope <span class="bcp14">MUST NOT</span> infer scope-level consent from the proof.<a href="#section-9.1-4" class="pilcrow">¶</a></p>
+<p id="section-9.1-5">This document defines one extension member for the proof <code>target</code> object, under the constraining-extension rule of <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span>:<a href="#section-9.1-5" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-9.1-6">
+          <dt id="section-9.1-6.1">
 <code>target.scope</code>:</dt>
-          <dd style="margin-left: 1.5em" id="section-9.1-5.2">
-            <p id="section-9.1-5.2.1"><span class="bcp14">OPTIONAL</span>.  A string of space-separated scope tokens the actor authorizes for the token issued at its hop, compared under the rules of <a href="#scope-dimension" class="auto internal xref">Section 6.1</a>.  As a constraining member, its presence narrows the actor's target binding; consumers that do not recognize it ignore it per <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span>.<a href="#section-9.1-5.2.1" class="pilcrow">¶</a></p>
+          <dd style="margin-left: 1.5em" id="section-9.1-6.2">
+            <p id="section-9.1-6.2.1"><span class="bcp14">OPTIONAL</span>.  A string of space-separated scope tokens the actor authorizes for the token issued at its hop, compared under the rules of <a href="#scope-dimension" class="auto internal xref">Section 6.1</a>.  As a constraining member, its presence narrows the actor's target binding; consumers that do not recognize it ignore it per <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span>.<a href="#section-9.1-6.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -1940,8 +1938,8 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           </tr>
         </tbody>
       </table>
-<p id="section-11-5">When the failure reflects an authorization-policy decision about the actor or delegation rather than a structural failure, an issuer <span class="bcp14">MAY</span> use <code>actor_unauthorized</code> as defined in the core actor profile <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>.<a href="#section-11-5" class="pilcrow">¶</a></p>
-<p id="section-11-6">When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it <span class="bcp14">SHOULD</span> return <code>invalid_token</code> per <span>[<a href="#RFC6750" class="cite xref">RFC6750</a>]</span> Section 3.1, and <span class="bcp14">SHOULD</span> include an <code>error_description</code> identifying bounds-verification failure so operators can distinguish it from generic token validation.<a href="#section-11-6" class="pilcrow">¶</a></p>
+<p id="section-11-5">The issuer uses <code>actor_unauthorized</code> as defined in the core actor profile <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span> when the failure reflects an actor-authorization decision.  An absent required artifact is an input-validation failure: <code>invalid_request</code> on a Token Exchange request, <code>invalid_grant</code> on a JWT bearer grant or refresh request.<a href="#section-11-5" class="pilcrow">¶</a></p>
+<p id="section-11-6">When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it <span class="bcp14">SHOULD</span> return <code>invalid_token</code> per <span>[<a href="#RFC6750" class="cite xref">RFC6750</a>]</span> Section 3.1, and <span class="bcp14">SHOULD</span> include an <code>error_description</code> identifying bounds-verification failure so operators can distinguish it from generic token validation.  For a Transaction Token, the resource server rejects it through the deployment's Txn-Token handling, because <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> defines no error response.<a href="#section-11-6" class="pilcrow">¶</a></p>
 <p id="section-11-7">An introspection server does not return an OAuth error for missing bounds artifacts; their presence is a property of the response.  This document defines no new OAuth error codes.<a href="#section-11-7" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2303,6 +2301,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <dt id="RFC9700">[RFC9700]</dt>
         <dd>
 <span class="refAuthor">Lodderstedt, T.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Labunets, A.</span>, and <span class="refAuthor">D. Fett</span>, <span class="refTitle">"Best Current Practice for OAuth 2.0 Security"</span>, <span class="seriesInfo">BCP 240</span>, <span class="seriesInfo">RFC 9700</span>, <span class="seriesInfo">DOI 10.17487/RFC9700</span>, <time datetime="2025-01" class="refDate">January 2025</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9700">https://www.rfc-editor.org/info/rfc9700</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.ietf-oauth-transaction-tokens">[I-D.ietf-oauth-transaction-tokens]</dt>
+        <dd>
+<span class="refAuthor">Tulshibagwale, A.</span>, <span class="refAuthor">Fletcher, G.</span>, and <span class="refAuthor">P. Kasselman</span>, <span class="refTitle">"Transaction Tokens"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-transaction-tokens-11</span>, <time datetime="2026-07-30" class="refDate">30 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.niyikiza-oauth-attenuating-agent-tokens">[I-D.niyikiza-oauth-attenuating-agent-tokens]</dt>
         <dd>

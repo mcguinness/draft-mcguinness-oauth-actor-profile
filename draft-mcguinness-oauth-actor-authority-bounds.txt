@@ -371,18 +371,18 @@ Table of Contents
    bounds.resource records the effective resource-indicator set applied
    by the issuer: an array of absolute URIs using [RFC8707] semantics.
    It records the set even when the token has no corresponding claim.
+   An issuer that applied no resource indicator omits bounds.resource
+   rather than recording an empty array; where a resource server
+   requires resource (Section 10.2), the omission fails that dimension.
 
    Comparison:
 
-   *  compare URIs by canonical form per [RFC3986] Section 6.2;
-      implementations SHOULD apply case normalization for scheme and
-      host, percent-encoding normalization, and path-segment
-      normalization before comparison;
+   *  compare URIs by simple string comparison ([RFC3986],
+      Section 6.2.1); issuers need to record each resource indicator in
+      the same form at every hop;
 
-   *  resource_a is within resource_b if and only if every canonical URI
-      in resource_a is also in resource_b;
-
-   *  an empty array is the empty set and is within every resource set.
+   *  resource_a is within resource_b if and only if every URI in
+      resource_a is also in resource_b;
 
    URI prefix subsumption (for example, treating https://api.travel-
    provider.example/v1/ as covering https://api.travel-
@@ -688,6 +688,18 @@ Table of Contents
    companions MUST treat it as a failed required check for both
    artifacts' evidence.
 
+   An issuer that supports this profile and accepts a proof carrying
+   target.scope MUST NOT embed that proof in a token whose scope exceeds
+   target.scope.  A recipient that supports this profile and relies on
+   the proof chain MUST verify, independently of receipt coverage, that
+   the current token's effective scope is within
+   actor_proofs[0].target.scope when that member is present, under
+   Section 6.1; a token whose scope exceeds it has diverged from the
+   proof chain, and the target-binding strict mode of
+   [I-D.mcguinness-oauth-actor-proofs] decides whether the recipient
+   rejects the chain.  A recipient that cannot determine the token's
+   effective scope MUST NOT infer scope-level consent from the proof.
+
    This document defines one extension member for the proof target
    object, under the constraining-extension rule of
    [I-D.mcguinness-oauth-actor-proofs]:
@@ -789,16 +801,21 @@ Table of Contents
 
                                   Table 1
 
-   When the failure reflects an authorization-policy decision about the
-   actor or delegation rather than a structural failure, an issuer MAY
-   use actor_unauthorized as defined in the core actor profile
-   [I-D.mcguinness-oauth-actor-profile].
+   The issuer uses actor_unauthorized as defined in the core actor
+   profile [I-D.mcguinness-oauth-actor-profile] when the failure
+   reflects an actor-authorization decision.  An absent required
+   artifact is an input-validation failure: invalid_request on a Token
+   Exchange request, invalid_grant on a JWT bearer grant or refresh
+   request.
 
    When a resource server rejects a request because bounds verification
    fails or required dimensions are unsatisfied, it SHOULD return
    invalid_token per [RFC6750] Section 3.1, and SHOULD include an
    error_description identifying bounds-verification failure so
-   operators can distinguish it from generic token validation.
+   operators can distinguish it from generic token validation.  For a
+   Transaction Token, the resource server rejects it through the
+   deployment's Txn-Token handling, because
+   [I-D.ietf-oauth-transaction-tokens] defines no error response.
 
    An introspection server does not return an OAuth error for missing
    bounds artifacts; their presence is a property of the response.  This
@@ -1167,6 +1184,13 @@ Table of Contents
               "Best Current Practice for OAuth 2.0 Security", BCP 240,
               RFC 9700, DOI 10.17487/RFC9700, January 2025,
               <https://www.rfc-editor.org/info/rfc9700>.
+
+   [I-D.ietf-oauth-transaction-tokens]
+              Tulshibagwale, A., Fletcher, G., and P. Kasselman,
+              "Transaction Tokens", Work in Progress, Internet-Draft,
+              draft-ietf-oauth-transaction-tokens-11, 30 July 2026,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
+              transaction-tokens-11>.
 
    [I-D.niyikiza-oauth-attenuating-agent-tokens]
               Aimable, N., "Attenuating Authorization Tokens for Agentic

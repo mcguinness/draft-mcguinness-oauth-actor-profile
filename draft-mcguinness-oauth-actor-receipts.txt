@@ -203,11 +203,12 @@ Table of Contents
    Actor Receipt:  A signed JWT that attests one visible actor hop in a
       delegated token chain.
 
-   Outer Token:  The access token or Transaction Token (JWT-formatted or
-      opaque) with which a receipt chain is associated.  JWT outputs
-      carry the actor_receipts claim inline; opaque tokens have their
-      receipts returned via introspection (see Section 9.5).
-      Distinguished from the receipt JWTs nested within it.
+   Outer Token:  The access token (JWT-formatted or opaque), JWT
+      assertion grant, or Transaction Token with which a receipt chain
+      is associated.  JWT outputs carry the actor_receipts claim inline;
+      opaque tokens have their receipts returned via introspection (see
+      Section 9.5).  Distinguished from the receipt JWTs nested within
+      it.
 
    Receipt Chain:  The ordered actor_receipts array carried in a token
       or introspection response.
@@ -425,9 +426,10 @@ Table of Contents
       Section 9.
 
       Issuers SHOULD set actor_receipts_complete to true for complete
-      coverage and false for partial coverage.  An absent value provides
-      no completeness attestation; consumers requiring the literal value
-      true treat absence like false.
+      coverage and false for partial coverage; an issuer extending a
+      chain sets true only as step 8 of Section 8.2 allows.  An absent
+      value provides no completeness attestation; consumers requiring
+      the literal value true treat absence like false.
 
    This document does not require every delegated token to carry
    actor_receipts.  A deployment that requires provenance receipts uses
@@ -595,10 +597,24 @@ Table of Contents
       exp of the outer token issued with it, and SHOULD cover the
       expected maximum token lifetime of any token that will carry or
       inherit this receipt.  An under-set exp causes propagation
-      failure: an issuer extending the chain rejects a receipt that
-      expires before its issued token (step 2 of Section 8.2), and a
-      reissuer caps the reissued token's exp or drops the array
-      (Section 8.3).
+      failure: issuers that later retain the receipt apply the following
+      receipt lifetime rule.
+
+      When an issuer retains receipts in a token it issues (extending
+      the chain under Section 8.2, or reissuing or refreshing under
+      Section 8.3) and a retained receipt's exp is earlier than the exp
+      the issuer would set, the issuer:
+
+      1.  MAY lower the issued token's exp to the earliest retained
+          receipt exp;
+
+      2.  otherwise, where local policy permits the issued token to lack
+          the retained receipts, MUST drop the array;
+
+      3.  otherwise MUST fail the request, with invalid_grant on a
+          refresh or JWT bearer grant request ([RFC6749], Section 5.2)
+          or invalid_request on a Token Exchange request ([RFC8693],
+          Section 2.2.2).
 
       Because the originating issuer cannot enumerate every downstream
       issuer that may inherit a receipt, deployments typically
@@ -717,11 +733,11 @@ Table of Contents
        processing rules in Section 9 before relying on it or carrying it
        forward.
 
-   2.  MUST verify that every inbound receipt's exp is no earlier than
-       the issued outer token's exp.  A failure is an inbound validation
-       failure.  Issuers MAY allow a small, deployment-defined clock-
-       skew margin consistent with consumer validation, but MUST NOT
-       accept a larger expiry gap.
+   2.  MUST apply the receipt lifetime rule in Section 7.2 when an
+       inbound receipt's exp is earlier than the issued outer token's
+       exp.  Issuers MAY allow a small, deployment-defined clock-skew
+       margin consistent with consumer validation, but MUST NOT accept a
+       larger expiry gap.
 
    3.  MUST preserve each inbound receipt byte-for-byte unchanged.
 
@@ -741,19 +757,20 @@ Table of Contents
        the inbound prh_alg value MUST reject the chain rather than
        rehash; rehashing would invalidate prior issuers' signatures.
 
-   8.  MUST preserve actor_receipts_complete: true when the inbound
-       attestation is valid and the new receipt covers the added hop.
-       Otherwise, the issuer MUST NOT set it to true and SHOULD set it
-       to false.
+   8.  MUST NOT set actor_receipts_complete to true unless every inbound
+       receipt validated and the issued token's receipt count equals its
+       visible actor-chain depth, and SHOULD set it to false otherwise.
 
    Byte-for-byte preservation (Section 7.3) rules out reserializing, re-
    signing, normalizing, trimming, or otherwise altering a prior
    receipt.
 
    If inbound receipts fail validation, the issuer MUST NOT propagate
-   them.  It MAY continue without actor_receipts only when local policy
-   permits partial coverage; otherwise it MUST fail the request under
-   the error model of the underlying protocol.
+   them.  It MAY continue without them only when local policy permits
+   the issued token to lack them, and it MAY then begin a new chain at
+   its own hop under Section 8.1; the result is partial coverage and
+   MUST NOT carry actor_receipts_complete: true.  Otherwise it MUST fail
+   the request under the error model of the underlying protocol.
 
 8.3.  Reissuance Without a New Actor Hop
 
@@ -776,8 +793,8 @@ Table of Contents
       dropping the array.
 
    *  MUST NOT set the outer token's exp later than the earliest exp
-      among the retained receipts; an issuer that needs a later exp MUST
-      drop the array.
+      among the retained receipts; an issuer that would set a later exp
+      applies the receipt lifetime rule in Section 7.2.
 
    If such an issuer changes the visible outermost actor, it has added a
    new hop and MUST follow Section 8.2.
@@ -803,13 +820,16 @@ Table of Contents
       token.
 
    In either case, origin_jti remains historical and no longer binds the
-   chain to the current instance.  Recipients accept such divergence
-   only under the reissuing-issuer policy in Section 13.4.
+   chain to the current instance.  Recipients accept different-issuer
+   reissuance only under the reissuing-issuer policy in Section 13.4,
+   and same-issuer reissuance only as provenance without instance
+   binding (case 3 of Section 9.1).
 
    Refresh-token reissuance is a special case of reissuance under this
-   section.  Receipt-bearing refresh is interoperable only when local
-   policy defines a bounded maximum delegated-session lifetime for
-   tokens that may inherit the receipts.
+   section.  Receipt-bearing refresh keeps its receipts only while their
+   exp values cover the refreshed tokens, so deployments size receipt
+   exp for a bounded maximum delegated-session lifetime that local
+   policy defines for tokens that may inherit the receipts.
 
    An AS that supports refresh tokens for delegated access tokens:
 
@@ -821,16 +841,16 @@ Table of Contents
       forward unchanged.
 
    *  needs receipt exp values (Section 7.2) that accommodate the
-      bounded maximum delegated-session lifetime.  Otherwise downstream
-      issuers reject inbound chains under Section 8.2 as receipts
-      approach expiry, and refresh loses receipt-based provenance.
+      bounded maximum delegated-session lifetime.  Otherwise, as
+      receipts approach expiry, refresh and downstream extension fall
+      under the receipt lifetime rule in Section 7.2, shortening tokens
+      or losing receipt-based provenance.
 
-   *  When that bounded lifetime would be exceeded, MUST stop emitting
-      actor_receipts; when local policy requires receipts, it MUST
-      instead fail the refresh request under the error model of the
-      underlying protocol.  Refresh adds no actor hop, so receipt
-      provenance resumes only through a new delegated issuance that adds
-      a hop and begins a chain under Section 8.1.
+   *  applies the receipt lifetime rule in Section 7.2 when a retained
+      receipt's exp is earlier than the exp it would set for the
+      refreshed token.  Refresh adds no actor hop, so receipt provenance
+      resumes only through a new delegated issuance that adds a hop and
+      begins a chain under Section 8.1.
 
 8.4.  Partial Coverage and Full Coverage
 
@@ -855,7 +875,7 @@ Table of Contents
    first.  Resource servers can require full coverage through
    actor_receipts_complete_required or local policy.
 
-   When the issuer also filters the visible act chain (see the
+   When an introspection server filters the visible act chain (see the
    chain_complete introspection member defined in the core actor profile
    [I-D.mcguinness-oauth-actor-profile]), actor_receipts covers only the
    visible filtered chain.  In that case actor_receipts_complete
@@ -888,6 +908,13 @@ Table of Contents
    Transaction semantics follow the underlying specification and
    deployment profile.
 
+   [I-D.ietf-oauth-transaction-tokens] defines no jti claim but permits
+   additional claims ([I-D.ietf-oauth-transaction-tokens], Section 9.2),
+   so a TTS MAY include jti in a Transaction Token.  Without it, a
+   Transaction Token's receipt chain is never instance-bound, because
+   case 1 of Section 9.1 requires the outer token's jti; recipients that
+   require instance binding need a TTS that includes jti.
+
 9.  Consumer Processing
 
    An issuer, resource server, or other recipient that relies on
@@ -914,15 +941,22 @@ Table of Contents
         actor-chain depth of the outer token.  If the outer token
         carries actor_receipts_complete: true, verify that the receipt
         count exactly equals the visible actor-chain depth; if it does
-        not, reject the token.
+        not, the check fails.
 
    5.   For each receipt, in array order:
 
         *  parse the string as a compact JWT;
 
+        *  verify that typ equals actor-receipt+jwt;
+
         *  verify that the receipt issuer is within the recipient's pre-
            configured trusted-issuer set before performing any network
            retrieval for that issuer's metadata or keys;
+
+        *  verify that the JOSE header uses an asymmetric digital-
+           signature alg value accepted for that receipt issuer, and
+           reject receipts that use alg: none or a MAC-based symmetric
+           algorithm;
 
         *  resolve the signing key from the receipt issuer's
            authorization server metadata jwks_uri [RFC8414] (where the
@@ -931,13 +965,6 @@ Table of Contents
            configuration;
 
         *  validate the JWT signature;
-
-        *  verify that the JOSE header uses an asymmetric digital-
-           signature alg value accepted for that receipt issuer, and
-           reject receipts that use alg: none or a MAC-based symmetric
-           algorithm;
-
-        *  verify that typ equals actor-receipt+jwt;
 
         *  reject a receipt whose crit header lists an extension header
            the consumer does not understand;
@@ -1046,10 +1073,14 @@ Table of Contents
         rejection conditions but cannot relax any requirement needed for
         conformance to this profile.
 
-   If any required check fails, the recipient MUST reject the receipt
-   chain for the purposes of this profile and MUST apply the underlying
-   protocol's error handling for the stage at which the failure
-   occurred.
+   Step 1 is a prerequisite: an outer token that fails its own
+   validation is rejected under the rules for its token type, not
+   treated as lacking receipts.  If any later required check fails, the
+   recipient MUST reject the receipt chain and treat the token as
+   lacking receipt-based provenance (step 2).  It rejects the token only
+   when local policy or Protected Resource Metadata requires that
+   evidence, using the underlying protocol's error handling for the
+   stage at which the failure occurred.
 
    A recipient that has rejected a receipt chain under this profile MAY,
    under explicit local policy, extract structural information from the
@@ -1073,12 +1104,13 @@ Table of Contents
        informational.
 
    3.  If the issuers match and the outer token has jti, but origin_jti
-       is absent, the recipient MAY accept provenance under local
-       policy.  It MUST NOT treat the chain as instance-bound.
+       is absent or differs from that jti, the recipient MAY accept
+       provenance under local policy.  It MUST NOT treat the chain as
+       instance-bound.
 
-   4.  Otherwise, the recipient MUST reject the chain unless local
-       policy trusts the outer issuer to reissue chains led by this
-       receipt issuer (Section 13.4.1).
+   4.  Otherwise (the issuers differ), the recipient MUST reject the
+       chain unless local policy trusts the outer issuer to reissue
+       chains led by this receipt issuer (Section 13.4.1).
 
    A recipient that requires instance binding MUST reject the chain
    unless case 1 applies.
@@ -1334,18 +1366,25 @@ Table of Contents
    issuer), it returns an error response per [RFC6749], Section 5.2:
    invalid_request for a Token Exchange request, as [RFC8693],
    Section 2.2.2 requires, or invalid_grant for a JWT bearer grant
-   request ([RFC7523], Section 3.1).
+   request ([RFC7523], Section 3.1).  An absent receipt array that local
+   policy requires, whether missing from the inbound token or from
+   retained refresh state, is an input-validation failure:
+   invalid_request for a Token Exchange request, or invalid_grant for a
+   JWT bearer grant or refresh request.
 
    When the failure reflects an actor-authorization decision rather than
-   a structural validation failure, an issuer MAY use actor_unauthorized
-   as defined in the core actor profile
-   [I-D.mcguinness-oauth-actor-profile] where applicable.
+   a structural validation failure, the issuer uses actor_unauthorized,
+   as the core actor profile [I-D.mcguinness-oauth-actor-profile]
+   requires.
 
 11.2.  Resource Server Errors
 
    When a resource server rejects a request because actor_receipts
    validation fails under Section 9, it SHOULD return invalid_token per
-   the bearer-token error model in [RFC6750] Section 3.1.
+   the bearer-token error model in [RFC6750] Section 3.1.  For a
+   Transaction Token, the recipient instead rejects the request through
+   the deployment's Transaction Token handling, because
+   [I-D.ietf-oauth-transaction-tokens] defines no error response.
 
    When the failure is specifically that required receipts are absent or
    coverage is incomplete (per actor_receipts_required or
@@ -1534,12 +1573,12 @@ Table of Contents
 13.1.3.  Trust Model Summary
 
    Trust is per-issuer and per-deployment, and not transitive across the
-   chain.  A receipt chain breaks at the first inner receipt whose
-   issuer is not trusted, even when the outer token's issuer and earlier
-   receipts are trusted.  Companion profiles (Section 12) can extend the
-   addressed adversary set; for example, an actor-signed-proofs
-   companion can mitigate the compromised-current-outer-token-issuer
-   adversary.
+   chain.  A receipt chain fails validation if any receipt's issuer is
+   not trusted, even when the outer token's issuer and the other
+   receipts are trusted (Section 13.3).  Companion profiles (Section 12)
+   can extend the addressed adversary set; for example, an actor-signed-
+   proofs companion can mitigate the compromised-current-outer-token-
+   issuer adversary.
 
 13.2.  Current Presenter Validation
 
@@ -1671,10 +1710,11 @@ Table of Contents
    other trusted issuers.
 
    Divergence in issuer or token identifier removes current-instance
-   binding.  Section 9.1 rejects such chains unless local policy
-   explicitly trusts the outer issuer to reissue them.  This profile
-   cannot distinguish legitimate reissuance from malicious rewrapping in
-   band.
+   binding.  Section 9.1 rejects issuer divergence unless local policy
+   explicitly trusts the outer issuer to reissue such chains; a same-
+   issuer token-identifier divergence leaves provenance without instance
+   binding.  This profile cannot distinguish legitimate reissuance from
+   malicious rewrapping in band.
 
    Recipients accepting reissuance configure that trust locally or
    through an out-of-band framework, and unexpected divergence warrants
@@ -1693,14 +1733,14 @@ Table of Contents
 13.4.1.  Strict-Mode Validation
 
    Without configured trusted reissuing issuers, recipients use strict
-   mode: issuer or origin_jti divergence causes rejection.  A missing
-   leading origin_jti is not divergence; case 3 of Section 9.1 governs
-   it.
+   mode: issuer divergence causes rejection.  A missing or differing
+   leading origin_jti under a matching issuer does not; case 3 of
+   Section 9.1 governs it.
 
    Strict mode is the recommended default.  Deployments that need to
-   accept reissued tokens, such as refreshed, re-emitted, or translated
-   tokens, need to configure the trusted reissuing issuers explicitly,
-   through local policy or an out-of-band trust framework.
+   accept tokens reissued by a different issuer, such as re-emitted or
+   translated tokens, need to configure the trusted reissuing issuers
+   explicitly, through local policy or an out-of-band trust framework.
 
 13.5.  Hash Algorithm Agility
 
@@ -2529,10 +2569,10 @@ A.4.  Example: Reissuance Without a New Actor Hop
       legitimate.
 
    Under Section 9.1, origin_jti is historical here because the outer
-   issuer and token identifier have changed.  The same rule applies when
-   an AS refreshes its own token with a new jti.  In either case,
-   acceptance requires explicit trust in the reissuing issuer
-   (Section 13.4).
+   issuer and token identifier have changed, and acceptance requires
+   explicit trust in the reissuing issuer (Section 13.4).  When an AS
+   refreshes its own token with a new jti, case 3 applies instead: local
+   policy can accept the chain as provenance, but not as instance-bound.
 
 Document History
 
@@ -2547,7 +2587,12 @@ Document History
       mode, and reissuance into one section.
 
    *  Defined reissuance divergence as a mismatch between receipt[0] and
-      the outer token's iss or jti.
+      the outer token's iss or jti.  Strict mode now rejects only issuer
+      divergence; a same-issuer chain whose leading origin_jti is absent
+      or differs from the outer token's jti, as after refresh, is
+      accepted under local policy without instance binding.  -00
+      rejected a differing origin_jti unless the recipient trusted the
+      reissuing issuer.
 
    *  Clarified that the claim-pair naming convention and its metadata
       apply to companion profiles that define parallel per-hop artifact
@@ -2561,14 +2606,18 @@ Document History
       the clock-skew leeway of [RFC7519], Section 4.1.4; -00 only
       recommended rejection and let local policy allow a margin.
 
-   *  A reissuer that carries receipts forward cannot set the outer
-      token's exp later than the earliest receipt exp; a reissuer that
-      needs a later exp drops the array.
+   *  One receipt lifetime rule now covers chain extension, reissuance,
+      and refresh: when a retained receipt's exp is earlier than the exp
+      the issuer would set, the issuer lowers the issued token's exp,
+      drops the array where local policy permits, or fails the request
+      (invalid_grant on refresh or a JWT bearer grant, invalid_request
+      on Token Exchange).  -00 treated an extension exp gap as an
+      inbound validation failure and let a reissuer set any exp.
 
-   *  Refresh beyond the bounded delegated-session lifetime now stops
-      emitting receipts, or fails when local policy requires them.
-      Refresh no longer starts a new receipt chain; that requires a new
-      delegated issuance that adds a hop.
+   *  Refresh no longer starts a new receipt chain; that requires a new
+      delegated issuance that adds a hop.  The bounded delegated-session
+      lifetime is now guidance for sizing receipt exp rather than a
+      separate trigger.
 
    *  Removed BCP 14 keywords from storage, trust-setup, and rollout
       guidance.
@@ -2593,7 +2642,11 @@ Document History
 
    *  Receipt validation failures on Token Exchange requests now use
       invalid_request, as [RFC8693], Section 2.2.2 requires; JWT bearer
-      grant requests use invalid_grant ([RFC7523], Section 3.1).
+      grant requests use invalid_grant ([RFC7523], Section 3.1).  An
+      absent required receipt array is an input-validation failure with
+      the same codes, or invalid_grant on refresh.  Actor-authorization
+      failures use actor_unauthorized, as the core profile requires; -00
+      made it optional.
 
    *  Named the IETF, rather than the IESG, as change controller for the
       claim, metadata, and introspection registrations.
@@ -2608,6 +2661,35 @@ Document History
    *  Clarified that receipt actor-object restrictions apply separately
       from the token's actor chain, and that historical binding comes
       from the issued token's top-level cnf.
+
+   *  A failed receipt chain now removes only receipt-based provenance:
+      an outer token that fails its own validation is still rejected,
+      and otherwise the recipient rejects the token only when local
+      policy or Protected Resource Metadata requires receipts, and a
+      count mismatch under actor_receipts_complete: true fails that
+      check instead of rejecting the token.  An issuer that discards
+      failed inbound receipts can begin a new, partial chain at its own
+      hop.  -00 applied the underlying protocol's error handling to
+      every failure.
+
+   *  An issuer extending a chain can set actor_receipts_complete: true
+      whenever every inbound receipt validated and the receipt count
+      equals the visible actor-chain depth.  -00 required an inbound
+      true attestation and required carrying it forward.
+
+   *  A TTS may include jti in a Transaction Token; without it, the
+      token's receipt chain is never instance-bound.  A resource server
+      rejects a Transaction Token through the deployment's Transaction
+      Token handling rather than the [RFC6750] error model.
+
+   *  The trust model summary now states that a chain with any untrusted
+      receipt issuer fails validation, matching Section 13.3.
+
+   *  Consumer step 5 checks typ and alg before resolving keys and
+      validating the signature.
+
+   *  Outer tokens include JWT assertion grants, and filtering of the
+      visible act chain is attributed to the introspection server.
 
    -00
 

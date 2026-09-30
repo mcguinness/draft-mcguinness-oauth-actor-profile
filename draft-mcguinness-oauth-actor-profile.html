@@ -1857,7 +1857,7 @@ act-object = {
             <p id="section-3.5-3.1.1">A <strong>hop</strong> is a single <code>act</code> object in a delegation chain.  The number of hops in a chain equals the chain's delegation depth.<a href="#section-3.5-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-3.5-3.2">
-            <p id="section-3.5-3.2.1">A <strong>visible hop</strong> is a hop that appears in the token's <code>act</code> chain as received by a recipient, after any filtering by an introspection server or upstream issuer.<a href="#section-3.5-3.2.1" class="pilcrow">¶</a></p>
+            <p id="section-3.5-3.2.1">A <strong>visible hop</strong> is a hop that appears in the token's <code>act</code> chain as received by a recipient, after any filtering by an introspection server.<a href="#section-3.5-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-3.5-3.3">
             <p id="section-3.5-3.3.1">A <strong>single-hop actor object</strong> is an <code>act</code> object with no nested <code>act</code>; it represents delegation depth 1.<a href="#section-3.5-3.3.1" class="pilcrow">¶</a></p>
@@ -2112,7 +2112,7 @@ PreserveChain(inbound_chain):
           <h4 id="name-token-exchange-continuation">
 <a href="#section-3.7.2" class="section-number selfRef">3.7.2. </a><a href="#name-token-exchange-continuation" class="section-name selfRef">Token Exchange Continuation</a>
           </h4>
-<p id="section-3.7.2-1">Presenter continuation requires a PoP-capable <code>subject_token</code> with top-level <code>cnf</code>.  The requester <span class="bcp14">MUST</span> prove possession of that binding using the mechanism applicable to the token type and deployment.  This profile does not define continuation without that binding.<a href="#section-3.7.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.7.2-1">Presenter continuation requires either a PoP-capable <code>subject_token</code> with top-level <code>cnf</code> or a bearer <code>subject_token</code> presented by an authenticated requester that corresponds, under Identifier Reconciliation (<span><a href="#conventions" class="internal xref">Conventions and Definitions</a> (<a href="#conventions" class="auto internal xref">Section 2</a>)</span>), to the token's outermost (<code>act.iss</code>, <code>act.sub</code>) pair, or to its <code>sub</code> when the token carries no <code>act</code>.  For a PoP-capable <code>subject_token</code>, the requester <span class="bcp14">MUST</span> prove possession of its binding using the mechanism applicable to the token type and deployment.  A bearer continuation yields a bearer output.<a href="#section-3.7.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="token-exchange-rebind">
@@ -2198,7 +2198,7 @@ PreserveChain(inbound_chain):
 {
   "iss": "https://as.enterprise.example",
   "sub": "https://idp.enterprise.example/users/alice",
-  "aud": "https://as.travel-provider.example/token",
+  "aud": "https://as.travel-provider.example",
   "jti": "a1b2c3d4-...",
   "exp": 1711820400,
   "iat": 1711816800,
@@ -2548,15 +2548,16 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
 <p id="section-6.1-5">Token Exchange under this profile runs in exactly one of two presenter-transition modes:<a href="#section-6.1-5" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-6.1-6.1">
-            <p id="section-6.1-6.1.1"><strong>Presenter continuation</strong>: no new presenter is established, either by a validated <code>actor_token</code> or on the <span><a href="#may-act" class="internal xref"><code>may_act</code></a> (<a href="#may-act" class="auto internal xref">Section 6.4</a>)</span> path without <code>actor_token</code>.  The issued token keeps the presenter of a PoP-capable token-state <code>subject_token</code>.<a href="#section-6.1-6.1.1" class="pilcrow">¶</a></p>
+            <p id="section-6.1-6.1.1"><strong>Presenter continuation</strong>: no new presenter is established, either by a validated <code>actor_token</code> or on the <span><a href="#may-act" class="internal xref"><code>may_act</code></a> (<a href="#may-act" class="auto internal xref">Section 6.4</a>)</span> path without <code>actor_token</code>.  The issued token keeps the presenter of a token-state <code>subject_token</code>: the holder of its top-level <code>cnf</code> binding or, for a bearer <code>subject_token</code>, its authenticated outermost actor or subject, as <span><a href="#delegated-pop-validation" class="internal xref">Sender Constraint and Proof-of-Possession Validation</a> (<a href="#delegated-pop-validation" class="auto internal xref">Section 3.7</a>)</span> requires.<a href="#section-6.1-6.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.1-6.2">
             <p id="section-6.1-6.2.1"><strong>Presenter rebind</strong>: a validated <code>actor_token</code>, or the authenticated client on the <span><a href="#may-act" class="internal xref"><code>may_act</code></a> (<a href="#may-act" class="auto internal xref">Section 6.4</a>)</span> path without <code>actor_token</code>, establishes a new presenter for the issued token.  When the output token is sender-constrained, its top-level <code>cnf</code> is bound to that new presenter.<a href="#section-6.1-6.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-6.1-7">Outside the <span><a href="#may-act" class="internal xref"><code>may_act</code></a> (<a href="#may-act" class="auto internal xref">Section 6.4</a>)</span> path without <code>actor_token</code>, presenter rebind requires a <strong>direct presenter credential</strong>: an <code>actor_token</code> whose top-level <code>sub</code> names the new presenter.  The request proves possession as required by that credential profile whether or not the output is sender-constrained, and proves possession for the new presenter binding when establishing a sender-constrained output.  Other means of installing a presenter are deployment-specific.<a href="#section-6.1-7" class="pilcrow">¶</a></p>
-<p id="section-6.1-8">Bearer and identity-only inputs cannot support continuation.  To upgrade them to sender-constrained tokens, present the existing credential as <code>subject_token</code> and a direct presenter credential as <code>actor_token</code>.  To preserve a delegation chain while changing presenters, deployments <span class="bcp14">SHOULD</span> likewise present the delegated credential as <code>subject_token</code> and a separate direct credential as <code>actor_token</code>.<a href="#section-6.1-8" class="pilcrow">¶</a></p>
-<p id="section-6.1-9">JWT assertion grants are not suitable for use as <code>actor_token</code> in Token Exchange.  Their <code>sub</code> identifies the subject of delegation rather than the acting party.  Requests that need to establish an agent, workload, or client as the actor <span class="bcp14">SHOULD</span> use one of the actor credential types defined in this section instead.<a href="#section-6.1-9" class="pilcrow">¶</a></p>
+<p id="section-6.1-7">A request that satisfies neither mode <span class="bcp14">MUST</span> be rejected with <code>invalid_request</code>.<a href="#section-6.1-7" class="pilcrow">¶</a></p>
+<p id="section-6.1-8">Outside the <span><a href="#may-act" class="internal xref"><code>may_act</code></a> (<a href="#may-act" class="auto internal xref">Section 6.4</a>)</span> path without <code>actor_token</code>, presenter rebind requires a <strong>direct presenter credential</strong>: an <code>actor_token</code> whose top-level <code>sub</code> names the new presenter.  The request proves possession as required by that credential profile whether or not the output is sender-constrained, and proves possession for the new presenter binding when establishing a sender-constrained output.  Other means of installing a presenter are deployment-specific.<a href="#section-6.1-8" class="pilcrow">¶</a></p>
+<p id="section-6.1-9">Identity-only inputs cannot support continuation, and bearer inputs support only bearer continuation.  To upgrade them to sender-constrained tokens, present the existing credential as <code>subject_token</code> and a direct presenter credential as <code>actor_token</code>.  To preserve a delegation chain while changing presenters, deployments <span class="bcp14">SHOULD</span> likewise present the delegated credential as <code>subject_token</code> and a separate direct credential as <code>actor_token</code>.<a href="#section-6.1-9" class="pilcrow">¶</a></p>
+<p id="section-6.1-10">JWT assertion grants are not suitable for use as <code>actor_token</code> in Token Exchange.  Their <code>sub</code> identifies the subject of delegation rather than the acting party.  Requests that need to establish an agent, workload, or client as the actor <span class="bcp14">SHOULD</span> use one of the actor credential types defined in this section instead.<a href="#section-6.1-10" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="subject-tokens">
@@ -2982,7 +2983,7 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
               <p id="section-6.5.1-3.1.1">Construct the chain per <span><a href="#jwt-access-token-propagation" class="internal xref">JWT Access Token Output</a> (<a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.5.2</a>)</span>.<a href="#section-6.5.1-3.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-6.5.1-3.2">
-              <p id="section-6.5.1-3.2.1">Set <code>aud</code> to the downstream token endpoint, from <code>resource</code> or deployment configuration.<a href="#section-6.5.1-3.2.1" class="pilcrow">¶</a></p>
+              <p id="section-6.5.1-3.2.1">Set <code>aud</code> from the request or deployment configuration: for an ID-JAG, to the Resource Authorization Server's issuer identifier (<span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">Section 3.1</a></span>); otherwise, to a value identifying the downstream authorization server that <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3" class="relref">Section 3</a></span> permits, such as its token endpoint URL.<a href="#section-6.5.1-3.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-6.5.1-3.3">
               <p id="section-6.5.1-3.3.1">Sign the assertion, per <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3" class="relref">Section 3</a></span>.<a href="#section-6.5.1-3.3.1" class="pilcrow">¶</a></p>
@@ -3085,7 +3086,7 @@ If the AS also restricts scope using the (<code>sub</code>, <code>act.sub</code>
 <p id="section-7.1.1-3">Claim semantics under this profile:<a href="#section-7.1.1-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-7.1.1-4.1">
-              <p id="section-7.1.1-4.1.1"><code>sub</code>: identifies the original initiator.  When a Transaction Token is exchanged for a replacement, the new token continues to refer to the same underlying subject, and the issuer can change <code>sub</code> only to re-express that subject in another identifier namespace under a trusted local mapping, as step 2 of <span><a href="#jwt-access-token-propagation" class="internal xref">JWT Access Token Output</a> (<a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.5.2</a>)</span> requires.<a href="#section-7.1.1-4.1.1" class="pilcrow">¶</a></p>
+              <p id="section-7.1.1-4.1.1"><code>sub</code>: identifies the original initiator.  A replacement Transaction Token keeps <code>sub</code> unchanged (<span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11#section-13.15" class="relref">Section 13.15</a></span>).  When a TTS issues a Transaction Token from a JWT access token or JWT assertion grant, it can change <code>sub</code> only to re-express that subject in another identifier namespace under a trusted local mapping, as step 2 of <span><a href="#jwt-access-token-propagation" class="internal xref">JWT Access Token Output</a> (<a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.5.2</a>)</span> requires.<a href="#section-7.1.1-4.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-7.1.1-4.2">
               <p id="section-7.1.1-4.2.1"><code>act.sub</code> (outermost): identifies the immediate acting party.  When a TTS sets both <code>req_wl</code> and the new outermost <code>act.sub</code> in a single token issuance (presenter-rebind mode), it <span class="bcp14">MUST</span> ensure they identify the same entity under local policy.  When a TTS preserves <code>req_wl</code> from an inbound token, the TTS <span class="bcp14">SHOULD</span> perform identifier reconciliation between <code>req_wl</code> and the outermost <code>act.sub</code>.  A recipient that relies on both to identify the current presenter requires them to identify the same entity, so it rejects the token when it cannot reconcile them (<span><a href="#conventions" class="internal xref">Conventions and Definitions</a> (<a href="#conventions" class="auto internal xref">Section 2</a>)</span>).<a href="#section-7.1.1-4.2.1" class="pilcrow">¶</a></p>
@@ -3142,7 +3143,7 @@ If the AS also restricts scope using the (<code>sub</code>, <code>act.sub</code>
 <p id="section-7.2-1">The TTS applies the same two presenter-transition modes defined in <span><a href="#token-exchange-presenter-model" class="internal xref">Presenter Transition Model</a> (<a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>)</span>, but only for token-state <code>subject_token</code> inputs:<a href="#section-7.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-7.2-2.1">
-            <p id="section-7.2-2.1.1"><strong>Presenter continuation</strong>: the authenticated requester is the same current presenter as the inbound token.  This mode is available only when the inbound token carries a top-level presenter binding and the TTS validates proof for that binding under <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> and the applicable deployment profile.  When the inbound token carries <code>act</code>, the authenticated requester corresponds to the outermost (<code>act.iss</code>, <code>act.sub</code>) pair, as step 5 of <span><a href="#transaction-token-output-rules" class="internal xref">Transaction Token Output Rules</a> (<a href="#transaction-token-output-rules" class="auto internal xref">Section 7.4</a>)</span> requires.  In this mode the TTS preserves the inbound <code>act</code> chain unchanged and <span class="bcp14">MUST NOT</span> add a new outermost <code>act</code>.<a href="#section-7.2-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-7.2-2.1.1"><strong>Presenter continuation</strong>: the authenticated requester is the same current presenter as the inbound token.  When the inbound token carries a top-level presenter binding, the TTS validates proof for that binding under <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> and the applicable deployment profile; a bearer inbound token yields a bearer Transaction Token, as in <span><a href="#delegated-pop-validation" class="internal xref">Sender Constraint and Proof-of-Possession Validation</a> (<a href="#delegated-pop-validation" class="auto internal xref">Section 3.7</a>)</span>.  When the inbound token carries <code>act</code>, the authenticated requester corresponds to the outermost (<code>act.iss</code>, <code>act.sub</code>) pair, as step 5 of <span><a href="#transaction-token-output-rules" class="internal xref">Transaction Token Output Rules</a> (<a href="#transaction-token-output-rules" class="auto internal xref">Section 7.4</a>)</span> requires.  In this mode the TTS preserves the inbound <code>act</code> chain unchanged and <span class="bcp14">MUST NOT</span> add a new outermost <code>act</code>.<a href="#section-7.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-7.2-2.2">
             <p id="section-7.2-2.2.1"><strong>Presenter rebind</strong>: a validated <code>actor_token</code> direct presenter credential establishes a different current presenter for the issued Transaction Token.  In this mode the TTS creates a new outermost <code>act</code> for that presenter and nests any inbound <code>act</code> chain beneath it.<a href="#section-7.2-2.2.1" class="pilcrow">¶</a></p>
@@ -3170,7 +3171,7 @@ If the AS also restricts scope using the (<code>sub</code>, <code>act.sub</code>
           <tbody>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">JWT assertion grant</td>
-              <td class="text-left" rowspan="1" colspan="1">Validation, presenter continuity, and scope ceiling</td>
+              <td class="text-left" rowspan="1" colspan="1">Validation and presenter continuity</td>
               <td class="text-left" rowspan="1" colspan="1">
                 <span><a href="#jwt-assertion-grant-as-subject-token" class="internal xref">JWT Assertion Grant as subject_token</a> (<a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 6.2.1.1</a>)</span>
 </td>
@@ -3191,7 +3192,7 @@ If the AS also restricts scope using the (<code>sub</code>, <code>act.sub</code>
             </tr>
           </tbody>
         </table>
-<p id="section-7.3-4">The resulting subject, classification, chain, and binding state feeds <span><a href="#transaction-token-output-rules" class="internal xref">Transaction Token Output Rules</a> (<a href="#transaction-token-output-rules" class="auto internal xref">Section 7.4</a>)</span> instead of JWT access token issuance.  For a JWT assertion grant, this state also includes the effective scope ceiling; for an inbound Transaction Token, it also includes <code>req_wl</code>.<a href="#section-7.3-4" class="pilcrow">¶</a></p>
+<p id="section-7.3-4">The resulting subject, classification, chain, and binding state feeds <span><a href="#transaction-token-output-rules" class="internal xref">Transaction Token Output Rules</a> (<a href="#transaction-token-output-rules" class="auto internal xref">Section 7.4</a>)</span> instead of JWT access token issuance.  For an inbound Transaction Token, this state also includes <code>req_wl</code>.  Transaction Token <code>scope</code> can use a different vocabulary from the inbound token (<span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11#section-9.2" class="relref">Section 9.2</a></span>), so the literal scope-subset rules in the referenced sections do not apply.  The TTS still ensures that the requested scope does not exceed the authority of the <code>subject_token</code> (<span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11#section-13.6" class="relref">Section 13.6</a></span>) and rejects the request when that authority cannot be determined (<span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11#section-13.14" class="relref">Section 13.14</a></span>), and a replacement Transaction Token cannot expand the scope of permitted actions (<span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11#section-13.15" class="relref">Section 13.15</a></span>).<a href="#section-7.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="transaction-token-output-rules">
@@ -3206,7 +3207,7 @@ If the AS also restricts scope using the (<code>sub</code>, <code>act.sub</code>
             <p id="section-7.4-3.1.1">The TTS preserves <code>sub</code> from the inbound token as required by step 2 of <span><a href="#jwt-access-token-propagation" class="internal xref">JWT Access Token Output</a> (<a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.5.2</a>)</span>.<a href="#section-7.4-3.1.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-7.4-3.1.2.1">
-                <p id="section-7.4-3.1.2.1.1">The TTS can re-express <code>sub</code> in a different identifier namespace only when a trusted local mapping establishes that both identifiers refer to the same underlying subject (for example, when crossing trust-domain boundaries in a federation scenario).<a href="#section-7.4-3.1.2.1.1" class="pilcrow">¶</a></p>
+                <p id="section-7.4-3.1.2.1.1">For an inbound JWT access token or JWT assertion grant, the TTS can re-express <code>sub</code> in a different identifier namespace only when a trusted local mapping establishes that both identifiers refer to the same underlying subject (for example, when crossing trust-domain boundaries in a federation scenario).  For an inbound Transaction Token, the replacement keeps <code>sub</code> unchanged (<span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11#section-13.15" class="relref">Section 13.15</a></span>).<a href="#section-7.4-3.1.2.1.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 <ul class="normal ulEmpty">
@@ -3289,7 +3290,7 @@ For a new outermost actor, the TTS sets <code>act.sub</code> to the new presente
             <p id="section-8.1-2.1.1"><strong>Subject principal</strong> (<code>sub</code>): the party whose authorization is being exercised.  This principal typically has a relationship with the resource (e.g., an account, a role, a permission).<a href="#section-8.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.1-2.2">
-            <p id="section-8.1-2.2.1"><strong>Actor principal</strong> (<code>act.sub</code>): the party that is making the immediate request.  This principal may be in a different organizational domain and trust level from the subject.<a href="#section-8.1-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-8.1-2.2.1"><strong>Actor principal</strong> (<code>act.sub</code>): the party that is making the immediate request.  This principal may be in a different organizational domain and trust level from the subject.  Wherever this document pairs <code>sub</code> with the outermost <code>act.sub</code> for authorization policy, the outermost actor is identified by its (<code>act.iss</code>, <code>act.sub</code>) pair (<span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span>).<a href="#section-8.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-8.1-3">For Transaction Tokens, the primary policy pair remains (<code>sub</code>, <code>act.sub</code>).  The <code>req_wl</code> claim provides workload context from the TTS and is not a replacement for <code>act.sub</code>.  Nested <code>act</code> objects provide prior-actor context for audit or other deployment-specific processing; this document does not standardize their authorization use.<a href="#section-8.1-3" class="pilcrow">¶</a></p>
@@ -3347,7 +3348,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
             </ul>
 </li>
           <li id="section-8.2-3.2">
-            <p id="section-8.2-3.2.1">If the token carries a top-level <code>cnf.jkt</code>, validate the accompanying DPoP proof per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>], <a href="https://rfc-editor.org/rfc/rfc9449#section-7" class="relref">Section 7</a></span>.  If a DPoP proof is present but the token does not carry <code>cnf.jkt</code>, the RS <span class="bcp14">MUST</span> treat the token as a bearer token; the RS <span class="bcp14">MUST NOT</span> infer a confirmation binding from the DPoP proof key.<a href="#section-8.2-3.2.1" class="pilcrow">¶</a></p>
+            <p id="section-8.2-3.2.1">If the token carries a top-level <code>cnf.jkt</code>, validate the accompanying DPoP proof per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>], <a href="https://rfc-editor.org/rfc/rfc9449#section-7" class="relref">Section 7</a></span>.  If the token carries a top-level <code>cnf.x5t#S256</code>, validate the client certificate of the mutual-TLS connection against it per <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>], <a href="https://rfc-editor.org/rfc/rfc8705#section-3" class="relref">Section 3</a></span>.  If a DPoP proof is present but the token carries neither <code>cnf.jkt</code> nor <code>cnf.x5t#S256</code>, the RS <span class="bcp14">MUST</span> treat the token as a bearer token; the RS <span class="bcp14">MUST NOT</span> infer a confirmation binding from the DPoP proof key.<a href="#section-8.2-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.2-3.3">
             <p id="section-8.2-3.3.1">Extract the <code>sub</code> and the outermost <code>act.sub</code> as the two principals relevant for authorization policy.<a href="#section-8.2-3.3.1" class="pilcrow">¶</a></p>
@@ -3371,10 +3372,13 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
                 <p id="section-8.2-3.7.2.2.1">If DPoP proof validation for <code>cnf.jkt</code> fails: HTTP 401 per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>], <a href="https://rfc-editor.org/rfc/rfc9449#section-7" class="relref">Section 7</a></span>.<a href="#section-8.2-3.7.2.2.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-8.2-3.7.2.3">
-                <p id="section-8.2-3.7.2.3.1">If actor authorization required by local policy fails for a structurally valid token: HTTP 403 with <code>error="actor_unauthorized"</code>, registered in <span><a href="#iana-error-codes" class="internal xref">OAuth Error Registry</a> (<a href="#iana-error-codes" class="auto internal xref">Section 16.4</a>)</span>.  The RS <span class="bcp14">MUST NOT</span> use <code>insufficient_scope</code> for this failure, because requesting broader scope does not resolve an actor-policy denial.<a href="#section-8.2-3.7.2.3.1" class="pilcrow">¶</a></p>
+                <p id="section-8.2-3.7.2.3.1">If the client certificate does not match <code>cnf.x5t#S256</code>: HTTP 401 with <code>error="invalid_token"</code>, per <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>], <a href="https://rfc-editor.org/rfc/rfc8705#section-3" class="relref">Section 3</a></span>.<a href="#section-8.2-3.7.2.3.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-8.2-3.7.2.4">
-                <p id="section-8.2-3.7.2.4.1">The RS <span class="bcp14">MUST NOT</span> expose actor-specific rejection details outside the trust domain.<a href="#section-8.2-3.7.2.4.1" class="pilcrow">¶</a></p>
+                <p id="section-8.2-3.7.2.4.1">If actor authorization required by local policy fails for a structurally valid token: HTTP 403 with <code>error="actor_unauthorized"</code>, registered in <span><a href="#iana-error-codes" class="internal xref">OAuth Error Registry</a> (<a href="#iana-error-codes" class="auto internal xref">Section 16.4</a>)</span>.  The RS <span class="bcp14">MUST NOT</span> use <code>insufficient_scope</code> for this failure, because requesting broader scope does not resolve an actor-policy denial.<a href="#section-8.2-3.7.2.4.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-8.2-3.7.2.5">
+                <p id="section-8.2-3.7.2.5.1">The RS <span class="bcp14">MUST NOT</span> expose actor-specific rejection details outside the trust domain.<a href="#section-8.2-3.7.2.5.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 </li>
@@ -3416,7 +3420,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
             <p id="section-8.3-3.5.1">Optionally traverse inner <code>act</code> objects to audit the full delegation chain.  If the RS relies on inner <code>act</code> objects for audit, policy refinement, or trust decisions, it <span class="bcp14">MUST</span> do so only under the prior-actor context rules in <span><a href="#carry-prior-actor-context" class="internal xref">Carry Prior-Actor Context</a> (<a href="#carry-prior-actor-context" class="auto internal xref">Section 3.6.2.4</a>)</span>.<a href="#section-8.3-3.5.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.3-3.6">
-            <p id="section-8.3-3.6.1">If any of the above steps fail, the RS <span class="bcp14">MUST</span> reject the request according to the Transaction Token mechanism in use and local deployment profile.  Validation or presenter-proof failures are token-validation failures; actor-policy failures required by local policy are authorization failures.  The RS <span class="bcp14">MUST NOT</span> include actor-specific rejection details in error responses exposed outside the trust domain.<a href="#section-8.3-3.6.1" class="pilcrow">¶</a></p>
+            <p id="section-8.3-3.6.1">If any of the above steps fail, the RS <span class="bcp14">MUST</span> reject the request through the deployment's Transaction Token handling, because <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> defines no error response.  Validation or presenter-proof failures are token-validation failures; actor-policy failures required by local policy are authorization failures.  The RS <span class="bcp14">MUST NOT</span> include actor-specific rejection details in error responses exposed outside the trust domain.<a href="#section-8.3-3.6.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -3464,7 +3468,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <p id="section-8.4-7">The RS <span class="bcp14">MUST NOT</span> treat a partial chain as complete delegation history.  Companion profiles with data aligned to <code>act</code> define their filtering behavior as required by <span><a href="#companion-profile-extensibility" class="internal xref">Companion Profiles and Extension Points</a> (<a href="#companion-profile-extensibility" class="auto internal xref">Section 11</a>)</span>.<a href="#section-8.4-7" class="pilcrow">¶</a></p>
 <p id="section-8.4-8">When an AS supports delegated opaque access tokens through introspection, it <span class="bcp14">MUST</span> return the fields listed above for active delegated tokens.  Support for this compatibility path <span class="bcp14">MUST NOT</span> be inferred solely from <code>actor_profile_required</code> metadata; see <span><a href="#profile-scope" class="internal xref">Profile Scope</a> (<a href="#profile-scope" class="auto internal xref">Section 3.3</a>)</span>.<a href="#section-8.4-8" class="pilcrow">¶</a></p>
 <p id="section-8.4-9">An introspecting RS <span class="bcp14">MUST</span> apply the same delegated-token processing as for equivalent locally validated JWT claims, including actor authorization when required by local policy.<a href="#section-8.4-9" class="pilcrow">¶</a></p>
-<p id="section-8.4-10">If policy, protected resource metadata, or token context indicates delegation or requires actor-profile conformance, a missing <code>act</code> is an inconsistency and the RS <span class="bcp14">MUST</span> reject the token.  Otherwise, the RS <span class="bcp14">MAY</span> treat an active response without <code>act</code> as non-delegated.<a href="#section-8.4-10" class="pilcrow">¶</a></p>
+<p id="section-8.4-10">If policy or token context indicates delegation, a missing <code>act</code> is an inconsistency and the RS <span class="bcp14">MUST</span> reject the token; <code>actor_profile_required</code> alone does not indicate delegation.  Otherwise, the RS <span class="bcp14">MAY</span> treat an active response without <code>act</code> as non-delegated.<a href="#section-8.4-10" class="pilcrow">¶</a></p>
 <p id="section-8.4-11">Introspection endpoints for delegated tokens <span class="bcp14">SHOULD</span> be advertised via the <code>introspection_endpoint</code> parameter in AS metadata (<span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>).  When revocation is integrated, the introspection response for a revoked delegated token returns <code>"active": false</code> per <span>[<a href="#RFC7662" class="cite xref">RFC7662</a>], <a href="https://rfc-editor.org/rfc/rfc7662#section-2.2" class="relref">Section 2.2</a></span> and <span class="bcp14">MUST NOT</span> include <code>act</code> or <code>sub_profile</code> claims.<a href="#section-8.4-11" class="pilcrow">¶</a></p>
 <p id="section-8.4-12">Resource servers that cache introspection responses for delegated tokens should use short cache lifetimes consistent with revocation requirements.  An RS using inner actors for security decisions <span class="bcp14">SHOULD NOT</span> cache a response with <code>"chain_complete": false</code>.<a href="#section-8.4-12" class="pilcrow">¶</a></p>
 </section>
@@ -3636,7 +3640,10 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
                     <p id="section-10.1-2.4.2.3.2.2.1"><code>urn:ietf:params:oauth:token-type:jwt</code>: JWT assertion grants (<span><a href="#jwt-assertion-grants" class="internal xref">JWT Assertion Grants</a> (<a href="#jwt-assertion-grants" class="auto internal xref">Section 4</a>)</span>)<a href="#section-10.1-2.4.2.3.2.2.1" class="pilcrow">¶</a></p>
 </li>
                   <li class="normal" id="section-10.1-2.4.2.3.2.3">
-                    <p id="section-10.1-2.4.2.3.2.3.1"><code>urn:ietf:params:oauth:token-type:txn_token</code>: Transaction Tokens (<span><a href="#transaction-tokens" class="internal xref">Transaction Tokens</a> (<a href="#transaction-tokens" class="auto internal xref">Section 7.1</a>)</span>)<a href="#section-10.1-2.4.2.3.2.3.1" class="pilcrow">¶</a></p>
+                    <p id="section-10.1-2.4.2.3.2.3.1"><code>urn:ietf:params:oauth:token-type:id-jag</code>: ID-JAGs (<span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>), a JWT assertion grant profile (<span><a href="#jwt-assertion-grant-issuance" class="internal xref">JWT Assertion Grant Output</a> (<a href="#jwt-assertion-grant-issuance" class="auto internal xref">Section 6.5.1</a>)</span>)<a href="#section-10.1-2.4.2.3.2.3.1" class="pilcrow">¶</a></p>
+</li>
+                  <li class="normal" id="section-10.1-2.4.2.3.2.4">
+                    <p id="section-10.1-2.4.2.3.2.4.1"><code>urn:ietf:params:oauth:token-type:txn_token</code>: Transaction Tokens (<span><a href="#transaction-tokens" class="internal xref">Transaction Tokens</a> (<a href="#transaction-tokens" class="auto internal xref">Section 7.1</a>)</span>)<a href="#section-10.1-2.4.2.3.2.4.1" class="pilcrow">¶</a></p>
 </li>
                 </ul>
 </li>
@@ -3699,7 +3706,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
           <dd style="margin-left: 1.5em" id="section-10.2-2.2">
             <p id="section-10.2-2.2.1"><span class="bcp14">OPTIONAL</span>.  A boolean indicating that delegated access to the resource requires actor information conforming to this profile.  When <code>false</code> or absent, metadata makes no such claim.  Non-delegated requests need not carry <code>act</code>.<a href="#section-10.2-2.2.1" class="pilcrow">¶</a></p>
 <p id="section-10.2-2.2.2">Clients <span class="bcp14">SHOULD</span> treat <code>true</code> as requiring a conforming token or an explicitly documented introspection path that provides equivalent claims for opaque tokens.<a href="#section-10.2-2.2.2" class="pilcrow">¶</a></p>
-<p id="section-10.2-2.2.3">An AS that has processed this metadata with <code>actor_profile_required</code> set to <code>true</code> <span class="bcp14">MUST</span> reject a request that would produce a nonconforming delegated token for the resource unless a supported introspection path provides equivalent actor information.  An RS enforcing this policy <span class="bcp14">MUST</span> reject a delegated request for which neither form of actor information is available.<a href="#section-10.2-2.2.3" class="pilcrow">¶</a></p>
+<p id="section-10.2-2.2.3">An AS that knows, by configuration or from this metadata, that <code>actor_profile_required</code> is <code>true</code> for the resource <span class="bcp14">MUST</span> reject a request that would produce a nonconforming delegated token for the resource unless a supported introspection path provides equivalent actor information.  An RS enforcing this policy <span class="bcp14">MUST</span> reject a delegated request for which neither form of actor information is available.<a href="#section-10.2-2.2.3" class="pilcrow">¶</a></p>
 <p id="section-10.2-2.2.4">The parameter applies to the resource as a whole.  An RS with path-specific requirements <span class="bcp14">MUST</span> enforce them at the request layer.  It <span class="bcp14">MAY</span> advertise <code>true</code> as a conservative resource-wide signal; clients and deployment documentation <span class="bcp14">SHOULD</span> account for path-specific enforcement that metadata cannot fully express.<a href="#section-10.2-2.2.4" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
@@ -3724,7 +3731,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
         <h3 id="name-transaction-token-capabilit">
 <a href="#section-10.3" class="section-number selfRef">10.3. </a><a href="#name-transaction-token-capabilit" class="section-name selfRef">Transaction Token Capability Signaling</a>
         </h3>
-<p id="section-10.3-1">Transaction Token support under this profile for Token Exchange paths is advertised through <code>actor_profile_token_exchange.requested_token_types_supported</code>.  When an AS or TTS can issue Transaction Tokens as delegated Token Exchange outputs under this profile, it <span class="bcp14">MUST</span> list <code>urn:ietf:params:oauth:token-type:txn_token</code> in <code>actor_profile_token_exchange.requested_token_types_supported</code>.  This document does not define any separate Transaction Token discovery parameter.<a href="#section-10.3-1" class="pilcrow">¶</a></p>
+<p id="section-10.3-1">Transaction Token support under this profile for Token Exchange paths is advertised through <code>actor_profile_token_exchange.requested_token_types_supported</code>.  When an AS or TTS that can issue Transaction Tokens as delegated Token Exchange outputs under this profile publishes <code>actor_profile_token_exchange</code>, it <span class="bcp14">MUST</span> list <code>urn:ietf:params:oauth:token-type:txn_token</code> in <code>actor_profile_token_exchange.requested_token_types_supported</code>.  This document does not define any separate Transaction Token discovery parameter.<a href="#section-10.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="capability-signaling-usage">
@@ -4806,8 +4813,8 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
   token-type%3Aid_token
 &amp;requested_token_type=urn%3Aietf%3Aparams%3Aoauth%3A\
   token-type%3Aid-jag
-&amp;audience=https%3A%2F%2Fas.travel-provider.example%2F
-&amp;resource=https%3A%2F%2Fas.travel-provider.example
+&amp;audience=https%3A%2F%2Fas.travel-provider.example
+&amp;resource=https%3A%2F%2Fapi.travel-provider.example
 &amp;scope=booking%3Acreate
 &amp;client_id=https%3A%2F%2Fagents.enterprise.example%2Ftravel-assistant
 &amp;client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3A\
@@ -4826,7 +4833,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
   "sub_profile": "user",
   "client_id": "https://agents.enterprise.example/travel-assistant",
   "azp": "https://agents.enterprise.example/travel-assistant",
-  "aud": "https://as.travel-provider.example/token",
+  "aud": "https://as.travel-provider.example",
   "jti": "ent-idj-20260401-001",
   "exp": 1743379200,
   "iat": 1743375600,
@@ -5099,7 +5106,7 @@ Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
 <p id="appendix-D-2">-01<a href="#appendix-D-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-D-3.1">
-          <p id="appendix-D-3.1.1">Changes that break a -00 implementation: JWT access tokens require <code>client_id</code>; an AS keeps an (<code>iss</code>, <code>jti</code>) replay cache for assertion grants unless the grant itself is sender-constrained; a Transaction Token without delegation omits <code>act</code>; <code>may_act.iss</code>, when present, takes precedence over the <code>subject_token</code> issuer; rebind requires proof for the new presenter only for sender-constrained output; and Token Exchange requests, including TTS requests, reject invalid or policy-unacceptable inputs with <code>invalid_request</code> rather than <code>invalid_grant</code>.<a href="#appendix-D-3.1.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.1.1">Changes that break a -00 implementation: JWT access tokens require <code>client_id</code>; an AS keeps an (<code>iss</code>, <code>jti</code>) replay cache for assertion grants unless the grant itself is sender-constrained; a Transaction Token without delegation omits <code>act</code>; <code>may_act.iss</code>, when present, takes precedence over the <code>subject_token</code> issuer; rebind requires proof for the new presenter only for sender-constrained output; Token Exchange requests, including TTS requests, reject invalid or policy-unacceptable inputs with <code>invalid_request</code> rather than <code>invalid_grant</code>; an ID-JAG issued as Token Exchange output carries the Resource Authorization Server's issuer identifier in <code>aud</code> rather than the downstream token endpoint; and a replacement Transaction Token keeps <code>sub</code> unchanged.<a href="#appendix-D-3.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.2">
           <p id="appendix-D-3.2.1">Consolidated and tightened the text throughout; claim roles, supported token types, and error mappings now use tables.<a href="#appendix-D-3.2.1" class="pilcrow">¶</a></p>
@@ -5141,7 +5148,7 @@ Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
           <p id="appendix-D-3.14.1">Resolved the remaining duplicate-rule conflicts: identifier reconciliation keeps both outcomes under explicit conditions, client identity must not substitute for <code>act</code>, inner-actor failures use the shared error mapping, and proof for a new presenter is required for sender-constrained output while any proof the credential's own profile requires is always validated.<a href="#appendix-D-3.14.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.15">
-          <p id="appendix-D-3.15.1">Actor <code>sub_profile</code> is recommended when the issuer can authoritatively classify the actor, and Transaction Token <code>sub</code> re-expression requires a trusted mapping.<a href="#appendix-D-3.15.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.15.1">Actor <code>sub_profile</code> is recommended when the issuer can authoritatively classify the actor.  A replacement Transaction Token keeps <code>sub</code> unchanged, per <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11#section-13.15" class="relref">Section 13.15</a></span>; <code>sub</code> re-expression under a trusted mapping applies only when a TTS issues a Transaction Token from a JWT access token or JWT assertion grant.<a href="#appendix-D-3.15.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.16">
           <p id="appendix-D-3.16.1">Unrecognized but syntactically valid values in a carried-forward top-level <code>sub_profile</code> are preserved.<a href="#appendix-D-3.16.1" class="pilcrow">¶</a></p>
@@ -5184,6 +5191,30 @@ Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
 </li>
         <li class="normal" id="appendix-D-3.29">
           <p id="appendix-D-3.29.1">The <code>actor_unauthorized</code> registration uses the error usage location names of <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>.<a href="#appendix-D-3.29.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-D-3.30">
+          <p id="appendix-D-3.30.1">Presenter continuation also covers a bearer <code>subject_token</code> presented by its authenticated outermost actor, or by its subject when it carries no <code>act</code>, and yields a bearer output.  A Token Exchange request that satisfies neither presenter-transition mode is rejected with <code>invalid_request</code>.<a href="#appendix-D-3.30.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-D-3.31">
+          <p id="appendix-D-3.31.1">A JWT assertion grant output sets <code>aud</code> to the Resource Authorization Server's issuer identifier for an ID-JAG, per <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">Section 3.1</a></span>, and the examples use that identifier.<a href="#appendix-D-3.31.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-D-3.32">
+          <p id="appendix-D-3.32.1">Transaction Token <code>scope</code> can use the Transaction Token vocabulary rather than a literal subset of the inbound token's scope, while the TTS keeps it within the <code>subject_token</code>'s authority, per <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>.<a href="#appendix-D-3.32.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-D-3.33">
+          <p id="appendix-D-3.33.1">An introspection response without <code>act</code> is an inconsistency only when policy or token context indicates delegation; <code>actor_profile_required</code> alone no longer causes rejection.<a href="#appendix-D-3.33.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-D-3.34">
+          <p id="appendix-D-3.34.1">Resource servers validate a <code>cnf.x5t#S256</code> binding against the mutual-TLS client certificate, per <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>], <a href="https://rfc-editor.org/rfc/rfc8705#section-3" class="relref">Section 3</a></span>.<a href="#appendix-D-3.34.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-D-3.35">
+          <p id="appendix-D-3.35.1">A resource server rejects a failed Transaction Token through the deployment's Transaction Token handling, since <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> defines no error response.<a href="#appendix-D-3.35.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-D-3.36">
+          <p id="appendix-D-3.36.1">Authorization policy identifies the outermost actor by its (<code>act.iss</code>, <code>act.sub</code>) pair.<a href="#appendix-D-3.36.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-D-3.37">
+          <p id="appendix-D-3.37.1">Metadata: the <code>actor_profile_required</code> issuance rule applies to an AS that knows the value by configuration or from metadata; the <code>txn_token</code> listing is required only of an AS or TTS that publishes <code>actor_profile_token_exchange</code>; and <code>requested_token_types_supported</code> lists <code>urn:ietf:params:oauth:token-type:id-jag</code>.<a href="#appendix-D-3.37.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-D-4">-00<a href="#appendix-D-4" class="pilcrow">¶</a></p>
