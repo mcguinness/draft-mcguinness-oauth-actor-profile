@@ -81,7 +81,7 @@ The profile adds bounds claims, an event array, issuer self-attestation, and dis
 
 {::boilerplate bcp14-tagged}
 
-This document uses OAuth terminology from {{RFC6749}} and {{RFC8693}}.  Actor Receipt, Receipt Chain, and Outer Token follow {{I-D.mcguinness-oauth-actor-receipts}}.  AS, RS, and TTS denote authorization server, resource server, and Transaction Token Service.
+This document uses OAuth terminology from {{RFC6749}} and {{RFC8693}}.  Actor Receipt, Receipt Chain, and Outer Token follow {{I-D.mcguinness-oauth-actor-receipts}}.  `receipt[i]` denotes entry i of the outer token's `actor_receipts` array, which that document orders newest first: `receipt[0]` is the receipt for the newest hop, whose actor is the outermost `act`.  AS, RS, and TTS denote authorization server, resource server, and Transaction Token Service.
 
 The following terms are used in this document:
 
