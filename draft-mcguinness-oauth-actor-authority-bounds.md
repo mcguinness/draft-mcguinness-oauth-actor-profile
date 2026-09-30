@@ -321,6 +321,8 @@ When the token also carries `actor_proofs` validated under {{I-D.mcguinness-oaut
 
 A failed comparison means the issuer recorded authority broader than the actor consented to at that hop; recipients validating both companions MUST treat it as a failed required check for both artifacts' evidence.
 
+An issuer that supports this profile and accepts a proof carrying `target.scope` MUST NOT embed that proof in a token whose scope exceeds `target.scope`.
+
 This document defines one extension member for the proof `target` object, under the constraining-extension rule of {{I-D.mcguinness-oauth-actor-proofs}}:
 
 `target.scope`:
