@@ -49,6 +49,7 @@ normative:
 
 informative:
   RFC9700:
+  I-D.niyikiza-oauth-attenuating-agent-tokens:
   PIC-MODEL:
     title: "PIC Model Specification (Provenance Identity Continuity)"
     author:
@@ -76,6 +77,8 @@ This document defines OAuth Actor Chain Authority Bounds, an optional companion 
 *  make authority expansion an explicit, signed, auditable event rather than a silent change.
 
 The profile adds bounds claims, an event array, issuer self-attestation, and discovery metadata; deployments opt in per resource or trust domain.
+
+Attenuating Authorization Tokens {{I-D.niyikiza-oauth-attenuating-agent-tokens}} address a related problem with a different model: a token holder derives a token with equal or narrower tool-level authority offline, and any enforcement point holding the root issuer's trust anchor verifies the derivation chain.  This profile instead adds evidence to issuance by authorization servers and Transaction Token Services, recording the authority each issuer applied in its signed receipt and permitting expansion only under a signed re-authorization.
 
 # Conventions and Definitions
 
