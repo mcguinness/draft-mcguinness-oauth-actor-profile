@@ -595,9 +595,9 @@ Receipt validation failures use the underlying protocol's error mechanism for th
 
 ## Authorization Server and Transaction Token Service Errors
 
-When an authorization server or Transaction Token Service rejects a request because inbound `actor_receipts` cannot be validated under {{extending-an-existing-receipt-chain}} (signature failure, expired receipt, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment, or untrusted receipt issuer), it returns an error response per {{RFC6749, Section 5.2}}: `invalid_request` for a Token Exchange request, as {{RFC8693, Section 2.2.2}} requires, or `invalid_grant` for a JWT bearer grant request ({{RFC7523, Section 3.1}}).
+When an authorization server or Transaction Token Service rejects a request because inbound `actor_receipts` cannot be validated under {{extending-an-existing-receipt-chain}} (signature failure, expired receipt, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment, or untrusted receipt issuer), it returns an error response per {{RFC6749, Section 5.2}}: `invalid_request` for a Token Exchange request, as {{RFC8693, Section 2.2.2}} requires, or `invalid_grant` for a JWT bearer grant request ({{RFC7523, Section 3.1}}).  An absent receipt array that local policy requires, whether missing from the inbound token or from retained refresh state, is an input-validation failure: `invalid_request` for a Token Exchange request, or `invalid_grant` for a JWT bearer grant or refresh request.
 
-When the failure reflects an actor-authorization decision rather than a structural validation failure, an issuer MAY use `actor_unauthorized` as defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}} where applicable.
+When the failure reflects an actor-authorization decision rather than a structural validation failure, the issuer uses `actor_unauthorized`, as the core actor profile {{I-D.mcguinness-oauth-actor-profile}} requires.
 
 ## Resource Server Errors
 
