@@ -785,10 +785,11 @@ Table of Contents
    *  MAY carry an actor_receipts array received in an inbound token or
       its introspection response forward unchanged, and MUST first
       validate it against that token under Section 9, as step 1 of
-      Section 8.2 requires for extension.  If the array fails
-      validation, the issuer MUST NOT carry it forward, and MUST fail
-      the request under the error model of the underlying protocol
-      unless local policy permits the issued token to lack it;
+      Section 8.2 requires for extension; an array the issuer retained
+      across refresh follows the refresh rules below instead.  If the
+      array fails validation, the issuer MUST NOT carry it forward, and
+      MUST fail the request under the error model of the underlying
+      protocol unless local policy permits the issued token to lack it;
 
    *  MUST NOT create a new receipt;
 
@@ -857,6 +858,12 @@ Table of Contents
       receipts approach expiry, refresh and downstream extension fall
       under the receipt lifetime rule in Section 7.2, shortening tokens
       or losing receipt-based provenance.
+
+   *  takes the array from that retained state rather than from the
+      previous access token: it validates the refresh request per
+      [RFC6749], Section 6, checks the retained receipts against its
+      issuance state, and does not require the previous access token to
+      remain unexpired or re-run Section 9 against it.
 
    *  applies the receipt lifetime rule in Section 7.2 when a retained
       receipt's exp is earlier than the exp it would set for the

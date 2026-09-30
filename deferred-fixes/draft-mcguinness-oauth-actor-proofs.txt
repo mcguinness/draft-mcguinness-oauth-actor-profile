@@ -775,9 +775,12 @@ Table of Contents
        is present and the request supplies no resource indicators, the
        issuer uses target.resource as the effective resource indicators
        and MUST NOT issue a token whose effective resources exceed it.
-       The issuer MAY narrow the issued resource indicators to fit the
-       target binding, as [RFC8707], Section 2.2 leaves acceptable
-       resources to its policy, but does not drop a requested audience;
+       On a request other than Token Exchange, the issuer MAY narrow the
+       issued resource indicators to fit the target binding, as
+       [RFC8707], Section 2.2 leaves acceptable resources to its policy.
+       On a Token Exchange request, it does not drop a requested
+       audience or resource, because both name targets where the
+       requested token must be usable ([RFC8693], Section 2.1);
        Section 12 gives the error to return when the requested target
        cannot be issued within the target binding after any narrowing.
 
@@ -869,10 +872,11 @@ Table of Contents
    *  MAY carry an actor_proofs array received in an inbound token or
       its introspection response forward unchanged, and MUST first
       validate it against that token under Section 10, as step 1 of
-      Section 9.2 requires for extension.  If the array fails
-      validation, the issuer MUST NOT carry it forward, and MUST fail
-      the request under the error model of the underlying protocol
-      unless local policy permits the issued token to lack it;
+      Section 9.2 requires for extension; an array the issuer retained
+      across refresh follows the refresh rules below instead.  If the
+      array fails validation, the issuer MUST NOT carry it forward, and
+      MUST fail the request under the error model of the underlying
+      protocol unless local policy permits the issued token to lack it;
 
    *  MUST NOT accept or embed a new proof, and MUST reject with
       invalid_request ([RFC6749], Section 5.2) a request that carries an
@@ -916,6 +920,12 @@ Table of Contents
       state database or refresh-token state) or embedded in a self-
       contained refresh token, so each refreshed access token can carry
       the proofs forward unchanged.
+
+   *  takes the array from that retained state rather than from the
+      previous access token: it validates the refresh request per
+      [RFC6749], Section 6, checks the retained proofs against its
+      issuance state, and does not require the previous access token to
+      remain unexpired or re-run Section 10 against it.
 
    *  applies the lifetime rule in Section 9 to each refreshed access
       token.  Refresh ends instance binding, so proof exp sizing for
@@ -2627,10 +2637,11 @@ Document History
    *  An issuer validates an inbound proof array under consumer
       processing before carrying it forward on reissuance.
 
-   *  An issuer may narrow the issued resource indicators, but not a
-      requested audience, to fit the proof's target binding and returns
+   *  An issuer may narrow resource indicators to fit the proof's target
+      binding on requests other than Token Exchange, keeps every
+      requested audience and every Token Exchange target, and returns
       invalid_target when the requested target cannot be issued within
-      it after any narrowing; requests other than Token Exchange ground
+      the binding; requests other than Token Exchange ground
       invalid_target in [RFC8707], Section 2.
 
    *  Deployment configuration supplies the actor with the act.iss value
