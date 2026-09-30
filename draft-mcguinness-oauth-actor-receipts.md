@@ -1188,11 +1188,11 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * An expired receipt is now invalid even for an older hop, with only the clock-skew leeway of {{RFC7519, Section 4.1.4}}; -00 only recommended rejection and let local policy allow a margin.
 * One receipt lifetime rule now covers chain extension, reissuance, and refresh: when a retained receipt's `exp` is earlier than the `exp` the issuer would set, the issuer lowers the issued token's `exp`, drops the array where local policy permits, or fails the request (`invalid_grant` on refresh or a JWT bearer grant, `invalid_request` on Token Exchange).  -00 treated an extension `exp` gap as an inbound validation failure and let a reissuer set any `exp`.
 * Refresh no longer starts a new receipt chain; that requires a new delegated issuance that adds a hop.  The bounded delegated-session lifetime is now guidance for sizing receipt `exp` rather than a separate trigger.
-* Removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
+* Removed BCP 14 keywords from storage, trust-setup, rollout, coordination, freshness, and completeness-evaluation guidance.
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
 * Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, and subject continuity allows namespace-aware matching or trusted mapping.
 * Prohibited `aud` in receipts (-00 discouraged it); consumers reject a receipt that carries it, and {{RFC8725}} applies except {{RFC8725, Section 3.9}}.
-* An introspection server that returns a stored array it knows has partial coverage is now required to include `actor_receipts_complete: false`.
+* An introspection server whose returned array does not cover every hop of the returned `act` chain is now required to include `actor_receipts_complete: false`.  A `false` value no longer asserts partial coverage; it makes no attestation of complete coverage.
 * Stated how filtering the visible `act` chain interacts with all-or-nothing receipt disclosure.
 * Receipt validation failures on Token Exchange requests now use `invalid_request`, as {{RFC8693, Section 2.2.2}} requires; JWT bearer grant requests use `invalid_grant` ({{RFC7523, Section 3.1}}).  An absent required receipt array is an input-validation failure with the same codes, or `invalid_grant` on refresh.  Actor-authorization failures use `actor_unauthorized`, as the core profile requires; -00 made it optional.
 * Named the IETF, rather than the IESG, as change controller for the claim, metadata, and introspection registrations.
@@ -1205,6 +1205,10 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * The trust model summary now states that a chain with any untrusted receipt issuer fails validation, matching {{trust-in-receipt-issuers}}.
 * Consumer step 5 checks `typ` and `alg` before resolving keys and validating the signature.
 * Outer tokens include JWT assertion grants, and filtering of the visible `act` chain is attributed to the introspection server.
+* An issuer extending a chain takes the inbound receipts from the token carrying the inbound delegation chain and sets the new receipt's claims as for a first receipt; a new receipt's `iss` is now required to equal the issued token's `iss`.
+* A reissuer now validates an inbound receipt chain before carrying it forward.  When the chain fails, the reissuer drops it, or fails the request when local policy requires receipts; -00 let it carry an unvalidated chain.
+* Unless a companion profile states otherwise, a failed companion rule now rejects only that companion's evidence, not the receipt chain.
+* The threat model no longer claims that actor-signed proofs address a compromised actor or a compromised outer token issuer; they prevent issuer fabrication of actor participation at proof-covered hops only.
 
 -00
 
