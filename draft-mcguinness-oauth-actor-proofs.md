@@ -760,7 +760,7 @@ Proofs are historical attestations of hop-time consent.  They can outlive the va
 *  Runtime policy evaluation, including current authorization and current revocation state, is separate from proof validation.
 *  Replay of an entire token plus its proofs is governed by the outer token's replay characteristics.  Re-embedding of an individual proof into a different token is a distinct threat, bounded as described in {{proof-to-token-binding-limits}}.
 
-Deployments needing freshness signals beyond proof `exp` MUST obtain those signals from the authorization server via introspection ({{RFC7662}}), fresh token issuance, or another mechanism outside the scope of this profile.
+Deployments that need freshness signals beyond proof `exp` obtain them from the authorization server via introspection ({{RFC7662}}), fresh token issuance, or another mechanism outside the scope of this profile.
 
 ## Sibling Revocation Independence
 
