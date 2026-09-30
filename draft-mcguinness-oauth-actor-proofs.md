@@ -131,7 +131,7 @@ Receipts are signed by the AS; proofs are signed by the actor.  A token MAY carr
 *  **Proofs-only**: receipts absent or ignored; trust rests on actor-key resolution and actor signatures.
 *  **Belt-and-suspenders**: both validated; independent issuer-side and actor-side attestations for covered hops, linked by the sibling references in {{sibling-receipt-issuance}}.
 
-Separate compact JWTs let deployments adopt issuer and actor evidence independently.  Proofs require actor signing keys and trusted key resolution in addition to issuer support.
+Receipts and proofs remain separate compact JWTs, rather than one JWS with both signatures over a shared payload (JWS JSON Serialization, {{RFC7515, Section 7.2}}), because their signers, adoption prerequisites, and threat models differ.  Receipts require only issuer support, while proofs also require actor signing keys and trusted key resolution.  Separate artifacts keep the two trust anchors independent ({{threat-model}}) and let deployments adopt, validate, and hash-chain issuer and actor evidence independently.
 
 The receipts companion's distinction between historical evidence and current introspection status also applies to proofs.
 
