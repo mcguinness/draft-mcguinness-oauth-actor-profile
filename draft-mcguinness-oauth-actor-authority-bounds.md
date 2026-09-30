@@ -47,6 +47,7 @@ normative:
 
 informative:
   RFC9700:
+  I-D.ietf-oauth-transaction-tokens:
   I-D.niyikiza-oauth-attenuating-agent-tokens:
   PIC-MODEL:
     title: "PIC Model Specification (Provenance Identity Continuity)"
@@ -177,13 +178,12 @@ A deployment whose chains do not retarget, or that treats retargeting as a polic
 
 ## `resource` {#resource-dimension}
 
-`bounds.resource` records the effective resource-indicator set applied by the issuer: an array of absolute URIs using {{RFC8707}} semantics.  It records the set even when the token has no corresponding claim.
+`bounds.resource` records the effective resource-indicator set applied by the issuer: an array of absolute URIs using {{RFC8707}} semantics.  It records the set even when the token has no corresponding claim.  An issuer that applied no resource indicator omits `bounds.resource` rather than recording an empty array; where a resource server requires `resource` ({{protected-resource-metadata}}), the omission fails that dimension.
 
 Comparison:
 
-*  compare URIs by canonical form per {{RFC3986}} Section 6.2; implementations SHOULD apply case normalization for scheme and host, percent-encoding normalization, and path-segment normalization before comparison;
-*  `resource_a` is within `resource_b` if and only if every canonical URI in `resource_a` is also in `resource_b`;
-*  an empty array is the empty set and is within every resource set.
+*  compare URIs by simple string comparison ({{RFC3986, Section 6.2.1}}); issuers need to record each resource indicator in the same form at every hop;
+*  `resource_a` is within `resource_b` if and only if every URI in `resource_a` is also in `resource_b`;
 
 URI prefix subsumption (for example, treating `https://api.travel-provider.example/v1/` as covering `https://api.travel-provider.example/v1/users`) is NOT applied.  Issuers wishing to express prefix relationships MUST emit explicit URIs at each hop.
 
@@ -322,6 +322,8 @@ When the token also carries `actor_proofs` validated under {{I-D.mcguinness-oaut
 
 A failed comparison means the issuer recorded authority broader than the actor consented to at that hop; recipients validating both companions MUST treat it as a failed required check for both artifacts' evidence.
 
+An issuer that supports this profile and accepts a proof carrying `target.scope` MUST NOT embed that proof in a token whose scope exceeds `target.scope`.  A recipient that supports this profile and relies on the proof chain MUST verify, independently of receipt coverage, that the current token's effective scope is within `actor_proofs[0].target.scope` when that member is present, under {{scope-dimension}}; a token whose scope exceeds it has diverged from the proof chain, and the target-binding strict mode of {{I-D.mcguinness-oauth-actor-proofs}} decides whether the recipient rejects the chain.  A recipient that cannot determine the token's effective scope MUST NOT infer scope-level consent from the proof.
+
 This document defines one extension member for the proof `target` object, under the constraining-extension rule of {{I-D.mcguinness-oauth-actor-proofs}}:
 
 `target.scope`:
@@ -371,9 +373,9 @@ When requested authority exceeds the recorded bound without re-authorization, th
 | `aud` or `resource` | `invalid_target` ({{RFC8693, Section 2.2.2}}) |
 | `authorization_details` | `invalid_authorization_details` {{RFC9396}} |
 
-When the failure reflects an authorization-policy decision about the actor or delegation rather than a structural failure, an issuer MAY use `actor_unauthorized` as defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}.
+The issuer uses `actor_unauthorized` as defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}} when the failure reflects an actor-authorization decision.  An absent required artifact is an input-validation failure: `invalid_request` on a Token Exchange request, `invalid_grant` on a JWT bearer grant or refresh request.
 
-When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it SHOULD return `invalid_token` per {{RFC6750}} Section 3.1, and SHOULD include an `error_description` identifying bounds-verification failure so operators can distinguish it from generic token validation.
+When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it SHOULD return `invalid_token` per {{RFC6750}} Section 3.1, and SHOULD include an `error_description` identifying bounds-verification failure so operators can distinguish it from generic token validation.  For a Transaction Token, the resource server rejects it through the deployment's Txn-Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
 
 An introspection server does not return an OAuth error for missing bounds artifacts; their presence is a property of the response.  This document defines no new OAuth error codes.
 
