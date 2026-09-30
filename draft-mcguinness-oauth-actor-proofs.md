@@ -303,7 +303,7 @@ Proofs define no subject `sub_profile` claim; subject classification remains iss
 
   A proof expiring before the issued outer token causes propagation failure ({{extending-an-existing-proof-chain}}, {{reissuance-without-a-new-actor-hop}}).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse ({{proof-to-token-binding-limits}}).
 
-  With instance binding through receipts in strict mode or a provisioned `origin_jti` ({{proof-to-token-binding-limits}}), `exp` MAY cover the delegated session.  Without instance binding, `exp` SHOULD be short to limit proof reuse.
+  With instance binding through receipts in strict mode or a provisioned `origin_jti` ({{proof-to-token-binding-limits}}), `exp` MAY cover the delegated session only while the outer token stays instance-bound.  Refresh or reissuance ends instance binding, so issuers that refresh tokens carrying proofs SHOULD keep proof `exp` short.  Without instance binding, `exp` SHOULD be short to limit proof reuse.
 
 `jti`:
 : REQUIRED.  A unique identifier for the proof, as defined in {{RFC7519}}.  Recipients and auditors can use `jti` uniqueness across observed tokens to detect proof re-embedding ({{proof-to-token-binding-limits}}).
@@ -399,7 +399,7 @@ An issuer that reissues, translates, or introspects and re-emits a token without
 
 If such an issuer changes the visible outermost actor, it has added a new hop and MUST follow {{extending-an-existing-proof-chain}}.
 
-If reissuance exceeds the newest proof's target, the issuer MUST drop `actor_proofs` unless recipients explicitly accept divergence under {{target-binding-strict-mode}}.  Narrowing or preserving the target leaves the chain valid.
+If reissuance exceeds the newest proof's target, the issuer MUST drop `actor_proofs` unless recipients explicitly accept divergence under {{target-binding-strict-mode}}.  Narrowing or preserving the target keeps the token within the target binding.  A reissued token with a new `jti` diverges from a present `actor_proofs[0].origin_jti` ({{target-binding-strict-mode}}).
 
 If proofs are dropped while receipts remain, inherited `proof_jti` references become informational.  Recipients requiring bound siblings enforce proof presence through metadata or local policy.
 
@@ -714,9 +714,9 @@ Inner proofs have no independent binding to the current token; they are bound to
 
 ### Target-Binding Strict Mode {#target-binding-strict-mode}
 
-An outer token diverges from its proof chain when its audience or effective resources exceed `actor_proofs[0]`'s target binding, or when its `jti` differs from a present `actor_proofs[0].origin_jti`.  A recipient MUST reject a divergent proof chain unless local policy designates the outer token issuer as a trusted reissuing issuer.  Recipients that have not explicitly configured a set of trusted reissuing issuers therefore operate in strict mode by default, rejecting every divergent chain.
+An outer token diverges from its proof chain when its audience or effective resources exceed `actor_proofs[0]`'s target binding, or when its `jti` differs from a present `actor_proofs[0].origin_jti`.  A recipient MUST reject a divergent proof chain unless local policy designates the outer token issuer as a trusted reissuing issuer.  Designation as a trusted reissuing issuer excuses only `jti` divergence unless local policy also permits that issuer to retarget.  Recipients that have not explicitly configured a set of trusted reissuing issuers therefore operate in strict mode by default, rejecting every divergent chain.
 
-Strict mode is the recommended default.  Deployments accepting retargeted reissuance need an explicit set of trusted reissuing issuers, configured through local policy or an out-of-band trust framework.  A recipient accepting divergence MUST treat proofs only as participation evidence and MUST NOT infer consent to the current audience or resources.  With receipts, it SHOULD apply one reissuance-trust decision to both companions.
+Strict mode is the recommended default.  Deployments accepting retargeted reissuance need an explicit set of trusted reissuing issuers, configured through local policy or an out-of-band trust framework.  A recipient accepting target divergence MUST treat proofs only as participation evidence and MUST NOT infer consent to the current audience or resources.  With receipts, it SHOULD apply one reissuance-trust decision to both companions.
 
 ## Hash Algorithm Agility
 
