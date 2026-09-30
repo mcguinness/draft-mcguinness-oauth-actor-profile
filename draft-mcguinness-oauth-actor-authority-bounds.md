@@ -117,7 +117,7 @@ Examples in this document are illustrative and omit unrelated claims, signatures
 This profile uses three extension points in {{I-D.mcguinness-oauth-actor-receipts}}:
 
 *  Receipt claims `bounds` and `reauthorized`, protected by the receipt signature.
-*  Comparisons across receipts, allowing sparse coverage unless completeness is required.
+*  Comparisons across receipts, tolerating sparse coverage by verifying a dimension only when every receipt records it.
 *  Events between hops, carried in `bounds_events` with a distinct JWT type and receipt-identifier anchors.
 
 Receipt signing, linkage, byte preservation, and coverage rules continue to apply.  Receipts without bounds remain valid.  Bounds evidence requires a validated receipt chain.
@@ -130,7 +130,7 @@ The goals of this document are:
 *  let recipients verify offline that monotonic dimensions never expanded across the covered chain except at explicit re-authorization events;
 *  make re-authorization a signed, anchored, ordered artifact rather than an out-of-band assumption, including re-authorization that occurs between hops;
 *  compose with the receipts companion's coverage, disclosure, and introspection machinery, and with the proofs companion's actor-consented target bindings;
-*  support progressive deployment, including sparse per-dimension coverage.
+*  support progressive deployment: sparse per-dimension recording supports audit, and verifying a dimension needs every receipt to record it.
 
 The non-goals of this document are:
 
@@ -145,7 +145,7 @@ The non-goals of this document are:
 
 This profile is most useful where issuers share authority vocabularies.  Changes to scope registries or resource namespaces at domain boundaries require explicit resets ({{domain-transitions}}), limiting comparisons to each domain segment.  Deployments whose chains cross domains at every hop gain recording and audit value from this profile but little enforcement value.
 
-Detecting an intermediate expansion requires bounds on both sides of each compared hop.  Deployments needing that guarantee enforce dense coverage through {{discovery-capability-signaling}}.  Sparse recording still supports audit but leaves gaps in verification.
+Verifying a dimension across the chain requires every receipt to record it.  Deployments needing that guarantee enforce dense coverage through {{discovery-capability-signaling}}.  Sparse recording supports audit, but a dimension recorded on only some receipts is not verified.
 
 # Authority Bounds Overview
 
@@ -228,7 +228,7 @@ This section defines two extension claims for Actor Receipt JWTs, under the exte
 
   An absent member is missing evidence, not an assertion that authority was unconstrained or unchanged.  Recipients MUST treat it accordingly.  Additional dimensions MAY be registered under {{iana-dimensions}}; consumers MUST ignore unrecognized members unless a specification or local agreement supplies their comparison rule.
 
-A receipt MAY omit `bounds` entirely, and a chain MAY mix receipts with and without it.  Consumer processing defines both sparse verification and dense enforcement ({{consumer-processing}}).
+A receipt MAY omit `bounds` entirely, and a chain MAY mix receipts with and without it.  A dimension recorded on only some receipts is recorded for audit but not verified across the chain ({{consumer-processing}}).
 
 ## The `reauthorized` Claim {#reauthorized-claim}
 
@@ -329,7 +329,7 @@ When an issuer adds a new outermost actor hop and creates the receipt for it, an
 
 1.  MUST determine the issued token's effective `scope`, `aud`, `resource`, and `authorization_details` under the underlying grant rules.
 2.  MUST include in the new receipt's `bounds` each dimension it attests, with each member equal to the effective issued value per {{bounds-claim}}.
-3.  For each monotonic dimension it enforces, MUST verify that the issued value is within the effective inbound value, and, when validated inbound receipts carry bounds for the dimension, within the effective upper bound derived from the newest applicable inbound receipt and any anchored events ({{consumer-processing}}).
+3.  For each monotonic dimension it enforces, MUST verify that the issued value is within the effective inbound value, and, when the inbound token's validated `receipt[0]` carries bounds for the dimension, within the effective upper bound derived from that receipt and any events anchored to it ({{consumer-processing}}).
 4.  When step 3 fails and the deployment holds an authoritative re-authorization for the expansion, MAY proceed by recording `reauthorized` on the new receipt per {{reauthorized-claim}}; otherwise MUST reject the request under {{error-handling}}.
 
 ## Reissuance and Refresh Without a New Hop {#reissuance-and-refresh}
@@ -356,7 +356,7 @@ Comparison applies within each domain segment.  A recipient requiring end-to-end
 
 ## Partial and Sparse Coverage
 
-A partial receipt chain can record bounds on any subset of its receipts.  Consumer processing compares only covered adjacencies; required dimensions need dense coverage.  Deployments needing origin-hop evidence should enable recording at the origin issuer first.
+A partial receipt chain can record bounds on any subset of its receipts.  Such sparse recording supports audit, but consumer processing verifies a dimension across the chain only when every receipt records it.  Deployments needing origin-hop evidence should enable recording at the origin issuer first.
 
 # Consumer Processing {#consumer-processing}
 
@@ -380,13 +380,13 @@ An issuer, resource server, or other recipient relying on this profile MUST perf
 4.  Compute the effective upper bound for each dimension D at each receipt `receipt[k]` that carries `bounds[D]`.  Start with `receipt[k].bounds[D]`.  If events anchored to that receipt contain D, use `new_bounds[D]` from the newest such event in chain order.
 
 5.  Compare adjacent receipts for each monotonic dimension, including `aud` when governed:
-    *  Compare only pairs where both receipts record D.
+    *  Apply this step to D only when every receipt in the chain records `bounds[D]`; a dimension recorded on only some receipts is recorded for audit but not verified.
     *  Skip comparison when the newer receipt carries `reauthorized`, establishing a new basis.
     *  Otherwise, the newer receipt's `bounds[D]` must be within the older receipt's effective upper bound under {{governed-dimensions}}.  Failure MUST reject bounds evidence.
 
 6.  Compare the current token with `receipt[0]` for each D that `receipt[0]` carries in `bounds` and whose effective token value is available from claims, introspection, or trusted context.  The token's value MUST be within the receipt's effective upper bound.  Skip `resource` comparison when its effective value cannot be determined.
 
-7.  Enforce dimensions required by `authority_bounds_required` or local policy.  Each required D must be recorded on every receipt and pass steps 4 through 6.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt and event coverage ({{protected-resource-metadata}}).
+7.  Enforce dimensions required by `authority_bounds_required` or local policy.  Each required D must be recorded on every receipt and pass steps 4 through 6; a step-6 comparison that cannot be made because the token's effective value for D cannot be determined fails D.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt and event coverage ({{protected-resource-metadata}}).
 
 8.  Apply any additional rules defined by companion profiles whose claims appear in the artifacts ({{extensibility}}).  They can add rejection conditions but cannot relax any requirement needed for conformance to this profile.
 
@@ -490,7 +490,7 @@ Authority bounds strengthen authority provenance for receipt-covered hops, but t
 
 ### Adversaries Mitigated by This Profile
 
-*  **Intermediate authority expansion.**  Detection requires both adjacent receipts to record the dimension.  Recording a wider value fails comparison; recording less than issued fails the next enforcing issuer's check or the terminal token comparison; omission fails dense-coverage enforcement.  Sparse coverage leaves gaps in this protection.
+*  **Intermediate authority expansion.**  Detection requires every receipt in the chain to record the dimension.  Recording a wider value fails comparison; recording less than issued fails the next enforcing issuer's check or the terminal token comparison; omission fails dense-coverage enforcement.  Sparse coverage leaves gaps in this protection.
 *  **Silent basis change.**  Expansion requires a signed artifact: a `reauthorized` claim inside a trusted issuer's receipt or a signed, anchored, chained event.  Dropping an event breaks the event `prh` chain; reordering is prevented by the chain; `bounds_events_complete: true` attests that no events are withheld.
 *  **Issuance beyond actor consent, when proofs are present.**  The cross-checks of {{composition-with-proofs}} detect recorded authority broader than the actor-signed target binding at the same hop.
 
