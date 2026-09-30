@@ -1227,6 +1227,8 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * A reissuer now validates an inbound receipt chain before carrying it forward.  When the chain fails, the reissuer drops it, or fails the request when local policy requires receipts; -00 let it carry an unvalidated chain.
 * Unless a companion profile states otherwise, a failed companion rule now rejects only that companion's evidence, not the receipt chain.
 * The threat model no longer claims that actor-signed proofs address a compromised actor or a compromised outer token issuer; they prevent issuer fabrication of actor participation at proof-covered hops only.
+* Receipt and outer-token `sub_profile` values are now compared as sets: case-insensitively, ignoring order and duplicate values, without rewriting a signed receipt.  -00 required the same value.
+* Redemption of an ID-JAG or other JWT assertion grant at a Resource Authorization Server without a new hop is now named as a common case of different-issuer reissuance, accepted only under explicit trusted-reissuer policy and without current-instance binding.
 
 -00
 
