@@ -177,13 +177,12 @@ A deployment whose chains do not retarget, or that treats retargeting as a polic
 
 ## `resource` {#resource-dimension}
 
-`bounds.resource` records the effective resource-indicator set applied by the issuer: an array of absolute URIs using {{RFC8707}} semantics.  It records the set even when the token has no corresponding claim.
+`bounds.resource` records the effective resource-indicator set applied by the issuer: an array of absolute URIs using {{RFC8707}} semantics.  It records the set even when the token has no corresponding claim.  An issuer that applied no resource indicator omits `bounds.resource` rather than recording an empty array; where a resource server requires `resource` ({{protected-resource-metadata}}), the omission fails that dimension.
 
 Comparison:
 
-*  compare URIs by canonical form per {{RFC3986}} Section 6.2; implementations SHOULD apply case normalization for scheme and host, percent-encoding normalization, and path-segment normalization before comparison;
-*  `resource_a` is within `resource_b` if and only if every canonical URI in `resource_a` is also in `resource_b`;
-*  an empty array is the empty set and is within every resource set.
+*  compare URIs by simple string comparison ({{RFC3986, Section 6.2.1}}); issuers need to record each resource indicator in the same form at every hop;
+*  `resource_a` is within `resource_b` if and only if every URI in `resource_a` is also in `resource_b`;
 
 URI prefix subsumption (for example, treating `https://api.travel-provider.example/v1/` as covering `https://api.travel-provider.example/v1/users`) is NOT applied.  Issuers wishing to express prefix relationships MUST emit explicit URIs at each hop.
 
