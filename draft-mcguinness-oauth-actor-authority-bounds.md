@@ -63,7 +63,7 @@ informative:
 
 --- abstract
 
-This document defines OAuth Actor Chain Authority Bounds, an optional companion to the OAuth Actor Profile for Delegation and Actor Receipts.  Receipt claims record authority at each hop so recipients can detect expansion in `scope`, `resource`, and `authorization_details`, and in `aud` where audience is governed, unless an explicit re-authorization establishes new bounds.  Signed JSON Web Token (JWT) events record re-authorization between hops.  This document specifies comparison rules, metadata, and introspection parameters.
+This document defines OAuth Actor Chain Authority Bounds, an optional companion to the OAuth Actor Profile for Delegation and Actor Receipts.  Receipt claims record authority at each hop so recipients can detect expansion in `scope` and `authorization_details`, and in `aud` and `resource` where a deployment requires it, unless an explicit re-authorization establishes new bounds.  Signed JSON Web Token (JWT) events record re-authorization between hops.  This document specifies comparison rules, metadata, and introspection parameters.
 
 --- middle
 
@@ -90,10 +90,10 @@ This document uses OAuth terminology from {{RFC6749}} and {{RFC8693}}.  Actor Re
 The following terms are used in this document:
 
 Governed Dimension:
-: An authority dimension whose per-hop values are recorded and compared under this profile.  This document defines four: `scope`, `aud`, `resource`, and `authorization_details`.
+: An authority dimension whose per-hop values are recorded under this profile and, when the dimension is monotonic, compared across hops.  This document defines four: `scope`, `aud`, `resource`, and `authorization_details`.
 
 Monotonic Dimension:
-: A governed dimension whose recorded values are required not to expand across hops.  `scope`, `resource`, and `authorization_details` are monotonic by default; `aud` is recorded but not monotonic by default (see {{audience-governance}}).
+: A governed dimension whose recorded values are required not to expand across hops.  `scope` and `authorization_details` are monotonic by default; `aud` and `resource` are recorded but not monotonic unless a resource server names them in `authority_bounds_required` or local policy requires it ({{audience-governance}}, {{resource-dimension}}).
 
 Authority Bounds:
 : The values of governed dimensions in effect for the token issued at a given hop, recorded in the receipt's `bounds` claim.
@@ -149,7 +149,7 @@ Verifying a dimension across the chain requires every receipt to record it.  Dep
 
 # Authority Bounds Overview
 
-An issuer that adds an actor hop and supports this profile records, inside the receipt it signs for that hop, the authority values it applied to the issued token.  Recipients walk the validated receipt chain from oldest to newest, comparing recorded values for each governed dimension:
+An issuer that adds an actor hop and supports this profile records, inside the receipt it signs for that hop, the authority values it applied to the issued token.  Recipients walk the validated receipt chain from oldest to newest, comparing recorded values for each monotonic dimension:
 
 *  values may narrow or stay the same across each adjacency;
 *  values may not expand, unless a signed re-authorization event establishes a new basis;
@@ -195,6 +195,8 @@ Comparison:
 *  an empty array is the empty set and is within every resource set.
 
 URI prefix subsumption (for example, treating `https://api.travel-provider.example/v1/` as covering `https://api.travel-provider.example/v1/users`) is NOT applied.  Issuers wishing to express prefix relationships MUST emit explicit URIs at each hop.
+
+`resource` is recorded without monotonicity enforcement by default because Token Exchange uses `resource` to retarget tokens ({{RFC8693, Section 2.1}}).  A deployment MAY require monotonicity for `resource` through the same metadata or local policy as audience governance ({{audience-governance}}).  It then applies the same monotonicity rules to `resource`; retargeting MUST be covered by re-authorization or verification fails.
 
 ## `authorization_details` {#rar-dimension}
 
@@ -379,7 +381,7 @@ An issuer, resource server, or other recipient relying on this profile MUST perf
 
 4.  Compute the effective upper bound for each dimension D at each receipt `receipt[k]` that carries `bounds[D]`.  Start with `receipt[k].bounds[D]`.  If events anchored to that receipt contain D, use `new_bounds[D]` from the newest such event in chain order.
 
-5.  Compare adjacent receipts for each monotonic dimension, including `aud` when governed:
+5.  Compare adjacent receipts for each monotonic dimension (`aud` and `resource` are monotonic only when required):
     *  Apply this step to D only when every receipt in the chain records `bounds[D]`; a dimension recorded on only some receipts is recorded for audit but not verified.
     *  Skip comparison when the newer receipt carries `reauthorized`, establishing a new basis.
     *  Otherwise, the newer receipt's `bounds[D]` must be within the older receipt's effective upper bound under {{governed-dimensions}}.  Failure MUST reject bounds evidence.
@@ -440,7 +442,7 @@ Both parameters apply equally to a Transaction Token Service publishing metadata
 The following parameters are defined for use in Protected Resource Metadata {{RFC9728}}:
 
 `authority_bounds_required`:
-: OPTIONAL.  A non-empty array of governed-dimension names.  For each named dimension, the resource server requires the dense receipt-attested enforcement of consumer step 7: `bounds` for the dimension on every receipt and successful verification.  Naming `aud` enables audience governance ({{audience-governance}}).  This is a deployment policy declaration, satisfied by configuring the authorization servers that serve the resource; clients MAY combine it with `authority_bounds_supported` to select an AS.
+: OPTIONAL.  A non-empty array of governed-dimension names.  For each named dimension, the resource server requires the dense receipt-attested enforcement of consumer step 7: `bounds` for the dimension on every receipt and successful verification.  Naming `aud` or `resource` makes that dimension monotonic ({{audience-governance}}, {{resource-dimension}}).  This is a deployment policy declaration, satisfied by configuring the authorization servers that serve the resource; clients MAY combine it with `authority_bounds_supported` to select an AS.
 
 `bounds_events_complete_required`:
 : OPTIONAL.  A boolean.  When `true`, the resource server requires `bounds_events_complete: true` on the outer token or introspection response whenever bounds evidence is presented, so that the absence of events is itself attested ({{bounds-events}}).  This document deliberately defines no `bounds_events_required` parameter: a recipient cannot observe whether unrecorded events occurred, so the only testable requirement is the completeness attestation.
@@ -610,7 +612,7 @@ This document requests that IANA establish a registry titled "OAuth Actor Author
 
 *  `scope`, monotonic, {{scope-dimension}} of this document
 *  `aud`, record-only, {{audience-governance}} of this document
-*  `resource`, monotonic, {{resource-dimension}} of this document
+*  `resource`, record-only, {{resource-dimension}} of this document
 *  `authorization_details`, monotonic, {{rar-dimension}} of this document
 
 Designated experts SHOULD verify that a requested dimension has a deterministic comparison rule, a declared governance class, and semantics that do not overlap an existing entry.
@@ -754,7 +756,7 @@ The outer token:
 The example verifies as follows:
 
 *  Scope narrows to `trips:book`.
-*  Resources narrow to the bookings endpoint.  URI prefixes do not imply containment.
+*  Resources narrow to the bookings endpoint, so the chain also verifies where `resource` is required.  URI prefixes do not imply containment.
 *  The outer token's scope equals the newest recorded scope.
 *  Audience changes are recorded without comparison under the default audience rules.
 
