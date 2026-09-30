@@ -1043,7 +1043,7 @@ For each accepted input, the TTS MUST apply the rules listed for it in the refer
 | JWT access token | Validation and extraction | [JWT Access Token as subject_token](#jwt-access-token-as-subject-token) |
 | Transaction Token | Validation and extraction | [Transaction Token as subject_token](#txn-token-as-subject-token) |
 
-The resulting subject, classification, chain, and binding state feeds [Transaction Token Output Rules](#transaction-token-output-rules) instead of JWT access token issuance.  For an inbound Transaction Token, this state also includes `req_wl`.  The scope ceilings in the referenced sections do not apply: Transaction Token `scope` follows {{I-D.ietf-oauth-transaction-tokens, Section 9.2}}, which does not require it to match the scope of any supplied token, and a replacement Transaction Token cannot expand the scope of permitted actions ({{I-D.ietf-oauth-transaction-tokens, Section 13.15}}).
+The resulting subject, classification, chain, and binding state feeds [Transaction Token Output Rules](#transaction-token-output-rules) instead of JWT access token issuance.  For an inbound Transaction Token, this state also includes `req_wl`.  Transaction Token `scope` can use a different vocabulary from the inbound token ({{I-D.ietf-oauth-transaction-tokens, Section 9.2}}), so the literal scope-subset rules in the referenced sections do not apply.  The TTS still ensures that the requested scope does not exceed the authority of the `subject_token` ({{I-D.ietf-oauth-transaction-tokens, Section 13.6}}) and rejects the request when that authority cannot be determined ({{I-D.ietf-oauth-transaction-tokens, Section 13.14}}), and a replacement Transaction Token cannot expand the scope of permitted actions ({{I-D.ietf-oauth-transaction-tokens, Section 13.15}}).
 
 ## Transaction Token Output Rules {#transaction-token-output-rules}
 
@@ -2127,7 +2127,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * The `actor_unauthorized` registration uses the error usage location names of {{RFC6749}}.
 * Presenter continuation also covers a bearer `subject_token` presented by its authenticated outermost actor, or by its subject when it carries no `act`, and yields a bearer output.  A Token Exchange request that satisfies neither presenter-transition mode is rejected with `invalid_request`.
 * A JWT assertion grant output sets `aud` to the Resource Authorization Server's issuer identifier for an ID-JAG, per {{I-D.ietf-oauth-identity-assertion-authz-grant, Section 3.1}}, and the examples use that identifier.
-* Transaction Token `scope` follows {{I-D.ietf-oauth-transaction-tokens}} rather than the scope ceiling of the inbound token.
+* Transaction Token `scope` can use the Transaction Token vocabulary rather than a literal subset of the inbound token's scope, while the TTS keeps it within the `subject_token`'s authority, per {{I-D.ietf-oauth-transaction-tokens}}.
 * An introspection response without `act` is an inconsistency only when policy or token context indicates delegation; `actor_profile_required` alone no longer causes rejection.
 * Resource servers validate a `cnf.x5t#S256` binding against the mutual-TLS client certificate, per {{RFC8705, Section 3}}.
 * A resource server rejects a failed Transaction Token through the deployment's Transaction Token handling, since {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
