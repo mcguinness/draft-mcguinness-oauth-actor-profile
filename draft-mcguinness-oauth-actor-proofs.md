@@ -345,7 +345,7 @@ This document defines one token request parameter:
 `actor_proof`:
 : OPTIONAL.  The compact serialization of a single actor proof JWT for the new outermost actor hop of the requested token.  A request carries at most one `actor_proof` parameter ({{RFC6749, Section 3.2}}).
 
-The parameter is defined for token endpoint requests that produce delegated tokens under the core actor profile, including OAuth 2.0 Token Exchange {{RFC8693}} requests and JWT assertion grants.  Transaction Token Service deployments convey the proof equivalently in the Transaction Token request, subject to {{I-D.ietf-oauth-transaction-tokens}}.
+The parameter is defined for token endpoint requests that produce delegated tokens under the core actor profile, including OAuth 2.0 Token Exchange {{RFC8693}} requests and JWT assertion grants.  A Transaction Token request made over HTTP is a Token Exchange request ({{I-D.ietf-oauth-transaction-tokens, Section 11}}) and carries the proof in `actor_proof`; other Transaction Token Service interfaces convey it equivalently.
 
 The AS authenticates the actor and derives its identity under the core profile, then separately validates the proof ({{accepting-a-proof}}).  `actor_proof` supplies participation and consent evidence; it does not serve as `actor_token` or authenticate the request.
 
