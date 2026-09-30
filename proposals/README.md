@@ -25,11 +25,12 @@ working-group discussion.
 - **[OAuth Actor Chain Authority Bounds](../draft-mcguinness-oauth-actor-authority-bounds.md)**:
   graduated from this directory to a full draft at the repository root.
   Records and verifies how authority changes at each hop, not just which
-  actor hop was added: `scope`, `resource`, and `authorization_details`
-  do not expand across hops except at explicit, signed re-authorization
-  events, while `aud` is recorded but not monotonic by default (audience
-  retargeting is the normal purpose of token exchange).  Non-hop
-  re-authorization travels in a hash-chained `bounds_events` array.
+  actor hop was added: `scope` and `authorization_details` do not expand
+  across hops except where a hop's receipt records an explicit, signed
+  re-authorization naming the dimensions it resets, while `aud` and
+  `resource` are recorded but not monotonic unless a resource server
+  requires it (retargeting is the normal purpose of token exchange).
+  Re-authorization between hops is left to a later extension.
   Where receipts attest past hop state, bounds add offline-verifiable
   evidence that authority was not widened across the covered chain.
   Motivated in part by the
