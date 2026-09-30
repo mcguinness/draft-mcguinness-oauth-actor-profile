@@ -487,7 +487,7 @@ The following example shows an AS-issued assertion grant, which is the recommend
 {
   "iss": "https://as.enterprise.example",
   "sub": "https://idp.enterprise.example/users/alice",
-  "aud": "https://as.travel-provider.example/token",
+  "aud": "https://as.travel-provider.example",
   "jti": "a1b2c3d4-...",
   "exp": 1711820400,
   "iat": 1711816800,
@@ -919,7 +919,7 @@ When `requested_token_type` requests a JWT assertion grant, the output MUST sati
 The AS MUST:
 
 *  Construct the chain per [JWT Access Token Output](#jwt-access-token-propagation).
-*  Set `aud` to the downstream token endpoint, from `resource` or deployment configuration.
+*  Set `aud` from the request or deployment configuration: for an ID-JAG, to the Resource Authorization Server's issuer identifier ({{I-D.ietf-oauth-identity-assertion-authz-grant, Section 3.1}}); otherwise, to a value identifying the downstream authorization server that {{RFC7523, Section 3}} permits, such as its token endpoint URL.
 *  Sign the assertion, per {{RFC7523, Section 3}}.
 
 Issuing such a grant is subject to AS configuration and to [Validate Outermost Actor](#validate-outermost-actor).
@@ -1891,8 +1891,8 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
   token-type%3Aid_token
 &requested_token_type=urn%3Aietf%3Aparams%3Aoauth%3A\
   token-type%3Aid-jag
-&audience=https%3A%2F%2Fas.travel-provider.example%2F
-&resource=https%3A%2F%2Fas.travel-provider.example
+&audience=https%3A%2F%2Fas.travel-provider.example
+&resource=https%3A%2F%2Fapi.travel-provider.example
 &scope=booking%3Acreate
 &client_id=https%3A%2F%2Fagents.enterprise.example%2Ftravel-assistant
 &client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3A\
@@ -1911,7 +1911,7 @@ The Enterprise IdP AS validates the shared JWT for client authentication and act
   "sub_profile": "user",
   "client_id": "https://agents.enterprise.example/travel-assistant",
   "azp": "https://agents.enterprise.example/travel-assistant",
-  "aud": "https://as.travel-provider.example/token",
+  "aud": "https://as.travel-provider.example",
   "jti": "ent-idj-20260401-001",
   "exp": 1743379200,
   "iat": 1743375600,
