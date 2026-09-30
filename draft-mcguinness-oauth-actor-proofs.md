@@ -556,7 +556,7 @@ An introspection response carrying proofs MUST include the members needed for {{
 
 An RS receiving both inline and introspected proofs MUST select an authoritative source under local policy.  If it consumes both, differing arrays or completeness values MUST cause rejection of proof-based provenance.
 
-An introspection server MUST return the full stored array or omit `actor_proofs`.  Removing an older entry breaks `prh`; removing the newest breaks hop alignment.  When the introspection server returns a stored array that it knows has partial coverage, it MUST include `actor_proofs_complete: false`.
+An introspection server MUST return the full stored array or omit `actor_proofs`.  Removing an older entry breaks `prh`; removing the newest breaks hop alignment.  A server that filters the visible `act` chain can still return the full array when it filters only inner actors that no proof covers; if it filters a covered actor, it MUST omit both `actor_proofs` and `actor_proofs_complete`.  When the introspection server returns a stored array that it knows has partial coverage, it MUST include `actor_proofs_complete: false`.
 
 For an inactive token, the introspection server MUST NOT return `actor_proofs` or `actor_proofs_complete`.
 
