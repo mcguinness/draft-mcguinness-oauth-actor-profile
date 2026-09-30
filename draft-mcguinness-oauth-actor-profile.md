@@ -1131,7 +1131,7 @@ When the resource server evaluates a JWT access token as a delegated token under
 
 1.  Validate the signature, `iss`, `aud`, and temporal claims per {{RFC9068}}.  If the request path requires actor-profile conformance, including through `actor_profile_required: true`:
 
-    *  A token evaluated as delegated MUST carry `act`, and each actor object the RS relies on MUST include `iss`.  Otherwise, reject with HTTP 401 `invalid_token`.
+    *  A token evaluated as delegated MUST carry `act`, and every actor object in the visible `act` chain MUST include `iss`.  Otherwise, reject with HTTP 401 `invalid_token`.  This is structural validation, not independent authentication of historical actors.
     *  Non-delegated tokens need not carry `act`.
 
 2.  If the token carries a top-level `cnf.jkt`, validate the accompanying DPoP proof per {{RFC9449, Section 7}}.  If the token carries a top-level `cnf.x5t#S256`, validate the client certificate of the mutual-TLS connection against it per {{RFC8705, Section 3}}.  If a DPoP proof is present but the token carries neither `cnf.jkt` nor `cnf.x5t#S256`, the RS MUST treat the token as a bearer token; the RS MUST NOT infer a confirmation binding from the DPoP proof key.
@@ -1162,7 +1162,7 @@ When the resource server evaluates a Transaction Token as a delegated token unde
 
     *  With `act`, top-level `iss` MUST be present and the RS MUST validate it as the token issuer.
     *  With neither `act` nor `iss`, the RS MUST determine the issuer through the Transaction Token trust-domain rules and local configuration.
-    *  If the request path requires actor-profile conformance, including through `actor_profile_required: true`, a token evaluated as delegated MUST carry `act`, and each actor object the RS relies on MUST include `iss`.  If either is missing, reject the request.  Non-delegated tokens need not carry `act`.
+    *  If the request path requires actor-profile conformance, including through `actor_profile_required: true`, a token evaluated as delegated MUST carry `act`, and every actor object in the visible `act` chain MUST include `iss`.  If either is missing, reject the request.  This is structural validation, not independent authentication of historical actors.  Non-delegated tokens need not carry `act`.
 
 2.  When the token carries a top-level presenter-binding claim such as `cnf`, validate the accompanying proof according to the applicable deployment profile; {{I-D.ietf-oauth-transaction-tokens}} defines no presenter-proof mechanism.  The top-level presenter binding applies to the current presenter only.
 
