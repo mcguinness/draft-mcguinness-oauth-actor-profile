@@ -1449,7 +1449,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="section-4-4.3.1">defining cross-domain equivalence of authority vocabularies; a trust-domain boundary is an explicit basis reset (<a href="#domain-transitions" class="auto internal xref">Section 8.3</a>);<a href="#section-4-4.3.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-4-4.4">
-          <p id="section-4-4.4.1">recording re-authorization between hops (a refresh or step-up without a new hop), which a later extension can add;<a href="#section-4-4.4.1" class="pilcrow">¶</a></p>
+          <p id="section-4-4.4.1">recording re-authorization between hops (a refresh or step-up without a new hop), which a later extension can add (<a href="#extensibility" class="auto internal xref">Section 12</a>);<a href="#section-4-4.4.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-4-4.5">
           <p id="section-4-4.5.1">asserting that recorded authority remains active, authorized, or acceptable under current policy;<a href="#section-4-4.5.1" class="pilcrow">¶</a></p>
@@ -1722,7 +1722,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-reissuance-and-refresh-with">
 <a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-reissuance-and-refresh-with" class="section-name selfRef">Reissuance and Refresh Without a New Hop</a>
         </h3>
-<p id="section-8.2-1">Reissuance without a new actor hop creates no receipt, so recorded bounds cannot change through the receipt chain.  This document does not define recording re-authorization between hops.  An issuer that reissues or refreshes while carrying a bounds-bearing receipt chain forward:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<p id="section-8.2-1">Reissuance without a new actor hop creates no receipt, so recorded bounds cannot change through the receipt chain.  This document does not define recording re-authorization between hops; <a href="#extensibility" class="auto internal xref">Section 12</a> lets another specification define it.  An issuer that reissues or refreshes while carrying a bounds-bearing receipt chain forward:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.2-2.1">
             <p id="section-8.2-2.1.1"><span class="bcp14">MUST NOT</span> issue an outer token whose value for any monotonic dimension exceeds <code>receipt[0]</code>'s recorded bound; narrowing further is always permitted;<a href="#section-8.2-2.1.1" class="pilcrow">¶</a></p>
@@ -1806,7 +1806,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="section-9-2.5.1">Enforce dimensions required by <code>authority_bounds_required</code> or local policy.  Each required D must be recorded on every receipt and pass steps 3 and 4; a step-4 comparison that cannot be made because the token's effective value for D cannot be determined fails D.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt coverage (<a href="#protected-resource-metadata" class="auto internal xref">Section 10.2</a>).<a href="#section-9-2.5.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-9-2.6">
-          <p id="section-9-2.6.1">Apply any additional rules defined by companion profiles whose claims appear in the artifacts (<a href="#extensibility" class="auto internal xref">Section 12</a>).  They can add rejection conditions but cannot relax any requirement needed for conformance to this profile.<a href="#section-9-2.6.1" class="pilcrow">¶</a></p>
+          <p id="section-9-2.6.1">Apply any additional rules defined by companion profiles whose claims appear in the artifacts (<a href="#extensibility" class="auto internal xref">Section 12</a>).  They can add rejection conditions but cannot relax any requirement needed for conformance to this profile, other than through a replacement bound (<a href="#extensibility" class="auto internal xref">Section 12</a>).<a href="#section-9-2.6.1" class="pilcrow">¶</a></p>
 </li>
       </ol>
 <p id="section-9-3">If any required check fails, the recipient <span class="bcp14">MUST</span> reject the token's bounds-based evidence and <span class="bcp14">MUST</span> apply the underlying protocol's error handling for the stage at which the failure occurred.  Rejection of bounds-based evidence does not by itself invalidate the receipt chain under <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span>; whether the token remains acceptable without bounds evidence is local policy, except where step 5 applies.<a href="#section-9-3" class="pilcrow">¶</a></p>
@@ -1961,8 +1961,11 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <li class="normal" id="section-12-2.3">
           <p id="section-12-2.3.1"><strong>Per-type RAR refinement rules</strong>, defined by the specifications that define RAR types; such rules extend <a href="#rar-dimension" class="auto internal xref">Section 6.4</a> for their types without modifying this document.<a href="#section-12-2.3.1" class="pilcrow">¶</a></p>
 </li>
+        <li class="normal" id="section-12-2.4">
+          <p id="section-12-2.4.1"><strong>Re-authorization without a new hop.</strong>  This profile defines no mechanism for recording re-authorization without a new actor hop.  Another specification can define one, including how a validated re-authorization establishes a replacement bound for the dimensions it covers, and the evidence, trust, ordering, expiry, preservation, and discovery rules it needs.  An issuer or recipient that supports such a mechanism uses the replacement bound in place of the affected receipt's <code>bounds[D]</code> wherever this document compares against it, for the covered dimensions only.  One that does not support it <span class="bcp14">MUST</span> apply the recorded bounds defined here.<a href="#section-12-2.4.1" class="pilcrow">¶</a></p>
+</li>
       </ul>
-<p id="section-12-3">Companion rules <span class="bcp14">MUST NOT</span> relax any requirement needed for conformance to this profile; they <span class="bcp14">MAY</span> add rejection conditions.  A companion's partial-validation mode, defined under its own normative scope as <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> requires, is not conformance to this profile.<a href="#section-12-3" class="pilcrow">¶</a></p>
+<p id="section-12-3">Companion rules <span class="bcp14">MUST NOT</span> relax any requirement needed for conformance to this profile, other than through a replacement bound as described above; they <span class="bcp14">MAY</span> add rejection conditions.  A companion's partial-validation mode, defined under its own normative scope as <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> requires, is not conformance to this profile.<a href="#section-12-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="security-considerations">
