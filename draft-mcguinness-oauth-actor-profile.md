@@ -2142,6 +2142,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Transaction Token `subject_token` processing applies at a TTS as well as an AS; its JWT access token output steps apply only to that output.
 * An assertion-grant actor without `act.iss` is rejected when profile conformance is required, and otherwise follows Migration and Adoption.
 * TTS presenter rebind can name the existing outermost actor, the Transaction Token request example uses `request_context`, and companion introspection response parameters can apply to delegated opaque access tokens.
+* When actor-profile conformance is required, a resource server rejects a delegated token in which any actor object in the visible `act` chain lacks `iss`; this is structural validation, not independent authentication of historical actors.
 
 -00
 
