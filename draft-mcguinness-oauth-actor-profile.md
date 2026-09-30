@@ -1199,7 +1199,7 @@ When an AS supports delegated opaque access tokens through introspection, it MUS
 
 An introspecting RS MUST apply the same delegated-token processing as for equivalent locally validated JWT claims, including actor authorization when required by local policy.
 
-If policy, protected resource metadata, or token context indicates delegation or requires actor-profile conformance, a missing `act` is an inconsistency and the RS MUST reject the token.  Otherwise, the RS MAY treat an active response without `act` as non-delegated.
+If policy or token context indicates delegation, a missing `act` is an inconsistency and the RS MUST reject the token; `actor_profile_required` alone does not indicate delegation.  Otherwise, the RS MAY treat an active response without `act` as non-delegated.
 
 Introspection endpoints for delegated tokens SHOULD be advertised via the `introspection_endpoint` parameter in AS metadata ({{RFC8414}}).  When revocation is integrated, the introspection response for a revoked delegated token returns `"active": false` per {{RFC7662, Section 2.2}} and MUST NOT include `act` or `sub_profile` claims.
 
