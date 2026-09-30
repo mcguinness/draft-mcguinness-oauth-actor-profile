@@ -372,7 +372,7 @@ If inbound receipts fail validation, the issuer MUST NOT propagate them.  It MAY
 
 An issuer that reissues, translates, or introspects and re-emits a token without adding a new outermost actor hop:
 
-*  MAY carry an `actor_receipts` array received in an inbound token or its introspection response forward unchanged, and MUST first validate it against that token under {{consumer-processing}}, as step 1 of {{extending-an-existing-receipt-chain}} requires for extension.  If the array fails validation, the issuer MUST NOT carry it forward, and MUST fail the request under the error model of the underlying protocol unless local policy permits the issued token to lack it;
+*  MAY carry an `actor_receipts` array received in an inbound token or its introspection response forward unchanged, and MUST first validate it against that token under {{consumer-processing}}, as step 1 of {{extending-an-existing-receipt-chain}} requires for extension; an array the issuer retained across refresh follows the refresh rules below instead.  If the array fails validation, the issuer MUST NOT carry it forward, and MUST fail the request under the error model of the underlying protocol unless local policy permits the issued token to lack it;
 *  MUST NOT create a new receipt;
 *  MUST preserve `actor_receipts_complete` when carrying the array unchanged.  An issuer that would change that value MUST drop the array entirely instead; disclosure is all-or-nothing ({{consumer-introspection}}).
 *  MUST NOT continue to carry an inherited `actor_receipts` array if it cannot preserve the visible hop alignment required by {{consumer-processing}};
@@ -396,6 +396,7 @@ An AS that supports refresh tokens for delegated access tokens:
 
 *  needs to retain the `actor_receipts` array associated with the original access token in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the receipts forward unchanged.
 *  needs receipt `exp` values ({{receipt-claims}}) that accommodate the bounded maximum delegated-session lifetime.  Otherwise, as receipts approach expiry, refresh and downstream extension fall under the receipt lifetime rule in {{receipt-claims}}, shortening tokens or losing receipt-based provenance.
+*  takes the array from that retained state rather than from the previous access token: it validates the refresh request per {{RFC6749, Section 6}}, checks the retained receipts against its issuance state, and does not require the previous access token to remain unexpired or re-run {{consumer-processing}} against it.
 *  applies the receipt lifetime rule in {{receipt-claims}} when a retained receipt's `exp` is earlier than the `exp` it would set for the refreshed token.  Refresh adds no actor hop, so receipt provenance resumes only through a new delegated issuance that adds a hop and begins a chain under {{creating-the-first-receipt}}.
 
 ## Partial Coverage and Full Coverage
