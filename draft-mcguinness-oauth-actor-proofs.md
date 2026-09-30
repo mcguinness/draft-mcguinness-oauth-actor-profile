@@ -427,6 +427,8 @@ If such an issuer changes the visible outermost actor, it has added a new hop an
 
 If reissuance exceeds the newest proof's target, the issuer MUST drop `actor_proofs` unless deployment agreement designates it, for the recipients of the reissued token, as a trusted reissuing issuer permitted to retarget ({{target-binding-strict-mode}}).  Narrowing or preserving the target keeps the token within the target binding.  A reissued token with a new `jti` diverges from a present `actor_proofs[0].origin_jti` ({{target-binding-strict-mode}}).
 
+An actor that intends its proof to survive a later redemption without a new hop, for example an Identity Assertion JWT Authorization Grant that a Resource Authorization Server redeems ({{I-D.mcguinness-oauth-actor-profile}}), can include the known downstream audiences in `target.aud`, subject to its consent policy.  This addresses audience divergence only: a new `jti` that diverges from a present `origin_jti`, a changed subject, or the proof's expiry still ends the proof's use for the redeemed token.
+
 If proofs are dropped while receipts remain, inherited `proof_jti` references become informational.  Recipients requiring bound siblings enforce proof presence through `actor_proofs_required`, `actor_proofs_complete_required`, or local policy.
 
 An AS that supports refresh tokens for delegated access tokens carrying proofs:
