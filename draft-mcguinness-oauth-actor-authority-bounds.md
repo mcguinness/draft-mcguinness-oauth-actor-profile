@@ -229,7 +229,7 @@ A receipt MAY omit `bounds` entirely, and a chain MAY mix receipts with and with
 : OPTIONAL.  A JSON object recording that the authority issued at this hop was expanded relative to the inbound authority under an explicit re-authorization.  Members:
 
   `sub`:
-  : REQUIRED.  Identifier of the principal that re-authorized the delegation.  It MUST equal the top-level `sub` of the token issued at this hop, or an upstream subject identifier recorded in the chain.
+  : REQUIRED.  Identifier of the principal or authority that re-authorized the delegation, such as the subject, an approver, or the authority whose policy or agreement applies.  When the subject itself re-authorized, it equals the top-level `sub` of the token issued at this hop.  Recipients evaluate whether to trust the re-authorization under {{reauthorization-abuse}}.
 
   `iss`:
   : REQUIRED.  Identifier of the authorization server or other authority that captured the re-authorization.
