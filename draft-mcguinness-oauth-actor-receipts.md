@@ -374,7 +374,7 @@ An issuer that reissues, translates, or introspects and re-emits a token without
 
 *  MAY carry an `actor_receipts` array received in an inbound token or its introspection response forward unchanged, and MUST first validate it against that token under {{consumer-processing}}, as step 1 of {{extending-an-existing-receipt-chain}} requires for extension.  If the array fails validation, the issuer MUST NOT carry it forward, and MUST fail the request under the error model of the underlying protocol unless local policy permits the issued token to lack it;
 *  MUST NOT create a new receipt;
-*  MUST preserve `actor_receipts_complete` when carrying the array unchanged.  If the issuer cannot attest that value, it MUST drop the array entirely; disclosure is all-or-nothing ({{consumer-introspection}}).
+*  MUST preserve `actor_receipts_complete` when carrying the array unchanged.  An issuer that would change that value MUST drop the array entirely instead; disclosure is all-or-nothing ({{consumer-introspection}}).
 *  MUST NOT continue to carry an inherited `actor_receipts` array if it cannot preserve the visible hop alignment required by {{consumer-processing}};
 *  MUST NOT change top-level `sub` while retaining receipts.  Subject re-expression breaks alignment with `receipt[0].sub` and requires dropping the array.
 *  MUST NOT set the outer token's `exp` later than the earliest `exp` among the retained receipts; an issuer that would set a later `exp` applies the receipt lifetime rule in {{receipt-claims}}.
