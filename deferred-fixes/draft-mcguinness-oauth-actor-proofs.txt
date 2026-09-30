@@ -750,7 +750,10 @@ Table of Contents
        actor identifier pair the issuer will emit as the new outermost
        visible act object, and that the proof iss equals the proof
        act.sub.  Deployment configuration supplies the actor with the
-       act.iss value the issuer will emit.
+       act.iss value the issuer will emit.  When the proof carries
+       act.sub_profile, the issuer MUST verify that it matches, under
+       the set comparison of step 7 of Section 10, the act.sub_profile
+       the issuer emits for the new outermost actor.
 
    3.  MUST verify that the proof sub equals the top-level sub of the
        token being issued.  An issuer that re-expresses the subject at
@@ -906,6 +909,15 @@ Table of Contents
    target keeps the token within the target binding.  A reissued token
    with a new jti diverges from a present actor_proofs[0].origin_jti
    (Section 14.4.1).
+
+   An actor that intends its proof to survive a later redemption without
+   a new hop, for example an Identity Assertion JWT Authorization Grant
+   that a Resource Authorization Server redeems
+   ([I-D.mcguinness-oauth-actor-profile]), can include the known
+   downstream audiences in target.aud, subject to its consent policy.
+   This addresses audience divergence only: a new jti that diverges from
+   a present origin_jti, a changed subject, or the proof's expiry still
+   ends the proof's use for the redeemed token.
 
    If proofs are dropped while receipts remain, inherited proof_jti
    references become informational.  Recipients requiring bound siblings
@@ -1102,7 +1114,11 @@ Table of Contents
 
         *  when act.sub_profile is present in the proof act object, the
            corresponding visible act object MUST contain act.sub_profile
-           with the same value;
+           with the same value.  sub_profile values are compared as
+           sets: the space-delimited values are compared case-
+           insensitively, their order is insignificant, and duplicate
+           values are ignored ([I-D.mora-oauth-entity-profiles],
+           Section 3.3); comparison never rewrites a signed proof;
 
         *  when act.sub_profile is present only in the visible act
            object, the proof remains aligned for this profile.  The
@@ -1720,7 +1736,7 @@ Table of Contents
    therefore evidences consent to that context, not to a particular
    token issuance.
 
-   Available bindings, strongest first:
+   Available bindings:
 
    *  *Receipts composition.* When the token also carries receipts, the
       receipt chain's origin_jti anchoring and strict-mode rules in
@@ -1729,7 +1745,8 @@ Table of Contents
       receipt chain.  A re-embedded proof would require a matching
       fabricated receipt, which the receipt trust model prevents for
       issuers that cannot sign trusted receipts.  This is the
-      RECOMMENDED posture for deployments that require instance binding.
+      RECOMMENDED posture for deployments that already use receipts and
+      require instance binding.
 
    *  *Provisioned origin_jti.* When the issuance flow provides the
       prospective outer-token jti to the actor before signing,
@@ -1743,6 +1760,12 @@ Table of Contents
 
    *  *Short exp.* Bounds the re-embedding window unconditionally, at
       the cost of shorter delegated-session lifetimes (Section 7.2).
+
+   Receipts composition relies on the receipt issuer's assertion linking
+   the proof to the token instance; a provisioned origin_jti records the
+   actor's own consent to that token identifier but needs the identifier
+   provisioned before signing; neither signs the outer token's other
+   contents.
 
    Inner proofs have no independent binding to the current token; they
    are bound to their newer neighbor through prh and inherit whatever
@@ -2320,6 +2343,13 @@ Table of Contents
               <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
               spiffe-client-auth-02>.
 
+   [I-D.mora-oauth-entity-profiles]
+              Mora, S. C., Dingle, P., and K. McGuinness, "OAuth Entity
+              Profiles", Work in Progress, Internet-Draft, draft-mora-
+              oauth-entity-profiles-01, 17 April 2026,
+              <https://www.ietf.org/archive/id/draft-mora-oauth-entity-
+              profiles-01.txt>.
+
 Appendix A.  Examples
 
    The examples in this appendix show decoded proof contents.  Real
@@ -2658,6 +2688,25 @@ Document History
    *  A Transaction Token request made over HTTP carries the proof in
       actor_proof, because it is a Token Exchange request
       ([I-D.ietf-oauth-transaction-tokens], Section 11).
+
+   *  Consumers compare a proof's act.sub_profile with the visible
+      act.sub_profile as a set of case-insensitive values (-00 required
+      the same value), and an issuer accepting a proof that carries
+      act.sub_profile verifies that it matches the act.sub_profile
+      emitted for the new outermost actor.
+
+   *  Replaced the strongest-first ranking of instance bindings with the
+      trust each relies on, and limited the recommendation of receipts
+      composition to deployments that already use receipts.
+
+   *  An actor can include known downstream audiences in target.aud so
+      that its proof survives a later redemption without a new hop; this
+      addresses audience divergence only.
+
+   *  On refresh, an authorization server takes retained proofs from its
+      issuance state: it validates the refresh request per [RFC6749],
+      Section 6 and checks the retained proofs against that state,
+      without requiring the previous access token to remain valid.
 
    -00
 

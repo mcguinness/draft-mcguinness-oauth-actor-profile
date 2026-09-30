@@ -2036,7 +2036,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-8.3-5">Reissuance is the only case in which <code>receipt[0]</code> may legitimately diverge from the current outer-token instance.  Two patterns of divergence are possible:<a href="#section-8.3-5" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.3-6.1">
-            <p id="section-8.3-6.1.1"><strong>Different-issuer reissuance</strong>: <code>receipt[0].iss</code> differs from the outer token's <code>iss</code>, for example when an introspection endpoint operated as a separate trust principal re-emits the token, or a token translator at a domain boundary re-issues it.<a href="#section-8.3-6.1.1" class="pilcrow">¶</a></p>
+            <p id="section-8.3-6.1.1"><strong>Different-issuer reissuance</strong>: <code>receipt[0].iss</code> differs from the outer token's <code>iss</code>, for example when an introspection endpoint operated as a separate trust principal re-emits the token, or a token translator at a domain boundary re-issues it.  A common case is a Resource Authorization Server that redeems an Identity Assertion JWT Authorization Grant (ID-JAG) or other JWT assertion grant (<span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>) without adding a hop: the issued token's <code>iss</code> differs from <code>receipt[0].iss</code>, so recipients accept the chain only when their policy trusts that authorization server as a reissuing issuer (case 4 of <a href="#receipt-instance-binding" class="auto internal xref">Section 9.1</a>) and the actor and subject alignment of steps 7 and 8 of <a href="#consumer-processing" class="auto internal xref">Section 9</a> still hold, and an accepted chain supplies historical provenance without current-instance binding.<a href="#section-8.3-6.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.3-6.2">
             <p id="section-8.3-6.2.1"><strong>Same-issuer reissuance</strong>: <code>receipt[0].iss</code> matches the outer token's <code>iss</code>, but a present <code>receipt[0].origin_jti</code> differs from the outer token's <code>jti</code>, for example when an AS refreshes its own access token.<a href="#section-8.3-6.2.1" class="pilcrow">¶</a></p>
@@ -2193,7 +2193,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-9-2.7.2.4.1">when <code>act.sub_profile</code> is present in the receipt <code>act</code> object, the corresponding visible <code>act</code> object <span class="bcp14">MUST</span> contain <code>act.sub_profile</code> with the same value;<a href="#section-9-2.7.2.4.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.7.2.5">
-              <p id="section-9-2.7.2.5.1">when <code>act.sub_profile</code> is present only in the visible <code>act</code> object, the receipt remains aligned for this profile.  The visible value is not independently attested by that receipt, and recipients that require receipt coverage for actor classification <span class="bcp14">MUST</span> reject the receipt chain or apply explicit local mapping rules.<a href="#section-9-2.7.2.5.1" class="pilcrow">¶</a></p>
+              <p id="section-9-2.7.2.5.1"><code>sub_profile</code> values are compared as sets: the space-delimited values are compared case-insensitively, their order is insignificant, and duplicate values are ignored (<span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mora-oauth-entity-profiles-01#section-3.3" class="relref">Section 3.3</a></span>); comparison never rewrites a signed receipt;<a href="#section-9-2.7.2.5.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-9-2.7.2.6">
+              <p id="section-9-2.7.2.6.1">when <code>act.sub_profile</code> is present only in the visible <code>act</code> object, the receipt remains aligned for this profile.  The visible value is not independently attested by that receipt, and recipients that require receipt coverage for actor classification <span class="bcp14">MUST</span> reject the receipt chain or apply explicit local mapping rules.<a href="#section-9-2.7.2.6.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </li>
@@ -2207,7 +2210,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-9-2.8.2.2.1">when <code>receipt[0].sub_iss</code> is present and the recipient has a top-level subject namespace authority for the outer token's <code>sub</code> from local configuration, an inbound subject token's claims, or another deployment-defined source, the two <span class="bcp14">MUST</span> identify the same namespace authority, evaluated by case-sensitive string comparison; treating lexically distinct identifiers as the same authority requires explicit trusted local mapping rules;<a href="#section-9-2.8.2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.8.2.3">
-              <p id="section-9-2.8.2.3.1">when <code>receipt[0].sub_profile</code> is present and the outer token contains top-level <code>sub_profile</code>, the values <span class="bcp14">MUST</span> match;<a href="#section-9-2.8.2.3.1" class="pilcrow">¶</a></p>
+              <p id="section-9-2.8.2.3.1">when <code>receipt[0].sub_profile</code> is present and the outer token contains top-level <code>sub_profile</code>, the values <span class="bcp14">MUST</span> match under the set comparison of step 7;<a href="#section-9-2.8.2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-9-2.8.2.4">
               <p id="section-9-2.8.2.4.1">when <code>receipt[0].sub_profile</code> is present but the outer token does not contain top-level <code>sub_profile</code>, recipients that require receipt coverage for subject classification <span class="bcp14">MUST</span> reject the receipt chain or apply explicit local mapping rules;<a href="#section-9-2.8.2.4.1" class="pilcrow">¶</a></p>
@@ -3280,8 +3283,12 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <span class="refAuthor">Liu, D.</span>, <span class="refAuthor">Zhu, J.</span>, <span class="refAuthor">Krishnan, S.</span>, and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"Delegation Chain for OAuth 2.0"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-liu-oauth-chain-delegation-00</span>, <time datetime="2026-06-07" class="refDate">7 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-liu-oauth-chain-delegation-00">https://datatracker.ietf.org/doc/html/draft-liu-oauth-chain-delegation-00</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.liu-oauth-authorization-evidence">[I-D.liu-oauth-authorization-evidence]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Liu, D.</span>, <span class="refAuthor">Zhu, J.</span>, <span class="refAuthor">Krishnan, S.</span>, and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"Authorization Evidence and Audit Trail for OAuth 2.0 Access Tokens"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-liu-oauth-authorization-evidence-01</span>, <time datetime="2026-06-22" class="refDate">22 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-liu-oauth-authorization-evidence-01">https://datatracker.ietf.org/doc/html/draft-liu-oauth-authorization-evidence-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.mora-oauth-entity-profiles">[I-D.mora-oauth-entity-profiles]</dt>
+      <dd>
+<span class="refAuthor">Mora, S. C.</span>, <span class="refAuthor">Dingle, P.</span>, and <span class="refAuthor">K. McGuinness</span>, <span class="refTitle">"OAuth Entity Profiles"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mora-oauth-entity-profiles-01</span>, <time datetime="2026-04-17" class="refDate">17 April 2026</time>, <span>&lt;<a href="https://www.ietf.org/archive/id/draft-mora-oauth-entity-profiles-01.txt">https://www.ietf.org/archive/id/draft-mora-oauth-entity-profiles-01.txt</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
@@ -3639,6 +3646,15 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         <li class="normal" id="appendix-B-3.29">
           <p id="appendix-B-3.29.1">The threat model no longer claims that actor-signed proofs address a compromised actor or a compromised outer token issuer; they prevent issuer fabrication of actor participation at proof-covered hops only.<a href="#appendix-B-3.29.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.30">
+          <p id="appendix-B-3.30.1">Receipt and outer-token <code>sub_profile</code> values are now compared as sets: case-insensitively, ignoring order and duplicate values, without rewriting a signed receipt.  -00 required the same value.<a href="#appendix-B-3.30.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.31">
+          <p id="appendix-B-3.31.1">Redemption of an ID-JAG or other JWT assertion grant at a Resource Authorization Server without a new hop is now named as a common case of different-issuer reissuance, accepted only under explicit trusted-reissuer policy and without current-instance binding.<a href="#appendix-B-3.31.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.32">
+          <p id="appendix-B-3.32.1">On refresh, an authorization server takes retained receipts from its issuance state: it validates the refresh request per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-6" class="relref">Section 6</a></span> and checks the retained receipts against that state, without requiring the previous access token to remain valid.<a href="#appendix-B-3.32.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-B-4">-00<a href="#appendix-B-4" class="pilcrow">¶</a></p>

@@ -2000,7 +2000,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-9.1-2.1.1"><span class="bcp14">MUST</span> validate the proof's structure per <a href="#actor-proof-jwt-format" class="auto internal xref">Section 7</a>: <code>typ</code> value, asymmetric <code>alg</code>, presence and JSON types of the <span class="bcp14">REQUIRED</span> claims <code>iss</code>, <code>sub</code>, <code>act</code>, <code>target</code> (including <code>target.aud</code>), <code>iat</code>, <code>exp</code>, and <code>jti</code>, the absence of <code>aud</code>, and the single-hop <code>act</code> rules.<a href="#section-9.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-9.1-2.2">
-            <p id="section-9.1-2.2.1"><span class="bcp14">MUST</span> verify that the proof's (<code>act.iss</code>, <code>act.sub</code>) pair equals the actor identifier pair the issuer will emit as the new outermost visible <code>act</code> object, and that the proof <code>iss</code> equals the proof <code>act.sub</code>.  Deployment configuration supplies the actor with the <code>act.iss</code> value the issuer will emit.<a href="#section-9.1-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-9.1-2.2.1"><span class="bcp14">MUST</span> verify that the proof's (<code>act.iss</code>, <code>act.sub</code>) pair equals the actor identifier pair the issuer will emit as the new outermost visible <code>act</code> object, and that the proof <code>iss</code> equals the proof <code>act.sub</code>.  Deployment configuration supplies the actor with the <code>act.iss</code> value the issuer will emit.  When the proof carries <code>act.sub_profile</code>, the issuer <span class="bcp14">MUST</span> verify that it matches, under the set comparison of step 7 of <a href="#consumer-processing" class="auto internal xref">Section 10</a>, the <code>act.sub_profile</code> the issuer emits for the new outermost actor.<a href="#section-9.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-9.1-2.3">
             <p id="section-9.1-2.3.1"><span class="bcp14">MUST</span> verify that the proof <code>sub</code> equals the top-level <code>sub</code> of the token being issued.  An issuer that re-expresses the subject at this hop <span class="bcp14">MUST NOT</span> embed the proof; re-expression breaks the alignment between <code>actor_proofs[0].sub</code> and the outer token's top-level <code>sub</code> that consumers verify under <a href="#consumer-processing" class="auto internal xref">Section 10</a>.<a href="#section-9.1-2.3.1" class="pilcrow">¶</a></p>
@@ -2087,20 +2087,21 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         </ul>
 <p id="section-9.3-3">If such an issuer changes the visible outermost actor, it has added a new hop and <span class="bcp14">MUST</span> follow <a href="#extending-an-existing-proof-chain" class="auto internal xref">Section 9.2</a>.<a href="#section-9.3-3" class="pilcrow">¶</a></p>
 <p id="section-9.3-4">If reissuance exceeds the newest proof's target, the issuer <span class="bcp14">MUST</span> drop <code>actor_proofs</code> unless deployment agreement designates it, for the recipients of the reissued token, as a trusted reissuing issuer permitted to retarget (<a href="#target-binding-strict-mode" class="auto internal xref">Section 14.4.1</a>).  Narrowing or preserving the target keeps the token within the target binding.  A reissued token with a new <code>jti</code> diverges from a present <code>actor_proofs[0].origin_jti</code> (<a href="#target-binding-strict-mode" class="auto internal xref">Section 14.4.1</a>).<a href="#section-9.3-4" class="pilcrow">¶</a></p>
-<p id="section-9.3-5">If proofs are dropped while receipts remain, inherited <code>proof_jti</code> references become informational.  Recipients requiring bound siblings enforce proof presence through <code>actor_proofs_required</code>, <code>actor_proofs_complete_required</code>, or local policy.<a href="#section-9.3-5" class="pilcrow">¶</a></p>
-<p id="section-9.3-6">An AS that supports refresh tokens for delegated access tokens carrying proofs:<a href="#section-9.3-6" class="pilcrow">¶</a></p>
+<p id="section-9.3-5">An actor that intends its proof to survive a later redemption without a new hop, for example an Identity Assertion JWT Authorization Grant that a Resource Authorization Server redeems (<span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>), can include the known downstream audiences in <code>target.aud</code>, subject to its consent policy.  This addresses audience divergence only: a new <code>jti</code> that diverges from a present <code>origin_jti</code>, a changed subject, or the proof's expiry still ends the proof's use for the redeemed token.<a href="#section-9.3-5" class="pilcrow">¶</a></p>
+<p id="section-9.3-6">If proofs are dropped while receipts remain, inherited <code>proof_jti</code> references become informational.  Recipients requiring bound siblings enforce proof presence through <code>actor_proofs_required</code>, <code>actor_proofs_complete_required</code>, or local policy.<a href="#section-9.3-6" class="pilcrow">¶</a></p>
+<p id="section-9.3-7">An AS that supports refresh tokens for delegated access tokens carrying proofs:<a href="#section-9.3-7" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-9.3-7.1">
-            <p id="section-9.3-7.1.1">needs to retain the <code>actor_proofs</code> array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.<a href="#section-9.3-7.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-9.3-8.1">
+            <p id="section-9.3-8.1.1">needs to retain the <code>actor_proofs</code> array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.<a href="#section-9.3-8.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-9.3-7.2">
-            <p id="section-9.3-7.2.1">takes the array from that retained state rather than from the previous access token: it validates the refresh request per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-6" class="relref">Section 6</a></span>, checks the retained proofs against its issuance state, and does not require the previous access token to remain unexpired or re-run <a href="#consumer-processing" class="auto internal xref">Section 10</a> against it.<a href="#section-9.3-7.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-9.3-8.2">
+            <p id="section-9.3-8.2.1">takes the array from that retained state rather than from the previous access token: it validates the refresh request per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-6" class="relref">Section 6</a></span>, checks the retained proofs against its issuance state, and does not require the previous access token to remain unexpired or re-run <a href="#consumer-processing" class="auto internal xref">Section 10</a> against it.<a href="#section-9.3-8.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-9.3-7.3">
-            <p id="section-9.3-7.3.1">applies the lifetime rule in <a href="#issuer-processing" class="auto internal xref">Section 9</a> to each refreshed access token.  Refresh ends instance binding, so proof <code>exp</code> sizing for refreshed tokens follows the short-<code>exp</code> guidance in <a href="#proof-claims" class="auto internal xref">Section 7.2</a>.<a href="#section-9.3-7.3.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-9.3-8.3">
+            <p id="section-9.3-8.3.1">applies the lifetime rule in <a href="#issuer-processing" class="auto internal xref">Section 9</a> to each refreshed access token.  Refresh ends instance binding, so proof <code>exp</code> sizing for refreshed tokens follows the short-<code>exp</code> guidance in <a href="#proof-claims" class="auto internal xref">Section 7.2</a>.<a href="#section-9.3-8.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-9.3-7.4">
-            <p id="section-9.3-7.4.1">after dropping <code>actor_proofs</code> under that rule, restores actor-signed evidence only through a new delegated issuance that adds a hop with a fresh proof, because refresh adds no actor hop.<a href="#section-9.3-7.4.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-9.3-8.4">
+            <p id="section-9.3-8.4.1">after dropping <code>actor_proofs</code> under that rule, restores actor-signed evidence only through a new delegated issuance that adds a hop with a fresh proof, because refresh adds no actor hop.<a href="#section-9.3-8.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2249,7 +2250,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-10-2.7.2.3.1">and so on for the number of proofs present;<a href="#section-10-2.7.2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-10-2.7.2.4">
-              <p id="section-10-2.7.2.4.1">when <code>act.sub_profile</code> is present in the proof <code>act</code> object, the corresponding visible <code>act</code> object <span class="bcp14">MUST</span> contain <code>act.sub_profile</code> with the same value;<a href="#section-10-2.7.2.4.1" class="pilcrow">¶</a></p>
+              <p id="section-10-2.7.2.4.1">when <code>act.sub_profile</code> is present in the proof <code>act</code> object, the corresponding visible <code>act</code> object <span class="bcp14">MUST</span> contain <code>act.sub_profile</code> with the same value.  <code>sub_profile</code> values are compared as sets: the space-delimited values are compared case-insensitively, their order is insignificant, and duplicate values are ignored (<span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>], <a href="https://datatracker.ietf.org/doc/html/draft-mora-oauth-entity-profiles-01#section-3.3" class="relref">Section 3.3</a></span>); comparison never rewrites a signed proof;<a href="#section-10-2.7.2.4.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-10-2.7.2.5">
               <p id="section-10-2.7.2.5.1">when <code>act.sub_profile</code> is present only in the visible <code>act</code> object, the proof remains aligned for this profile.  The visible value is not attested by the actor, and recipients that require actor-signed evidence for actor classification <span class="bcp14">MUST</span> reject the proof chain or apply explicit local mapping rules.<a href="#section-10-2.7.2.5.1" class="pilcrow">¶</a></p>
@@ -2693,10 +2694,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <a href="#section-14.4" class="section-number selfRef">14.4. </a><a href="#name-proof-to-token-binding-limi" class="section-name selfRef">Proof-to-Token Binding Limits</a>
         </h3>
 <p id="section-14.4-1">Without instance binding, a proof records a subject, actor, target, and validity window.  Any party holding it, including the issuer it was legitimately submitted to, can reuse it in another token matching that context without invalidating its signature.  The signature therefore evidences consent to that context, not to a particular token issuance.<a href="#section-14.4-1" class="pilcrow">¶</a></p>
-<p id="section-14.4-2">Available bindings, strongest first:<a href="#section-14.4-2" class="pilcrow">¶</a></p>
+<p id="section-14.4-2">Available bindings:<a href="#section-14.4-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-14.4-3.1">
-            <p id="section-14.4-3.1.1"><strong>Receipts composition.</strong>  When the token also carries receipts, the receipt chain's <code>origin_jti</code> anchoring and strict-mode rules in <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> bind the token instance, and <code>proof_jti</code> (<a href="#sibling-receipt-issuance" class="auto internal xref">Section 9.6</a>) binds the proof chain to that anchored receipt chain.  A re-embedded proof would require a matching fabricated receipt, which the receipt trust model prevents for issuers that cannot sign trusted receipts.  This is the <span class="bcp14">RECOMMENDED</span> posture for deployments that require instance binding.<a href="#section-14.4-3.1.1" class="pilcrow">¶</a></p>
+            <p id="section-14.4-3.1.1"><strong>Receipts composition.</strong>  When the token also carries receipts, the receipt chain's <code>origin_jti</code> anchoring and strict-mode rules in <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> bind the token instance, and <code>proof_jti</code> (<a href="#sibling-receipt-issuance" class="auto internal xref">Section 9.6</a>) binds the proof chain to that anchored receipt chain.  A re-embedded proof would require a matching fabricated receipt, which the receipt trust model prevents for issuers that cannot sign trusted receipts.  This is the <span class="bcp14">RECOMMENDED</span> posture for deployments that already use receipts and require instance binding.<a href="#section-14.4-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-14.4-3.2">
             <p id="section-14.4-3.2.1"><strong>Provisioned <code>origin_jti</code>.</strong>  When the issuance flow provides the prospective outer-token <code>jti</code> to the actor before signing, <code>actor_proofs[0].origin_jti</code> binds the proof to that token instance directly, per step 9 of <a href="#consumer-processing" class="auto internal xref">Section 10</a>.<a href="#section-14.4-3.2.1" class="pilcrow">¶</a></p>
@@ -2708,7 +2709,8 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-14.4-3.4.1"><strong>Short <code>exp</code>.</strong>  Bounds the re-embedding window unconditionally, at the cost of shorter delegated-session lifetimes (<a href="#proof-claims" class="auto internal xref">Section 7.2</a>).<a href="#section-14.4-3.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-14.4-4">Inner proofs have no independent binding to the current token; they are bound to their newer neighbor through <code>prh</code> and inherit whatever binding <code>actor_proofs[0]</code> has.<a href="#section-14.4-4" class="pilcrow">¶</a></p>
+<p id="section-14.4-4">Receipts composition relies on the receipt issuer's assertion linking the proof to the token instance; a provisioned <code>origin_jti</code> records the actor's own consent to that token identifier but needs the identifier provisioned before signing; neither signs the outer token's other contents.<a href="#section-14.4-4" class="pilcrow">¶</a></p>
+<p id="section-14.4-5">Inner proofs have no independent binding to the current token; they are bound to their newer neighbor through <code>prh</code> and inherit whatever binding <code>actor_proofs[0]</code> has.<a href="#section-14.4-5" class="pilcrow">¶</a></p>
 <div id="target-binding-strict-mode">
 <section id="section-14.4.1">
           <h4 id="name-target-binding-strict-mode">
@@ -3290,8 +3292,12 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <span class="refAuthor">Looker, T.</span>, <span class="refAuthor">Bastian, P.</span>, and <span class="refAuthor">C. Bormann</span>, <span class="refTitle">"OAuth 2.0 Attestation-Based Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-attestation-based-client-auth-11</span>, <time datetime="2026-09-03" class="refDate">3 September 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.ietf-oauth-spiffe-client-auth">[I-D.ietf-oauth-spiffe-client-auth]</dt>
-      <dd>
+        <dd>
 <span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Rose, S.</span>, <span class="refAuthor">Thorgersen, S.</span>, and <span class="refAuthor">N. Cam-Winget</span>, <span class="refTitle">"OAuth SPIFFE Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-spiffe-client-auth-02</span>, <time datetime="2026-06-15" class="refDate">15 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.mora-oauth-entity-profiles">[I-D.mora-oauth-entity-profiles]</dt>
+      <dd>
+<span class="refAuthor">Mora, S. C.</span>, <span class="refAuthor">Dingle, P.</span>, and <span class="refAuthor">K. McGuinness</span>, <span class="refTitle">"OAuth Entity Profiles"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mora-oauth-entity-profiles-01</span>, <time datetime="2026-04-17" class="refDate">17 April 2026</time>, <span>&lt;<a href="https://www.ietf.org/archive/id/draft-mora-oauth-entity-profiles-01.txt">https://www.ietf.org/archive/id/draft-mora-oauth-entity-profiles-01.txt</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>
@@ -3594,6 +3600,18 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 </li>
         <li class="normal" id="appendix-B-3.35">
           <p id="appendix-B-3.35.1">A Transaction Token request made over HTTP carries the proof in <code>actor_proof</code>, because it is a Token Exchange request (<span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11#section-11" class="relref">Section 11</a></span>).<a href="#appendix-B-3.35.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.36">
+          <p id="appendix-B-3.36.1">Consumers compare a proof's <code>act.sub_profile</code> with the visible <code>act.sub_profile</code> as a set of case-insensitive values (-00 required the same value), and an issuer accepting a proof that carries <code>act.sub_profile</code> verifies that it matches the <code>act.sub_profile</code> emitted for the new outermost actor.<a href="#appendix-B-3.36.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.37">
+          <p id="appendix-B-3.37.1">Replaced the strongest-first ranking of instance bindings with the trust each relies on, and limited the recommendation of receipts composition to deployments that already use receipts.<a href="#appendix-B-3.37.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.38">
+          <p id="appendix-B-3.38.1">An actor can include known downstream audiences in <code>target.aud</code> so that its proof survives a later redemption without a new hop; this addresses audience divergence only.<a href="#appendix-B-3.38.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.39">
+          <p id="appendix-B-3.39.1">On refresh, an authorization server takes retained proofs from its issuance state: it validates the refresh request per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-6" class="relref">Section 6</a></span> and checks the retained proofs against that state, without requiring the previous access token to remain valid.<a href="#appendix-B-3.39.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-B-4">-00<a href="#appendix-B-4" class="pilcrow">¶</a></p>

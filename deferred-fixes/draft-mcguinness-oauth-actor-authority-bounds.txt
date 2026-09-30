@@ -123,6 +123,8 @@ Table of Contents
      17.2.  Informative References
    Appendix A.  Examples
      A.1.  Example: Two-Hop Chain with Narrowing Bounds
+     A.2.  Example: Re-Authorization at a Hop
+     A.3.  Example: Expansion Not Covered by Re-Authorization
    Document History
    Author's Address
 
@@ -421,9 +423,13 @@ Table of Contents
       because the effect of a member depends on the API's semantics
       ([RFC9396], Section 6.1).
 
-   For type-specific members the recipient cannot evaluate, the
-   recipient MUST reject verification of that dimension by default, or
-   skip the object's refinement under explicit local policy.  RAR type
+   The common-member rules above apply to objects of a type whose
+   members the recipient can evaluate, because it knows that the type
+   defines no other members, or because it has a refinement rule for
+   them.  For any other type, an object refines another object of the
+   same type only when the two are equal as whole JSON objects (the same
+   member names with equal values; member order is insignificant), and
+   any change requires a type-specific refinement rule.  RAR type
    specifications SHOULD define their own refinement rules; see
    Section 12.
 
@@ -1234,7 +1240,10 @@ Appendix A.  Examples
    token is exchanged at the travel-provider AS, which adds a booking
    tool as the outermost actor.  Because these receipts carry bounds,
    they are different byte strings from the receipts shown in that
-   document's examples and carry their own identifiers.
+   document's examples and carry their own identifiers.  The later
+   examples vary Appendix A.1 and show only the members that change; a
+   token or receipt that changes is a different byte string with its own
+   jti, and the origin_jti or prh that references it changes with it.
 
 A.1.  Example: Two-Hop Chain with Narrowing Bounds
 
@@ -1322,6 +1331,81 @@ A.1.  Example: Two-Hop Chain with Narrowing Bounds
 
    *  Audience changes are recorded without comparison under the default
       audience rules.
+
+A.2.  Example: Re-Authorization at a Hop
+
+   Here Alice completes step-up authentication at the travel-provider AS
+   before it adds the booking tool, so that the tool can also cancel
+   trips.  The outer token's scope is trips:book trips:cancel.
+   actor_receipts[1] is unchanged; actor_receipts[0] records the broader
+   scope in bounds and adds reauthorized:
+
+   {
+     "bounds": {
+       "scope": "trips:book trips:cancel",
+       "aud": ["https://api.travel-provider.example"],
+       "resource": ["https://api.travel-provider.example/bookings"]
+     },
+     "reauthorized": {
+       "sub": "https://idp.enterprise.example/users/alice",
+       "iss": "https://as.travel-provider.example",
+       "method": "step_up",
+       "iat": 1776745140,
+       "dimensions": ["scope"]
+     }
+   }
+
+   The example verifies as follows, for a recipient whose policy trusts
+   the travel-provider AS to record step_up re-authorization for Alice
+   (Section 13.2):
+
+   *  Step 3 of Section 9 skips the scope comparison between the
+      receipts because reauthorized.dimensions lists scope; without that
+      listing, trips:cancel would fail it.
+
+   *  Step 4 passes: the outer token's scope equals the newly recorded
+      scope.
+
+   *  Other dimensions compare as in Appendix A.1.
+
+A.3.  Example: Expansion Not Covered by Re-Authorization
+
+   This variant of Appendix A.2 also records authorization_details on
+   both receipts, and the travel-provider AS widens it without listing
+   it in reauthorized.dimensions.  actor_receipts[1].bounds adds:
+
+   {
+     "authorization_details": [
+       {
+         "type": "trip_booking",
+         "actions": ["read", "book"],
+         "locations": ["https://api.travel-provider.example/bookings"]
+       }
+     ]
+   }
+
+   actor_receipts[0].bounds adds the following member, and the outer
+   token carries it as a top-level claim:
+
+   {
+     "authorization_details": [
+       {
+         "type": "trip_booking",
+         "actions": ["book", "cancel"],
+         "locations": ["https://api.travel-provider.example/bookings"]
+       }
+     ]
+   }
+
+   Step 3 of Section 9 fails for authorization_details:
+   reauthorized.dimensions lists only scope, and the newer object adds
+   the cancel action, so, whether or not the recipient has a refinement
+   rule for trip_booking, it refines no older object (Section 6.4).  The
+   recipient therefore rejects the token's bounds evidence, including
+   the re-authorized scope bound.  The receipt chain remains valid under
+   [I-D.mcguinness-oauth-actor-receipts]; whether the token is
+   acceptable without bounds evidence is local policy, except where step
+   5 applies.
 
 Document History
 

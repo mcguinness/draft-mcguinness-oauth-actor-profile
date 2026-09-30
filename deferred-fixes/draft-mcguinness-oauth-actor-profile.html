@@ -3343,7 +3343,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
             <p id="section-8.2-3.1.1">Validate the signature, <code>iss</code>, <code>aud</code>, and temporal claims per <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>.  If the request path requires actor-profile conformance, including through <code>actor_profile_required: true</code>:<a href="#section-8.2-3.1.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.2-3.1.2.1">
-                <p id="section-8.2-3.1.2.1.1">A token evaluated as delegated <span class="bcp14">MUST</span> carry <code>act</code>, and each actor object the RS relies on <span class="bcp14">MUST</span> include <code>iss</code>.  Otherwise, reject with HTTP 401 <code>invalid_token</code>.<a href="#section-8.2-3.1.2.1.1" class="pilcrow">¶</a></p>
+                <p id="section-8.2-3.1.2.1.1">A token evaluated as delegated <span class="bcp14">MUST</span> carry <code>act</code>, and every actor object in the visible <code>act</code> chain <span class="bcp14">MUST</span> include <code>iss</code>.  Otherwise, reject with HTTP 401 <code>invalid_token</code>.  This is structural validation, not independent authentication of historical actors.<a href="#section-8.2-3.1.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-8.2-3.1.2.2">
                 <p id="section-8.2-3.1.2.2.1">Non-delegated tokens need not carry <code>act</code>.<a href="#section-8.2-3.1.2.2.1" class="pilcrow">¶</a></p>
@@ -3406,7 +3406,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
                 <p id="section-8.3-3.1.2.2.1">With neither <code>act</code> nor <code>iss</code>, the RS <span class="bcp14">MUST</span> determine the issuer through the Transaction Token trust-domain rules and local configuration.<a href="#section-8.3-3.1.2.2.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-8.3-3.1.2.3">
-                <p id="section-8.3-3.1.2.3.1">If the request path requires actor-profile conformance, including through <code>actor_profile_required: true</code>, a token evaluated as delegated <span class="bcp14">MUST</span> carry <code>act</code>, and each actor object the RS relies on <span class="bcp14">MUST</span> include <code>iss</code>.  If either is missing, reject the request.  Non-delegated tokens need not carry <code>act</code>.<a href="#section-8.3-3.1.2.3.1" class="pilcrow">¶</a></p>
+                <p id="section-8.3-3.1.2.3.1">If the request path requires actor-profile conformance, including through <code>actor_profile_required: true</code>, a token evaluated as delegated <span class="bcp14">MUST</span> carry <code>act</code>, and every actor object in the visible <code>act</code> chain <span class="bcp14">MUST</span> include <code>iss</code>.  If either is missing, reject the request.  This is structural validation, not independent authentication of historical actors.  Non-delegated tokens need not carry <code>act</code>.<a href="#section-8.3-3.1.2.3.1" class="pilcrow">¶</a></p>
 </li>
             </ul>
 </li>
@@ -5242,6 +5242,9 @@ Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
 </li>
         <li class="normal" id="appendix-D-3.45">
           <p id="appendix-D-3.45.1">TTS presenter rebind can name the existing outermost actor, the Transaction Token request example uses <code>request_context</code>, and companion introspection response parameters can apply to delegated opaque access tokens.<a href="#appendix-D-3.45.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-D-3.46">
+          <p id="appendix-D-3.46.1">When actor-profile conformance is required, a resource server rejects a delegated token in which any actor object in the visible <code>act</code> chain lacks <code>iss</code>; this is structural validation, not independent authentication of historical actors.<a href="#appendix-D-3.46.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-D-4">-00<a href="#appendix-D-4" class="pilcrow">¶</a></p>

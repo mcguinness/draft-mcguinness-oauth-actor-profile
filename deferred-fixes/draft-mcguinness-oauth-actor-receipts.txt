@@ -825,7 +825,16 @@ Table of Contents
    *  *Different-issuer reissuance*: receipt[0].iss differs from the
       outer token's iss, for example when an introspection endpoint
       operated as a separate trust principal re-emits the token, or a
-      token translator at a domain boundary re-issues it.
+      token translator at a domain boundary re-issues it.  A common case
+      is a Resource Authorization Server that redeems an Identity
+      Assertion JWT Authorization Grant (ID-JAG) or other JWT assertion
+      grant ([I-D.mcguinness-oauth-actor-profile]) without adding a hop:
+      the issued token's iss differs from receipt[0].iss, so recipients
+      accept the chain only when their policy trusts that authorization
+      server as a reissuing issuer (case 4 of Section 9.1) and the actor
+      and subject alignment of steps 7 and 8 of Section 9 still hold,
+      and an accepted chain supplies historical provenance without
+      current-instance binding.
 
    *  *Same-issuer reissuance*: receipt[0].iss matches the outer token's
       iss, but a present receipt[0].origin_jti differs from the outer
@@ -1039,6 +1048,12 @@ Table of Contents
            the corresponding visible act object MUST contain
            act.sub_profile with the same value;
 
+        *  sub_profile values are compared as sets: the space-delimited
+           values are compared case-insensitively, their order is
+           insignificant, and duplicate values are ignored
+           ([I-D.mora-oauth-entity-profiles], Section 3.3); comparison
+           never rewrites a signed receipt;
+
         *  when act.sub_profile is present only in the visible act
            object, the receipt remains aligned for this profile.  The
            visible value is not independently attested by that receipt,
@@ -1060,7 +1075,8 @@ Table of Contents
            local mapping rules;
 
         *  when receipt[0].sub_profile is present and the outer token
-           contains top-level sub_profile, the values MUST match;
+           contains top-level sub_profile, the values MUST match under
+           the set comparison of step 7;
 
         *  when receipt[0].sub_profile is present but the outer token
            does not contain top-level sub_profile, recipients that
@@ -2328,6 +2344,13 @@ Table of Contents
               <https://datatracker.ietf.org/doc/html/draft-liu-oauth-
               authorization-evidence-01>.
 
+   [I-D.mora-oauth-entity-profiles]
+              Mora, S. C., Dingle, P., and K. McGuinness, "OAuth Entity
+              Profiles", Work in Progress, Internet-Draft, draft-mora-
+              oauth-entity-profiles-01, 17 April 2026,
+              <https://www.ietf.org/archive/id/draft-mora-oauth-entity-
+              profiles-01.txt>.
+
 Appendix A.  Examples
 
    The examples in this appendix show decoded receipt contents.  Real
@@ -2736,6 +2759,21 @@ Document History
       a compromised actor or a compromised outer token issuer; they
       prevent issuer fabrication of actor participation at proof-covered
       hops only.
+
+   *  Receipt and outer-token sub_profile values are now compared as
+      sets: case-insensitively, ignoring order and duplicate values,
+      without rewriting a signed receipt.  -00 required the same value.
+
+   *  Redemption of an ID-JAG or other JWT assertion grant at a Resource
+      Authorization Server without a new hop is now named as a common
+      case of different-issuer reissuance, accepted only under explicit
+      trusted-reissuer policy and without current-instance binding.
+
+   *  On refresh, an authorization server takes retained receipts from
+      its issuance state: it validates the refresh request per
+      [RFC6749], Section 6 and checks the retained receipts against that
+      state, without requiring the previous access token to remain
+      valid.
 
    -00
 

@@ -2518,9 +2518,11 @@ Table of Contents
        [RFC9068].  If the request path requires actor-profile
        conformance, including through actor_profile_required: true:
 
-       *  A token evaluated as delegated MUST carry act, and each actor
-          object the RS relies on MUST include iss.  Otherwise, reject
-          with HTTP 401 invalid_token.
+       *  A token evaluated as delegated MUST carry act, and every actor
+          object in the visible act chain MUST include iss.  Otherwise,
+          reject with HTTP 401 invalid_token.  This is structural
+          validation, not independent authentication of historical
+          actors.
 
        *  Non-delegated tokens need not carry act.
 
@@ -2611,9 +2613,11 @@ Table of Contents
 
        *  If the request path requires actor-profile conformance,
           including through actor_profile_required: true, a token
-          evaluated as delegated MUST carry act, and each actor object
-          the RS relies on MUST include iss.  If either is missing,
-          reject the request.  Non-delegated tokens need not carry act.
+          evaluated as delegated MUST carry act, and every actor object
+          in the visible act chain MUST include iss.  If either is
+          missing, reject the request.  This is structural validation,
+          not independent authentication of historical actors.  Non-
+          delegated tokens need not carry act.
 
    2.  When the token carries a top-level presenter-binding claim such
        as cnf, validate the accompanying proof according to the
@@ -4675,6 +4679,11 @@ Document History
       Transaction Token request example uses request_context, and
       companion introspection response parameters can apply to delegated
       opaque access tokens.
+
+   *  When actor-profile conformance is required, a resource server
+      rejects a delegated token in which any actor object in the visible
+      act chain lacks iss; this is structural validation, not
+      independent authentication of historical actors.
 
    -00
 
