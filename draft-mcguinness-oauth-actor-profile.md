@@ -700,7 +700,7 @@ When a Token Exchange request ({{RFC8693}}) presents a JWT assertion grant as th
 
 Apply the continuation or rebind rules in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).  In presenter continuation, step 6 of [Authorization Grant Processing](#jwt-assertion-grants-processing) applies.  In presenter rebind, the new presenter's binding supersedes the grant's: the AS does not perform step 6's match of the request's proof against the grant's top-level `cnf`, and it treats the grant as having no enforced grant-level sender constraint, so the (`iss`, `jti`) single-use rule in step 1 of [Authorization Grant Processing](#jwt-assertion-grants-processing) applies.  The AS still validates any proof that the new presenter's credential profile or the deployment requires, as the rebind rules specify.
 
-After any scope reduction under local policy, the AS MUST apply [JWT Access Token Output](#jwt-access-token-propagation).
+The AS can reduce scope under local policy.  The effective scope of the issued token MUST NOT exceed the grant's effective scope ceiling: the grant's `scope` claim when present, otherwise the scope the AS would authorize if the grant were redeemed directly under [Authorization Grant Processing](#jwt-assertion-grants-processing).  The AS MUST then apply [JWT Access Token Output](#jwt-access-token-propagation).
 
 #### JWT Access Token {#jwt-access-token-as-subject-token}
 
@@ -1029,7 +1029,7 @@ For each accepted input, the TTS MUST apply the rules listed for it in the refer
 
 | Input | Rules applied | Section |
 |-------|---------------|---------|
-| JWT assertion grant | Validation, presenter continuity, and scope reduction | [JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token) |
+| JWT assertion grant | Validation, presenter continuity, and scope ceiling | [JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token) |
 | JWT access token | Validation and extraction | [JWT Access Token as subject_token](#jwt-access-token-as-subject-token) |
 | Transaction Token | Validation and extraction | [Transaction Token as subject_token](#txn-token-as-subject-token) |
 
