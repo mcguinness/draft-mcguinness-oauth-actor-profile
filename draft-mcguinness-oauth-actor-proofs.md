@@ -220,7 +220,7 @@ The JOSE header of an actor proof:
 *  SHOULD include `kid` when the actor's key source publishes multiple verification keys;
 *  MAY include `crit`; a proof whose `crit` header lists an extension header the consumer does not understand is invalid per {{RFC7515, Section 4.1.11}}.
 
-Actors, issuers, and consumers MUST apply the JWT best practices in {{RFC8725}} when creating and validating proofs, except for the audience validation of {{RFC8725, Section 3.9}}, from which this profile departs as described for `aud` in {{proof-claims}}.
+Actors, issuers, and consumers MUST apply the JWT best practices in {{RFC8725}} when creating and validating proofs, except for the audience requirements of {{RFC8725, Section 3.9}}, from which this profile departs by prohibiting `aud` as described in {{proof-claims}}.
 
 ## Proof Claims {#proof-claims}
 
@@ -317,9 +317,9 @@ Proofs define no subject `sub_profile` claim; subject classification remains iss
 ### Excluded Standard Claims
 
 `aud`:
-: NOT RECOMMENDED.  Actors SHOULD omit `aud` from proofs.
+: Prohibited.  Actors MUST NOT include `aud` in a proof, and consumers MUST reject a proof that carries it (step 5 of {{consumer-processing}}).
 
-  Proofs are validated as part of outer-token processing, not as independent JWTs against an audience; the outer token carries the audience scoping for the request, and the actor's consented audiences live in `target.aud`.  This profile diverges from the audience-validation guidance in {{RFC8725}} Section 3.9 on those grounds.  Including `aud` in a proof would create ambiguity between an audience restriction on the proof artifact and the target binding, which are different statements.
+  Proofs are validated as part of outer-token processing, not as independent JWTs against an audience; the outer token carries the audience scoping for the request, and the actor's consented audiences live in `target.aud`.  This profile departs from {{RFC8725, Section 3.9}} on those grounds.  Including `aud` in a proof would create ambiguity between an audience restriction on the proof artifact and the target binding, which are different statements; rejecting it gives the result that {{RFC7519, Section 4.1.3}} requires when the processing principal does not identify itself with the `aud` value.
 
 ### Extension Claims
 
@@ -355,7 +355,7 @@ This section defines how an authorization server or Transaction Token Service ac
 
 When an issuer adds a new outermost actor hop and the token request carries `actor_proof`, the issuer:
 
-1.  MUST validate the proof's structure per {{actor-proof-jwt-format}}: `typ` value, asymmetric `alg`, presence and JSON types of the REQUIRED claims `iss`, `sub`, `act`, `target` (including `target.aud`), `iat`, `exp`, and `jti`, and the single-hop `act` rules.
+1.  MUST validate the proof's structure per {{actor-proof-jwt-format}}: `typ` value, asymmetric `alg`, presence and JSON types of the REQUIRED claims `iss`, `sub`, `act`, `target` (including `target.aud`), `iat`, `exp`, and `jti`, the absence of `aud`, and the single-hop `act` rules.
 2.  MUST verify that the proof's (`act.iss`, `act.sub`) pair equals the actor identifier pair the issuer will emit as the new outermost visible `act` object, and that the proof `iss` equals the proof `act.sub`.
 3.  MUST verify that the proof `sub` equals the top-level `sub` of the token being issued.  An issuer that re-expresses the subject at this hop MUST NOT embed the proof; re-expression breaks the alignment between `actor_proofs[0].sub` and the outer token's top-level `sub` that consumers verify under {{consumer-processing}}.
 4.  MUST resolve the actor's verification key through an actor-key source trusted under the issuer's local policy and validate the proof's signature ({{actor-key-resolution}}).
@@ -456,6 +456,7 @@ An issuer, resource server, or other recipient that relies on `actor_proofs` MUS
     *  reject a proof whose `crit` header lists an extension header the consumer does not understand;
     *  verify that all REQUIRED proof claims are present and have the expected JSON types, including `iss`, `sub`, `act`, `target` with `target.aud`, `iat`, `exp`, and `jti`;
     *  verify that OPTIONAL claims used by this profile have the expected JSON types when present, including `sub_iss`, `target.resource`, `prh`, `prh_alg`, `receipt_jti`, and `origin_jti`;
+    *  reject a proof that carries an `aud` claim ({{proof-claims}});
     *  verify that the proof `act` object is single-hop, contains no nested `act`, and contains no `cnf`, and that the proof `iss` equals the proof `act.sub`;
     *  enforce `exp`, `iat`, and other JWT validity rules.  An expired proof is invalid even for an older hop; only the small clock-skew leeway of {{RFC7519, Section 4.1.4}} applies.
 6.  Verify proof-chain linkage:
@@ -638,7 +639,7 @@ Conflict resolution: when a recipient implements multiple companion profiles who
 
 # Security Considerations
 
-Actor proofs strengthen delegation evidence with actor-side signatures, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}}, except its audience validation for proof JWTs (see `aud` in {{proof-claims}}), apply to systems implementing this profile.
+Actor proofs strengthen delegation evidence with actor-side signatures, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}}, except its audience requirements for proof JWTs (see `aud` in {{proof-claims}}), apply to systems implementing this profile.
 
 ## Threat Model {#threat-model}
 
