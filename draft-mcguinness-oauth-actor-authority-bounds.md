@@ -371,7 +371,7 @@ When requested authority exceeds the recorded bound without re-authorization, th
 | `aud` or `resource` | `invalid_target` ({{RFC8693, Section 2.2.2}}) |
 | `authorization_details` | `invalid_authorization_details` {{RFC9396}} |
 
-When the failure reflects an authorization-policy decision about the actor or delegation rather than a structural failure, an issuer MAY use `actor_unauthorized` as defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}.
+The issuer uses `actor_unauthorized` as defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}} when the failure reflects an actor-authorization decision.  An absent required artifact is an input-validation failure: `invalid_request` on a Token Exchange request, `invalid_grant` on a JWT bearer grant or refresh request.
 
 When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it SHOULD return `invalid_token` per {{RFC6750}} Section 3.1, and SHOULD include an `error_description` identifying bounds-verification failure so operators can distinguish it from generic token validation.
 
