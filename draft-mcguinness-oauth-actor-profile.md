@@ -529,7 +529,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 3.  The AS MUST verify that the JWT `iss` is trusted under local policy to assert the (`act.iss`, `act.sub`) actor identifier pair.
 
-    *  If `act.iss` is absent: reject with `invalid_grant`.
+    *  If `act.iss` is absent: when policy or metadata requires profile conformance, reject with `invalid_grant`; otherwise, apply [Migration and Adoption](#migration-and-adoption).
     *  If the JWT `iss` is not trusted to assert the actor identifier pair: reject with `invalid_grant`.
 
     > Note: See [Validate Outermost Actor](#validate-outermost-actor) for the trust-validation framing and [Trusting Actor Identifier Pairs](#act-iss-authority-guidance) for non-normative examples.
