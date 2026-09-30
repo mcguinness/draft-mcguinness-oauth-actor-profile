@@ -35,6 +35,7 @@ normative:
   RFC7519:
   RFC7521:
   RFC7523:
+  RFC7800:
   RFC8705:
   RFC7662:
   RFC8414:
@@ -264,7 +265,7 @@ act-object = {
 
   The `sub_profile` claim MAY also appear as a top-level JWT claim outside any `act` object to classify the entity type of the token's `sub`; it applies exclusively to `sub` and does not affect `sub_profile` values within `act` objects.  Issuers SHOULD include a top-level `sub_profile` when they can authoritatively classify the subject entity type.
 
-The current presenter's binding is carried in top-level `cnf`; see [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).  Confirmation members inside `act` have no proof-of-possession semantics under this profile.  Per-actor key provenance requires another specification.
+The current presenter's binding is carried in the top-level `cnf` claim ({{RFC7800}}); see [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).  Confirmation members inside `act` have no proof-of-possession semantics under this profile.  Per-actor key provenance requires another specification.
 
 The `client_profile` claim defined in {{I-D.mora-oauth-entity-profiles}} classifies the OAuth client and MUST NOT appear within an `act` object.  Client classification belongs at the top level of the token.  An AS or RS that encounters a `client_profile` member inside an `act` node MAY reject the token or ignore the offending member; it MUST NOT treat it as a valid actor classification.
 
