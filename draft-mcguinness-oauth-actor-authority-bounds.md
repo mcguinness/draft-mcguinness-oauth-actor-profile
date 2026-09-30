@@ -264,14 +264,14 @@ When an issuer adds a new outermost actor hop and creates the receipt for it, an
 1.  MUST determine the issued token's effective `scope`, `aud`, `resource`, and `authorization_details` under the underlying grant rules.
 2.  MUST include in the new receipt's `bounds` each dimension it attests, with each member equal to the effective issued value per {{bounds-claim}}.
 3.  For each monotonic dimension it enforces, MUST verify that the issued value is within the effective inbound value, and, when the inbound token's validated `receipt[0]` carries bounds for the dimension, within that receipt's recorded bound.
-4.  When step 3 fails and the deployment holds an authoritative re-authorization for the expansion, MAY proceed by recording `reauthorized` on the new receipt, listing each expanded dimension in `reauthorized.dimensions`, per {{reauthorized-claim}}; otherwise MUST reject the request under {{error-handling}}.
+4.  When the requested authority would fail step 3, MAY narrow the issued `scope` or `resource` value to fit, as {{RFC6749, Section 3.3}} permits for scope and {{RFC8707, Section 2.2}} leaves acceptable resources to its policy, but does not drop a requested audience; steps 1 to 3 then apply to the narrowed value.  When the deployment holds an authoritative re-authorization for the expansion, it MAY instead proceed by recording `reauthorized` on the new receipt, listing each expanded dimension in `reauthorized.dimensions`, per {{reauthorized-claim}}.  An issuer that does neither, or whose narrowing leaves nothing permitted, MUST reject the request under {{error-handling}}.
 
 ## Reissuance and Refresh Without a New Hop {#reissuance-and-refresh}
 
 Reissuance without a new actor hop creates no receipt, so recorded bounds cannot change through the receipt chain.  This document does not define recording re-authorization between hops; {{extensibility}} lets another specification define it.  An issuer that reissues or refreshes while carrying a bounds-bearing receipt chain forward:
 
 *  MUST NOT issue an outer token whose value for any monotonic dimension exceeds `receipt[0]`'s recorded bound; narrowing further is always permitted;
-*  when the issued value would exceed the recorded bound for a monotonic dimension, even because broader authority was authorized without a new hop (for example, a refresh grant following step-up or an approver widening a governing authority object), MUST fail the request or, where local policy and resource requirements permit absent receipt coverage, drop the inherited `actor_receipts` array and with it the bounds evidence.
+*  when the issued value would exceed the recorded bound for a monotonic dimension, even because broader authority was authorized without a new hop (for example, a refresh grant following step-up or an approver widening a governing authority object), MUST narrow the issued value to fit, fail the request, or, where local policy and resource requirements permit absent receipt coverage, drop the inherited `actor_receipts` array and with it the bounds evidence.
 
 ## Domain Transitions {#domain-transitions}
 
@@ -365,7 +365,7 @@ Bounds validation extends the underlying OAuth or Transaction Token validation. 
 
 When an authorization server or Transaction Token Service rejects a token request because inbound bounds evidence fails validation under {{consumer-processing}} (for example, a monotonicity failure in the inbound chain), it returns an error response per {{RFC6749, Section 5.2}}: `invalid_request` for a Token Exchange request, as {{RFC8693, Section 2.2.2}} requires, or `invalid_grant` for a JWT bearer grant request ({{RFC7523, Section 3.1}}), consistent with the core actor profile's error mapping for actor information that fails validation.
 
-When requested authority exceeds the recorded bound without re-authorization, the issuer SHOULD return:
+When requested authority exceeds the recorded bound without re-authorization and the issuer does not narrow the issued value to fit, or narrowing leaves nothing permitted ({{recording-bounds}}), the issuer SHOULD return:
 
 | Dimension | Error |
 |-----------|-------|
