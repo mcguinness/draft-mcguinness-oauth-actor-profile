@@ -346,7 +346,7 @@ The AS MUST validate the token carrying the inbound delegation chain per the typ
 For the outermost `act` object the AS MUST:
 
 1.  Verify that both `act.sub` and `act.iss` are present.  If either is absent, reject with `invalid_request`.
-2.  Verify that local policy trusts the token issuer to assert (`act.iss`, `act.sub`); otherwise, reject with `invalid_grant`.  This does not make `act.iss` the token issuer or independently authenticate prior hops.  [Trusting Actor Identifier Pairs](#act-iss-authority-guidance) gives examples of this deployment-specific trust decision.
+2.  Verify that local policy trusts the token issuer to assert (`act.iss`, `act.sub`); otherwise, reject with `invalid_request` on a Token Exchange request or `invalid_grant` on a JWT bearer grant request ([Error Responses](#actor-profile-error-responses)).  This does not make `act.iss` the token issuer or independently authenticate prior hops.  [Trusting Actor Identifier Pairs](#act-iss-authority-guidance) gives examples of this deployment-specific trust decision.
 3.  Evaluate delegation under local policy:
 
     *  When [extending the chain](#extend-chain-with-new-actor), the AS MUST confirm that the new actor is authorized to act for `sub`, for example through a grant, consent record, or policy rule.
@@ -357,7 +357,7 @@ For the outermost `act` object the AS MUST:
 
 #### Validate Inner Actors Used for Decisions {#validate-inner-actors-used-for-decisions}
 
-Interoperable processing under this profile is defined around `sub` and the outermost `act.sub`.  If local policy additionally uses an inner `act` object as an input to issuance decisions, the AS MUST validate that entry's `act.sub` and `act.iss` pair and MUST evaluate its delegation relationship, as in [Validate Outermost Actor](#validate-outermost-actor), before using it as a security input.  Failures use that step's errors: `invalid_request` for a missing `act.sub` or `act.iss`, `invalid_grant` when the token issuer is not trusted to assert the identifier pair, and `actor_unauthorized` when the delegation relationship is prohibited or cannot be confirmed.  Such use of inner actors is deployment-specific.
+Interoperable processing under this profile is defined around `sub` and the outermost `act.sub`.  If local policy additionally uses an inner `act` object as an input to issuance decisions, the AS MUST validate that entry's `act.sub` and `act.iss` pair and MUST evaluate its delegation relationship, as in [Validate Outermost Actor](#validate-outermost-actor), before using it as a security input.  Failures use that step's errors: `invalid_request` for a missing `act.sub` or `act.iss`, `invalid_request` on a Token Exchange request or `invalid_grant` on a JWT bearer grant request when the token issuer is not trusted to assert the identifier pair, and `actor_unauthorized` when the delegation relationship is prohibited or cannot be confirmed.  Such use of inner actors is deployment-specific.
 
 #### Carry Prior-Actor Context {#carry-prior-actor-context}
 
@@ -649,8 +649,8 @@ This profile defines three JWT-based `actor_token` credential types.  JWT access
 For JWT `actor_token` inputs, the AS identifies the credential profile as follows:
 
 *  A JWT also presented as `client_assertion` with type `urn:ietf:params:oauth:client-assertion-type:jwt-bearer` is a client assertion when its `sub` equals the authenticating client's `client_id`.
-*  If `sub` differs from `client_id`, the AS MUST NOT classify the JWT as a client assertion solely because it appears in `client_assertion`.  It MUST apply workload credential processing if that profile matches, or reject with `invalid_grant`.
-*  If exactly one supported actor-credential profile cannot be identified, the AS MUST reject with `invalid_grant`.
+*  If `sub` differs from `client_id`, the AS MUST NOT classify the JWT as a client assertion solely because it appears in `client_assertion`.  It MUST apply workload credential processing if that profile matches, or reject with `invalid_request`.
+*  If exactly one supported actor-credential profile cannot be identified, the AS MUST reject with `invalid_request`.
 *  If `client_assertion` and `actor_token` are different JWTs, the AS MUST process each independently.  These disambiguation rules apply only to `actor_token`.
 
 ## Presenter Transition Model {#token-exchange-presenter-model}
@@ -696,7 +696,7 @@ JWT assertion grants, JWT access tokens, and Transaction Tokens are token-state 
 
 #### JWT Assertion Grant {#jwt-assertion-grant-as-subject-token}
 
-When a Token Exchange request ({{RFC8693}}) presents a JWT assertion grant as the `subject_token`, the AS MUST apply the inbound validation rules of [Authorization Grant Processing](#jwt-assertion-grants-processing) to validate the inbound token.  Assertion-grant output construction from that section does not apply; propagation and scope reduction are governed by the rules below and by [JWT Access Token Output](#jwt-access-token-propagation).
+When a Token Exchange request ({{RFC8693}}) presents a JWT assertion grant as the `subject_token`, the AS MUST apply the inbound validation rules of [Authorization Grant Processing](#jwt-assertion-grants-processing) to validate the inbound token.  Assertion-grant output construction from that section does not apply; propagation and scope reduction are governed by the rules below and by [JWT Access Token Output](#jwt-access-token-propagation).  On this Token Exchange path, a failure that section rejects with `invalid_grant` uses `invalid_request` instead ({{RFC8693, Section 2.2.2}}).
 
 Apply the continuation or rebind rules in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).  In presenter continuation, step 6 of [Authorization Grant Processing](#jwt-assertion-grants-processing) applies.  In presenter rebind, the new presenter's binding supersedes the grant's: the AS does not perform step 6's match of the request's proof against the grant's top-level `cnf`, and it treats the grant as having no enforced grant-level sender constraint, so the (`iss`, `jti`) single-use rule in step 1 of [Authorization Grant Processing](#jwt-assertion-grants-processing) applies.  The AS still validates any proof that the new presenter's credential profile or the deployment requires, as the rebind rules specify.
 
@@ -708,7 +708,7 @@ When a Token Exchange request ({{RFC8693}}) presents a JWT access token as the `
 
 1.  The AS MUST validate the inbound JWT access token per {{RFC9068}}: signature, `iss`, `sub`, `exp`, `nbf`, and `jti`.  Because a JWT access token used as `subject_token` was issued for a resource server, its `aud` will not ordinarily include the Token Exchange AS's token endpoint; the AS MUST NOT reject the inbound token solely because its `aud` does not include the AS's token endpoint URI.
 
-2.  The AS MUST verify that the inbound token's `iss` is trusted under local policy to assert the delegation chain it carries.  If not, the AS MUST reject the request with `invalid_grant`.
+2.  The AS MUST verify that the inbound token's `iss` is trusted under local policy to assert the delegation chain it carries.  If not, the AS MUST reject the request with `invalid_request`.
 
 3.  The AS MUST apply the continuation or rebind rules in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).  Without top-level `cnf`, the input can still be used for presenter rebind.
 
@@ -726,9 +726,9 @@ When a Token Exchange request ({{RFC8693}}) presents a Transaction Token as the 
 
     *  With `act`, top-level `iss` MUST be present and the AS MUST validate it as the token issuer.  If `iss` is missing, the AS MUST reject the request with `invalid_request`.
     *  With neither `act` nor `iss`, the AS MUST determine the issuer through the Transaction Token trust-domain rules and local configuration.
-    *  If validation fails or the issuer cannot be established, the AS MUST reject with `invalid_grant`.
+    *  If validation fails or the issuer cannot be established, the AS MUST reject with `invalid_request`.
 
-2.  The AS MUST verify that the Transaction Token issuer identified in step 1 is trusted under local policy.  If not, the AS MUST reject the request with `invalid_grant`.
+2.  The AS MUST verify that the Transaction Token issuer identified in step 1 is trusted under local policy.  If not, the AS MUST reject the request with `invalid_request`.
 
 3.  The AS MUST apply [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation), using the mechanism defined by {{I-D.ietf-oauth-transaction-tokens}} and the deployment profile.  Without a top-level presenter binding, the token can still be used for presenter rebind.
 
@@ -783,9 +783,9 @@ Client binding, cross-client presentation, and cross-AS acceptance policies rema
 
 When a Token Exchange request ({{RFC8693}}) presents a refresh token as the `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:refresh_token`), the AS MUST apply the following steps.
 
-1.  The AS MUST validate the refresh token through its token store or a trusted back-channel to its issuer.  For a token issued by another AS, the AS MUST NOT accept it unless that back-channel provides the subject, client binding, authorized scope, and revocation state.  Signature validation alone is insufficient.  If the token is expired, revoked, or otherwise invalid, the AS MUST reject with `invalid_grant`.
+1.  The AS MUST validate the refresh token through its token store or a trusted back-channel to its issuer.  For a token issued by another AS, the AS MUST NOT accept it unless that back-channel provides the subject, client binding, authorized scope, and revocation state.  Signature validation alone is insufficient.  If the token is expired, revoked, or otherwise invalid, the AS MUST reject with `invalid_request`.
 
-2.  The AS MUST verify that the requesting client or authenticated presenter is authorized to use the refresh token under the refresh token's client-binding, sender-constraint, rotation, and cross-client presentation policy.  If the requester is not authorized to use the refresh token, the AS MUST reject the request with `invalid_grant`.
+2.  The AS MUST verify that the requesting client or authenticated presenter is authorized to use the refresh token under the refresh token's client-binding, sender-constraint, rotation, and cross-client presentation policy.  If the requester is not authorized to use the refresh token, the AS MUST reject the request with `invalid_request`.
 
 3.  The AS MUST extract the subject identity and authorized scope associated with the refresh token from its token store or other trusted refresh-token state.  The `sub` of the user associated with the refresh token becomes `sub` in the issued token.  Top-level `sub_profile` follows [Actor Object Structure](#actor-object-structure), which recommends it when the AS can authoritatively classify the subject entity type.
 
@@ -801,9 +801,9 @@ This document does not standardize whether an AS issues refresh tokens in respon
 
 The following rules apply to every `actor_token` type in this section:
 
-1.  The credential MUST identify the acting party in its top-level `sub`.  If it carries `act`, the AS MUST reject with `invalid_grant`.
+1.  The credential MUST identify the acting party in its top-level `sub`.  If it carries `act`, the AS MUST reject with `invalid_request`.
 2.  After validating the credential, the AS MUST use its `sub` as the new outermost `act.sub` and set `act.iss` to that identifier's issuer or namespace context.
-3.  If `subject_token` carries a chain, the new actor takes precedence over its outermost actor.  Different identities are permitted for presenter rebind.  Local policy MAY require equivalence on paths that only confirm an existing actor; when such a restriction applies and no trusted mapping establishes equivalence, the AS MUST reject with `invalid_grant`.
+3.  If `subject_token` carries a chain, the new actor takes precedence over its outermost actor.  Different identities are permitted for presenter rebind.  Local policy MAY require equivalence on paths that only confirm an existing actor; when such a restriction applies and no trusted mapping establishes equivalence, the AS MUST reject with `invalid_request`.
 
 [Delegation Chain Validation and Construction](#delegation-chain-algorithm) governs nesting of the `subject_token` chain.  Because `actor_token` cannot carry `act`, it contributes no prior chain to merge.
 
@@ -824,13 +824,13 @@ To establish a principal distinct from the OAuth `client_id` as the actor, the r
 
 When a Token Exchange request includes an `actor_token` that is a JWT client assertion, the AS MUST apply the following steps.
 
-1.  The AS MUST validate the `actor_token` per {{RFC7523}}.  If the same JWT is also used as `client_assertion` for client authentication in the same request and this shared validation fails, the AS MUST reject the request with `invalid_client`; otherwise, the AS MUST reject the request with `invalid_grant`.
+1.  The AS MUST validate the `actor_token` per {{RFC7523}}.  If the same JWT is also used as `client_assertion` for client authentication in the same request and this shared validation fails, the AS MUST reject the request with `invalid_client`; otherwise, the AS MUST reject the request with `invalid_request`.
 
-2.  The AS MUST verify that the `actor_token`'s `iss` is a client registered with the AS, that `sub` equals that client's `client_id`, and that local policy permits that client's assertion to be used as an actor credential.  If not, the AS MUST reject the request with `invalid_grant`.
+2.  The AS MUST verify that the `actor_token`'s `iss` is a client registered with the AS, that `sub` equals that client's `client_id`, and that local policy permits that client's assertion to be used as an actor credential.  If not, the AS MUST reject the request with `invalid_request`.
 
 3.  The AS MUST derive the outermost actor and handle any inbound chain as specified in [Actor Tokens](#actor-tokens).
 
-4.  When the `actor_token` is the same JWT presented as `client_assertion` for client authentication in the same request, the AS MAY derive the actor identity from the already-authenticated client context rather than re-validating the `actor_token` separately, provided the result is an identical `act.sub` value.  Actor-profile-specific policy failures that occur after successful client authentication are still `invalid_grant`, not `invalid_client`.
+4.  When the `actor_token` is the same JWT presented as `client_assertion` for client authentication in the same request, the AS MAY derive the actor identity from the already-authenticated client context rather than re-validating the `actor_token` separately, provided the result is an identical `act.sub` value.  Actor-profile-specific policy failures that occur after successful client authentication are `invalid_request`, not `invalid_client`.
 
 5.  When the request uses this client assertion to establish a sender-constrained output token in presenter-rebind mode, the AS MUST validate any proof required by the selected proof mechanism for the new presenter per [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).
 
@@ -851,13 +851,13 @@ The recommended pattern for agentic Token Exchange is:
 
 When a Token Exchange request ({{RFC8693}}) includes an `actor_token` that is a workload identity credential, the AS MUST apply the following steps.
 
-1.  The AS MUST validate the workload identity credential per its type specification.  For WIMSE workload identity credentials ({{I-D.ietf-wimse-workload-creds}}), validation follows the rules defined in that specification.  If validation fails, the AS MUST reject the request with `invalid_grant`.
+1.  The AS MUST validate the workload identity credential per its type specification.  For WIMSE workload identity credentials ({{I-D.ietf-wimse-workload-creds}}), validation follows the rules defined in that specification.  If validation fails, the AS MUST reject the request with `invalid_request`.
 
-2.  The AS MUST verify that the workload credential's issuer (`iss`) is trusted under local policy to assert the workload's identity.  If not, the AS MUST reject the request with `invalid_grant`.
+2.  The AS MUST verify that the workload credential's issuer (`iss`) is trusted under local policy to assert the workload's identity.  If not, the AS MUST reject the request with `invalid_request`.
 
 3.  The AS MUST derive the outermost actor and handle any inbound chain as specified in [Actor Tokens](#actor-tokens).
 
-4.  The AS MUST validate any proof the workload-credential profile requires, such as a WIMSE Workload Proof Token (WPT, {{I-D.ietf-wimse-wpt}}) per its specification, whether or not the output token is sender-constrained.  When the request uses this credential to establish a sender-constrained output token in presenter-rebind mode, the AS MUST also validate proof for the new presenter binding: the WPT, or a DPoP proof ({{RFC9449}}) over the token endpoint URI when the credential carries `cnf.jkt`.  If a required proof is absent or invalid, the AS MUST reject the request with `invalid_grant`.
+4.  The AS MUST validate any proof the workload-credential profile requires, such as a WIMSE Workload Proof Token (WPT, {{I-D.ietf-wimse-wpt}}) per its specification, whether or not the output token is sender-constrained.  When the request uses this credential to establish a sender-constrained output token in presenter-rebind mode, the AS MUST also validate proof for the new presenter binding: the WPT, or a DPoP proof ({{RFC9449}}) over the token endpoint URI when the credential carries `cnf.jkt`.  If a required proof is absent or invalid, the AS MUST reject the request with `invalid_request`.
 
 
 ### JWT Access Token {#jwt-access-token-as-actor-token}
@@ -870,9 +870,9 @@ A non-delegated JWT access token may be presented as `actor_token` to establish 
 
 When a Token Exchange request includes an `actor_token` that is a JWT access token (`actor_token_type=urn:ietf:params:oauth:token-type:access_token`), the AS MUST apply the following steps.  Use of an opaque access token as the `actor_token` is outside the interoperable scope of this profile (see [Profile Scope](#profile-scope)).
 
-1.  The AS MUST validate the `actor_token` per {{RFC9068}}.  If validation fails, the AS MUST reject the request with `invalid_grant`.
+1.  The AS MUST validate the `actor_token` per {{RFC9068}}.  If validation fails, the AS MUST reject the request with `invalid_request`.
 
-2.  The AS MUST verify that the `actor_token`'s `iss` is trusted under local policy to assert the acting party's identity in the top-level `sub`.  If trust cannot be established, the AS MUST reject the request with `invalid_grant`.
+2.  The AS MUST verify that the `actor_token`'s `iss` is trusted under local policy to assert the acting party's identity in the top-level `sub`.  If trust cannot be established, the AS MUST reject the request with `invalid_request`.
 
 3.  The AS MUST derive the outermost actor and handle any inbound chain as specified in [Actor Tokens](#actor-tokens), including rejecting an `actor_token` that carries `act`.
 
@@ -920,7 +920,7 @@ When the output is a JWT access token, the issued token MUST satisfy [JWT Access
 
 For a sender-constrained output, the AS MUST set top-level `cnf` according to [Presenter Transition Model](#token-exchange-presenter-model): retain the presenter's binding in continuation mode, or bind to the new presenter in rebind mode.  The latter also supports bearer-to-PoP upgrades.
 
-If a Token Exchange request explicitly seeks a delegated output, for example by supplying an `actor_token` or by presenting a `subject_token` that already carries `act`, and the AS cannot validate the actor information, it MUST reject the request with `invalid_grant`.  If the AS can validate the actor information but cannot establish or confirm the required delegation basis, or if local policy prohibits the relationship, it MUST reject the request with `actor_unauthorized`.  The AS MUST NOT issue a non-delegated token in place of the requested delegated output.
+If a Token Exchange request explicitly seeks a delegated output, for example by supplying an `actor_token` or by presenting a `subject_token` that already carries `act`, and the AS cannot validate the actor information, it MUST reject the request with `invalid_request`.  If the AS can validate the actor information but cannot establish or confirm the required delegation basis, or if local policy prohibits the relationship, it MUST reject the request with `actor_unauthorized`.  The AS MUST NOT issue a non-delegated token in place of the requested delegated output.
 
 1.  The AS includes or omits `act` as required by [Delegation Chains](#delegation-chains), and does not silently drop inbound actor information ([Omit `act`](#omit-act)).
 
@@ -928,7 +928,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 3.  The AS MUST construct the `act` claim using the construction decision order in [Delegation Chain Validation and Construction](#delegation-chain-algorithm): extend with a new actor, preserve an existing chain, or omit `act`, in that order.  Inherited actors are not rewritten, as [Extend Chain with New Actor](#extend-chain-with-new-actor) and [Preserve Inbound Chain](#preserve-inbound-chain) require.  An actor derived from `actor_token` is asserted by the issuing AS; consumers MUST NOT infer that it was present in the `subject_token` or endorsed by its issuer.
 
-4.  The AS MUST reject if actor validation fails or the resulting chain exceeds the depth limit.  It MUST use `invalid_request` for excessive depth or an inbound actor missing `act.sub` or `act.iss`, and `invalid_grant` for validation failures.  It MUST NOT issue a partially preserved chain.
+4.  The AS MUST reject if actor validation fails or the resulting chain exceeds the depth limit.  It MUST use `invalid_request` for excessive depth, for an inbound actor missing `act.sub` or `act.iss`, and for other validation failures on a Token Exchange request, and `invalid_grant` for other validation failures on a JWT bearer grant request.  It MUST NOT issue a partially preserved chain.
 
 5.  Top-level `sub_profile` follows [Actor Object Structure](#actor-object-structure), which recommends it when the AS can authoritatively classify the token's `sub` entity type.  When the AS carries a trusted inbound top-level `sub_profile` into the issued token, it MUST preserve its unrecognized but syntactically valid values, because dropping a value can remove a classification that a downstream recipient restricts on.
 
@@ -1060,10 +1060,10 @@ When a TTS receives a token-exchange request to issue or refresh a Transaction T
 
 5.  The TTS MUST determine whether the request is presenter continuation or presenter rebind:
 
-    *  **Presenter continuation**: The TTS MUST authenticate the requester as the same current presenter as the inbound token.  When the inbound token carries `act`, the authenticated requester MUST correspond to the outermost (`act.iss`, `act.sub`) pair or the TTS MUST reject the request with `invalid_grant`.  If the required actor relationship is prohibited by local policy, absent, or cannot be confirmed from the current inputs and policy, the TTS MUST reject the request with `actor_unauthorized`.
+    *  **Presenter continuation**: The TTS MUST authenticate the requester as the same current presenter as the inbound token.  When the inbound token carries `act`, the authenticated requester MUST correspond to the outermost (`act.iss`, `act.sub`) pair or the TTS MUST reject the request with `invalid_request`.  If the required actor relationship is prohibited by local policy, absent, or cannot be confirmed from the current inputs and policy, the TTS MUST reject the request with `actor_unauthorized`.
     *  **Presenter rebind**: The TTS MUST validate a direct presenter `actor_token` for the new presenter.  Before creating a new outermost `act` object, the TTS MUST evaluate whether the newly authenticated presenter is authorized under local policy to act on behalf of `sub` for the requested transaction.  If the required actor relationship is prohibited by local policy, absent, or cannot be confirmed from the current inputs and policy, the TTS MUST reject the request with `actor_unauthorized`.
 
-    If the current inputs satisfy neither presenter-continuation nor presenter-rebind requirements, the TTS MUST reject the request with `invalid_grant`.
+    If the current inputs satisfy neither presenter-continuation nor presenter-rebind requirements, the TTS MUST reject the request with `invalid_request`.
 
 6.  When the issued Transaction Token carries delegated actor information, it includes the top-level `iss` claim required by [Transaction Tokens](#transaction-tokens), identifying the TTS as its issuer, and the TTS MUST construct the `act` claim using [Delegation Chain Validation and Construction](#delegation-chain-algorithm).  In summary:
 
@@ -1198,18 +1198,18 @@ Resource servers that cache introspection responses for delegated tokens should 
 
 # Error Responses {#actor-profile-error-responses}
 
-When an AS or TTS rejects a request under this profile for reasons related to actor-profile processing, its error response follows {{RFC6749, Section 5.2}} and {{RFC8693, Section 2.2}}.  These error codes do not override `invalid_client` when a request fails client authentication per {{RFC6749}} or {{RFC7523}}.
+When an AS or TTS rejects a request under this profile for reasons related to actor-profile processing, its error response follows {{RFC6749, Section 5.2}}.  On Token Exchange requests, including TTS requests, an invalid or policy-unacceptable `subject_token` or `actor_token` uses `invalid_request`, as {{RFC8693, Section 2.2.2}} requires; on JWT bearer grant requests, an invalid grant uses `invalid_grant`, as {{RFC7523, Section 3.1}} requires.  These error codes do not override `invalid_client` when a request fails client authentication per {{RFC6749}} or {{RFC7523}}.
 
 The following errors apply to both AS and TTS endpoints:
 
 | Error | Condition |
 |-------|-----------|
-| `invalid_request` | Invalid actor structure, missing required claim, or excessive chain depth |
-| `invalid_grant` | Invalid credential, untrusted issuer, failed actor validation, or failed presenter proof |
+| `invalid_request` | Invalid actor structure, missing required claim, or excessive chain depth; on a Token Exchange request, also an invalid credential, untrusted issuer, failed actor validation, or failed presenter proof ({{RFC8693, Section 2.2.2}}) |
+| `invalid_grant` | On a JWT bearer grant request ({{RFC7523, Section 3.1}}): invalid grant, untrusted issuer, failed actor validation, or failed grant proof |
 | `invalid_scope` | No effective scope remains for reasons other than categorical actor denial |
 | `actor_unauthorized` | Actor policy prohibits the request, rejects the actor type, or cannot confirm the required delegation relationship |
 
-Missing required claims include `act.sub`, `act.iss`, the binding claim of a sender-constrained JWT assertion grant, and top-level `iss` on a delegated Transaction Token.  TTS failures to preserve the subject or to trust inbound actor identifiers also use `invalid_grant`.  Mechanism-specific proof errors, such as `invalid_dpop_proof`, follow the applicable processing section.
+Missing required claims include `act.sub`, `act.iss`, the binding claim of a sender-constrained JWT assertion grant, and top-level `iss` on a delegated Transaction Token.  TTS failures to preserve the subject or to trust inbound actor identifiers also use `invalid_request`.  Mechanism-specific proof errors, such as `invalid_dpop_proof`, follow the applicable processing section.
 
 The `error_description` field SHOULD be included and SHOULD describe which aspect of actor-profile processing failed, to the extent permitted by the server's security and privacy policy.  Some `actor_unauthorized` failures are recoverable by using a different actor credential, actor type, or delegation grant; others are definitive local-policy prohibitions.
 
