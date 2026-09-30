@@ -1089,14 +1089,20 @@ The single proof covers the outermost hop:
 * An issuer now drops inherited proofs when reissuance exceeds any part of the newest proof's target, not only its audience.
 * Distinguished a mismatched `origin_jti`, which consumer processing rejects unless the outer issuer is a trusted reissuer, from an absent one.
 * Removed an example claim that receipt composition stops a compromised issuer from re-embedding a proof.
-* Reconciled `exp` guidance, aligned expiry handling with {{RFC7519}}, and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
+* Reconciled `exp` guidance and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
+* An expired proof, including one for an older hop, is now invalid; only the clock-skew leeway of {{RFC7519, Section 4.1.4}} applies.
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
-* Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, {{RFC8725}} applies except its audience validation, and Strict Mode governs every divergence.
+* Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, and Strict Mode governs every divergence.
 * Removed the unconditional recommendation for short proof `exp` in favor of the claim's conditional sizing rule.
-* Aligned subject-continuity handling, the introspection partial-coverage flag, and the proof actor object's `sub_profile` rule with Receipts.
+* Aligned subject-continuity handling and the proof actor object's `sub_profile` rule with Receipts.
+* An introspection server that returns a stored array it knows has partial coverage is now required to include `actor_proofs_complete: false`.
 * Used the base profile's example identifiers for the travel assistant and booking tool.
 * Clarified that proof actor-object restrictions apply separately from confirmation extensions in the token's actor chain.
-* Restored the Introduction's defining sentence and design-center list, and the list of what this document defines.
+* Prohibited `aud` in proofs (-00 discouraged it); consumers reject a proof that carries it, and {{RFC8725}} applies except {{RFC8725, Section 3.9}}.
+* A reissuer that carries proofs forward, including an AS refreshing a token, cannot set the outer token's `exp` later than the earliest proof `exp`; a reissuer that needs a later `exp` drops the array, or fails the request when actor-signed evidence is required.
+* Proof validation failures on Token Exchange requests now use `invalid_request`, as {{RFC8693, Section 2.2.2}} requires; JWT bearer grant requests use `invalid_grant` ({{RFC7523, Section 3.1}}).
+* A resource indicator is within a proof's target binding only when it equals an entry of `target.resource`.
+* Named the IETF, rather than the IESG, as change controller for the claim, parameter, metadata, and introspection registrations.
 
 -00
 
