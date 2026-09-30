@@ -1170,7 +1170,7 @@ When the resource server evaluates a Transaction Token as a delegated token unde
 
 5.  Optionally traverse inner `act` objects to audit the full delegation chain.  If the RS relies on inner `act` objects for audit, policy refinement, or trust decisions, it MUST do so only under the prior-actor context rules in [Carry Prior-Actor Context](#carry-prior-actor-context).
 
-6.  If any of the above steps fail, the RS MUST reject the request according to the Transaction Token mechanism in use and local deployment profile.  Validation or presenter-proof failures are token-validation failures; actor-policy failures required by local policy are authorization failures.  The RS MUST NOT include actor-specific rejection details in error responses exposed outside the trust domain.
+6.  If any of the above steps fail, the RS MUST reject the request through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.  Validation or presenter-proof failures are token-validation failures; actor-policy failures required by local policy are authorization failures.  The RS MUST NOT include actor-specific rejection details in error responses exposed outside the trust domain.
 
 ## Token Introspection {#token-introspection}
 
