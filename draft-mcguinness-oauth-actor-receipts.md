@@ -1175,13 +1175,21 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * Gathered the receipt instance-binding rules for `origin_jti`, strict mode, and reissuance into one section.
 * Defined reissuance divergence as a mismatch between `receipt[0]` and the outer token's `iss` or `jti`.
 * Clarified that the claim-pair naming convention and its metadata apply to companion profiles that define parallel per-hop artifact arrays.
-* Reconciled `exp` guidance, aligned expiry handling with {{RFC7519}}, and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
+* Receipt `exp` now has a floor: no earlier than the `exp` of the outer token issued with it.  Covering the lifetime of tokens that inherit the receipt is now recommended rather than required.
+* An expired receipt is now invalid even for an older hop, with only the clock-skew leeway of {{RFC7519, Section 4.1.4}}; -00 only recommended rejection and let local policy allow a margin.
+* A reissuer that carries receipts forward cannot set the outer token's `exp` later than the earliest receipt `exp`; a reissuer that needs a later `exp` drops the array.
+* Refresh beyond the bounded delegated-session lifetime now stops emitting receipts, or fails when local policy requires them.  Refresh no longer starts a new receipt chain; that requires a new delegated issuance that adds a hop.
+* Removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
-* Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, {{RFC8725}} applies except its audience validation, introspection flags known partial coverage, and subject continuity allows namespace-aware matching or trusted mapping.
+* Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, and subject continuity allows namespace-aware matching or trusted mapping.
+* Prohibited `aud` in receipts (-00 discouraged it); consumers reject a receipt that carries it, and {{RFC8725}} applies except {{RFC8725, Section 3.9}}.
+* An introspection server that returns a stored array it knows has partial coverage is now required to include `actor_receipts_complete: false`.
+* Stated how filtering the visible `act` chain interacts with all-or-nothing receipt disclosure.
+* Receipt validation failures on Token Exchange requests now use `invalid_request`, as {{RFC8693, Section 2.2.2}} requires; JWT bearer grant requests use `invalid_grant` ({{RFC7523, Section 3.1}}).
+* Named the IETF, rather than the IESG, as change controller for the claim, metadata, and introspection registrations.
 * A recipient that requires instance binding rejects any chain not bound by a matching leading `origin_jti`, and the completeness assurances share one home.
 * Used the base profile's example identifiers for the travel assistant and booking tool.
 * Clarified that receipt actor-object restrictions apply separately from the token's actor chain, and that historical binding comes from the issued token's top-level `cnf`.
-* Restored the Introduction's defining sentence and design-center list, and the list of what this document defines.
 
 -00
 
