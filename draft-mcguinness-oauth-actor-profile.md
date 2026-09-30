@@ -1373,7 +1373,7 @@ This document defines current-token delegated identity while leaving room for co
 
 A companion profile layered on top of this one:
 
-*  MAY define additional top-level JWT claims, OAuth metadata parameters, or introspection response parameters that apply only when a token already conforms to this profile;
+*  MAY define additional top-level JWT claims, OAuth metadata parameters, or introspection response parameters that apply only to a token that conforms to this profile or to an introspection response for a delegated opaque access token under [Token Introspection](#token-introspection);
 *  MUST preserve the meanings of the token's top-level `sub`, the outermost `act.sub`, the (`act.iss`, `act.sub`) actor identifier pair, the nested `act` chain ordering, and the top-level `cnf` claim for the current presenter;
 *  MUST NOT reinterpret `act.iss`, nested `act` objects, or the top-level `cnf` claim as independently trusted prior-hop provenance artifacts;
 *  SHOULD define any supplementary provenance, receipt, or chain-wide state in separate top-level claims or equivalent companion mechanisms rather than by overloading members inside inherited `act` objects;
