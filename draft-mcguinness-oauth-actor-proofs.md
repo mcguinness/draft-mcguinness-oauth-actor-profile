@@ -400,7 +400,7 @@ If inbound proofs fail validation, the issuer MUST NOT propagate them.  It MAY c
 
 An issuer that reissues, translates, or introspects and re-emits a token without adding a new outermost actor hop:
 
-*  MAY carry an `actor_proofs` array received in an inbound token or its introspection response forward unchanged, and MUST first validate it against that token under {{consumer-processing}}, as step 1 of {{extending-an-existing-proof-chain}} requires for extension.  If the array fails validation, the issuer MUST NOT carry it forward, and MUST fail the request under the error model of the underlying protocol unless local policy permits the issued token to lack it;
+*  MAY carry an `actor_proofs` array received in an inbound token or its introspection response forward unchanged, and MUST first validate it against that token under {{consumer-processing}}, as step 1 of {{extending-an-existing-proof-chain}} requires for extension; an array the issuer retained across refresh follows the refresh rules below instead.  If the array fails validation, the issuer MUST NOT carry it forward, and MUST fail the request under the error model of the underlying protocol unless local policy permits the issued token to lack it;
 *  MUST NOT accept or embed a new proof, and MUST reject with `invalid_request` ({{RFC6749, Section 5.2}}) a request that carries an `actor_proof` parameter;
 *  MUST preserve `actor_proofs_complete` when carrying the array unchanged.  If it cannot attest that value, the issuer MUST drop the whole array.
 *  MUST NOT continue to carry an inherited `actor_proofs` array if it cannot preserve the visible hop alignment required by {{consumer-processing}};
@@ -416,6 +416,7 @@ If proofs are dropped while receipts remain, inherited `proof_jti` references be
 An AS that supports refresh tokens for delegated access tokens carrying proofs:
 
 *  needs to retain the `actor_proofs` array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.
+*  takes the array from that retained state rather than from the previous access token: it validates the refresh request per {{RFC6749, Section 6}}, checks the retained proofs against its issuance state, and does not require the previous access token to remain unexpired or re-run {{consumer-processing}} against it.
 *  applies the lifetime rule in {{issuer-processing}} to each refreshed access token.  Refresh ends instance binding, so proof `exp` sizing for refreshed tokens follows the short-`exp` guidance in {{proof-claims}}.
 *  after dropping `actor_proofs` under that rule, restores actor-signed evidence only through a new delegated issuance that adds a hop with a fresh proof, because refresh adds no actor hop.
 
