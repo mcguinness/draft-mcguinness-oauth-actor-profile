@@ -434,7 +434,10 @@ Table of Contents
       subset, and identifier equal; a common member present in the ad_b
       object but absent from the ad_a object is expansion and fails the
       comparison, and one absent from the ad_b object but present in the
-      ad_a object is narrowing.
+      ad_a object also fails the comparison unless the refinement rules
+      for that type establish that it preserves or narrows authority,
+      because the effect of a member depends on the API's semantics
+      ([RFC9396], Section 6.1).
 
    For type-specific members the recipient cannot evaluate, the
    recipient MUST reject verification of that dimension by default, or
