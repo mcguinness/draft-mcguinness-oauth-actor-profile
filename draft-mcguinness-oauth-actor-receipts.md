@@ -432,11 +432,11 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
 4.  Verify that the number of receipts does not exceed the visible actor-chain depth of the outer token.  If the outer token carries `actor_receipts_complete: true`, verify that the receipt count exactly equals the visible actor-chain depth; if it does not, the check fails.
 5.  For each receipt, in array order:
     *  parse the string as a compact JWT;
+    *  verify that `typ` equals `actor-receipt+jwt`;
     *  verify that the receipt issuer is within the recipient's pre-configured trusted-issuer set before performing any network retrieval for that issuer's metadata or keys;
+    *  verify that the JOSE header uses an asymmetric digital-signature `alg` value accepted for that receipt issuer, and reject receipts that use `alg: none` or a MAC-based symmetric algorithm;
     *  resolve the signing key from the receipt issuer's authorization server metadata `jwks_uri` {{RFC8414}} (where the receipt issuer is identified by the receipt's `iss` claim, which may differ from the outer token's issuer) or from local configuration;
     *  validate the JWT signature;
-    *  verify that the JOSE header uses an asymmetric digital-signature `alg` value accepted for that receipt issuer, and reject receipts that use `alg: none` or a MAC-based symmetric algorithm;
-    *  verify that `typ` equals `actor-receipt+jwt`;
     *  reject a receipt whose `crit` header lists an extension header the consumer does not understand;
     *  verify that all REQUIRED receipt claims are present and have the expected JSON types, including `iss`, `sub`, `act`, `iat`, `exp`, and `jti`;
     *  verify that OPTIONAL claims used by this profile have the expected JSON types when present, including `sub_iss`, `sub_profile`, `cnf`, `prh`, `prh_alg`, and `origin_jti`;
