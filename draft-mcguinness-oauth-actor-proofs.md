@@ -729,12 +729,14 @@ Actor keys, like receipt-issuer trust, are not transitive: each proof is validat
 
 Without instance binding, a proof records a subject, actor, target, and validity window.  Any party holding it, including the issuer it was legitimately submitted to, can reuse it in another token matching that context without invalidating its signature.  The signature therefore evidences consent to that context, not to a particular token issuance.
 
-Available bindings, strongest first:
+Available bindings:
 
-*  **Receipts composition.**  When the token also carries receipts, the receipt chain's `origin_jti` anchoring and strict-mode rules in {{I-D.mcguinness-oauth-actor-receipts}} bind the token instance, and `proof_jti` ({{sibling-receipt-issuance}}) binds the proof chain to that anchored receipt chain.  A re-embedded proof would require a matching fabricated receipt, which the receipt trust model prevents for issuers that cannot sign trusted receipts.  This is the RECOMMENDED posture for deployments that require instance binding.
+*  **Receipts composition.**  When the token also carries receipts, the receipt chain's `origin_jti` anchoring and strict-mode rules in {{I-D.mcguinness-oauth-actor-receipts}} bind the token instance, and `proof_jti` ({{sibling-receipt-issuance}}) binds the proof chain to that anchored receipt chain.  A re-embedded proof would require a matching fabricated receipt, which the receipt trust model prevents for issuers that cannot sign trusted receipts.  This is the RECOMMENDED posture for deployments that already use receipts and require instance binding.
 *  **Provisioned `origin_jti`.**  When the issuance flow provides the prospective outer-token `jti` to the actor before signing, `actor_proofs[0].origin_jti` binds the proof to that token instance directly, per step 9 of {{consumer-processing}}.
 *  **`jti` uniqueness monitoring.**  Recipients and audit pipelines MAY track proof `jti` values and flag the same proof appearing in more than one outer-token instance.  This is stateful and deployment-specific; this document does not define the mechanism.
 *  **Short `exp`.**  Bounds the re-embedding window unconditionally, at the cost of shorter delegated-session lifetimes ({{proof-claims}}).
+
+Receipts composition relies on the receipt issuer's assertion linking the proof to the token instance; a provisioned `origin_jti` records the actor's own consent to that token identifier but needs the identifier provisioned before signing; neither signs the outer token's other contents.
 
 Inner proofs have no independent binding to the current token; they are bound to their newer neighbor through `prh` and inherit whatever binding `actor_proofs[0]` has.
 
