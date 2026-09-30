@@ -285,7 +285,7 @@ Delegation chains MUST use nested `act` objects as specified in {{RFC8693, Secti
 This document uses the following terminology consistently:
 
 *  A **hop** is a single `act` object in a delegation chain.  The number of hops in a chain equals the chain's delegation depth.
-*  A **visible hop** is a hop that appears in the token's `act` chain as received by a recipient, after any filtering by an introspection server or upstream issuer.
+*  A **visible hop** is a hop that appears in the token's `act` chain as received by a recipient, after any filtering by an introspection server.
 *  A **single-hop actor object** is an `act` object with no nested `act`; it represents delegation depth 1.
 *  An **inbound delegation chain** is the complete `act` structure received in an inbound token, whether depth 1 or greater.
 *  A **preserved delegation chain** is an inbound delegation chain that an issuer has validated and copied into a newly issued token without rewriting inherited actor entries.
