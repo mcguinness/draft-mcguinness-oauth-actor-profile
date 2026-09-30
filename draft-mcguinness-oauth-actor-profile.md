@@ -1281,6 +1281,7 @@ The following parameters are defined for use in the AS metadata document ({{RFC8
 
      -  `urn:ietf:params:oauth:token-type:access_token`: JWT access tokens ([JWT Access Tokens](#jwt-access-tokens))
      -  `urn:ietf:params:oauth:token-type:jwt`: JWT assertion grants ([JWT Assertion Grants](#jwt-assertion-grants))
+     -  `urn:ietf:params:oauth:token-type:id-jag`: ID-JAGs ({{I-D.ietf-oauth-identity-assertion-authz-grant}}), a JWT assertion grant profile ([JWT Assertion Grant Output](#jwt-assertion-grant-issuance))
      -  `urn:ietf:params:oauth:token-type:txn_token`: Transaction Tokens ([Transaction Tokens](#transaction-tokens))
 
 Advertising a type does not guarantee every input/output combination, resource, scope, binding mechanism, or JWT variant.  In particular, the `jwt` type covers both client assertions and workload credentials; [Token Exchange Processing](#token-exchange-processing) defines disambiguation.
@@ -1335,7 +1336,7 @@ One new parameter is defined for use in Protected Resource Metadata ({{RFC9728}}
 
   Clients SHOULD treat `true` as requiring a conforming token or an explicitly documented introspection path that provides equivalent claims for opaque tokens.
 
-  An AS that has processed this metadata with `actor_profile_required` set to `true` MUST reject a request that would produce a nonconforming delegated token for the resource unless a supported introspection path provides equivalent actor information.  An RS enforcing this policy MUST reject a delegated request for which neither form of actor information is available.
+  An AS that knows, by configuration or from this metadata, that `actor_profile_required` is `true` for the resource MUST reject a request that would produce a nonconforming delegated token for the resource unless a supported introspection path provides equivalent actor information.  An RS enforcing this policy MUST reject a delegated request for which neither form of actor information is available.
 
   The parameter applies to the resource as a whole.  An RS with path-specific requirements MUST enforce them at the request layer.  It MAY advertise `true` as a conservative resource-wide signal; clients and deployment documentation SHOULD account for path-specific enforcement that metadata cannot fully express.
 
@@ -1355,7 +1356,7 @@ Example Protected Resource Metadata fragment:
 
 ## Transaction Token Capability Signaling {#transaction-token-capability-signaling}
 
-Transaction Token support under this profile for Token Exchange paths is advertised through `actor_profile_token_exchange.requested_token_types_supported`.  When an AS or TTS can issue Transaction Tokens as delegated Token Exchange outputs under this profile, it MUST list `urn:ietf:params:oauth:token-type:txn_token` in `actor_profile_token_exchange.requested_token_types_supported`.  This document does not define any separate Transaction Token discovery parameter.
+Transaction Token support under this profile for Token Exchange paths is advertised through `actor_profile_token_exchange.requested_token_types_supported`.  When an AS or TTS that can issue Transaction Tokens as delegated Token Exchange outputs under this profile publishes `actor_profile_token_exchange`, it MUST list `urn:ietf:params:oauth:token-type:txn_token` in `actor_profile_token_exchange.requested_token_types_supported`.  This document does not define any separate Transaction Token discovery parameter.
 
 ## Capability Signaling Usage
 
