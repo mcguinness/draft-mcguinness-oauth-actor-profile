@@ -916,11 +916,11 @@ Issuing such a grant is subject to AS configuration and to [Validate Outermost A
 
 ### JWT Access Token Output {#jwt-access-token-propagation}
 
-The issued token MUST satisfy [JWT Access Token Structure](#jwt-access-tokens-structure).  After the applicable grant, subject-token, actor-token, or TTS input processing, the AS MUST apply the rules below.
+When the output is a JWT access token, the issued token MUST satisfy [JWT Access Token Structure](#jwt-access-tokens-structure); [JWT Assertion Grant Structure](#jwt-assertion-grants-structure) and [Transaction Tokens](#transaction-tokens) define the structure of the other outputs.  After the applicable grant, subject-token, actor-token, or TTS input processing, the AS MUST apply the rules below.
 
 For a sender-constrained output, the AS MUST set top-level `cnf` according to [Presenter Transition Model](#token-exchange-presenter-model): retain the presenter's binding in continuation mode, or bind to the validated `actor_token` presenter in rebind mode.  The latter also supports bearer-to-PoP upgrades.
 
-If a Token Exchange request explicitly seeks a delegated output, for example by supplying an `actor_token` or by presenting a `subject_token` that already carries `act`, and the AS cannot validate the actor information, it MUST reject the request with `invalid_grant`.  If the AS can validate the actor information but cannot establish or confirm the required delegation basis, or if local policy prohibits the relationship, it MUST reject the request with `actor_unauthorized`.  The AS MUST NOT issue a non-delegated JWT access token in place of the requested delegated output.
+If a Token Exchange request explicitly seeks a delegated output, for example by supplying an `actor_token` or by presenting a `subject_token` that already carries `act`, and the AS cannot validate the actor information, it MUST reject the request with `invalid_grant`.  If the AS can validate the actor information but cannot establish or confirm the required delegation basis, or if local policy prohibits the relationship, it MUST reject the request with `actor_unauthorized`.  The AS MUST NOT issue a non-delegated token in place of the requested delegated output.
 
 1.  The AS includes or omits `act` as required by [Delegation Chains](#delegation-chains), and does not silently drop inbound actor information ([Omit `act`](#omit-act)).
 
