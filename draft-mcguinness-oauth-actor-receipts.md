@@ -480,7 +480,7 @@ Only `receipt[0].sub` must match the outer token.  Older receipts can carry diff
 
 Matching actors alone do not establish subject continuity.  A receipt from an unrelated subject chain that shares the same actor identity can satisfy the hop-alignment check, whether by accident or because a compromised upstream issuer minted it for insertion.  Recipients need to account for this cross-subject insertion risk.
 
-Deployments requiring subject continuity SHOULD establish it either by exact, namespace-aware matching of subject identifiers throughout (the same `sub` under the same namespace authority; see `sub_iss` in {{receipt-claims}}) or by positive reconciliation through trusted mappings.  When neither applies, recipients MUST treat continuity as unverified and MUST NOT use the differing older receipts to support authorization that requires subject continuity.
+Deployments requiring subject continuity SHOULD establish it either by exact, namespace-aware matching of subject identifiers throughout (the same `sub` under the same namespace authority; see `sub_iss` in {{receipt-claims}}) or by positive reconciliation through trusted mappings.  When neither applies, recipients MUST treat continuity as unverified and MUST NOT use the differing older receipts to support authorization that requires subject continuity (for example, a decision that treats every covered hop as having acted for the current token's subject).
 
 ## Complete Receipt Coverage
 
