@@ -1107,10 +1107,21 @@ The single proof covers the outermost hop:
 * Used the base profile's example identifiers for the travel assistant and booking tool.
 * Clarified that proof actor-object restrictions apply separately from confirmation extensions in the token's actor chain.
 * Prohibited `aud` in proofs (-00 discouraged it); consumers reject a proof that carries it, and {{RFC8725}} applies except {{RFC8725, Section 3.9}}.
-* A reissuer that carries proofs forward, including an AS refreshing a token, cannot set the outer token's `exp` later than the earliest proof `exp`; a reissuer that needs a later `exp` drops the array, or fails the request when actor-signed evidence is required.
+* One lifetime rule now governs hop extension, reissuance, and refresh when a retained proof expires before the token the issuer would set: lower the token's `exp`, otherwise drop the proofs where policy permits absent coverage, otherwise fail with `invalid_grant` on refresh or a JWT bearer grant or `invalid_request` on Token Exchange.
 * Proof validation failures on Token Exchange requests now use `invalid_request`, as {{RFC8693, Section 2.2.2}} requires; JWT bearer grant requests use `invalid_grant` ({{RFC7523, Section 3.1}}).
-* A resource indicator is within a proof's target binding only when it equals an entry of `target.resource`.
+* A resource indicator is within a proof's target binding only when it equals an entry of `target.resource` under simple string comparison ({{RFC3986, Section 6.2.1}}).
+* When `target.resource` is present and the request supplies no resource indicators, the issuer uses `target.resource` as the effective resources; a recipient that cannot determine the token's resources treats the proof as audience-level consent.
 * Named the IETF, rather than the IESG, as change controller for the claim, parameter, metadata, and introspection registrations.
+* A failed proof check, including a false `actor_proofs_complete: true`, now drops only the actor-signed evidence; the recipient rejects the token only when policy or metadata requires that evidence, and an issuer that cannot propagate inbound proofs can begin a partial chain at its own hop.
+* A reissued or refreshed token with a new `jti` diverges from a present `actor_proofs[0].origin_jti`; trusted-reissuer designation excuses only that divergence unless policy also permits retargeting, and proof `exp` covers a delegated session only while the outer token stays instance-bound.
+* Removed receipt-attested presenter keys as an actor-key resolution pattern; the examples use pre-established keys.
+* An issuer that adds a hop without a valid new proof drops the inbound proofs, and a request that adds no hop but carries `actor_proof` is rejected with `invalid_request`.
+* A Transaction Token Service can include `jti` so that a Transaction Token's proof chain can be instance-bound; resource servers reject a Transaction Token through the deployment's Txn-Token handling.
+* An extending issuer sets `actor_proofs_complete: true` only when every inbound proof validated and the proof count equals the visible actor-chain depth.
+* A proof chain fails validation when any proof's signing key is untrusted.
+* Consumers check `alg` and `typ` before key resolution and signature validation ({{RFC8725, Section 3.1}}).
+* Issuers use `actor_unauthorized` for actor-authorization failures, as the core actor profile requires, and treat an absent required proof as an input-validation failure.
+* An introspection server that filters a proof-covered actor from the visible `act` chain omits `actor_proofs` and `actor_proofs_complete`.
 
 -00
 
