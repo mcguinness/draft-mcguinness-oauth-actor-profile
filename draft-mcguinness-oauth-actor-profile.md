@@ -1133,7 +1133,7 @@ When the resource server evaluates a JWT access token as a delegated token under
     *  A token evaluated as delegated MUST carry `act`, and each actor object the RS relies on MUST include `iss`.  Otherwise, reject with HTTP 401 `invalid_token`.
     *  Non-delegated tokens need not carry `act`.
 
-2.  If the token carries a top-level `cnf.jkt`, validate the accompanying DPoP proof per {{RFC9449, Section 7}}.  If a DPoP proof is present but the token does not carry `cnf.jkt`, the RS MUST treat the token as a bearer token; the RS MUST NOT infer a confirmation binding from the DPoP proof key.
+2.  If the token carries a top-level `cnf.jkt`, validate the accompanying DPoP proof per {{RFC9449, Section 7}}.  If the token carries a top-level `cnf.x5t#S256`, validate the client certificate of the mutual-TLS connection against it per {{RFC8705, Section 3}}.  If a DPoP proof is present but the token carries neither `cnf.jkt` nor `cnf.x5t#S256`, the RS MUST treat the token as a bearer token; the RS MUST NOT infer a confirmation binding from the DPoP proof key.
 
 3.  Extract the `sub` and the outermost `act.sub` as the two principals relevant for authorization policy.
 
@@ -1147,6 +1147,7 @@ When the resource server evaluates a JWT access token as a delegated token under
 
     *  If signature, `iss`, `aud`, or temporal validation fails: HTTP 401 with `error="invalid_token"`.
     *  If DPoP proof validation for `cnf.jkt` fails: HTTP 401 per {{RFC9449, Section 7}}.
+    *  If the client certificate does not match `cnf.x5t#S256`: HTTP 401 with `error="invalid_token"`, per {{RFC8705, Section 3}}.
     *  If actor authorization required by local policy fails for a structurally valid token: HTTP 403 with `error="actor_unauthorized"`, registered in [OAuth Error Registry](#iana-error-codes).  The RS MUST NOT use `insufficient_scope` for this failure, because requesting broader scope does not resolve an actor-policy denial.
     *  The RS MUST NOT expose actor-specific rejection details outside the trust domain.
 
