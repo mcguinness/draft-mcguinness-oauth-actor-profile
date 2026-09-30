@@ -513,7 +513,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 1.  The AS MUST validate the assertion per {{RFC7523}}, including signature, `iss`, `sub`, `aud`, `exp`, and `jti`.
 
-    *  **Grants without an enforced grant-level sender constraint**: The AS MUST reject with `invalid_grant` an assertion whose validated (`iss`, `jti`) pair it has already accepted, for as long as the assertion remains acceptable, including any allowed clock skew.  A proof used only for client authentication or to bind the issued access token is not a grant-level sender constraint.
+    *  **Grants without an enforced grant-level sender constraint**: The AS MUST reject with `invalid_grant` an assertion whose validated (`iss`, `jti`) pair it has already accepted, for as long as the assertion remains acceptable, including any allowed clock skew.  A proof used only for client authentication or to bind the issued token is not a grant-level sender constraint, and neither is a top-level `cnf` that presenter rebind supersedes ([JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token)).
     *  **Sender-constrained grants**: When the AS validates the request's proof of possession against the assertion's top-level `cnf` as specified in step 6, the AS SHOULD additionally apply replay prevention to the validated (`iss`, `jti`) pair as defense-in-depth.  Any permitted reuse requires validation of that binding on each redemption and remains subject to single-use requirements in [Self-Issued Authorization Grants](#security-self-issued-grants) or the applicable grant profile.
 
 2.  The AS MUST verify that the JWT `iss` is trusted under local policy to assert delegation on behalf of the actor identified by `act.sub`.
@@ -558,7 +558,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
        *  Validate the client certificate presented at the token endpoint against `cnf.x5t#S256`.
        *  Use the `cnf.x5t#S256` value set by the upstream issuer; MUST NOT substitute a locally registered certificate.
        *  Reject per {{RFC8705}} if the presented certificate does not match.
-    *  When this JWT assertion grant is later used as a `subject_token` in Token Exchange, presenter continuation and presenter rebind are determined by [Presenter Transition Model](#token-exchange-presenter-model) and [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation), not by nested `act` contents.
+    *  When this JWT assertion grant is later used as a `subject_token` in Token Exchange, presenter continuation and presenter rebind are determined by [Presenter Transition Model](#token-exchange-presenter-model) and [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation), not by nested `act` contents.  In presenter rebind, this step's match against the grant's top-level `cnf` is not performed ([JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token)).
 
 7.  If the assertion or authenticated request context identifies an OAuth client separately from `act.sub`:
 
@@ -698,7 +698,7 @@ JWT assertion grants, JWT access tokens, and Transaction Tokens are token-state 
 
 When a Token Exchange request ({{RFC8693}}) presents a JWT assertion grant as the `subject_token`, the AS MUST apply the inbound validation rules of [Authorization Grant Processing](#jwt-assertion-grants-processing) to validate the inbound token.  Assertion-grant output construction from that section does not apply; propagation and scope reduction are governed by the rules below and by [JWT Access Token Output](#jwt-access-token-propagation).
 
-Apply the continuation or rebind rules in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).
+Apply the continuation or rebind rules in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).  In presenter continuation, step 6 of [Authorization Grant Processing](#jwt-assertion-grants-processing) applies.  In presenter rebind, the new presenter's binding supersedes the grant's: the AS does not perform step 6's match of the request's proof against the grant's top-level `cnf`, and it treats the grant as having no enforced grant-level sender constraint, so the (`iss`, `jti`) single-use rule in step 1 of [Authorization Grant Processing](#jwt-assertion-grants-processing) applies.  The AS still validates any proof that the new presenter's credential profile or the deployment requires, as the rebind rules specify.
 
 After any scope reduction under local policy, the AS MUST apply [JWT Access Token Output](#jwt-access-token-propagation).
 
@@ -1526,7 +1526,7 @@ Because no upstream AS vouches for the actor's identity or the delegation relati
 *  Validate the JWT signature using the key identified in the JWT header, obtained from a pre-registered or otherwise independently trusted source for the self-issuing party.
 *  Verify the `exp`, `iat`, and `nbf` claims per {{RFC7519}}.
 *  Reject, to prevent replay, an assertion whose validated (`iss`, `jti`) pair has already been accepted, for as long as the assertion remains acceptable, including any allowed clock skew.
-*  Verify proof of possession per the token-endpoint mechanism in use (DPoP per {{RFC9449}} or mTLS per {{RFC8705}}), and against the assertion's top-level `cnf` when present, as in step 6 of [Authorization Grant Processing](#jwt-assertion-grants-processing).
+*  Verify proof of possession per the token-endpoint mechanism in use (DPoP per {{RFC9449}} or mTLS per {{RFC8705}}), and against the assertion's top-level `cnf` when present and not superseded by presenter rebind, as in step 6 of [Authorization Grant Processing](#jwt-assertion-grants-processing) and [JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token).
 *  Apply the actor-profile validation and proof-of-possession requirements in [Authorization Grant Processing](#jwt-assertion-grants-processing).
 *  Establish the delegation relationship from an independent authorization basis such as a pre-registered grant, explicit consent record, or equivalent deployment-specific artifact.
 
@@ -1534,7 +1534,7 @@ In the absence of these controls, an attacker can self-assert an arbitrary (`sub
 
 ## Assertion Replay Prevention {#security-assertion-replay}
 
-Replaying a delegated assertion can obtain tokens exercising the subject's authorization and establish an unauthorized delegation chain.  [Authorization Grant Processing](#jwt-assertion-grants-processing) requires replay prevention for grants without an enforced grant-level sender constraint and recommends it as an additional control when that constraint is enforced.  Replay records identify accepted grants by (`iss`, `jti`) and cover the full acceptance window, including allowed clock skew.  Short assertion lifetimes bound retention.
+Replaying a delegated assertion can obtain tokens exercising the subject's authorization and establish an unauthorized delegation chain.  [Authorization Grant Processing](#jwt-assertion-grants-processing) requires replay prevention for grants without an enforced grant-level sender constraint and recommends it as an additional control when that constraint is enforced.  Replay records identify accepted grants by (`iss`, `jti`) and cover the full acceptance window, including allowed clock skew.  Short assertion lifetimes bound retention.  Presenter rebind supersedes a sender-constrained grant's binding ([JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token)), so a party that obtains such a grant but not its key can redeem it once, as a Token Exchange `subject_token`, with any actor credential that local policy authorizes to act for `sub`; actor authorization policy, mandatory single use of the grant, and short grant lifetimes remain the mitigations.
 
 ## Token Substitution
 
