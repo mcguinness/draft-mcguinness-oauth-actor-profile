@@ -1146,10 +1146,15 @@ Table of Contents
           -  Use the assertion's cnf.jkt as set by the upstream issuer;
              MUST NOT substitute a locally registered key.
 
-          -  Reject with invalid_dpop_proof if the proof is absent or
+          -  Reject with invalid_grant if the required proof is absent,
+             as specified for ID-JAG in
+             [I-D.ietf-oauth-identity-assertion-authz-grant],
+             Section 9.8.1.2.2.  If a valid proof's key does not match
+             the assertion's cnf.jkt, reject with invalid_grant.
+
+          -  Reject with invalid_dpop_proof if a supplied proof is
              invalid, subject to the nonce challenge rules of [RFC9449],
-             Section 8.  If a valid proof's key does not match the
-             assertion's cnf.jkt, reject with invalid_grant.
+             Section 8.
 
              Note: The ath claim is not applicable at the token endpoint
              and MUST NOT be required.  See also
@@ -2691,9 +2696,11 @@ Table of Contents
 
    Client-authentication and proof-mechanism errors take precedence over
    these generic input-validation errors.  Failed client authentication
-   uses invalid_client per [RFC6749] or [RFC7523].  DPoP errors use
-   invalid_dpop_proof, or use_dpop_nonce for a nonce challenge, per
-   Sections 5 and 8 of [RFC9449].  Actor-authorization denials use
+   uses invalid_client per [RFC6749] or [RFC7523].  A supplied invalid
+   DPoP proof uses invalid_dpop_proof; a nonce challenge uses
+   use_dpop_nonce, per Sections 5 and 8 of [RFC9449].  A missing
+   required grant proof is an input-validation failure and uses the
+   grant-type-specific error above.  Actor-authorization denials use
    actor_unauthorized, an extension error permitted by [RFC8693],
    Section 2.2.2.
 
@@ -4514,9 +4521,10 @@ Document History
 
    *  Centralized error precedence: client-authentication and proof-
       mechanism errors take precedence over generic input-validation
-      errors.  Missing required assertion claims and other structural
-      failures use invalid_grant on JWT bearer grant requests and
-      invalid_request on Token Exchange requests.
+      errors.  Missing required assertion claims, missing required grant
+      proofs, and other structural failures use invalid_grant on JWT
+      bearer grant requests and invalid_request on Token Exchange
+      requests; supplied invalid DPoP proofs retain invalid_dpop_proof.
 
    *  [RFC6749], [RFC7800], [OpenID.Core], and ID-JAG are now normative
       references, and ID-JAG is cited at -04.
