@@ -384,7 +384,7 @@ Byte-for-byte preservation ({{proof-chain-linkage}}) rules out reserializing, re
 
 The actor must know the newest inbound proof's exact serialization, or its hash and `prh_alg`, before signing.  For JWT inputs it can read `actor_proofs[0]`.  For opaque inputs, the deployment MUST supply that information.  If unavailable, the issuer MUST NOT accept a proof without `prh` as a chain extension; it MAY instead start a new chain under {{accepting-a-proof}} where local policy permits partial coverage ({{partial-coverage-and-full-coverage}}).
 
-If inbound proofs fail validation, the issuer MUST NOT propagate them.  It MAY continue without `actor_proofs` only when local policy permits partial or absent coverage; otherwise it MUST fail the request under the error model of the underlying protocol.
+If inbound proofs fail validation, the issuer MUST NOT propagate them.  It MAY continue without them only when local policy permits partial or absent coverage, and MAY then begin a new chain at its own hop under {{accepting-a-proof}}; the result is partial coverage and MUST NOT carry `actor_proofs_complete: true`.  Otherwise it MUST fail the request under the error model of the underlying protocol.
 
 ## Reissuance Without a New Actor Hop {#reissuance-without-a-new-actor-hop}
 
@@ -447,7 +447,7 @@ An issuer, resource server, or other recipient that relies on `actor_proofs` MUS
 1.  Validate the outer token according to its token type and the core actor profile.
 2.  If `actor_proofs` is absent, treat the token as lacking actor-signed evidence.  Whether that is acceptable is determined by local policy or by Protected Resource Metadata signals such as `actor_proofs_required` and `actor_proofs_complete_required` defined in {{discovery-capability-signaling}}.  If `actor_proofs_complete` is present with the value `true` while `actor_proofs` is absent, the combination is malformed; the recipient MUST treat this as a failed required check and apply the rejection rule following step 11.
 3.  Verify that `actor_proofs`, if present, is a non-empty JSON array of strings.  Verify that `actor_proofs_complete`, if present, is a JSON boolean.
-4.  Verify that the number of proofs does not exceed the visible actor-chain depth of the outer token.  If the outer token carries `actor_proofs_complete: true`, verify that the proof count exactly equals the visible actor-chain depth; if it does not, reject the token.
+4.  Verify that the number of proofs does not exceed the visible actor-chain depth of the outer token.  If the outer token carries `actor_proofs_complete: true`, verify that the proof count exactly equals the visible actor-chain depth; if it does not, the check fails.
 5.  For each proof, in array order:
     *  parse the string as a compact JWT;
     *  verify that the proof's (`act.iss`, `act.sub`) pair is within the scope of an actor-key source the recipient trusts, before performing any network retrieval keyed by the proof's content;
@@ -489,7 +489,7 @@ An issuer, resource server, or other recipient that relies on `actor_proofs` MUS
      *  when receipts are absent or not validated, `receipt_jti` values are informational only.
 11.  Apply any additional consumer-processing rules defined by companion profiles whose claims appear in the proof or outer token (see {{extensibility}}).  Companion-profile rules can add rejection conditions but cannot relax any requirement needed for conformance to this profile.
 
-If any required check fails, the recipient MUST reject the proof chain for the purposes of this profile and MUST apply the underlying protocol's error handling for the stage at which the failure occurred.
+If any required check fails, the recipient MUST reject the proof chain and treat the token as lacking actor-signed evidence (step 2).  It rejects the token only when local policy or Protected Resource Metadata requires that evidence, using the underlying protocol's error handling for the stage at which the failure occurred.
 
 A recipient that has rejected a proof chain under this profile MAY, under explicit local policy, extract structural information from the chain for use by companion profiles.  The recipient MUST NOT treat such partial validation as conformance with this profile, and MUST NOT relax the rejection requirements defined above.
 
