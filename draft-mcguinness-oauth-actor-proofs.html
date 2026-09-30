@@ -1045,11 +1045,11 @@ svg {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">OAuth Actor Proofs</td>
-<td class="right">July 2026</td>
+<td class="right">September 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">McGuinness</td>
-<td class="center">Expires 5 January 2027</td>
+<td class="center">Expires 3 April 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1062,12 +1062,12 @@ svg {
 <dd class="internet-draft">draft-mcguinness-oauth-actor-proofs-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-07-04" class="published">4 July 2026</time>
+<time datetime="2026-09-30" class="published">30 September 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-01-05">5 January 2027</time></dd>
+<dd class="expires"><time datetime="2027-04-03">3 April 2027</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1117,7 +1117,7 @@ svg {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 5 January 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 3 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1550,7 +1550,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-3.1-2.3.1"><strong>Belt-and-suspenders</strong>: both validated; independent issuer-side and actor-side attestations for covered hops, linked by the sibling references in <a href="#sibling-receipt-issuance" class="auto internal xref">Section 9.6</a>.<a href="#section-3.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-3.1-3">Separate compact JWTs let deployments adopt issuer and actor evidence independently.  Proofs require actor signing keys and trusted key resolution in addition to issuer support.<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.1-3">Receipts and proofs remain separate compact JWTs, rather than one JWS with both signatures over a shared payload (JWS JSON Serialization, <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>], <a href="https://rfc-editor.org/rfc/rfc7515#section-7.2" class="relref">Section 7.2</a></span>), because their signers, adoption prerequisites, and threat models differ.  Receipts require only issuer support, while proofs also require actor signing keys and trusted key resolution.  Separate artifacts keep the two trust anchors independent (<a href="#threat-model" class="auto internal xref">Section 14.1</a>) and let deployments adopt, validate, and hash-chain issuer and actor evidence independently.<a href="#section-3.1-3" class="pilcrow">¶</a></p>
 <p id="section-3.1-4">The receipts companion's distinction between historical evidence and current introspection status also applies to proofs.<a href="#section-3.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1722,7 +1722,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-7.1-2.5.1"><span class="bcp14">MAY</span> include <code>crit</code>; a proof whose <code>crit</code> header lists an extension header the consumer does not understand is invalid per <span>[<a href="#RFC7515" class="cite xref">RFC7515</a>], <a href="https://rfc-editor.org/rfc/rfc7515#section-4.1.11" class="relref">Section 4.1.11</a></span>.<a href="#section-7.1-2.5.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-7.1-3">Actors, issuers, and consumers <span class="bcp14">MUST</span> apply the JWT best practices in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> when creating and validating proofs, except for the audience validation of <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.9" class="relref">Section 3.9</a></span>, from which this profile departs as described for <code>aud</code> in <a href="#proof-claims" class="auto internal xref">Section 7.2</a>.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+<p id="section-7.1-3">Actors, issuers, and consumers <span class="bcp14">MUST</span> apply the JWT best practices in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> when creating and validating proofs, except for the audience requirements of <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.9" class="relref">Section 3.9</a></span>, from which this profile departs by prohibiting <code>aud</code> as described in <a href="#proof-claims" class="auto internal xref">Section 7.2</a>.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="proof-claims">
@@ -1877,7 +1877,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <dd style="margin-left: 1.5em" id="section-7.2.5-1.4">
               <p id="section-7.2.5-1.4.1"><span class="bcp14">REQUIRED</span>.  Expiration time for the proof, as defined in <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.<a href="#section-7.2.5-1.4.1" class="pilcrow">¶</a></p>
 <p id="section-7.2.5-1.4.2"><code>exp</code> needs to cover the lifetime of any token that will carry or inherit this proof; otherwise consumers reject older proofs in a valid chain prematurely.<a href="#section-7.2.5-1.4.2" class="pilcrow">¶</a></p>
-<p id="section-7.2.5-1.4.3">A proof expiring before the issued outer token causes propagation failure (<a href="#extending-an-existing-proof-chain" class="auto internal xref">Section 9.2</a>).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse (<a href="#proof-to-token-binding-limits" class="auto internal xref">Section 14.4</a>).<a href="#section-7.2.5-1.4.3" class="pilcrow">¶</a></p>
+<p id="section-7.2.5-1.4.3">A proof expiring before the issued outer token causes propagation failure (<a href="#extending-an-existing-proof-chain" class="auto internal xref">Section 9.2</a>, <a href="#reissuance-without-a-new-actor-hop" class="auto internal xref">Section 9.3</a>).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse (<a href="#proof-to-token-binding-limits" class="auto internal xref">Section 14.4</a>).<a href="#section-7.2.5-1.4.3" class="pilcrow">¶</a></p>
 <p id="section-7.2.5-1.4.4">With instance binding through receipts in strict mode or a provisioned <code>origin_jti</code> (<a href="#proof-to-token-binding-limits" class="auto internal xref">Section 14.4</a>), <code>exp</code> <span class="bcp14">MAY</span> cover the delegated session.  Without instance binding, <code>exp</code> <span class="bcp14">SHOULD</span> be short to limit proof reuse.<a href="#section-7.2.5-1.4.4" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
@@ -1915,8 +1915,8 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <dt id="section-7.2.7-1.1">
 <code>aud</code>:</dt>
             <dd style="margin-left: 1.5em" id="section-7.2.7-1.2">
-              <p id="section-7.2.7-1.2.1"><span class="bcp14">NOT RECOMMENDED</span>.  Actors <span class="bcp14">SHOULD</span> omit <code>aud</code> from proofs.<a href="#section-7.2.7-1.2.1" class="pilcrow">¶</a></p>
-<p id="section-7.2.7-1.2.2">Proofs are validated as part of outer-token processing, not as independent JWTs against an audience; the outer token carries the audience scoping for the request, and the actor's consented audiences live in <code>target.aud</code>.  This profile diverges from the audience-validation guidance in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> Section 3.9 on those grounds.  Including <code>aud</code> in a proof would create ambiguity between an audience restriction on the proof artifact and the target binding, which are different statements.<a href="#section-7.2.7-1.2.2" class="pilcrow">¶</a></p>
+              <p id="section-7.2.7-1.2.1">Prohibited.  Actors <span class="bcp14">MUST NOT</span> include <code>aud</code> in a proof, and consumers <span class="bcp14">MUST</span> reject a proof that carries it (step 5 of <a href="#consumer-processing" class="auto internal xref">Section 10</a>).<a href="#section-7.2.7-1.2.1" class="pilcrow">¶</a></p>
+<p id="section-7.2.7-1.2.2">Proofs are validated as part of outer-token processing, not as independent JWTs against an audience; the outer token carries the audience scoping for the request, and the actor's consented audiences live in <code>target.aud</code>.  This profile departs from <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.9" class="relref">Section 3.9</a></span> on those grounds.  Including <code>aud</code> in a proof would create ambiguity between an audience restriction on the proof artifact and the target binding, which are different statements; rejecting it gives the result that <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>], <a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.3" class="relref">Section 4.1.3</a></span> requires when the processing principal does not identify itself with the <code>aud</code> value.<a href="#section-7.2.7-1.2.2" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 </dl>
@@ -1984,7 +1984,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-9.1-1">When an issuer adds a new outermost actor hop and the token request carries <code>actor_proof</code>, the issuer:<a href="#section-9.1-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-9.1-2">
 <li id="section-9.1-2.1">
-            <p id="section-9.1-2.1.1"><span class="bcp14">MUST</span> validate the proof's structure per <a href="#actor-proof-jwt-format" class="auto internal xref">Section 7</a>: <code>typ</code> value, asymmetric <code>alg</code>, presence and JSON types of the <span class="bcp14">REQUIRED</span> claims <code>iss</code>, <code>sub</code>, <code>act</code>, <code>target</code> (including <code>target.aud</code>), <code>iat</code>, <code>exp</code>, and <code>jti</code>, and the single-hop <code>act</code> rules.<a href="#section-9.1-2.1.1" class="pilcrow">¶</a></p>
+            <p id="section-9.1-2.1.1"><span class="bcp14">MUST</span> validate the proof's structure per <a href="#actor-proof-jwt-format" class="auto internal xref">Section 7</a>: <code>typ</code> value, asymmetric <code>alg</code>, presence and JSON types of the <span class="bcp14">REQUIRED</span> claims <code>iss</code>, <code>sub</code>, <code>act</code>, <code>target</code> (including <code>target.aud</code>), <code>iat</code>, <code>exp</code>, and <code>jti</code>, the absence of <code>aud</code>, and the single-hop <code>act</code> rules.<a href="#section-9.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-9.1-2.2">
             <p id="section-9.1-2.2.1"><span class="bcp14">MUST</span> verify that the proof's (<code>act.iss</code>, <code>act.sub</code>) pair equals the actor identifier pair the issuer will emit as the new outermost visible <code>act</code> object, and that the proof <code>iss</code> equals the proof <code>act.sub</code>.<a href="#section-9.1-2.2.1" class="pilcrow">¶</a></p>
@@ -1999,7 +1999,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-9.1-2.5.1"><span class="bcp14">MUST</span> verify that the proof's <code>exp</code> is no earlier than the issued outer token's <code>exp</code>, and that <code>iat</code> is plausible under the issuer's clock-skew policy.<a href="#section-9.1-2.5.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-9.1-2.6">
-            <p id="section-9.1-2.6.1"><span class="bcp14">MUST NOT</span> issue an outer token whose <code>aud</code>, or whose effective resource indicators when the request expresses them, exceed the proof's target binding.  Every audience of the issued token <span class="bcp14">MUST</span> be present in <code>target.aud</code>, and every effective resource indicator <span class="bcp14">MUST</span> be within <code>target.resource</code> when that member is present.  For Token Exchange requests, <a href="#error-handling" class="auto internal xref">Section 12</a> gives the error to return when the requested target cannot be satisfied within the proof's target binding.<a href="#section-9.1-2.6.1" class="pilcrow">¶</a></p>
+            <p id="section-9.1-2.6.1"><span class="bcp14">MUST NOT</span> issue an outer token whose <code>aud</code>, or whose effective resource indicators when the request expresses them, exceed the proof's target binding.  Every audience of the issued token <span class="bcp14">MUST</span> be present in <code>target.aud</code>, and every effective resource indicator <span class="bcp14">MUST</span> equal an entry of <code>target.resource</code> when that member is present.  For Token Exchange requests, <a href="#error-handling" class="auto internal xref">Section 12</a> gives the error to return when the requested target cannot be satisfied within the proof's target binding.<a href="#section-9.1-2.6.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-9.1-2.7">
             <p id="section-9.1-2.7.1"><span class="bcp14">MUST</span> include the validated proof as <code>actor_proofs[0]</code> of the issued token, subject to the chain rules below.<a href="#section-9.1-2.7.1" class="pilcrow">¶</a></p>
@@ -2065,6 +2065,9 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <li class="normal" id="section-9.3-2.5">
             <p id="section-9.3-2.5.1"><span class="bcp14">MUST NOT</span> change top-level <code>sub</code> while retaining proofs; doing so breaks alignment with <code>actor_proofs[0].sub</code>.<a href="#section-9.3-2.5.1" class="pilcrow">¶</a></p>
 </li>
+          <li class="normal" id="section-9.3-2.6">
+            <p id="section-9.3-2.6.1"><span class="bcp14">MUST NOT</span> set the outer token's <code>exp</code> later than the earliest <code>exp</code> among the retained proofs; an issuer that needs a later <code>exp</code> <span class="bcp14">MUST</span> drop the array, or <span class="bcp14">MUST</span> instead fail the request under the error model of <a href="#error-handling" class="auto internal xref">Section 12</a> when local policy or the deployment's resource requirements require actor-signed evidence.<a href="#section-9.3-2.6.1" class="pilcrow">¶</a></p>
+</li>
         </ul>
 <p id="section-9.3-3">If such an issuer changes the visible outermost actor, it has added a new hop and <span class="bcp14">MUST</span> follow <a href="#extending-an-existing-proof-chain" class="auto internal xref">Section 9.2</a>.<a href="#section-9.3-3" class="pilcrow">¶</a></p>
 <p id="section-9.3-4">If reissuance exceeds the newest proof's target, the issuer <span class="bcp14">MUST</span> drop <code>actor_proofs</code> unless recipients explicitly accept divergence under <a href="#target-binding-strict-mode" class="auto internal xref">Section 14.4.1</a>.  Narrowing or preserving the target leaves the chain valid.<a href="#section-9.3-4" class="pilcrow">¶</a></p>
@@ -2075,10 +2078,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-9.3-7.1.1">needs to retain the <code>actor_proofs</code> array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.<a href="#section-9.3-7.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-9.3-7.2">
-            <p id="section-9.3-7.2.1"><span class="bcp14">MUST</span> rely on proof <code>exp</code> values set per <a href="#proof-claims" class="auto internal xref">Section 7.2</a> to accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under <a href="#extending-an-existing-proof-chain" class="auto internal xref">Section 9.2</a> as proofs approach expiry, and refresh loses actor-signed evidence.<a href="#section-9.3-7.2.1" class="pilcrow">¶</a></p>
+            <p id="section-9.3-7.2.1">applies the <code>exp</code> limit above to each refreshed access token.  How long refresh can carry the proofs therefore depends on the conditional proof <code>exp</code> sizing in <a href="#proof-claims" class="auto internal xref">Section 7.2</a>, which lets <code>exp</code> cover the delegated session with instance binding and calls for a short <code>exp</code> without it.<a href="#section-9.3-7.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-9.3-7.3">
-            <p id="section-9.3-7.3.1">When that bounded lifetime would be exceeded, <span class="bcp14">MUST</span> either obtain fresh delegation state with fresh proofs or stop emitting <code>actor_proofs</code>, unless local policy permits partial or absent coverage.<a href="#section-9.3-7.3.1" class="pilcrow">¶</a></p>
+            <p id="section-9.3-7.3.1">when a refreshed access token needs a later <code>exp</code> than that limit allows, drops <code>actor_proofs</code> from it or fails the refresh request, as the rule above requires.  Refresh adds no actor hop, so actor-signed evidence resumes only through a new delegated issuance that adds a hop with a fresh proof.<a href="#section-9.3-7.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2184,10 +2187,13 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-10-2.5.2.9.1">verify that <span class="bcp14">OPTIONAL</span> claims used by this profile have the expected JSON types when present, including <code>sub_iss</code>, <code>target.resource</code>, <code>prh</code>, <code>prh_alg</code>, <code>receipt_jti</code>, and <code>origin_jti</code>;<a href="#section-10-2.5.2.9.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-10-2.5.2.10">
-              <p id="section-10-2.5.2.10.1">verify that the proof <code>act</code> object is single-hop, contains no nested <code>act</code>, and contains no <code>cnf</code>, and that the proof <code>iss</code> equals the proof <code>act.sub</code>;<a href="#section-10-2.5.2.10.1" class="pilcrow">¶</a></p>
+              <p id="section-10-2.5.2.10.1">reject a proof that carries an <code>aud</code> claim (<a href="#proof-claims" class="auto internal xref">Section 7.2</a>);<a href="#section-10-2.5.2.10.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-10-2.5.2.11">
-              <p id="section-10-2.5.2.11.1">enforce <code>exp</code>, <code>iat</code>, and other JWT validity rules.  An expired proof is invalid even for an older hop; only the small clock-skew leeway of <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>], <a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.4" class="relref">Section 4.1.4</a></span> applies.<a href="#section-10-2.5.2.11.1" class="pilcrow">¶</a></p>
+              <p id="section-10-2.5.2.11.1">verify that the proof <code>act</code> object is single-hop, contains no nested <code>act</code>, and contains no <code>cnf</code>, and that the proof <code>iss</code> equals the proof <code>act.sub</code>;<a href="#section-10-2.5.2.11.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-10-2.5.2.12">
+              <p id="section-10-2.5.2.12.1">enforce <code>exp</code>, <code>iat</code>, and other JWT validity rules.  An expired proof is invalid even for an older hop; only the small clock-skew leeway of <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>], <a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.4" class="relref">Section 4.1.4</a></span> applies.<a href="#section-10-2.5.2.12.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </li>
@@ -2249,13 +2255,13 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="section-10-2.9.1">Evaluate outer-token binding and target binding:<a href="#section-10-2.9.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-10-2.9.2.1">
-              <p id="section-10-2.9.2.1.1">when <code>actor_proofs[0].origin_jti</code> is present and equals the outer token's <code>jti</code>, the proof chain is bound to the current outer-token instance; when it is present and differs, the chain has diverged, <a href="#target-binding-strict-mode" class="auto internal xref">Section 14.4.1</a> decides whether the recipient rejects it, and an accepted value is historical provenance;<a href="#section-10-2.9.2.1.1" class="pilcrow">¶</a></p>
+              <p id="section-10-2.9.2.1.1">when <code>actor_proofs[0].origin_jti</code> is present and equals the outer token's <code>jti</code>, the proof chain is bound to the current outer-token instance; when it is present and differs, the chain has diverged, <a href="#target-binding-strict-mode" class="auto internal xref">Section 14.4.1</a> decides whether the recipient rejects it (rejection is the default), and an accepted value is historical provenance;<a href="#section-10-2.9.2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-10-2.9.2.2">
               <p id="section-10-2.9.2.2.1">when <code>actor_proofs[0].origin_jti</code> is absent, the proof chain carries no instance binding of its own; this is not by itself a validation failure;<a href="#section-10-2.9.2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-10-2.9.2.3">
-              <p id="section-10-2.9.2.3.1">verify that every audience of the outer token is present in <code>actor_proofs[0].target.aud</code>, and, when the outer token's effective resource indicators are determinable from token claims, the introspection response, or trusted local context, that each is within <code>actor_proofs[0].target.resource</code> when that member is present.  A token whose audience or resources exceed the newest proof's target binding has also diverged; <a href="#target-binding-strict-mode" class="auto internal xref">Section 14.4.1</a> decides whether the recipient rejects the chain and limits an accepted chain to participation evidence, not actor consent to the current target;<a href="#section-10-2.9.2.3.1" class="pilcrow">¶</a></p>
+              <p id="section-10-2.9.2.3.1">verify that every audience of the outer token is present in <code>actor_proofs[0].target.aud</code>, and, when the outer token's effective resource indicators are determinable from token claims, the introspection response, or trusted local context, that each equals an entry of <code>actor_proofs[0].target.resource</code> when that member is present.  A token whose audience or resources exceed the newest proof's target binding has also diverged; <a href="#target-binding-strict-mode" class="auto internal xref">Section 14.4.1</a> decides whether the recipient rejects the chain (rejection is the default) and limits an accepted chain to participation evidence, not actor consent to the current target;<a href="#section-10-2.9.2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-10-2.9.2.4">
               <p id="section-10-2.9.2.4.1">target bindings of proofs other than <code>actor_proofs[0]</code> are historical consent for their own hops.  The recipient <span class="bcp14">MUST NOT</span> evaluate them against the current outer token's audience or resources.<a href="#section-10-2.9.2.4.1" class="pilcrow">¶</a></p>
@@ -2311,7 +2317,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-10.1-7.2.1">enforce explicit trusted subject-mapping rules that can positively confirm each distinct subject identifier refers to the same underlying entity.<a href="#section-10.1-7.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-10.1-8">When neither condition is met, the recipient <span class="bcp14">MUST</span> treat subject continuity as unverified and <span class="bcp14">MUST NOT</span> rely on older proofs whose subject identifiers (<code>sub</code> or <code>sub_iss</code>) differ to support authorization that requires subject continuity.<a href="#section-10.1-8" class="pilcrow">¶</a></p>
+<p id="section-10.1-8">When neither condition is met, the recipient <span class="bcp14">MUST</span> treat subject continuity as unverified and <span class="bcp14">MUST NOT</span> rely on older proofs whose subject identifiers (<code>sub</code> or <code>sub_iss</code>) differ to support authorization that requires subject continuity (for example, a decision that treats every covered hop as having acted for the current token's subject).<a href="#section-10.1-8" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="complete-proof-coverage">
@@ -2467,7 +2473,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-authorization-server-and-tr">
 <a href="#section-12.1" class="section-number selfRef">12.1. </a><a href="#name-authorization-server-and-tr" class="section-name selfRef">Authorization Server and Transaction Token Service Errors</a>
         </h3>
-<p id="section-12.1-1">When an authorization server or Transaction Token Service rejects a token request because an inbound <code>actor_proofs</code> chain or a newly submitted proof cannot be validated (signature failure, key-resolution failure for an actor outside the trusted key sources, expired proof, unsupported <code>prh_alg</code>, broken <code>prh</code> chain, hop or subject misalignment), it <span class="bcp14">SHOULD</span> return <code>invalid_grant</code>, constructed per <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> Section 2.2.2 and <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> Section 5.2, consistent with the core actor profile's error mapping for actor information that fails validation.<a href="#section-12.1-1" class="pilcrow">¶</a></p>
+<p id="section-12.1-1">When an authorization server or Transaction Token Service rejects a token request because an inbound <code>actor_proofs</code> chain or a newly submitted proof cannot be validated (signature failure, key-resolution failure for an actor outside the trusted key sources, expired proof, unsupported <code>prh_alg</code>, broken <code>prh</code> chain, hop or subject misalignment), it returns an error response per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-5.2" class="relref">Section 5.2</a></span>: <code>invalid_request</code> for a Token Exchange request, as <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.2" class="relref">Section 2.2.2</a></span> requires, or <code>invalid_grant</code> for a JWT bearer grant request (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3.1" class="relref">Section 3.1</a></span>), consistent with the core actor profile's error mapping for actor information that fails validation.<a href="#section-12.1-1" class="pilcrow">¶</a></p>
 <p id="section-12.1-2">When the requested token's audience or resources cannot be satisfied within the submitted proof's target binding in a Token Exchange request, the issuer <span class="bcp14">SHOULD</span> return <code>invalid_target</code> per <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> Section 2.2.2.<a href="#section-12.1-2" class="pilcrow">¶</a></p>
 <p id="section-12.1-3">When the failure reflects an actor-authorization decision rather than a structural validation failure, an issuer <span class="bcp14">MAY</span> use <code>actor_unauthorized</code> as defined in the core actor profile <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span> where applicable.<a href="#section-12.1-3" class="pilcrow">¶</a></p>
 </section>
@@ -2540,7 +2546,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
       <h2 id="name-security-considerations">
 <a href="#section-14" class="section-number selfRef">14. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
       </h2>
-<p id="section-14-1">Actor proofs strengthen delegation evidence with actor-side signatures, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> and the JWT best practices in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>, except its audience validation for proof JWTs (see <code>aud</code> in <a href="#proof-claims" class="auto internal xref">Section 7.2</a>), apply to systems implementing this profile.<a href="#section-14-1" class="pilcrow">¶</a></p>
+<p id="section-14-1">Actor proofs strengthen delegation evidence with actor-side signatures, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> and the JWT best practices in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span>, except its audience requirements for proof JWTs (see <code>aud</code> in <a href="#proof-claims" class="auto internal xref">Section 7.2</a>), apply to systems implementing this profile.<a href="#section-14-1" class="pilcrow">¶</a></p>
 <div id="threat-model">
 <section id="section-14.1">
         <h3 id="name-threat-model">
@@ -2746,7 +2752,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-proof-freshness-and-replay">
 <a href="#section-14.9" class="section-number selfRef">14.9. </a><a href="#name-proof-freshness-and-replay" class="section-name selfRef">Proof Freshness and Replay</a>
         </h3>
-<p id="section-14.9-1">Proofs are historical attestations of hop-time consent.  They <span class="bcp14">MAY</span> outlive the validity period of the outer token they were originally embedded in, and <span class="bcp14">MAY</span> be carried forward across reissuance and refresh as long as their <code>exp</code> permits.<a href="#section-14.9-1" class="pilcrow">¶</a></p>
+<p id="section-14.9-1">Proofs are historical attestations of hop-time consent.  They can outlive the validity period of the outer token they were originally embedded in, and can be carried forward across reissuance and refresh only in tokens that expire no later than they do (<a href="#reissuance-without-a-new-actor-hop" class="auto internal xref">Section 9.3</a>).<a href="#section-14.9-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-14.9-2.1">
             <p id="section-14.9-2.1.1">Proofs attest participation and target consent at signing time; they do not assert that the represented delegation is still active or that the actor would consent today.<a href="#section-14.9-2.1.1" class="pilcrow">¶</a></p>
@@ -2945,7 +2951,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-16.2-2.2.1">Claim Description: Array of actor-signed hop proofs providing delegation participation evidence<a href="#section-16.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.2-2.3">
-            <p id="section-16.2-2.3.1">Change Controller: IESG<a href="#section-16.2-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-16.2-2.3.1">Change Controller: IETF<a href="#section-16.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.2-2.4">
             <p id="section-16.2-2.4.1">Specification Document(s): This document<a href="#section-16.2-2.4.1" class="pilcrow">¶</a></p>
@@ -2957,7 +2963,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-16.2-2.6.1">Claim Description: Boolean indicating whether actor_proofs covers every visible hop in the token's act chain<a href="#section-16.2-2.6.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.2-2.7">
-            <p id="section-16.2-2.7.1">Change Controller: IESG<a href="#section-16.2-2.7.1" class="pilcrow">¶</a></p>
+            <p id="section-16.2-2.7.1">Change Controller: IETF<a href="#section-16.2-2.7.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.2-2.8">
             <p id="section-16.2-2.8.1">Specification Document(s): This document<a href="#section-16.2-2.8.1" class="pilcrow">¶</a></p>
@@ -2969,7 +2975,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-16.2-2.10.1">Claim Description: Target binding (audience and resource constraints) authorized by the signer of an Actor Proof JWT<a href="#section-16.2-2.10.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.2-2.11">
-            <p id="section-16.2-2.11.1">Change Controller: IESG<a href="#section-16.2-2.11.1" class="pilcrow">¶</a></p>
+            <p id="section-16.2-2.11.1">Change Controller: IETF<a href="#section-16.2-2.11.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.2-2.12">
             <p id="section-16.2-2.12.1">Specification Document(s): This document<a href="#section-16.2-2.12.1" class="pilcrow">¶</a></p>
@@ -2981,7 +2987,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-16.2-2.14.1">Claim Description: jti of the sibling Actor Receipt JWT created for the same delegation hop as an Actor Proof JWT<a href="#section-16.2-2.14.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.2-2.15">
-            <p id="section-16.2-2.15.1">Change Controller: IESG<a href="#section-16.2-2.15.1" class="pilcrow">¶</a></p>
+            <p id="section-16.2-2.15.1">Change Controller: IETF<a href="#section-16.2-2.15.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.2-2.16">
             <p id="section-16.2-2.16.1">Specification Document(s): This document<a href="#section-16.2-2.16.1" class="pilcrow">¶</a></p>
@@ -2993,7 +2999,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-16.2-2.18.1">Claim Description: jti of the sibling Actor Proof JWT validated for the same delegation hop as an Actor Receipt JWT<a href="#section-16.2-2.18.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.2-2.19">
-            <p id="section-16.2-2.19.1">Change Controller: IESG<a href="#section-16.2-2.19.1" class="pilcrow">¶</a></p>
+            <p id="section-16.2-2.19.1">Change Controller: IETF<a href="#section-16.2-2.19.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.2-2.20">
             <p id="section-16.2-2.20.1">Specification Document(s): This document<a href="#section-16.2-2.20.1" class="pilcrow">¶</a></p>
@@ -3030,7 +3036,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-16.3-2.2.1">Parameter usage location: token request<a href="#section-16.3-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.3-2.3">
-            <p id="section-16.3-2.3.1">Change Controller: IESG<a href="#section-16.3-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-16.3-2.3.1">Change Controller: IETF<a href="#section-16.3-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.3-2.4">
             <p id="section-16.3-2.4.1">Specification Document(s): This document<a href="#section-16.3-2.4.1" class="pilcrow">¶</a></p>
@@ -3052,7 +3058,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-16.4-2.2.1">Metadata Description: Indicates support for accepting, validating, embedding, preserving, and extending actor-signed hop proofs<a href="#section-16.4-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.4-2.3">
-            <p id="section-16.4-2.3.1">Change Controller: IESG<a href="#section-16.4-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-16.4-2.3.1">Change Controller: IETF<a href="#section-16.4-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.4-2.4">
             <p id="section-16.4-2.4.1">Specification Document(s): This document<a href="#section-16.4-2.4.1" class="pilcrow">¶</a></p>
@@ -3074,7 +3080,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-16.5-2.2.1">Metadata Description: Indicates that the resource expects delegated requests to carry valid actor proofs covering at minimum the outermost visible actor hop<a href="#section-16.5-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.5-2.3">
-            <p id="section-16.5-2.3.1">Change Controller: IESG<a href="#section-16.5-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-16.5-2.3.1">Change Controller: IETF<a href="#section-16.5-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.5-2.4">
             <p id="section-16.5-2.4.1">Specification Document(s): This document<a href="#section-16.5-2.4.1" class="pilcrow">¶</a></p>
@@ -3086,7 +3092,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-16.5-2.6.1">Metadata Description: Indicates that the resource requires complete proof coverage for all visible actor hops<a href="#section-16.5-2.6.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.5-2.7">
-            <p id="section-16.5-2.7.1">Change Controller: IESG<a href="#section-16.5-2.7.1" class="pilcrow">¶</a></p>
+            <p id="section-16.5-2.7.1">Change Controller: IETF<a href="#section-16.5-2.7.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.5-2.8">
             <p id="section-16.5-2.8.1">Specification Document(s): This document<a href="#section-16.5-2.8.1" class="pilcrow">¶</a></p>
@@ -3108,7 +3114,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-16.6-2.2.1">Description: Array of actor-signed hop proofs returned by introspection<a href="#section-16.6-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.6-2.3">
-            <p id="section-16.6-2.3.1">Change Controller: IESG<a href="#section-16.6-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-16.6-2.3.1">Change Controller: IETF<a href="#section-16.6-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.6-2.4">
             <p id="section-16.6-2.4.1">Specification Document(s): This document<a href="#section-16.6-2.4.1" class="pilcrow">¶</a></p>
@@ -3120,7 +3126,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-16.6-2.6.1">Description: Indicates whether the returned actor proofs provide complete visible-hop coverage<a href="#section-16.6-2.6.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.6-2.7">
-            <p id="section-16.6-2.7.1">Change Controller: IESG<a href="#section-16.6-2.7.1" class="pilcrow">¶</a></p>
+            <p id="section-16.6-2.7.1">Change Controller: IETF<a href="#section-16.6-2.7.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-16.6-2.8">
             <p id="section-16.6-2.8.1">Specification Document(s): This document<a href="#section-16.6-2.8.1" class="pilcrow">¶</a></p>
@@ -3169,6 +3175,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <dt id="RFC7519">[RFC7519]</dt>
         <dd>
 <span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">N. Sakimura</span>, <span class="refTitle">"JSON Web Token (JWT)"</span>, <span class="seriesInfo">RFC 7519</span>, <span class="seriesInfo">DOI 10.17487/RFC7519</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7519">https://www.rfc-editor.org/info/rfc7519</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7523">[RFC7523]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Campbell, B.</span>, and <span class="refAuthor">C. Mortimore</span>, <span class="refTitle">"JSON Web Token (JWT) Profile for OAuth 2.0 Client Authentication and Authorization Grants"</span>, <span class="seriesInfo">RFC 7523</span>, <span class="seriesInfo">DOI 10.17487/RFC7523</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7523">https://www.rfc-editor.org/info/rfc7523</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC7662">[RFC7662]</dt>
         <dd>
@@ -3473,28 +3483,46 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="appendix-B-3.4.1">Removed an example claim that receipt composition stops a compromised issuer from re-embedding a proof.<a href="#appendix-B-3.4.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.5">
-          <p id="appendix-B-3.5.1">Reconciled <code>exp</code> guidance, aligned expiry handling with <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>, and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.<a href="#appendix-B-3.5.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.5.1">Reconciled <code>exp</code> guidance and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.<a href="#appendix-B-3.5.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.6">
-          <p id="appendix-B-3.6.1">Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.<a href="#appendix-B-3.6.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.6.1">An expired proof, including one for an older hop, is now invalid; only the clock-skew leeway of <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>], <a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.4" class="relref">Section 4.1.4</a></span> applies.<a href="#appendix-B-3.6.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.7">
-          <p id="appendix-B-3.7.1">Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> applies except its audience validation, and Strict Mode governs every divergence.<a href="#appendix-B-3.7.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.7.1">Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.<a href="#appendix-B-3.7.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.8">
-          <p id="appendix-B-3.8.1">Removed the unconditional recommendation for short proof <code>exp</code> in favor of the claim's conditional sizing rule.<a href="#appendix-B-3.8.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.8.1">Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, and Strict Mode governs every divergence.<a href="#appendix-B-3.8.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.9">
-          <p id="appendix-B-3.9.1">Aligned subject-continuity handling, the introspection partial-coverage flag, and the proof actor object's <code>sub_profile</code> rule with Receipts.<a href="#appendix-B-3.9.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.9.1">Removed the unconditional recommendation for short proof <code>exp</code> in favor of the claim's conditional sizing rule.<a href="#appendix-B-3.9.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.10">
-          <p id="appendix-B-3.10.1">Used the base profile's example identifiers for the travel assistant and booking tool.<a href="#appendix-B-3.10.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.10.1">Aligned subject-continuity handling and the proof actor object's <code>sub_profile</code> rule with Receipts.<a href="#appendix-B-3.10.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.11">
-          <p id="appendix-B-3.11.1">Clarified that proof actor-object restrictions apply separately from confirmation extensions in the token's actor chain.<a href="#appendix-B-3.11.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.11.1">An introspection server that returns a stored array it knows has partial coverage is now required to include <code>actor_proofs_complete: false</code>.<a href="#appendix-B-3.11.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.12">
-          <p id="appendix-B-3.12.1">Restored the Introduction's defining sentence and design-center list, and the list of what this document defines.<a href="#appendix-B-3.12.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.12.1">Used the base profile's example identifiers for the travel assistant and booking tool.<a href="#appendix-B-3.12.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.13">
+          <p id="appendix-B-3.13.1">Clarified that proof actor-object restrictions apply separately from confirmation extensions in the token's actor chain.<a href="#appendix-B-3.13.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.14">
+          <p id="appendix-B-3.14.1">Prohibited <code>aud</code> in proofs (-00 discouraged it); consumers reject a proof that carries it, and <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> applies except <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.9" class="relref">Section 3.9</a></span>.<a href="#appendix-B-3.14.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.15">
+          <p id="appendix-B-3.15.1">A reissuer that carries proofs forward, including an AS refreshing a token, cannot set the outer token's <code>exp</code> later than the earliest proof <code>exp</code>; a reissuer that needs a later <code>exp</code> drops the array, or fails the request when actor-signed evidence is required.<a href="#appendix-B-3.15.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.16">
+          <p id="appendix-B-3.16.1">Proof validation failures on Token Exchange requests now use <code>invalid_request</code>, as <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.2" class="relref">Section 2.2.2</a></span> requires; JWT bearer grant requests use <code>invalid_grant</code> (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3.1" class="relref">Section 3.1</a></span>).<a href="#appendix-B-3.16.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.17">
+          <p id="appendix-B-3.17.1">A resource indicator is within a proof's target binding only when it equals an entry of <code>target.resource</code>.<a href="#appendix-B-3.17.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="appendix-B-3.18">
+          <p id="appendix-B-3.18.1">Named the IETF, rather than the IESG, as change controller for the claim, parameter, metadata, and introspection registrations.<a href="#appendix-B-3.18.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-B-4">-00<a href="#appendix-B-4" class="pilcrow">¶</a></p>

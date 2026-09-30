@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                             4 July 2026
-Expires: 5 January 2027
+Intended status: Standards Track                       30 September 2026
+Expires: 3 April 2027
 
 
                      OAuth Actor-Signed Hop Proofs
@@ -54,7 +54,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 5 January 2027.
+   This Internet-Draft will expire on 3 April 2027.
 
 Copyright Notice
 
@@ -286,9 +286,14 @@ Table of Contents
       actor-side attestations for covered hops, linked by the sibling
       references in Section 9.6.
 
-   Separate compact JWTs let deployments adopt issuer and actor evidence
-   independently.  Proofs require actor signing keys and trusted key
-   resolution in addition to issuer support.
+   Receipts and proofs remain separate compact JWTs, rather than one JWS
+   with both signatures over a shared payload (JWS JSON Serialization,
+   [RFC7515], Section 7.2), because their signers, adoption
+   prerequisites, and threat models differ.  Receipts require only
+   issuer support, while proofs also require actor signing keys and
+   trusted key resolution.  Separate artifacts keep the two trust
+   anchors independent (Section 14.1) and let deployments adopt,
+   validate, and hash-chain issuer and actor evidence independently.
 
    The receipts companion's distinction between historical evidence and
    current introspection status also applies to proofs.
@@ -476,8 +481,8 @@ Table of Contents
 
    Actors, issuers, and consumers MUST apply the JWT best practices in
    [RFC8725] when creating and validating proofs, except for the
-   audience validation of [RFC8725], Section 3.9, from which this
-   profile departs as described for aud in Section 7.2.
+   audience requirements of [RFC8725], Section 3.9, from which this
+   profile departs by prohibiting aud as described in Section 7.2.
 
 7.2.  Proof Claims
 
@@ -608,9 +613,9 @@ Table of Contents
       valid chain prematurely.
 
       A proof expiring before the issued outer token causes propagation
-      failure (Section 9.2).  Longer validity supports delegated
-      sessions but also extends exposure to key compromise and proof
-      reuse (Section 14.4).
+      failure (Section 9.2, Section 9.3).  Longer validity supports
+      delegated sessions but also extends exposure to key compromise and
+      proof reuse (Section 14.4).
 
       With instance binding through receipts in strict mode or a
       provisioned origin_jti (Section 14.4), exp MAY cover the delegated
@@ -636,16 +641,20 @@ Table of Contents
 
 7.2.7.  Excluded Standard Claims
 
-   aud:  NOT RECOMMENDED.  Actors SHOULD omit aud from proofs.
+   aud:  Prohibited.  Actors MUST NOT include aud in a proof, and
+      consumers MUST reject a proof that carries it (step 5 of
+      Section 10).
 
       Proofs are validated as part of outer-token processing, not as
       independent JWTs against an audience; the outer token carries the
       audience scoping for the request, and the actor's consented
-      audiences live in target.aud.  This profile diverges from the
-      audience-validation guidance in [RFC8725] Section 3.9 on those
-      grounds.  Including aud in a proof would create ambiguity between
-      an audience restriction on the proof artifact and the target
-      binding, which are different statements.
+      audiences live in target.aud.  This profile departs from
+      [RFC8725], Section 3.9 on those grounds.  Including aud in a proof
+      would create ambiguity between an audience restriction on the
+      proof artifact and the target binding, which are different
+      statements; rejecting it gives the result that [RFC7519],
+      Section 4.1.3 requires when the processing principal does not
+      identify itself with the aud value.
 
 7.2.8.  Extension Claims
 
@@ -713,7 +722,7 @@ Table of Contents
    1.  MUST validate the proof's structure per Section 7: typ value,
        asymmetric alg, presence and JSON types of the REQUIRED claims
        iss, sub, act, target (including target.aud), iat, exp, and jti,
-       and the single-hop act rules.
+       the absence of aud, and the single-hop act rules.
 
    2.  MUST verify that the proof's (act.iss, act.sub) pair equals the
        actor identifier pair the issuer will emit as the new outermost
@@ -738,10 +747,10 @@ Table of Contents
        resource indicators when the request expresses them, exceed the
        proof's target binding.  Every audience of the issued token MUST
        be present in target.aud, and every effective resource indicator
-       MUST be within target.resource when that member is present.  For
-       Token Exchange requests, Section 12 gives the error to return
-       when the requested target cannot be satisfied within the proof's
-       target binding.
+       MUST equal an entry of target.resource when that member is
+       present.  For Token Exchange requests, Section 12 gives the error
+       to return when the requested target cannot be satisfied within
+       the proof's target binding.
 
    7.  MUST include the validated proof as actor_proofs[0] of the issued
        token, subject to the chain rules below.
@@ -835,6 +844,12 @@ Table of Contents
    *  MUST NOT change top-level sub while retaining proofs; doing so
       breaks alignment with actor_proofs[0].sub.
 
+   *  MUST NOT set the outer token's exp later than the earliest exp
+      among the retained proofs; an issuer that needs a later exp MUST
+      drop the array, or MUST instead fail the request under the error
+      model of Section 12 when local policy or the deployment's resource
+      requirements require actor-signed evidence.
+
    If such an issuer changes the visible outermost actor, it has added a
    new hop and MUST follow Section 9.2.
 
@@ -856,15 +871,17 @@ Table of Contents
       contained refresh token, so each refreshed access token can carry
       the proofs forward unchanged.
 
-   *  MUST rely on proof exp values set per Section 7.2 to accommodate
-      the bounded maximum delegated-session lifetime.  Otherwise
-      downstream issuers reject inbound chains under Section 9.2 as
-      proofs approach expiry, and refresh loses actor-signed evidence.
+   *  applies the exp limit above to each refreshed access token.  How
+      long refresh can carry the proofs therefore depends on the
+      conditional proof exp sizing in Section 7.2, which lets exp cover
+      the delegated session with instance binding and calls for a short
+      exp without it.
 
-   *  When that bounded lifetime would be exceeded, MUST either obtain
-      fresh delegation state with fresh proofs or stop emitting
-      actor_proofs, unless local policy permits partial or absent
-      coverage.
+   *  when a refreshed access token needs a later exp than that limit
+      allows, drops actor_proofs from it or fails the refresh request,
+      as the rule above requires.  Refresh adds no actor hop, so actor-
+      signed evidence resumes only through a new delegated issuance that
+      adds a hop with a fresh proof.
 
 9.4.  Partial Coverage and Full Coverage
 
@@ -992,6 +1009,8 @@ Table of Contents
            expected JSON types when present, including sub_iss,
            target.resource, prh, prh_alg, receipt_jti, and origin_jti;
 
+        *  reject a proof that carries an aud claim (Section 7.2);
+
         *  verify that the proof act object is single-hop, contains no
            nested act, and contains no cnf, and that the proof iss
            equals the proof act.sub;
@@ -1064,8 +1083,8 @@ Table of Contents
            outer token's jti, the proof chain is bound to the current
            outer-token instance; when it is present and differs, the
            chain has diverged, Section 14.4.1 decides whether the
-           recipient rejects it, and an accepted value is historical
-           provenance;
+           recipient rejects it (rejection is the default), and an
+           accepted value is historical provenance;
 
         *  when actor_proofs[0].origin_jti is absent, the proof chain
            carries no instance binding of its own; this is not by itself
@@ -1075,12 +1094,13 @@ Table of Contents
            actor_proofs[0].target.aud, and, when the outer token's
            effective resource indicators are determinable from token
            claims, the introspection response, or trusted local context,
-           that each is within actor_proofs[0].target.resource when that
-           member is present.  A token whose audience or resources
-           exceed the newest proof's target binding has also diverged;
-           Section 14.4.1 decides whether the recipient rejects the
-           chain and limits an accepted chain to participation evidence,
-           not actor consent to the current target;
+           that each equals an entry of actor_proofs[0].target.resource
+           when that member is present.  A token whose audience or
+           resources exceed the newest proof's target binding has also
+           diverged; Section 14.4.1 decides whether the recipient
+           rejects the chain (rejection is the default) and limits an
+           accepted chain to participation evidence, not actor consent
+           to the current target;
 
         *  target bindings of proofs other than actor_proofs[0] are
            historical consent for their own hops.  The recipient MUST
@@ -1166,7 +1186,8 @@ Table of Contents
    When neither condition is met, the recipient MUST treat subject
    continuity as unverified and MUST NOT rely on older proofs whose
    subject identifiers (sub or sub_iss) differ to support authorization
-   that requires subject continuity.
+   that requires subject continuity (for example, a decision that treats
+   every covered hop as having acted for the current token's subject).
 
 10.2.  Complete Proof Coverage
 
@@ -1346,10 +1367,12 @@ Table of Contents
    submitted proof cannot be validated (signature failure, key-
    resolution failure for an actor outside the trusted key sources,
    expired proof, unsupported prh_alg, broken prh chain, hop or subject
-   misalignment), it SHOULD return invalid_grant, constructed per
-   [RFC8693] Section 2.2.2 and [RFC6749] Section 5.2, consistent with
-   the core actor profile's error mapping for actor information that
-   fails validation.
+   misalignment), it returns an error response per [RFC6749],
+   Section 5.2: invalid_request for a Token Exchange request, as
+   [RFC8693], Section 2.2.2 requires, or invalid_grant for a JWT bearer
+   grant request ([RFC7523], Section 3.1), consistent with the core
+   actor profile's error mapping for actor information that fails
+   validation.
 
    When the requested token's audience or resources cannot be satisfied
    within the submitted proof's target binding in a Token Exchange
@@ -1448,7 +1471,7 @@ Table of Contents
    Actor proofs strengthen delegation evidence with actor-side
    signatures, but they do not replace ordinary token validation.  The
    general OAuth 2.0 Security Best Current Practice [RFC9700] and the
-   JWT best practices in [RFC8725], except its audience validation for
+   JWT best practices in [RFC8725], except its audience requirements for
    proof JWTs (see aud in Section 7.2), apply to systems implementing
    this profile.
 
@@ -1746,10 +1769,10 @@ Table of Contents
 
 14.9.  Proof Freshness and Replay
 
-   Proofs are historical attestations of hop-time consent.  They MAY
+   Proofs are historical attestations of hop-time consent.  They can
    outlive the validity period of the outer token they were originally
-   embedded in, and MAY be carried forward across reissuance and refresh
-   as long as their exp permits.
+   embedded in, and can be carried forward across reissuance and refresh
+   only in tokens that expire no later than they do (Section 9.3).
 
    *  Proofs attest participation and target consent at signing time;
       they do not assert that the represented delegation is still active
@@ -1922,7 +1945,7 @@ Table of Contents
    *  Claim Description: Array of actor-signed hop proofs providing
       delegation participation evidence
 
-   *  Change Controller: IESG
+   *  Change Controller: IETF
 
    *  Specification Document(s): This document
 
@@ -1931,7 +1954,7 @@ Table of Contents
    *  Claim Description: Boolean indicating whether actor_proofs covers
       every visible hop in the token's act chain
 
-   *  Change Controller: IESG
+   *  Change Controller: IETF
 
    *  Specification Document(s): This document
 
@@ -1940,7 +1963,7 @@ Table of Contents
    *  Claim Description: Target binding (audience and resource
       constraints) authorized by the signer of an Actor Proof JWT
 
-   *  Change Controller: IESG
+   *  Change Controller: IETF
 
    *  Specification Document(s): This document
 
@@ -1949,7 +1972,7 @@ Table of Contents
    *  Claim Description: jti of the sibling Actor Receipt JWT created
       for the same delegation hop as an Actor Proof JWT
 
-   *  Change Controller: IESG
+   *  Change Controller: IETF
 
    *  Specification Document(s): This document
 
@@ -1958,7 +1981,7 @@ Table of Contents
    *  Claim Description: jti of the sibling Actor Proof JWT validated
       for the same delegation hop as an Actor Receipt JWT
 
-   *  Change Controller: IESG
+   *  Change Controller: IETF
 
    *  Specification Document(s): This document
 
@@ -1993,7 +2016,7 @@ Table of Contents
 
    *  Parameter usage location: token request
 
-   *  Change Controller: IESG
+   *  Change Controller: IETF
 
    *  Specification Document(s): This document
 
@@ -2007,7 +2030,7 @@ Table of Contents
    *  Metadata Description: Indicates support for accepting, validating,
       embedding, preserving, and extending actor-signed hop proofs
 
-   *  Change Controller: IESG
+   *  Change Controller: IETF
 
    *  Specification Document(s): This document
 
@@ -2022,7 +2045,7 @@ Table of Contents
       delegated requests to carry valid actor proofs covering at minimum
       the outermost visible actor hop
 
-   *  Change Controller: IESG
+   *  Change Controller: IETF
 
    *  Specification Document(s): This document
 
@@ -2031,7 +2054,7 @@ Table of Contents
    *  Metadata Description: Indicates that the resource requires
       complete proof coverage for all visible actor hops
 
-   *  Change Controller: IESG
+   *  Change Controller: IETF
 
    *  Specification Document(s): This document
 
@@ -2045,7 +2068,7 @@ Table of Contents
    *  Description: Array of actor-signed hop proofs returned by
       introspection
 
-   *  Change Controller: IESG
+   *  Change Controller: IETF
 
    *  Specification Document(s): This document
 
@@ -2054,7 +2077,7 @@ Table of Contents
    *  Description: Indicates whether the returned actor proofs provide
       complete visible-hop coverage
 
-   *  Change Controller: IESG
+   *  Change Controller: IETF
 
    *  Specification Document(s): This document
 
@@ -2097,6 +2120,11 @@ Table of Contents
    [RFC7519]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web Token
               (JWT)", RFC 7519, DOI 10.17487/RFC7519, May 2015,
               <https://www.rfc-editor.org/info/rfc7519>.
+
+   [RFC7523]  Jones, M., Campbell, B., and C. Mortimore, "JSON Web Token
+              (JWT) Profile for OAuth 2.0 Client Authentication and
+              Authorization Grants", RFC 7523, DOI 10.17487/RFC7523, May
+              2015, <https://www.rfc-editor.org/info/rfc7523>.
 
    [RFC7662]  Richer, J., Ed., "OAuth 2.0 Token Introspection",
               RFC 7662, DOI 10.17487/RFC7662, October 2015,
@@ -2436,23 +2464,28 @@ Document History
    *  Removed an example claim that receipt composition stops a
       compromised issuer from re-embedding a proof.
 
-   *  Reconciled exp guidance, aligned expiry handling with [RFC7519],
-      and removed BCP 14 keywords from storage, trust-setup, and rollout
-      guidance.
+   *  Reconciled exp guidance and removed BCP 14 keywords from storage,
+      trust-setup, and rollout guidance.
+
+   *  An expired proof, including one for an older hop, is now invalid;
+      only the clock-skew leeway of [RFC7519], Section 4.1.4 applies.
 
    *  Consolidated duplicated requirements into single homes and cited
       dependencies instead of restating them.
 
    *  Resolved the remaining duplicate-rule conflicts: companion rules
-      cannot relax conformance requirements, [RFC8725] applies except
-      its audience validation, and Strict Mode governs every divergence.
+      cannot relax conformance requirements, and Strict Mode governs
+      every divergence.
 
    *  Removed the unconditional recommendation for short proof exp in
       favor of the claim's conditional sizing rule.
 
-   *  Aligned subject-continuity handling, the introspection partial-
-      coverage flag, and the proof actor object's sub_profile rule with
-      Receipts.
+   *  Aligned subject-continuity handling and the proof actor object's
+      sub_profile rule with Receipts.
+
+   *  An introspection server that returns a stored array it knows has
+      partial coverage is now required to include actor_proofs_complete:
+      false.
 
    *  Used the base profile's example identifiers for the travel
       assistant and booking tool.
@@ -2460,8 +2493,24 @@ Document History
    *  Clarified that proof actor-object restrictions apply separately
       from confirmation extensions in the token's actor chain.
 
-   *  Restored the Introduction's defining sentence and design-center
-      list, and the list of what this document defines.
+   *  Prohibited aud in proofs (-00 discouraged it); consumers reject a
+      proof that carries it, and [RFC8725] applies except [RFC8725],
+      Section 3.9.
+
+   *  A reissuer that carries proofs forward, including an AS refreshing
+      a token, cannot set the outer token's exp later than the earliest
+      proof exp; a reissuer that needs a later exp drops the array, or
+      fails the request when actor-signed evidence is required.
+
+   *  Proof validation failures on Token Exchange requests now use
+      invalid_request, as [RFC8693], Section 2.2.2 requires; JWT bearer
+      grant requests use invalid_grant ([RFC7523], Section 3.1).
+
+   *  A resource indicator is within a proof's target binding only when
+      it equals an entry of target.resource.
+
+   *  Named the IETF, rather than the IESG, as change controller for the
+      claim, parameter, metadata, and introspection registrations.
 
    -00
 
