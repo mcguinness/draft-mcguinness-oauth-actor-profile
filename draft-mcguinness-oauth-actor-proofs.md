@@ -692,7 +692,6 @@ Trust establishment requirements:
 This document profiles the following resolution patterns; a deployment may support any subset:
 
 *  **Pre-established keys.**  The actor's verification keys are registered with the recipient or its trust framework in advance, for example as the JWKS of a registered OAuth client at the authorization server, or as locally configured keys at a resource server.  This pattern is self-contained and provides the strongest independence properties.  Attestation-based client authentication {{I-D.ietf-oauth-attestation-based-client-auth}} provides an interoperable way to establish such keys, with an attester vouching for the actor's key binding.
-*  **Receipt-attested presenter keys.**  When the aligned receipt carries the historical presenter binding `cnf` defined in {{I-D.mcguinness-oauth-actor-receipts}} and the deployment uses presenter keys to sign proofs, a recipient MAY use that `cnf` to identify the verification key.  This avoids a separate key registry but provides no independence from that receipt issuer, including the current issuer at the newest hop when that issuer created the newest receipt.
 *  **Federation and workload identity systems.**  Deployment-defined resolution through workload identity or federation infrastructure.  The trust and freshness properties are those of the underlying system; this document does not profile them.  OAuth SPIFFE client authentication {{I-D.ietf-oauth-spiffe-client-auth}} is an example of workload-identity key establishment that deployments can apply to actor signing keys.
 
 The independence requirement follows from the threat model: for the anti-fabrication property against a given issuer to hold at a hop, the recipient MUST resolve the actor's key for that hop through a source independent of that issuer.
@@ -1023,7 +1022,7 @@ The example verifies as follows:
 *  The older proof's target records consent for its own hop and is not compared with the current audience.
 *  Receipt `proof_jti` links the two chains, and the leading receipt's `origin_jti` anchors the current token instance.
 
-The proofs use the presenter keys identified by sibling receipts (`ToolJKT` and `AgentJKT`).  This illustrates receipt-attested key resolution, which provides no protection against fabrication by the receipt issuer itself ({{actor-key-resolution}}).  Receipt binding also does not prevent a compromised issuer from signing a replacement receipt.
+The recipient verifies each proof against a pre-established key registered for its actor ({{actor-key-resolution}}).  Receipt binding does not prevent a compromised issuer from signing a replacement receipt.
 
 ## Example: Proofs-Only Partial Coverage
 
