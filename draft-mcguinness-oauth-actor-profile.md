@@ -557,7 +557,8 @@ When an AS receives a JWT assertion grant containing an `act` claim:
        *  Verify the DPoP proof is valid per {{RFC9449}} with `htm="POST"` and `htu` equal to the AS token endpoint URI.
        *  Verify that the JWK SHA-256 thumbprint of the public key in the DPoP proof matches the assertion's `cnf.jkt` ({{RFC9449, Section 6.1}}), as in the proof checks of {{RFC9449, Section 4.3}}.
        *  Use the assertion's `cnf.jkt` as set by the upstream issuer; MUST NOT substitute a locally registered key.
-       *  Reject with `invalid_dpop_proof` if the proof is absent or invalid, subject to the nonce challenge rules of {{RFC9449, Section 8}}.  If a valid proof's key does not match the assertion's `cnf.jkt`, reject with `invalid_grant`.
+       *  Reject with `invalid_grant` if the required proof is absent, as specified for ID-JAG in {{I-D.ietf-oauth-identity-assertion-authz-grant, Section 9.8.1.2.2}}.  If a valid proof's key does not match the assertion's `cnf.jkt`, reject with `invalid_grant`.
+       *  Reject with `invalid_dpop_proof` if a supplied proof is invalid, subject to the nonce challenge rules of {{RFC9449, Section 8}}.
 
        > Note: The `ath` claim is not applicable at the token endpoint and MUST NOT be required.  See also {{I-D.parecki-oauth-jwt-dpop-grant}} for related work on DPoP-bound JWT grants.
 
@@ -1209,7 +1210,7 @@ When an AS or TTS rejects a request for reasons related to actor-profile process
 
 Input validation errors follow the request's grant type.  On Token Exchange requests, including TTS requests, an invalid or policy-unacceptable `subject_token` or `actor_token` uses `invalid_request` ({{RFC8693, Section 2.2.2}}).  On JWT bearer grant requests, an invalid assertion uses `invalid_grant` ({{RFC7523, Section 3.1}}).  This distinction also applies to missing required claims, invalid actor structure, and excessive inbound chain depth.
 
-Client-authentication and proof-mechanism errors take precedence over these generic input-validation errors.  Failed client authentication uses `invalid_client` per {{RFC6749}} or {{RFC7523}}.  DPoP errors use `invalid_dpop_proof`, or `use_dpop_nonce` for a nonce challenge, per {{RFC9449, Sections 5 and 8}}.  Actor-authorization denials use `actor_unauthorized`, an extension error permitted by {{RFC8693, Section 2.2.2}}.
+Client-authentication and proof-mechanism errors take precedence over these generic input-validation errors.  Failed client authentication uses `invalid_client` per {{RFC6749}} or {{RFC7523}}.  A supplied invalid DPoP proof uses `invalid_dpop_proof`; a nonce challenge uses `use_dpop_nonce`, per {{RFC9449, Sections 5 and 8}}.  A missing required grant proof is an input-validation failure and uses the grant-type-specific error above.  Actor-authorization denials use `actor_unauthorized`, an extension error permitted by {{RFC8693, Section 2.2.2}}.
 
 The following errors apply to both AS and TTS endpoints:
 
@@ -2117,7 +2118,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * On the `may_act` path without `actor_token`, the authenticated client is the new presenter, and a sender-constrained output is bound to the key it demonstrates.
 * The scope issued from a JWT assertion grant used as `subject_token` is capped by the grant's `scope`, or, when that is absent, by the scope the AS would authorize for the grant directly.
 * Token Exchange and TTS requests reject invalid or policy-unacceptable `subject_token` and `actor_token` inputs with `invalid_request`, per {{RFC8693, Section 2.2.2}}, while actor-policy denials keep `actor_unauthorized`; JWT bearer grant requests keep `invalid_grant`.
-* Centralized error precedence: client-authentication and proof-mechanism errors take precedence over generic input-validation errors.  Missing required assertion claims and other structural failures use `invalid_grant` on JWT bearer grant requests and `invalid_request` on Token Exchange requests.
+* Centralized error precedence: client-authentication and proof-mechanism errors take precedence over generic input-validation errors.  Missing required assertion claims, missing required grant proofs, and other structural failures use `invalid_grant` on JWT bearer grant requests and `invalid_request` on Token Exchange requests; supplied invalid DPoP proofs retain `invalid_dpop_proof`.
 * {{RFC6749}}, {{RFC7800}}, {{OpenID.Core}}, and ID-JAG are now normative references, and ID-JAG is cited at -04.
 * The `actor_unauthorized` registration uses the error usage location names of {{RFC6749}}.
 
