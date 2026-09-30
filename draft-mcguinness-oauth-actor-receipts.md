@@ -381,7 +381,7 @@ Reissuance is the only case in which `receipt[0]` may legitimately diverge from 
 *  **Different-issuer reissuance**: `receipt[0].iss` differs from the outer token's `iss`, for example when an introspection endpoint operated as a separate trust principal re-emits the token, or a token translator at a domain boundary re-issues it.
 *  **Same-issuer reissuance**: `receipt[0].iss` matches the outer token's `iss`, but a present `receipt[0].origin_jti` differs from the outer token's `jti`, for example when an AS refreshes its own access token.
 
-In either case, `origin_jti` remains historical and no longer binds the chain to the current instance.  Recipients accept such divergence only under the reissuing-issuer policy in {{receipt-to-token-binding-limits}}.
+In either case, `origin_jti` remains historical and no longer binds the chain to the current instance.  Recipients accept different-issuer reissuance only under the reissuing-issuer policy in {{receipt-to-token-binding-limits}}, and same-issuer reissuance only as provenance without instance binding (case 3 of {{receipt-instance-binding}}).
 
 Refresh-token reissuance is a special case of reissuance under this section.  Receipt-bearing refresh is interoperable only when local policy defines a bounded maximum delegated-session lifetime for tokens that may inherit the receipts.
 
@@ -469,8 +469,8 @@ Consumer step 5 applies the following cases in order to `receipt[0]`:
 
 1.  If its `iss` matches the outer issuer and its `origin_jti` is present and matches the outer token's `jti`, the chain is bound to that token instance.
 2.  If the issuers match but the outer token has no `jti`, the chain supplies provenance without instance binding.  Any `origin_jti` is informational.
-3.  If the issuers match and the outer token has `jti`, but `origin_jti` is absent, the recipient MAY accept provenance under local policy.  It MUST NOT treat the chain as instance-bound.
-4.  Otherwise, the recipient MUST reject the chain unless local policy trusts the outer issuer to reissue chains led by this receipt issuer ({{strict-mode-validation}}).
+3.  If the issuers match and the outer token has `jti`, but `origin_jti` is absent or differs from that `jti`, the recipient MAY accept provenance under local policy.  It MUST NOT treat the chain as instance-bound.
+4.  Otherwise (the issuers differ), the recipient MUST reject the chain unless local policy trusts the outer issuer to reissue chains led by this receipt issuer ({{strict-mode-validation}}).
 
 A recipient that requires instance binding MUST reject the chain unless case 1 applies.
 
@@ -708,7 +708,7 @@ This construction makes coverage tamper-evident at the structural level:
 
 Coverage is therefore truthful within the limits of the trusted-issuer set: a compromised issuer can omit some or all of its own receipts and any outermost receipts from issuers it controls, but it cannot fabricate, reorder, or selectively drop receipts signed by other trusted issuers.
 
-Divergence in issuer or token identifier removes current-instance binding.  {{receipt-instance-binding}} rejects such chains unless local policy explicitly trusts the outer issuer to reissue them.  This profile cannot distinguish legitimate reissuance from malicious rewrapping in band.
+Divergence in issuer or token identifier removes current-instance binding.  {{receipt-instance-binding}} rejects issuer divergence unless local policy explicitly trusts the outer issuer to reissue such chains; a same-issuer token-identifier divergence leaves provenance without instance binding.  This profile cannot distinguish legitimate reissuance from malicious rewrapping in band.
 
 Recipients accepting reissuance configure that trust locally or through an out-of-band framework, and unexpected divergence warrants investigation.  Outside the originating-issuance case, protection against non-issuer transplantation depends on the outer signature.  A compromised outer issuer can create a replacement token; see {{compromised-outer-issuer}}.
 
@@ -716,9 +716,9 @@ Companion profiles MAY define additional outer-token binding claims following th
 
 ### Strict-Mode Validation {#strict-mode-validation}
 
-Without configured trusted reissuing issuers, recipients use strict mode: issuer or `origin_jti` divergence causes rejection.  A missing leading `origin_jti` is not divergence; case 3 of {{receipt-instance-binding}} governs it.
+Without configured trusted reissuing issuers, recipients use strict mode: issuer divergence causes rejection.  A missing or differing leading `origin_jti` under a matching issuer does not; case 3 of {{receipt-instance-binding}} governs it.
 
-Strict mode is the recommended default.  Deployments that need to accept reissued tokens, such as refreshed, re-emitted, or translated tokens, need to configure the trusted reissuing issuers explicitly, through local policy or an out-of-band trust framework.
+Strict mode is the recommended default.  Deployments that need to accept tokens reissued by a different issuer, such as re-emitted or translated tokens, need to configure the trusted reissuing issuers explicitly, through local policy or an out-of-band trust framework.
 
 ## Hash Algorithm Agility
 
@@ -1162,7 +1162,7 @@ The receipts are bit-identical to those in the Two-Hop Delegation Chain example.
 *  `outer.iss` is `https://introspection.travel-provider.example`, while `receipt[0].iss` remains `https://as.travel-provider.example`.  This divergence is legitimate under {{reissuance-without-a-new-actor-hop}}.
 *  `outer.jti` is `f4a7b9c2-1d3e-4f5a-8b6c-7d8e9f0a1b2c`, while `receipt[0].origin_jti` remains `d3a1b2c0-9f4e-4a1d-b8e7-12345678abcd` (the original outer token's `jti`).  This divergence is also legitimate.
 
-Under {{receipt-instance-binding}}, `origin_jti` is historical here because the outer issuer and token identifier have changed.  The same rule applies when an AS refreshes its own token with a new `jti`.  In either case, acceptance requires explicit trust in the reissuing issuer ({{receipt-to-token-binding-limits}}).
+Under {{receipt-instance-binding}}, `origin_jti` is historical here because the outer issuer and token identifier have changed, and acceptance requires explicit trust in the reissuing issuer ({{receipt-to-token-binding-limits}}).  When an AS refreshes its own token with a new `jti`, case 3 applies instead: local policy can accept the chain as provenance, but not as instance-bound.
 
 # Document History
 {:numbered="false"}
