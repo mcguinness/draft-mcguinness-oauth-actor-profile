@@ -285,7 +285,13 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 `exp`:
 : REQUIRED.  Expiration time for the receipt, as defined in {{RFC7519}}.
 
-  The `exp` of a newly created receipt MUST NOT be earlier than the `exp` of the outer token issued with it, and SHOULD cover the expected maximum token lifetime of any token that will carry or inherit this receipt.  An under-set `exp` causes propagation failure: an issuer extending the chain rejects a receipt that expires before its issued token (step 2 of {{extending-an-existing-receipt-chain}}), and a reissuer caps the reissued token's `exp` or drops the array ({{reissuance-without-a-new-actor-hop}}).
+  The `exp` of a newly created receipt MUST NOT be earlier than the `exp` of the outer token issued with it, and SHOULD cover the expected maximum token lifetime of any token that will carry or inherit this receipt.  An under-set `exp` causes propagation failure: issuers that later retain the receipt apply the following receipt lifetime rule.
+
+  When an issuer retains receipts in a token it issues (extending the chain under {{extending-an-existing-receipt-chain}}, or reissuing or refreshing under {{reissuance-without-a-new-actor-hop}}) and a retained receipt's `exp` is earlier than the `exp` the issuer would set, the issuer:
+
+  1.  MAY lower the issued token's `exp` to the earliest retained receipt `exp`;
+  2.  otherwise, where local policy permits the issued token to lack the retained receipts, MUST drop the array;
+  3.  otherwise MUST fail the request, with `invalid_grant` on a refresh or JWT bearer grant request ({{RFC6749, Section 5.2}}) or `invalid_request` on a Token Exchange request ({{RFC8693, Section 2.2.2}}).
 
   Because the originating issuer cannot enumerate every downstream issuer that may inherit a receipt, deployments typically coordinate a bounded delegated-session lifetime to avoid propagation failure while limiting signing-key exposure; see {{reissuance-without-a-new-actor-hop}}.
 
@@ -349,7 +355,7 @@ A one-element array is complete coverage only when the visible `act` chain has d
 When an issuer adds a new outermost actor hop and also preserves an inbound `actor_receipts` array, it:
 
 1.  MUST validate the inbound receipt chain by applying the consumer processing rules in {{consumer-processing}} before relying on it or carrying it forward.
-2.  MUST verify that every inbound receipt's `exp` is no earlier than the issued outer token's `exp`.  A failure is an inbound validation failure.  Issuers MAY allow a small, deployment-defined clock-skew margin consistent with consumer validation, but MUST NOT accept a larger expiry gap.
+2.  MUST apply the receipt lifetime rule in {{receipt-claims}} when an inbound receipt's `exp` is earlier than the issued outer token's `exp`.  Issuers MAY allow a small, deployment-defined clock-skew margin consistent with consumer validation, but MUST NOT accept a larger expiry gap.
 3.  MUST preserve each inbound receipt byte-for-byte unchanged.
 4.  MUST create exactly one new receipt for the new outermost actor hop.
 5.  MUST prepend that new receipt to the inherited array.
@@ -370,7 +376,7 @@ An issuer that reissues, translates, or introspects and re-emits a token without
 *  MUST preserve `actor_receipts_complete` when carrying the array unchanged.  If the issuer cannot attest that value, it MUST drop the array entirely; disclosure is all-or-nothing ({{consumer-introspection}}).
 *  MUST NOT continue to carry an inherited `actor_receipts` array if it cannot preserve the visible hop alignment required by {{consumer-processing}};
 *  MUST NOT change top-level `sub` while retaining receipts.  Subject re-expression breaks alignment with `receipt[0].sub` and requires dropping the array.
-*  MUST NOT set the outer token's `exp` later than the earliest `exp` among the retained receipts; an issuer that needs a later `exp` MUST drop the array.
+*  MUST NOT set the outer token's `exp` later than the earliest `exp` among the retained receipts; an issuer that would set a later `exp` applies the receipt lifetime rule in {{receipt-claims}}.
 
 If such an issuer changes the visible outermost actor, it has added a new hop and MUST follow {{extending-an-existing-receipt-chain}}.
 
@@ -383,13 +389,13 @@ Reissuance is the only case in which `receipt[0]` may legitimately diverge from 
 
 In either case, `origin_jti` remains historical and no longer binds the chain to the current instance.  Recipients accept different-issuer reissuance only under the reissuing-issuer policy in {{receipt-to-token-binding-limits}}, and same-issuer reissuance only as provenance without instance binding (case 3 of {{receipt-instance-binding}}).
 
-Refresh-token reissuance is a special case of reissuance under this section.  Receipt-bearing refresh is interoperable only when local policy defines a bounded maximum delegated-session lifetime for tokens that may inherit the receipts.
+Refresh-token reissuance is a special case of reissuance under this section.  Receipt-bearing refresh keeps its receipts only while their `exp` values cover the refreshed tokens, so deployments size receipt `exp` for a bounded maximum delegated-session lifetime that local policy defines for tokens that may inherit the receipts.
 
 An AS that supports refresh tokens for delegated access tokens:
 
 *  needs to retain the `actor_receipts` array associated with the original access token in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the receipts forward unchanged.
-*  needs receipt `exp` values ({{receipt-claims}}) that accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under {{extending-an-existing-receipt-chain}} as receipts approach expiry, and refresh loses receipt-based provenance.
-*  When that bounded lifetime would be exceeded, MUST stop emitting `actor_receipts`; when local policy requires receipts, it MUST instead fail the refresh request under the error model of the underlying protocol.  Refresh adds no actor hop, so receipt provenance resumes only through a new delegated issuance that adds a hop and begins a chain under {{creating-the-first-receipt}}.
+*  needs receipt `exp` values ({{receipt-claims}}) that accommodate the bounded maximum delegated-session lifetime.  Otherwise, as receipts approach expiry, refresh and downstream extension fall under the receipt lifetime rule in {{receipt-claims}}, shortening tokens or losing receipt-based provenance.
+*  applies the receipt lifetime rule in {{receipt-claims}} when a retained receipt's `exp` is earlier than the `exp` it would set for the refreshed token.  Refresh adds no actor hop, so receipt provenance resumes only through a new delegated issuance that adds a hop and begins a chain under {{creating-the-first-receipt}}.
 
 ## Partial Coverage and Full Coverage
 
