@@ -1098,7 +1098,7 @@ When a token contains both `sub` and an `act` claim, a resource server has two i
 
 *  **Subject principal** (`sub`): the party whose authorization is being exercised.  This principal typically has a relationship with the resource (e.g., an account, a role, a permission).
 
-*  **Actor principal** (`act.sub`): the party that is making the immediate request.  This principal may be in a different organizational domain and trust level from the subject.
+*  **Actor principal** (`act.sub`): the party that is making the immediate request.  This principal may be in a different organizational domain and trust level from the subject.  Wherever this document pairs `sub` with the outermost `act.sub` for authorization policy, the outermost actor is identified by its (`act.iss`, `act.sub`) pair ([Actor Object Structure](#actor-object-structure)).
 
 For Transaction Tokens, the primary policy pair remains (`sub`, `act.sub`).  The `req_wl` claim provides workload context from the TTS and is not a replacement for `act.sub`.  Nested `act` objects provide prior-actor context for audit or other deployment-specific processing; this document does not standardize their authorization use.
 
