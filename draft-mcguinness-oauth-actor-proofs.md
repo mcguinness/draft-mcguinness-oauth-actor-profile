@@ -391,7 +391,7 @@ When an issuer adds a new outermost actor hop and also preserves an inbound `act
 
 Byte-for-byte preservation ({{proof-chain-linkage}}) rules out reserializing, re-signing, normalizing, trimming, or otherwise altering a prior proof.
 
-The actor must know the newest inbound proof's exact serialization, or its hash and `prh_alg`, before signing.  For JWT inputs it can read `actor_proofs[0]`.  For opaque inputs, the deployment MUST supply that information.  If unavailable, the issuer MUST NOT accept a proof without `prh` as a chain extension; it MAY instead start a new chain under {{accepting-a-proof}} where local policy permits partial coverage ({{partial-coverage-and-full-coverage}}).
+The actor must know the newest inbound proof's exact serialization, or its hash and `prh_alg`, before signing.  For JWT inputs it can read `actor_proofs[0]`.  For opaque inputs, the deployment needs to supply that information through a mechanism it defines ({{actor-proof-parameter}}).  If unavailable, the issuer MUST NOT accept a proof without `prh` as a chain extension; it MAY instead start a new chain under {{accepting-a-proof}} where local policy permits partial coverage ({{partial-coverage-and-full-coverage}}).
 
 If inbound proofs fail validation, the issuer MUST NOT propagate them.  It MAY continue without them only when local policy permits partial or absent coverage, and MAY then begin a new chain at its own hop under {{accepting-a-proof}}; the result is partial coverage and MUST NOT carry `actor_proofs_complete: true`.  Otherwise it MUST fail the request under the error model of the underlying protocol.
 
