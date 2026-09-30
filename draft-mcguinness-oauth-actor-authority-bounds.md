@@ -198,7 +198,7 @@ The `authorization_details` dimension records the Rich Authorization Requests ar
 
 *  an array `ad_a` refines `ad_b` if and only if every object in `ad_a` refines some object in `ad_b`; objects present in `ad_b` but absent from `ad_a` represent narrowing and are permitted; objects in `ad_a` that refine no object in `ad_b` represent expansion and fail the comparison;
 *  two objects refine only when they share the same `type`;
-*  for the common members defined by {{RFC9396}}, refinement requires: `actions` a subset, `locations` a subset under the URI rules of {{resource-dimension}}, `datatypes` a subset, and `identifier` equal.
+*  for the common members defined by {{RFC9396, Section 2.2}}, refinement requires: `actions` a subset, `locations` a subset under the URI rules of {{resource-dimension}}, `datatypes` a subset, `privileges` a subset, and `identifier` equal; a common member present in the `ad_b` object but absent from the `ad_a` object is expansion and fails the comparison, and one absent from the `ad_b` object but present in the `ad_a` object is narrowing.
 
 For type-specific members the recipient cannot evaluate, the recipient MUST reject verification of that dimension by default, or skip the object's refinement under explicit local policy.  RAR type specifications SHOULD define their own refinement rules; see {{extensibility}}.
 
