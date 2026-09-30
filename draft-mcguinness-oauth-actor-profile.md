@@ -2011,7 +2011,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
   token-type%3Atxn_token
 &audience=https%3A%2F%2Ftravel-provider.example
 &scope=inventory%3Acheck
-&rctx={"req_ip":"198.51.100.42"}
+&request_context=%7B%22req_ip%22%3A%22198.51.100.42%22%7D
 ~~~
 
 The WIT is therefore the JWT `actor_token` defined by this profile, while the WPT provides the accompanying proof of possession required by the workload-credential profile.
