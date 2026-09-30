@@ -301,7 +301,7 @@ Proofs define no subject `sub_profile` claim; subject classification remains iss
 
   `exp` needs to cover the lifetime of any token that will carry or inherit this proof; otherwise consumers reject older proofs in a valid chain prematurely.
 
-  A proof expiring before the issued outer token causes propagation failure ({{extending-an-existing-proof-chain}}, {{reissuance-without-a-new-actor-hop}}).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse ({{proof-to-token-binding-limits}}).
+  A proof expiring before the outer token an issuer would issue caps that token's `exp` or ends the proof's propagation ({{issuer-processing}}).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse ({{proof-to-token-binding-limits}}).
 
   With instance binding through receipts in strict mode or a provisioned `origin_jti` ({{proof-to-token-binding-limits}}), `exp` MAY cover the delegated session only while the outer token stays instance-bound.  Refresh or reissuance ends instance binding, so issuers that refresh tokens carrying proofs SHOULD keep proof `exp` short.  Without instance binding, `exp` SHOULD be short to limit proof reuse.
 
@@ -348,9 +348,15 @@ The AS authenticates the actor and derives its identity under the core profile, 
 
 This document does not define a challenge mechanism by which an authorization server provides prospective values (such as the outer token's `jti`, a receipt's `jti`, or the newest inbound proof for opaque inbound tokens) to the actor before signing.  Deployments and companion profiles MAY define such mechanisms; the `origin_jti` and `receipt_jti` claims are the designed insertion points.
 
-# Issuer Processing
+# Issuer Processing {#issuer-processing}
 
 This section defines how an authorization server or Transaction Token Service accepts, validates, embeds, preserves, and extends `actor_proofs`.
+
+When a proof the issuer retains from an inbound token or refresh state has an `exp` earlier than the `exp` the issuer would set for the issued token, the issuer:
+
+1.  MAY lower the issued token's `exp` to the earliest `exp` among the retained proofs;
+2.  otherwise, where local policy permits absent coverage, MUST drop the `actor_proofs` array;
+3.  otherwise, MUST fail the request: `invalid_grant` on a refresh or JWT bearer grant request ({{RFC6749, Section 5.2}}), `invalid_request` on a Token Exchange request ({{RFC8693, Section 2.2.2}}).
 
 ## Accepting a Proof for a New Actor Hop {#accepting-a-proof}
 
@@ -373,7 +379,7 @@ If proof validation fails, the issuer MUST NOT embed the proof.  When local poli
 When an issuer adds a new outermost actor hop and also preserves an inbound `actor_proofs` array, it:
 
 1.  MUST validate the inbound proof chain by applying the consumer processing rules in {{consumer-processing}} before relying on it or carrying it forward.
-2.  MUST verify that each inbound proof's `exp` is no earlier than the issued outer token's `exp`.  An inbound proof that fails this check is treated as failing validation under step 1.  Issuers MAY apply a small clock-skew margin to this comparison, consistent with the consumer-side skew tolerance in {{consumer-processing}}, but MUST NOT broadly accept inbound proofs whose `exp` precedes the issued outer token's `exp` by more than a deployment-defined skew bound.
+2.  MUST verify that each inbound proof's `exp` is no earlier than the issued outer token's `exp`, applying the lifetime rule in {{issuer-processing}} when an inbound proof's `exp` is earlier than the `exp` the issuer would set.  Issuers MAY apply a small clock-skew margin to this comparison, consistent with the consumer-side skew tolerance in {{consumer-processing}}, but MUST NOT broadly accept inbound proofs whose `exp` precedes the issued outer token's `exp` by more than a deployment-defined skew bound.
 3.  preserves each inbound proof byte-for-byte unchanged, as required by {{proof-chain-linkage}}.
 4.  MUST accept exactly one new proof, conveyed per {{actor-proof-parameter}} and validated per {{accepting-a-proof}}, for the new outermost actor hop.  Without a valid new proof, the issuer MUST NOT carry the inbound `actor_proofs` array forward; it continues without proofs where local policy permits absent coverage, and otherwise MUST fail the request under {{error-handling}}.
 5.  MUST verify that the new proof's `prh` equals the hash of the exact compact serialization of the inbound array's newest proof, computed using the algorithm named by the inherited `prh_alg` (defaulting to SHA-256 when absent), and MUST verify that the new proof's `prh_alg` matches the inherited chain's value or is omitted when the chain omits it.  An issuer that does not support the inbound `prh_alg` MUST reject the chain rather than rehash; rehashing would invalidate prior actors' signatures.
@@ -395,7 +401,7 @@ An issuer that reissues, translates, or introspects and re-emits a token without
 *  MUST preserve `actor_proofs_complete` when carrying the array unchanged.  If it cannot attest that value, the issuer MUST drop the whole array.
 *  MUST NOT continue to carry an inherited `actor_proofs` array if it cannot preserve the visible hop alignment required by {{consumer-processing}};
 *  MUST NOT change top-level `sub` while retaining proofs; doing so breaks alignment with `actor_proofs[0].sub`.
-*  MUST NOT set the outer token's `exp` later than the earliest `exp` among the retained proofs; an issuer that needs a later `exp` MUST drop the array, or MUST instead fail the request under the error model of {{error-handling}} when local policy or the deployment's resource requirements require actor-signed evidence.
+*  MUST NOT set the outer token's `exp` later than the earliest `exp` among the retained proofs, and applies the lifetime rule in {{issuer-processing}} when it would otherwise set a later `exp`.
 
 If such an issuer changes the visible outermost actor, it has added a new hop and MUST follow {{extending-an-existing-proof-chain}}.
 
@@ -406,8 +412,8 @@ If proofs are dropped while receipts remain, inherited `proof_jti` references be
 An AS that supports refresh tokens for delegated access tokens carrying proofs:
 
 *  needs to retain the `actor_proofs` array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.
-*  applies the `exp` limit above to each refreshed access token.  How long refresh can carry the proofs therefore depends on the conditional proof `exp` sizing in {{proof-claims}}, which lets `exp` cover the delegated session with instance binding and calls for a short `exp` without it.
-*  when a refreshed access token needs a later `exp` than that limit allows, drops `actor_proofs` from it or fails the refresh request, as the rule above requires.  Refresh adds no actor hop, so actor-signed evidence resumes only through a new delegated issuance that adds a hop with a fresh proof.
+*  applies the lifetime rule in {{issuer-processing}} to each refreshed access token.  Refresh ends instance binding, so proof `exp` sizing for refreshed tokens follows the short-`exp` guidance in {{proof-claims}}.
+*  after dropping `actor_proofs` under that rule, restores actor-signed evidence only through a new delegated issuance that adds a hop with a fresh proof, because refresh adds no actor hop.
 
 ## Partial Coverage and Full Coverage {#partial-coverage-and-full-coverage}
 
