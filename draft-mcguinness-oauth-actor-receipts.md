@@ -401,7 +401,7 @@ However:
 
 Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop should enable receipt support at the origin issuer first.  Resource servers can require full coverage through `actor_receipts_complete_required` or local policy.
 
-When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_receipts` covers only the visible filtered chain.  In that case `actor_receipts_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness MUST evaluate `chain_complete` separately.
+When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_receipts` covers only the visible filtered chain.  In that case `actor_receipts_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness MUST evaluate `chain_complete` separately.  Filtering only inner actors that no receipt covers keeps the full array and its alignment; filtering a covered actor breaks hop alignment (step 7 of {{consumer-processing}}), so the array cannot be kept ({{consumer-introspection}}).
 
 Whether or not the chain was filtered, recipients that rely on both signals MUST evaluate `chain_complete` and `actor_receipts_complete` independently.
 
@@ -514,7 +514,7 @@ An introspection response carrying receipts MUST include the members needed for 
 
 An RS receiving both inline and introspected receipts MUST select an authoritative source under local policy.  If it consumes both, differing arrays or completeness values MUST cause rejection of receipt-based provenance.
 
-An introspection server MUST return the full stored array or omit `actor_receipts`.  Removing an older entry breaks `prh`; removing the newest breaks hop alignment.  When the introspection server returns a stored array that it knows has partial coverage, it MUST include `actor_receipts_complete: false`.
+An introspection server MUST return the full stored array or omit `actor_receipts`.  Removing an older entry breaks `prh`; removing the newest breaks hop alignment.  A server that filters the visible `act` chain can still return the full array when it filters only inner actors that no receipt covers; if it filters a covered actor, it MUST omit both `actor_receipts` and `actor_receipts_complete`.  When the introspection server returns a stored array that it knows has partial coverage, it MUST include `actor_receipts_complete: false`.
 
 For an inactive token, the introspection server MUST NOT return `actor_receipts` or `actor_receipts_complete`.
 
