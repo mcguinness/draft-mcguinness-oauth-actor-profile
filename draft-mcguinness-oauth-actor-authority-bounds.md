@@ -392,7 +392,7 @@ An issuer, resource server, or other recipient relying on this profile MUST perf
 
 6.  Compare the current token with `receipt[0]` for each D that `receipt[0]` carries in `bounds` and whose effective token value is available from claims, introspection, or trusted context.  The token's value MUST be within the receipt's effective upper bound.  Skip `resource` comparison when its effective value cannot be determined.
 
-7.  Check `authority_bounds_enforced`, if present.  Every named dimension MUST be recognized.  For each named dimension for which the chain carries any receipt-attested bounds, steps 4 through 6 MUST succeed; inconsistency MUST reject bounds evidence.
+7.  Check `authority_bounds_enforced`, if present.  Every named dimension MUST be recognized; unlike an unrecognized `bounds` member, which is ignored, an unrecognized name here is an enforcement claim the recipient cannot verify, as with an unrecognized `crit` header parameter ({{RFC7515, Section 4.1.11}}).  For each named dimension for which the chain carries any receipt-attested bounds, steps 4 through 6 MUST succeed; inconsistency MUST reject bounds evidence.
 
 8.  Enforce dimensions required by `authority_bounds_required` or local policy.  Each required D must appear in `authority_bounds_enforced`, be recorded on every receipt, and pass steps 4 through 6.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt and event coverage ({{protected-resource-metadata}}).
 
