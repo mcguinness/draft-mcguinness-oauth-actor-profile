@@ -5,7 +5,6 @@ category: std
 docname: draft-mcguinness-oauth-actor-authority-bounds-latest
 submissiontype: IETF
 number:
-date: 2026-07-03
 ipr: "trust200902"
 area: "Security"
 workgroup: "Web Authorization Protocol"
@@ -37,6 +36,7 @@ normative:
   RFC6838:
   RFC7515:
   RFC7519:
+  RFC7523:
   RFC7662:
   RFC8414:
   RFC8693:
@@ -45,25 +45,12 @@ normative:
   RFC9396:
   RFC9728:
   I-D.mcguinness-oauth-actor-profile:
-  ACTOR-RECEIPTS:
-    title: "OAuth Actor Receipts for Delegation Provenance"
-    author:
-      -
-        fullname: Karl McGuinness
-        organization: Independent
-    date: 2026-07
-    target: "https://mcguinness.github.io/draft-mcguinness-oauth-actor-profile/draft-mcguinness-oauth-actor-receipts.html"
-  ACTOR-PROOFS:
-    title: "OAuth Actor-Signed Hop Proofs"
-    author:
-      -
-        fullname: Karl McGuinness
-        organization: Independent
-    date: 2026-07
-    target: "https://mcguinness.github.io/draft-mcguinness-oauth-actor-profile/draft-mcguinness-oauth-actor-proofs.html"
+  I-D.mcguinness-oauth-actor-receipts:
+  I-D.mcguinness-oauth-actor-proofs:
 
 informative:
   RFC9700:
+  I-D.niyikiza-oauth-attenuating-agent-tokens:
   PIC-MODEL:
     title: "PIC Model Specification (Provenance Identity Continuity)"
     author:
@@ -82,7 +69,7 @@ This document defines OAuth Actor Chain Authority Bounds, an optional companion 
 
 # Introduction
 
-The OAuth Actor Profile {{I-D.mcguinness-oauth-actor-profile}} identifies delegated actors.  Actor Receipts {{ACTOR-RECEIPTS}} attest issuer participation, and Actor Proofs {{ACTOR-PROOFS}} attest actor participation and target consent.  OAuth 2.0 Token Exchange {{RFC8693}} does not define a record of authority changes across hops, and these profiles do not add one.  Actor Receipts lists historical authority as a non-goal.  An actor proof binds only the target its actor authorized at one hop.  A recipient can therefore verify who participated at every hop without detecting that an intermediate issuer widened the authority flowing through the chain.
+The OAuth Actor Profile {{I-D.mcguinness-oauth-actor-profile}} identifies delegated actors.  Actor Receipts {{I-D.mcguinness-oauth-actor-receipts}} attest issuer participation, and Actor Proofs {{I-D.mcguinness-oauth-actor-proofs}} attest actor participation and target consent.  OAuth 2.0 Token Exchange {{RFC8693}} does not define a record of authority changes across hops, and these profiles do not add one.  Actor Receipts lists historical authority as a non-goal.  An actor proof binds only the target its actor authorized at one hop.  A recipient can therefore verify who participated at every hop without detecting that an intermediate issuer widened the authority flowing through the chain.
 
 This document defines OAuth Actor Chain Authority Bounds, an optional companion profile that closes that gap for deployments that use actor receipts.  Receipt claims record the authority in effect at each hop; recipients compare those values across hops and against the current token, and expansion requires an explicit re-authorization, recorded either in a new receipt or in a signed event between hops.  The design center is:
 
@@ -92,11 +79,13 @@ This document defines OAuth Actor Chain Authority Bounds, an optional companion 
 
 The profile adds bounds claims, an event array, issuer self-attestation, and discovery metadata; deployments opt in per resource or trust domain.
 
+Attenuating Authorization Tokens {{I-D.niyikiza-oauth-attenuating-agent-tokens}} address a related problem with a different model: a token holder derives a token with equal or narrower tool-level authority offline, and any enforcement point holding the root issuer's trust anchor verifies the derivation chain.  This profile instead adds evidence to issuance by authorization servers and Transaction Token Services, recording the authority each issuer applied in its signed receipt and permitting expansion only under a signed re-authorization.
+
 # Conventions and Definitions
 
 {::boilerplate bcp14-tagged}
 
-This document uses OAuth terminology from {{RFC6749}} and {{RFC8693}}.  Actor Receipt, Receipt Chain, and Outer Token follow {{ACTOR-RECEIPTS}}.  AS, RS, and TTS denote authorization server, resource server, and Transaction Token Service.
+This document uses OAuth terminology from {{RFC6749}} and {{RFC8693}}.  Actor Receipt, Receipt Chain, and Outer Token follow {{I-D.mcguinness-oauth-actor-receipts}}.  `receipt[i]` denotes entry i of the outer token's `actor_receipts` array, which that document orders newest first: `receipt[0]` is the receipt for the newest hop, whose actor is the outermost `act`.  AS, RS, and TTS denote authorization server, resource server, and Transaction Token Service.
 
 The following terms are used in this document:
 
@@ -125,7 +114,7 @@ Examples in this document are illustrative and omit unrelated claims, signatures
 
 # Relationship to the Receipts Companion
 
-This profile uses three extension points in {{ACTOR-RECEIPTS}}:
+This profile uses three extension points in {{I-D.mcguinness-oauth-actor-receipts}}:
 
 *  Receipt claims `bounds` and `reauthorized`, protected by the receipt signature.
 *  Comparisons across receipts, allowing sparse coverage unless completeness is required.
@@ -213,7 +202,7 @@ The `authorization_details` dimension records the Rich Authorization Requests ar
 
 *  an array `ad_a` refines `ad_b` if and only if every object in `ad_a` refines some object in `ad_b`; objects present in `ad_b` but absent from `ad_a` represent narrowing and are permitted; objects in `ad_a` that refine no object in `ad_b` represent expansion and fail the comparison;
 *  two objects refine only when they share the same `type`;
-*  for the common members defined by {{RFC9396}}, refinement requires: `actions` a subset, `locations` a subset under the URI rules of {{resource-dimension}}, `datatypes` a subset, and `identifier` equal.
+*  for the common members defined by {{RFC9396, Section 2.2}}, refinement requires: `actions` a subset, `locations` a subset under the URI rules of {{resource-dimension}}, `datatypes` a subset, `privileges` a subset, and `identifier` equal; a common member present in the `ad_b` object but absent from the `ad_a` object is expansion and fails the comparison, and one absent from the `ad_b` object but present in the `ad_a` object also fails the comparison unless the refinement rules for that `type` establish that it preserves or narrows authority, because the effect of a member depends on the API's semantics ({{RFC9396, Section 6.1}}).
 
 For type-specific members the recipient cannot evaluate, the recipient MUST reject verification of that dimension by default, or skip the object's refinement under explicit local policy.  RAR type specifications SHOULD define their own refinement rules; see {{extensibility}}.
 
@@ -223,7 +212,7 @@ This profile does not govern token lifetime (`exp`), presenter binding (`cnf`), 
 
 # Receipt Extension Claims
 
-This section defines two extension claims for Actor Receipt JWTs, under the extension-claims rule of {{ACTOR-RECEIPTS}}.  Both inherit the receipt's signature and byte-preservation.
+This section defines two extension claims for Actor Receipt JWTs, under the extension-claims rule of {{I-D.mcguinness-oauth-actor-receipts}}.  Both inherit the receipt's signature and byte-preservation.
 
 ## The `bounds` Claim {#bounds-claim}
 
@@ -271,7 +260,7 @@ When `reauthorized` is present on a receipt, that hop is a new monotonicity basi
 
 # Bounds Events {#bounds-events}
 
-Re-authorization at a new hop is recorded in that hop's receipt.  Between hops, it is recorded in the `bounds_events` array, using the event pattern from {{ACTOR-RECEIPTS}}.
+Re-authorization at a new hop is recorded in that hop's receipt.  Between hops, it is recorded in the `bounds_events` array, using the event pattern from {{I-D.mcguinness-oauth-actor-receipts}}.
 
 ## The `bounds_events` and `bounds_events_complete` Claims
 
@@ -303,7 +292,7 @@ The JWT payload of a bounds event:
 : REQUIRED.  The value `bounds_reauth` for events defined by this document.  Companion profiles defining other event types use their own event arrays per the receipts companion's non-hop pattern, not this array.
 
 `receipt_jti`:
-: REQUIRED.  The `jti` of the receipt to which this event is anchored: the newest receipt in the chain at the time of the event.  The event supersedes that receipt's recorded bounds for everything newer than that receipt.  This claim is reused from {{ACTOR-PROOFS}} with its registered semantics generalized to event anchoring ({{iana-jwt-claims}}).
+: REQUIRED.  The `jti` of the receipt to which this event is anchored: the newest receipt in the chain at the time of the event.  The event supersedes that receipt's recorded bounds for everything newer than that receipt.  This claim is reused from {{I-D.mcguinness-oauth-actor-proofs}} with its registered semantics generalized to event anchoring ({{iana-jwt-claims}}).
 
 `new_bounds`:
 : REQUIRED.  A JSON object with the same shape and member rules as the `bounds` receipt claim ({{bounds-claim}}), recording the authority in effect after the event.  At least one governed dimension MUST be present.
@@ -312,7 +301,7 @@ The JWT payload of a bounds event:
 : REQUIRED.  A JSON object with the same structure and requirements as the `reauthorized` receipt claim ({{reauthorized-claim}}), recording who authorized the change, how, and when.
 
 `prh` / `prh_alg`:
-: The linkage construction from {{ACTOR-RECEIPTS}}, applied independently to the event array.
+: The linkage construction from {{I-D.mcguinness-oauth-actor-receipts}}, applied independently to the event array.
 
   *  Each non-oldest event MUST include `prh` hashing the next older event's exact compact serialization; the oldest MUST omit `prh`.
   *  Events MUST use the same `prh_alg` value or all omit it.  The SHA-256 default and agility rules apply unchanged.
@@ -320,6 +309,9 @@ The JWT payload of a bounds event:
 
 `iat`, `exp`, `jti`:
 : REQUIRED, as defined in {{RFC7519}}.  `exp` MUST cover the expected maximum lifetime of any token that will carry this event.
+
+`aud`:
+: Prohibited.  The event issuer MUST NOT include `aud`, and consumers MUST reject an event that carries it.  An event is validated as part of outer-token processing, and the outer token carries the audience for the request; this document departs from {{RFC8725, Section 3.9}} for events on those grounds.
 
 An event MAY contain additional claims; consumers ignore unrecognized claims unless a specification or local agreement defines their meaning, per {{RFC7519, Section 4}}.
 
@@ -341,7 +333,7 @@ Absence of the claim, or of a dimension from it, does not assert that authority 
 
 # Issuer Processing
 
-This section defines how an authorization server or Transaction Token Service records, checks, and re-bases authority bounds.  It extends the issuer processing of {{ACTOR-RECEIPTS}}; all receipt creation, extension, preservation, and reissuance rules of that document apply unchanged.
+This section defines how an authorization server or Transaction Token Service records, checks, and re-bases authority bounds.  It extends the issuer processing of {{I-D.mcguinness-oauth-actor-receipts}}; all receipt creation, extension, preservation, and reissuance rules of that document apply unchanged.
 
 ## Recording Bounds at a New Hop {#recording-bounds}
 
@@ -359,7 +351,7 @@ Reissuance without a new actor hop creates no receipt, so recorded bounds cannot
 
 *  MUST NOT issue an outer token whose value for any monotonic dimension exceeds the effective upper bound derived from `receipt[0]` and any events anchored to it; narrowing further is always permitted;
 *  when a broader value is authorized (for example, a refresh grant following step-up or an approver widening a governing authority object), MUST record the expansion as a `bounds_reauth` event in `bounds_events`, anchored to the inherited `receipt[0]` by its `jti`, signed by the authority that captured the re-authorization, and prepended per {{bounds-events}}; the issued token's values are then measured against the event's `new_bounds`;
-*  when it can neither stay within the effective upper bound nor record a covering event, MUST NOT carry the bounds-bearing receipt chain forward while claiming enforcement: it MUST fail the request, or issue without `authority_bounds_enforced` for the expanded dimension where local policy and resource requirements permit.
+*  when it can neither stay within the effective upper bound nor record a covering event, MUST fail the request or, where local policy and resource requirements permit absent receipt coverage, drop the inherited `actor_receipts` array and with it the bounds evidence, omitting `bounds_events` and `bounds_events_complete` as well.
 
 An AS that supports refresh tokens for bounds-bearing delegated tokens needs to retain, in the same issuer-controlled state that the receipts companion requires for `actor_receipts`, the inherited `bounds_events` array and enough state to compute the effective upper bound at refresh time.
 
@@ -383,7 +375,7 @@ A partial receipt chain can record bounds on any subset of its receipts.  Consum
 
 An issuer, resource server, or other recipient relying on this profile MUST perform the following steps:
 
-1.  Validate the outer token and receipt chain under {{ACTOR-RECEIPTS}}.  Bounds in receipts that fail that validation MUST NOT be used.
+1.  Validate the outer token and receipt chain under {{I-D.mcguinness-oauth-actor-receipts}}.  Bounds in receipts that fail that validation MUST NOT be used.
 
 2.  Check claim types:
     *  `bounds` and `new_bounds` are objects whose recognized members have the types defined in {{governed-dimensions}}.
@@ -407,17 +399,17 @@ An issuer, resource server, or other recipient relying on this profile MUST perf
 
 6.  Compare the current token with `receipt[0]` for each D that `receipt[0]` carries in `bounds` and whose effective token value is available from claims, introspection, or trusted context.  The token's value MUST be within the receipt's effective upper bound.  Skip `resource` comparison when its effective value cannot be determined.
 
-7.  Check `authority_bounds_enforced`, if present.  Every named dimension MUST be recognized.  For each named dimension for which the chain carries any receipt-attested bounds, steps 4 through 6 MUST succeed; inconsistency MUST reject bounds evidence.
+7.  Check `authority_bounds_enforced`, if present.  Every named dimension MUST be recognized; unlike an unrecognized `bounds` member, which is ignored, an unrecognized name here is an enforcement claim the recipient cannot verify, as with an unrecognized `crit` header parameter ({{RFC7515, Section 4.1.11}}).  For each named dimension for which the chain carries any receipt-attested bounds, steps 4 through 6 MUST succeed; inconsistency MUST reject bounds evidence.
 
 8.  Enforce dimensions required by `authority_bounds_required` or local policy.  Each required D must appear in `authority_bounds_enforced`, be recorded on every receipt, and pass steps 4 through 6.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt and event coverage ({{protected-resource-metadata}}).
 
 9.  Apply any additional rules defined by companion profiles whose claims appear in the artifacts ({{extensibility}}).  They can add rejection conditions but cannot relax any requirement needed for conformance to this profile.
 
-If any required check fails, the recipient MUST reject the token's bounds-based evidence and MUST apply the underlying protocol's error handling for the stage at which the failure occurred.  Rejection of bounds-based evidence does not by itself invalidate the receipt chain under {{ACTOR-RECEIPTS}}; whether the token remains acceptable without bounds evidence is local policy, except where step 8 applies.
+If any required check fails, the recipient MUST reject the token's bounds-based evidence and MUST apply the underlying protocol's error handling for the stage at which the failure occurred.  Rejection of bounds-based evidence does not by itself invalidate the receipt chain under {{I-D.mcguinness-oauth-actor-receipts}}; whether the token remains acceptable without bounds evidence is local policy, except where step 8 applies.
 
 ## Composition with Actor-Signed Hop Proofs {#composition-with-proofs}
 
-When the token also carries `actor_proofs` validated under {{ACTOR-PROOFS}}, recorded bounds and actor-consented target bindings are comparable at each hop covered by both artifacts.  For each index i covered by a bounds-bearing receipt and a proof:
+When the token also carries `actor_proofs` validated under {{I-D.mcguinness-oauth-actor-proofs}}, recorded bounds and actor-consented target bindings are comparable at each hop covered by both artifacts.  For each index i covered by a bounds-bearing receipt and a proof:
 
 *  when `receipt[i].bounds.aud` is present, it MUST be within `actor_proofs[i].target.aud`;
 *  when both `receipt[i].bounds.resource` and `actor_proofs[i].target.resource` are present, the recorded set MUST be within the consented set;
@@ -425,10 +417,10 @@ When the token also carries `actor_proofs` validated under {{ACTOR-PROOFS}}, rec
 
 A failed comparison means the issuer recorded authority broader than the actor consented to at that hop; recipients validating both companions MUST treat it as a failed required check for both artifacts' evidence.
 
-This document defines one extension member for the proof `target` object, under the constraining-extension rule of {{ACTOR-PROOFS}}:
+This document defines one extension member for the proof `target` object, under the constraining-extension rule of {{I-D.mcguinness-oauth-actor-proofs}}:
 
 `target.scope`:
-: OPTIONAL.  A string of space-separated scope tokens the actor authorizes for the token issued at its hop, compared under the rules of {{scope-dimension}}.  As a constraining member, its presence narrows the actor's target binding; consumers that do not recognize it ignore it per {{ACTOR-PROOFS}}.
+: OPTIONAL.  A string of space-separated scope tokens the actor authorizes for the token issued at its hop, compared under the rules of {{scope-dimension}}.  As a constraining member, its presence narrows the actor's target binding; consumers that do not recognize it ignore it per {{I-D.mcguinness-oauth-actor-proofs}}.
 
 ## Use by Resource Servers
 
@@ -436,7 +428,7 @@ Bounds evidence records non-expansion across covered hops, with explicit re-auth
 
 ## Introspection {#consumer-introspection}
 
-Receipt-attested bounds travel inside receipts and are returned wherever receipts are returned; the introspection rules of {{ACTOR-RECEIPTS}} apply unchanged, including all-or-nothing receipt disclosure and the requirement list for outer-token members.
+Receipt-attested bounds travel inside receipts and are returned wherever receipts are returned; the introspection rules of {{I-D.mcguinness-oauth-actor-receipts}} apply unchanged, including all-or-nothing receipt disclosure and the requirement list for outer-token members.
 
 An introspection response MAY include `authority_bounds_enforced`, `bounds_events`, and `bounds_events_complete` using their JWT syntax.  It MUST return the full stored event array or omit both event claims, except that, for a token whose stored history is complete and contains no events, it MAY return `bounds_events_complete: true` without `bounds_events`.  A subset would break linkage or conceal a change of bounds.
 
@@ -444,7 +436,7 @@ For inactive tokens, introspection servers MUST NOT return `authority_bounds_enf
 
 # Discovery and Capability Signaling {#discovery-capability-signaling}
 
-This section defines metadata for advertising authority-bounds support.  It follows the discovery conventions of {{ACTOR-RECEIPTS}}, with dimension-valued parameters where a boolean would hide which dimensions are covered.
+This section defines metadata for advertising authority-bounds support.  It follows the discovery conventions of {{I-D.mcguinness-oauth-actor-receipts}}, with dimension-valued parameters where a boolean would hide which dimensions are covered.
 
 ## Authorization Server Metadata
 
@@ -478,7 +470,7 @@ The following members are defined for use in OAuth Token Introspection responses
 
 Bounds validation extends the underlying OAuth or Transaction Token validation.  Failures are reported through the error mechanism applicable to the stage at which they occur.
 
-When an authorization server or Transaction Token Service rejects a token request because inbound bounds evidence fails validation under {{consumer-processing}} (signature failure on an event, broken event chain, unresolvable anchor, monotonicity failure in the inbound chain), it SHOULD return `invalid_grant`, constructed per {{RFC8693}} Section 2.2.2 and {{RFC6749}} Section 5.2, consistent with the core actor profile's error mapping for actor information that fails validation.
+When an authorization server or Transaction Token Service rejects a token request because inbound bounds evidence fails validation under {{consumer-processing}} (signature failure on an event, broken event chain, unresolvable anchor, monotonicity failure in the inbound chain), it returns an error response per {{RFC6749, Section 5.2}}: `invalid_request` for a Token Exchange request, as {{RFC8693, Section 2.2.2}} requires, or `invalid_grant` for a JWT bearer grant request ({{RFC7523, Section 3.1}}), consistent with the core actor profile's error mapping for actor information that fails validation.
 
 When requested authority exceeds the effective upper bound without re-authorization, the issuer SHOULD return:
 
@@ -496,14 +488,14 @@ An introspection server does not return an OAuth error for missing bounds artifa
 
 # Extensibility {#extensibility}
 
-This profile composes with the extensibility framework of {{ACTOR-RECEIPTS}} and adds its own surfaces:
+This profile composes with the extensibility framework of {{I-D.mcguinness-oauth-actor-receipts}} and adds its own surfaces:
 
 *  **New governed dimensions**, registered in the dimension registry ({{iana-dimensions}}) with a defined comparison rule and a declared governance class (monotonic by default, or record-only).  Consumers ignore unregistered `bounds` members they do not recognize.
 *  **New re-authorization methods**, registered in the methods registry ({{iana-methods}}) or expressed as collision-resistant URIs.
 *  **Per-type RAR refinement rules**, defined by the specifications that define RAR types; such rules extend {{rar-dimension}} for their types without modifying this document.
 *  **New event types** are NOT added to `bounds_events`; companion profiles defining other non-hop events use their own parallel arrays per the receipts companion's pattern, so that each array has one verification routine and one completeness attestation.
 
-Companion rules MUST NOT relax any requirement needed for conformance to this profile; they MAY add rejection conditions.  A companion's partial-validation mode, defined under its own normative scope as {{ACTOR-RECEIPTS}} requires, is not conformance to this profile.
+Companion rules MUST NOT relax any requirement needed for conformance to this profile; they MAY add rejection conditions.  A companion's partial-validation mode, defined under its own normative scope as {{I-D.mcguinness-oauth-actor-receipts}} requires, is not conformance to this profile.
 
 # Security Considerations
 
@@ -556,7 +548,7 @@ The event array grows with each re-authorization.  Deployments need to account f
 
 # Privacy Considerations {#privacy-considerations}
 
-The privacy considerations of {{ACTOR-RECEIPTS}} apply, including cross-service correlation and retention beyond token lifetime.  Bounds add authority-shaped disclosure:
+The privacy considerations of {{I-D.mcguinness-oauth-actor-receipts}} apply, including cross-service correlation and retention beyond token lifetime.  Bounds add authority-shaped disclosure:
 
 *  `bounds` exposes per-hop scope, audience, resource, and authorization-detail values to every recipient of the token or introspection response, revealing internal permission vocabulary, resource topology, and orchestration structure.  Issuers SHOULD record only the dimensions recipients need, and MAY enforce monotonicity at issuance without recording bounds where disclosure outweighs evidence value.
 *  `reauthorized` and `bounds_events` reveal consent prompts, step-up authentication, and policy decisions, with timing; this is sensitive activity metadata.  `bounds_events` is visible at the outer-token level even when receipts are suppressed, so its presence is a distinct disclosure decision.  Deployments that need event history for audit but not for relying parties SHOULD return `bounds_events` via introspection only.
@@ -597,40 +589,40 @@ This document requests registration of the following JWT Claims in the "JSON Web
 
 *  Claim Name: `bounds`
 *  Claim Description: Authority bounds in effect for the token issued at the hop attested by an Actor Receipt JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `reauthorized`
 *  Claim Description: Record of explicit re-authorization of delegated authority at a hop or event
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `bounds_events`
 *  Claim Description: Array of signed bounds-event JWTs recording non-hop re-authorization of delegated authority
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `bounds_events_complete`
 *  Claim Description: Boolean indicating whether bounds_events covers every non-hop bounds-changing event as of issuance
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `authority_bounds_enforced`
 *  Claim Description: Array of authority-dimension names for which the issuer attests issuance-time monotonicity enforcement
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `event_type`
 *  Claim Description: Type discriminator for a delegation-evidence event JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `new_bounds`
 *  Claim Description: Authority bounds in effect after the re-authorization recorded by a bounds-event JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
-This document reuses the `prh` and `prh_alg` claims registered by {{ACTOR-RECEIPTS}} and the `receipt_jti` claim registered by {{ACTOR-PROOFS}}, applied to bounds-event JWTs as profiled in this document.  This document requests that IANA add this document to the Specification Document(s) entries for those three registrations.  The Claim Description wording requested by {{ACTOR-PROOFS}} for `prh` and `prh_alg` already covers the delegation-evidence artifact family; for `receipt_jti`, this document requests that the Claim Description be updated to:
+This document reuses the `prh` and `prh_alg` claims registered by {{I-D.mcguinness-oauth-actor-receipts}} and the `receipt_jti` claim registered by {{I-D.mcguinness-oauth-actor-proofs}}, applied to bounds-event JWTs as profiled in this document.  This document requests that IANA add this document to the Specification Document(s) entries for those three registrations.  The Claim Description wording requested by {{I-D.mcguinness-oauth-actor-proofs}} for `prh` and `prh_alg` already covers the delegation-evidence artifact family; for `receipt_jti`, this document requests that the Claim Description be updated to:
 
 *  `receipt_jti`: jti of the Actor Receipt JWT that a sibling or anchored delegation-evidence JWT references for the same delegation hop
 
@@ -657,12 +649,12 @@ This document requests registration of the following metadata names in the "OAut
 
 *  Metadata Name: `authority_bounds_supported`
 *  Metadata Description: Array of authority-dimension names for which the server records receipt-attested bounds and enforces issuance-time monotonicity
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Metadata Name: `bounds_events_supported`
 *  Metadata Description: Indicates support for creating, preserving, and returning bounds-event arrays
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Protected Resource Metadata Registration
@@ -671,12 +663,12 @@ This document requests registration of the following metadata names in the "OAut
 
 *  Metadata Name: `authority_bounds_required`
 *  Metadata Description: Array of authority-dimension names for which the resource requires dense receipt-attested bounds enforcement
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Metadata Name: `bounds_events_complete_required`
 *  Metadata Description: Indicates that the resource requires an issuer attestation of complete bounds-event coverage
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Token Introspection Response Registration
@@ -685,17 +677,17 @@ This document requests registration of the following names in the "OAuth Token I
 
 *  Name: `authority_bounds_enforced`
 *  Description: Array of authority-dimension names for which the issuer attests issuance-time monotonicity enforcement
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Name: `bounds_events`
 *  Description: Array of signed bounds-event JWTs returned by introspection
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Name: `bounds_events_complete`
 *  Description: Indicates whether the returned bounds events provide complete coverage of non-hop re-authorization
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 # Acknowledgments
@@ -708,7 +700,7 @@ Contributors and reviewers will be acknowledged in future revisions.
 
 # Examples
 
-The examples in this appendix show decoded contents; real receipts and events are compact-signed JWT strings.  Timestamps are illustrative.  The scenario continues the two-hop travel example of {{ACTOR-RECEIPTS}}: Alice delegates to an AI travel-assistant agent through the enterprise AS, and the agent's token is exchanged at the travel-provider AS, which adds a booking tool as the outermost actor.  Because these receipts carry `bounds`, they are different byte strings from the receipts shown in that document's examples and carry their own identifiers.
+The examples in this appendix show decoded contents; real receipts and events are compact-signed JWT strings.  Timestamps are illustrative.  The scenario continues the two-hop travel example of {{I-D.mcguinness-oauth-actor-receipts}}: Alice delegates to an AI travel-assistant agent through the enterprise AS, and the agent's token is exchanged at the travel-provider AS, which adds a booking tool as the outermost actor.  Because these receipts carry `bounds`, they are different byte strings from the receipts shown in that document's examples and carry their own identifiers.
 
 ## Example: Two-Hop Chain with Narrowing Bounds
 

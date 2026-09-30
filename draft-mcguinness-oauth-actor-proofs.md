@@ -5,7 +5,6 @@ category: std
 docname: draft-mcguinness-oauth-actor-proofs-latest
 submissiontype: IETF
 number:
-date: 2026-07-04
 ipr: "trust200902"
 area: "Security"
 workgroup: "Web Authorization Protocol"
@@ -35,6 +34,7 @@ normative:
   RFC6838:
   RFC7515:
   RFC7519:
+  RFC7523:
   RFC7662:
   RFC7800:
   RFC8259:
@@ -132,7 +132,7 @@ Receipts are signed by the AS; proofs are signed by the actor.  A token MAY carr
 *  **Proofs-only**: receipts absent or ignored; trust rests on actor-key resolution and actor signatures.
 *  **Belt-and-suspenders**: both validated; independent issuer-side and actor-side attestations for covered hops, linked by the sibling references in {{sibling-receipt-issuance}}.
 
-Separate compact JWTs let deployments adopt issuer and actor evidence independently.  Proofs require actor signing keys and trusted key resolution in addition to issuer support.
+Receipts and proofs remain separate compact JWTs, rather than one JWS with both signatures over a shared payload (JWS JSON Serialization, {{RFC7515, Section 7.2}}), because their signers, adoption prerequisites, and threat models differ.  Receipts require only issuer support, while proofs also require actor signing keys and trusted key resolution.  Separate artifacts keep the two trust anchors independent ({{threat-model}}) and let deployments adopt, validate, and hash-chain issuer and actor evidence independently.
 
 The receipts companion's distinction between historical evidence and current introspection status also applies to proofs.
 
@@ -221,7 +221,7 @@ The JOSE header of an actor proof:
 *  SHOULD include `kid` when the actor's key source publishes multiple verification keys;
 *  MAY include `crit`; a proof whose `crit` header lists an extension header the consumer does not understand is invalid per {{RFC7515, Section 4.1.11}}.
 
-Actors, issuers, and consumers MUST apply the JWT best practices in {{RFC8725}} when creating and validating proofs, except for the audience validation of {{RFC8725, Section 3.9}}, from which this profile departs as described for `aud` in {{proof-claims}}.
+Actors, issuers, and consumers MUST apply the JWT best practices in {{RFC8725}} when creating and validating proofs, except for the audience requirements of {{RFC8725, Section 3.9}}, from which this profile departs by prohibiting `aud` as described in {{proof-claims}}.
 
 ## Proof Claims {#proof-claims}
 
@@ -301,7 +301,7 @@ Proofs define no subject `sub_profile` claim; subject classification remains iss
 
   `exp` needs to cover the lifetime of any token that will carry or inherit this proof; otherwise consumers reject older proofs in a valid chain prematurely.
 
-  A proof expiring before the issued outer token causes propagation failure ({{extending-an-existing-proof-chain}}).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse ({{proof-to-token-binding-limits}}).
+  A proof expiring before the issued outer token causes propagation failure ({{extending-an-existing-proof-chain}}, {{reissuance-without-a-new-actor-hop}}).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse ({{proof-to-token-binding-limits}}).
 
   With instance binding through receipts in strict mode or a provisioned `origin_jti` ({{proof-to-token-binding-limits}}), `exp` MAY cover the delegated session.  Without instance binding, `exp` SHOULD be short to limit proof reuse.
 
@@ -318,9 +318,9 @@ Proofs define no subject `sub_profile` claim; subject classification remains iss
 ### Excluded Standard Claims
 
 `aud`:
-: NOT RECOMMENDED.  Actors SHOULD omit `aud` from proofs.
+: Prohibited.  Actors MUST NOT include `aud` in a proof, and consumers MUST reject a proof that carries it (step 5 of {{consumer-processing}}).
 
-  Proofs are validated as part of outer-token processing, not as independent JWTs against an audience; the outer token carries the audience scoping for the request, and the actor's consented audiences live in `target.aud`.  This profile diverges from the audience-validation guidance in {{RFC8725}} Section 3.9 on those grounds.  Including `aud` in a proof would create ambiguity between an audience restriction on the proof artifact and the target binding, which are different statements.
+  Proofs are validated as part of outer-token processing, not as independent JWTs against an audience; the outer token carries the audience scoping for the request, and the actor's consented audiences live in `target.aud`.  This profile departs from {{RFC8725, Section 3.9}} on those grounds.  Including `aud` in a proof would create ambiguity between an audience restriction on the proof artifact and the target binding, which are different statements; rejecting it gives the result that {{RFC7519, Section 4.1.3}} requires when the processing principal does not identify itself with the `aud` value.
 
 ### Extension Claims
 
@@ -356,12 +356,12 @@ This section defines how an authorization server or Transaction Token Service ac
 
 When an issuer adds a new outermost actor hop and the token request carries `actor_proof`, the issuer:
 
-1.  MUST validate the proof's structure per {{actor-proof-jwt-format}}: `typ` value, asymmetric `alg`, presence and JSON types of the REQUIRED claims `iss`, `sub`, `act`, `target` (including `target.aud`), `iat`, `exp`, and `jti`, and the single-hop `act` rules.
+1.  MUST validate the proof's structure per {{actor-proof-jwt-format}}: `typ` value, asymmetric `alg`, presence and JSON types of the REQUIRED claims `iss`, `sub`, `act`, `target` (including `target.aud`), `iat`, `exp`, and `jti`, the absence of `aud`, and the single-hop `act` rules.
 2.  MUST verify that the proof's (`act.iss`, `act.sub`) pair equals the actor identifier pair the issuer will emit as the new outermost visible `act` object, and that the proof `iss` equals the proof `act.sub`.
 3.  MUST verify that the proof `sub` equals the top-level `sub` of the token being issued.  An issuer that re-expresses the subject at this hop MUST NOT embed the proof; re-expression breaks the alignment between `actor_proofs[0].sub` and the outer token's top-level `sub` that consumers verify under {{consumer-processing}}.
 4.  MUST resolve the actor's verification key through an actor-key source trusted under the issuer's local policy and validate the proof's signature ({{actor-key-resolution}}).
 5.  MUST verify that the proof's `exp` is no earlier than the issued outer token's `exp`, and that `iat` is plausible under the issuer's clock-skew policy.
-6.  MUST NOT issue an outer token whose `aud`, or whose effective resource indicators when the request expresses them, exceed the proof's target binding.  Every audience of the issued token MUST be present in `target.aud`, and every effective resource indicator MUST be within `target.resource` when that member is present.  For Token Exchange requests, {{error-handling}} gives the error to return when the requested target cannot be satisfied within the proof's target binding.
+6.  MUST NOT issue an outer token whose `aud`, or whose effective resource indicators when the request expresses them, exceed the proof's target binding.  Every audience of the issued token MUST be present in `target.aud`, and every effective resource indicator MUST equal an entry of `target.resource` when that member is present.  For Token Exchange requests, {{error-handling}} gives the error to return when the requested target cannot be satisfied within the proof's target binding.
 7.  MUST include the validated proof as `actor_proofs[0]` of the issued token, subject to the chain rules below.
 
 When no inbound `actor_proofs` are being preserved, the proof starts a new chain and MUST omit `prh`.  The one-element array is complete coverage only when the visible `act` chain has depth 1; {{actor-proofs-claim}} governs how the issuer sets `actor_proofs_complete` in each case.
@@ -395,6 +395,7 @@ An issuer that reissues, translates, or introspects and re-emits a token without
 *  MUST preserve `actor_proofs_complete` when carrying the array unchanged.  If it cannot attest that value, the issuer MUST drop the whole array.
 *  MUST NOT continue to carry an inherited `actor_proofs` array if it cannot preserve the visible hop alignment required by {{consumer-processing}};
 *  MUST NOT change top-level `sub` while retaining proofs; doing so breaks alignment with `actor_proofs[0].sub`.
+*  MUST NOT set the outer token's `exp` later than the earliest `exp` among the retained proofs; an issuer that needs a later `exp` MUST drop the array, or MUST instead fail the request under the error model of {{error-handling}} when local policy or the deployment's resource requirements require actor-signed evidence.
 
 If such an issuer changes the visible outermost actor, it has added a new hop and MUST follow {{extending-an-existing-proof-chain}}.
 
@@ -405,8 +406,8 @@ If proofs are dropped while receipts remain, inherited `proof_jti` references be
 An AS that supports refresh tokens for delegated access tokens carrying proofs:
 
 *  needs to retain the `actor_proofs` array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.
-*  MUST rely on proof `exp` values set per {{proof-claims}} to accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under {{extending-an-existing-proof-chain}} as proofs approach expiry, and refresh loses actor-signed evidence.
-*  When that bounded lifetime would be exceeded, MUST either obtain fresh delegation state with fresh proofs or stop emitting `actor_proofs`, unless local policy permits partial or absent coverage.
+*  applies the `exp` limit above to each refreshed access token.  How long refresh can carry the proofs therefore depends on the conditional proof `exp` sizing in {{proof-claims}}, which lets `exp` cover the delegated session with instance binding and calls for a short `exp` without it.
+*  when a refreshed access token needs a later `exp` than that limit allows, drops `actor_proofs` from it or fails the refresh request, as the rule above requires.  Refresh adds no actor hop, so actor-signed evidence resumes only through a new delegated issuance that adds a hop with a fresh proof.
 
 ## Partial Coverage and Full Coverage {#partial-coverage-and-full-coverage}
 
@@ -457,6 +458,7 @@ An issuer, resource server, or other recipient that relies on `actor_proofs` MUS
     *  reject a proof whose `crit` header lists an extension header the consumer does not understand;
     *  verify that all REQUIRED proof claims are present and have the expected JSON types, including `iss`, `sub`, `act`, `target` with `target.aud`, `iat`, `exp`, and `jti`;
     *  verify that OPTIONAL claims used by this profile have the expected JSON types when present, including `sub_iss`, `target.resource`, `prh`, `prh_alg`, `receipt_jti`, and `origin_jti`;
+    *  reject a proof that carries an `aud` claim ({{proof-claims}});
     *  verify that the proof `act` object is single-hop, contains no nested `act`, and contains no `cnf`, and that the proof `iss` equals the proof `act.sub`;
     *  enforce `exp`, `iat`, and other JWT validity rules.  An expired proof is invalid even for an older hop; only the small clock-skew leeway of {{RFC7519, Section 4.1.4}} applies.
 6.  Verify proof-chain linkage:
@@ -476,9 +478,9 @@ An issuer, resource server, or other recipient that relies on `actor_proofs` MUS
     *  when `actor_proofs[0].sub_iss` is present and the recipient has a top-level subject namespace authority for the outer token's `sub` from local configuration, an inbound subject token's claims, or another deployment-defined source, the two MUST identify the same namespace authority, evaluated by case-sensitive string comparison; treating lexically distinct identifiers as the same authority requires explicit trusted local mapping rules;
     *  older proofs MAY carry differing `sub` or `sub_iss` values.  This acceptance is structural only: authorization that depends on subject equivalence across those proofs is subject to the continuity rules of {{subject-re-expression-across-hops}}.
 9.  Evaluate outer-token binding and target binding:
-    *  when `actor_proofs[0].origin_jti` is present and equals the outer token's `jti`, the proof chain is bound to the current outer-token instance; when it is present and differs, the chain has diverged, {{target-binding-strict-mode}} decides whether the recipient rejects it, and an accepted value is historical provenance;
+    *  when `actor_proofs[0].origin_jti` is present and equals the outer token's `jti`, the proof chain is bound to the current outer-token instance; when it is present and differs, the chain has diverged, {{target-binding-strict-mode}} decides whether the recipient rejects it (rejection is the default), and an accepted value is historical provenance;
     *  when `actor_proofs[0].origin_jti` is absent, the proof chain carries no instance binding of its own; this is not by itself a validation failure;
-    *  verify that every audience of the outer token is present in `actor_proofs[0].target.aud`, and, when the outer token's effective resource indicators are determinable from token claims, the introspection response, or trusted local context, that each is within `actor_proofs[0].target.resource` when that member is present.  A token whose audience or resources exceed the newest proof's target binding has also diverged; {{target-binding-strict-mode}} decides whether the recipient rejects the chain and limits an accepted chain to participation evidence, not actor consent to the current target;
+    *  verify that every audience of the outer token is present in `actor_proofs[0].target.aud`, and, when the outer token's effective resource indicators are determinable from token claims, the introspection response, or trusted local context, that each equals an entry of `actor_proofs[0].target.resource` when that member is present.  A token whose audience or resources exceed the newest proof's target binding has also diverged; {{target-binding-strict-mode}} decides whether the recipient rejects the chain (rejection is the default) and limits an accepted chain to participation evidence, not actor consent to the current target;
     *  target bindings of proofs other than `actor_proofs[0]` are historical consent for their own hops.  The recipient MUST NOT evaluate them against the current outer token's audience or resources.
 10.  Verify sibling references, when the token also carries `actor_receipts` validated under {{I-D.mcguinness-oauth-actor-receipts}}:
      *  for each index i covered by both arrays, when `actor_receipts[i]` carries `proof_jti`, it MUST equal `actor_proofs[i].jti`, and when `actor_proofs[i]` carries `receipt_jti`, it MUST equal `actor_receipts[i].jti`;
@@ -509,7 +511,7 @@ Deployments where subject continuity is a security requirement SHOULD adopt one 
 *  require exact, namespace-aware matching of subject identifiers across all proofs (the same `sub` under the same namespace authority; see `sub_iss` in {{identity-claims}}); or
 *  enforce explicit trusted subject-mapping rules that can positively confirm each distinct subject identifier refers to the same underlying entity.
 
-When neither condition is met, the recipient MUST treat subject continuity as unverified and MUST NOT rely on older proofs whose subject identifiers (`sub` or `sub_iss`) differ to support authorization that requires subject continuity.
+When neither condition is met, the recipient MUST treat subject continuity as unverified and MUST NOT rely on older proofs whose subject identifiers (`sub` or `sub_iss`) differ to support authorization that requires subject continuity (for example, a decision that treats every covered hop as having acted for the current token's subject).
 
 ## Complete Proof Coverage
 
@@ -598,7 +600,7 @@ Proof validation failures use the underlying protocol's error mechanism for the 
 
 ## Authorization Server and Transaction Token Service Errors
 
-When an authorization server or Transaction Token Service rejects a token request because an inbound `actor_proofs` chain or a newly submitted proof cannot be validated (signature failure, key-resolution failure for an actor outside the trusted key sources, expired proof, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment), it SHOULD return `invalid_grant`, constructed per {{RFC8693}} Section 2.2.2 and {{RFC6749}} Section 5.2, consistent with the core actor profile's error mapping for actor information that fails validation.
+When an authorization server or Transaction Token Service rejects a token request because an inbound `actor_proofs` chain or a newly submitted proof cannot be validated (signature failure, key-resolution failure for an actor outside the trusted key sources, expired proof, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment), it returns an error response per {{RFC6749, Section 5.2}}: `invalid_request` for a Token Exchange request, as {{RFC8693, Section 2.2.2}} requires, or `invalid_grant` for a JWT bearer grant request ({{RFC7523, Section 3.1}}), consistent with the core actor profile's error mapping for actor information that fails validation.
 
 When the requested token's audience or resources cannot be satisfied within the submitted proof's target binding in a Token Exchange request, the issuer SHOULD return `invalid_target` per {{RFC8693}} Section 2.2.2.
 
@@ -639,7 +641,7 @@ Conflict resolution: when a recipient implements multiple companion profiles who
 
 # Security Considerations
 
-Actor proofs strengthen delegation evidence with actor-side signatures, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}}, except its audience validation for proof JWTs (see `aud` in {{proof-claims}}), apply to systems implementing this profile.
+Actor proofs strengthen delegation evidence with actor-side signatures, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}}, except its audience requirements for proof JWTs (see `aud` in {{proof-claims}}), apply to systems implementing this profile.
 
 ## Threat Model {#threat-model}
 
@@ -743,7 +745,7 @@ Each proof is a full signed JWT, and the chain grows linearly with delegation de
 
 ## Proof Freshness and Replay {#proof-freshness}
 
-Proofs are historical attestations of hop-time consent.  They MAY outlive the validity period of the outer token they were originally embedded in, and MAY be carried forward across reissuance and refresh as long as their `exp` permits.
+Proofs are historical attestations of hop-time consent.  They can outlive the validity period of the outer token they were originally embedded in, and can be carried forward across reissuance and refresh only in tokens that expire no later than they do ({{reissuance-without-a-new-actor-hop}}).
 
 *  Proofs attest participation and target consent at signing time; they do not assert that the represented delegation is still active or that the actor would consent today.
 *  Runtime policy evaluation, including current authorization and current revocation state, is separate from proof validation.
@@ -826,27 +828,27 @@ This document requests registration of the following JWT Claims in the "JSON Web
 
 *  Claim Name: `actor_proofs`
 *  Claim Description: Array of actor-signed hop proofs providing delegation participation evidence
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `actor_proofs_complete`
 *  Claim Description: Boolean indicating whether actor_proofs covers every visible hop in the token's act chain
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `target`
 *  Claim Description: Target binding (audience and resource constraints) authorized by the signer of an Actor Proof JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `receipt_jti`
 *  Claim Description: jti of the sibling Actor Receipt JWT created for the same delegation hop as an Actor Proof JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `proof_jti`
 *  Claim Description: jti of the sibling Actor Proof JWT validated for the same delegation hop as an Actor Receipt JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 This document reuses the `prh`, `prh_alg`, `origin_jti`, and `sub_iss` claims registered by {{I-D.mcguinness-oauth-actor-receipts}}, with the semantics defined there, applied to Actor Proof JWTs as profiled in this document.  This document requests that IANA add this document to the Specification Document(s) entries for those four registrations, and requests that their Claim Description entries be updated to cover both artifact types:
@@ -862,7 +864,7 @@ This document requests registration of the following parameter in the "OAuth Par
 
 *  Parameter name: `actor_proof`
 *  Parameter usage location: token request
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Authorization Server Metadata Registration
@@ -871,7 +873,7 @@ This document requests registration of the following metadata name in the "OAuth
 
 *  Metadata Name: `actor_proofs_supported`
 *  Metadata Description: Indicates support for accepting, validating, embedding, preserving, and extending actor-signed hop proofs
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Protected Resource Metadata Registration
@@ -880,12 +882,12 @@ This document requests registration of the following metadata names in the "OAut
 
 *  Metadata Name: `actor_proofs_required`
 *  Metadata Description: Indicates that the resource expects delegated requests to carry valid actor proofs covering at minimum the outermost visible actor hop
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Metadata Name: `actor_proofs_complete_required`
 *  Metadata Description: Indicates that the resource requires complete proof coverage for all visible actor hops
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Token Introspection Response Registration
@@ -894,12 +896,12 @@ This document requests registration of the following names in the "OAuth Token I
 
 *  Name: `actor_proofs`
 *  Description: Array of actor-signed hop proofs returned by introspection
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Name: `actor_proofs_complete`
 *  Description: Indicates whether the returned actor proofs provide complete visible-hop coverage
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 # Acknowledgments
@@ -1087,14 +1089,20 @@ The single proof covers the outermost hop:
 * An issuer now drops inherited proofs when reissuance exceeds any part of the newest proof's target, not only its audience.
 * Distinguished a mismatched `origin_jti`, which consumer processing rejects unless the outer issuer is a trusted reissuer, from an absent one.
 * Removed an example claim that receipt composition stops a compromised issuer from re-embedding a proof.
-* Reconciled `exp` guidance, aligned expiry handling with {{RFC7519}}, and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
+* Reconciled `exp` guidance and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
+* An expired proof, including one for an older hop, is now invalid; only the clock-skew leeway of {{RFC7519, Section 4.1.4}} applies.
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
-* Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, {{RFC8725}} applies except its audience validation, and Strict Mode governs every divergence.
+* Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, and Strict Mode governs every divergence.
 * Removed the unconditional recommendation for short proof `exp` in favor of the claim's conditional sizing rule.
-* Aligned subject-continuity handling, the introspection partial-coverage flag, and the proof actor object's `sub_profile` rule with Receipts.
+* Aligned subject-continuity handling and the proof actor object's `sub_profile` rule with Receipts.
+* An introspection server that returns a stored array it knows has partial coverage is now required to include `actor_proofs_complete: false`.
 * Used the base profile's example identifiers for the travel assistant and booking tool.
 * Clarified that proof actor-object restrictions apply separately from confirmation extensions in the token's actor chain.
-* Restored the Introduction's defining sentence and design-center list, and the list of what this document defines.
+* Prohibited `aud` in proofs (-00 discouraged it); consumers reject a proof that carries it, and {{RFC8725}} applies except {{RFC8725, Section 3.9}}.
+* A reissuer that carries proofs forward, including an AS refreshing a token, cannot set the outer token's `exp` later than the earliest proof `exp`; a reissuer that needs a later `exp` drops the array, or fails the request when actor-signed evidence is required.
+* Proof validation failures on Token Exchange requests now use `invalid_request`, as {{RFC8693, Section 2.2.2}} requires; JWT bearer grant requests use `invalid_grant` ({{RFC7523, Section 3.1}}).
+* A resource indicator is within a proof's target binding only when it equals an entry of `target.resource`.
+* Named the IETF, rather than the IESG, as change controller for the claim, parameter, metadata, and introspection registrations.
 
 -00
 

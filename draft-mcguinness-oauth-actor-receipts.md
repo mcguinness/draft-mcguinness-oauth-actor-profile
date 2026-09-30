@@ -5,7 +5,6 @@ category: std
 docname: draft-mcguinness-oauth-actor-receipts-latest
 submissiontype: IETF
 number:
-date: 2026-07-04
 ipr: "trust200902"
 area: "Security"
 workgroup: "Web Authorization Protocol"
@@ -36,6 +35,7 @@ normative:
   RFC6920:
   RFC7515:
   RFC7519:
+  RFC7523:
   RFC7662:
   RFC7800:
   RFC8259:
@@ -208,7 +208,7 @@ The JOSE header of an actor receipt:
 *  SHOULD include `kid` when the issuer publishes multiple verification keys;
 *  MAY include `crit` per {{RFC7515, Section 4.1.11}}; step 5 of {{consumer-processing}} rejects a receipt whose `crit` header lists an extension header the consumer does not understand.
 
-Receipt issuers and consumers MUST apply the JWT best practices in {{RFC8725}} when creating and validating receipts, except for the audience validation of {{RFC8725, Section 3.9}}, from which this profile departs as described for `aud` in {{receipt-claims}}.
+Receipt issuers and consumers MUST apply the JWT best practices in {{RFC8725}} when creating and validating receipts, except for the audience requirements of {{RFC8725, Section 3.9}}, from which this profile departs by prohibiting `aud` as described in {{receipt-claims}}.
 
 ## Receipt Claims
 
@@ -285,9 +285,9 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 `exp`:
 : REQUIRED.  Expiration time for the receipt, as defined in {{RFC7519}}.
 
-  The `exp` of a newly created receipt MUST NOT be earlier than the `exp` of the outer token issued with it.  Beyond that floor, `exp` needs to cover the lifetime of any token that will carry or inherit this receipt; otherwise consumers reject older receipts in a valid chain prematurely.
+  The `exp` of a newly created receipt MUST NOT be earlier than the `exp` of the outer token issued with it, and SHOULD cover the expected maximum token lifetime of any token that will carry or inherit this receipt.  An under-set `exp` causes propagation failure: an issuer extending the chain rejects a receipt that expires before its issued token (step 2 of {{extending-an-existing-receipt-chain}}), and a reissuer caps the reissued token's `exp` or drops the array ({{reissuance-without-a-new-actor-hop}}).
 
-  Downstream issuers reject receipts that expire before the issued outer token.  Deployments typically coordinate a bounded delegated-session lifetime to avoid propagation failure while limiting signing-key exposure; see {{reissuance-without-a-new-actor-hop}}.
+  Because the originating issuer cannot enumerate every downstream issuer that may inherit a receipt, deployments typically coordinate a bounded delegated-session lifetime to avoid propagation failure while limiting signing-key exposure; see {{reissuance-without-a-new-actor-hop}}.
 
 `jti`:
 : REQUIRED.  A unique identifier for the receipt, as defined in {{RFC7519}}.
@@ -304,9 +304,9 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 ### Excluded Standard Claims
 
 `aud`:
-: NOT RECOMMENDED.  Issuers SHOULD omit `aud` from receipts.
+: Prohibited.  Issuers MUST NOT include `aud` in a receipt, and consumers MUST reject a receipt that carries it (step 5 of {{consumer-processing}}).
 
-  Receipts are validated as part of outer-token processing, not as independent JWTs against an audience; the outer token carries the audience scoping for the request.  This profile diverges from the audience-validation guidance in {{RFC8725}} Section 3.9 on those grounds.  Including `aud` in a receipt has no defined meaning under this profile and would create ambiguity about whether the receipt asserts an independent audience constraint, which it does not.
+  Receipts are validated as part of outer-token processing, not as independent JWTs against an audience; the outer token carries the audience scoping for the request.  This profile departs from {{RFC8725, Section 3.9}} on those grounds.  A present `aud` would suggest an independent audience constraint, which receipts do not assert; rejecting it gives the result that {{RFC7519, Section 4.1.3}} requires when the processing principal does not identify itself with the `aud` value.
 
 ### Extension Claims
 
@@ -370,10 +370,11 @@ An issuer that reissues, translates, or introspects and re-emits a token without
 *  MUST preserve `actor_receipts_complete` when carrying the array unchanged.  If the issuer cannot attest that value, it MUST drop the array entirely; disclosure is all-or-nothing ({{consumer-introspection}}).
 *  MUST NOT continue to carry an inherited `actor_receipts` array if it cannot preserve the visible hop alignment required by {{consumer-processing}};
 *  MUST NOT change top-level `sub` while retaining receipts.  Subject re-expression breaks alignment with `receipt[0].sub` and requires dropping the array.
+*  MUST NOT set the outer token's `exp` later than the earliest `exp` among the retained receipts; an issuer that needs a later `exp` MUST drop the array.
 
 If such an issuer changes the visible outermost actor, it has added a new hop and MUST follow {{extending-an-existing-receipt-chain}}.
 
-Reissuance MAY change `aud`, `scope`, `cnf`, `exp`, and other current-request claims without changing receipts.  Receipt `cnf` remains historical, so key rotation alone does not invalidate the chain.  The `sub` and hop-alignment restrictions above still apply.
+Reissuance MAY change `aud`, `scope`, `cnf`, and other current-request claims without changing receipts, and MAY change `exp` within the limit above.  Receipt `cnf` remains historical, so key rotation alone does not invalidate the chain.  The `sub` and hop-alignment restrictions above still apply.
 
 Reissuance is the only case in which `receipt[0]` may legitimately diverge from the current outer-token instance.  Two patterns of divergence are possible:
 
@@ -388,7 +389,7 @@ An AS that supports refresh tokens for delegated access tokens:
 
 *  needs to retain the `actor_receipts` array associated with the original access token in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the receipts forward unchanged.
 *  needs receipt `exp` values ({{receipt-claims}}) that accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under {{extending-an-existing-receipt-chain}} as receipts approach expiry, and refresh loses receipt-based provenance.
-*  When that bounded lifetime would be exceeded, MUST either obtain fresh delegation state and start a new receipt chain or stop emitting `actor_receipts`, unless local policy permits partial or absent receipt coverage.
+*  When that bounded lifetime would be exceeded, MUST stop emitting `actor_receipts`; when local policy requires receipts, it MUST instead fail the refresh request under the error model of the underlying protocol.  Refresh adds no actor hop, so receipt provenance resumes only through a new delegated issuance that adds a hop and begins a chain under {{creating-the-first-receipt}}.
 
 ## Partial Coverage and Full Coverage
 
@@ -401,7 +402,7 @@ However:
 
 Partial coverage leaves the oldest hops uncovered, including the original subject-to-actor delegation.  Deployments needing evidence for that hop should enable receipt support at the origin issuer first.  Resource servers can require full coverage through `actor_receipts_complete_required` or local policy.
 
-When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_receipts` covers only the visible filtered chain.  In that case `actor_receipts_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness MUST evaluate `chain_complete` separately.
+When the issuer also filters the visible `act` chain (see the `chain_complete` introspection member defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}), `actor_receipts` covers only the visible filtered chain.  In that case `actor_receipts_complete` describes coverage relative to the visible filtered chain, not the unfiltered delegation chain; recipients that need true-chain completeness MUST evaluate `chain_complete` separately.  Filtering only inner actors that no receipt covers keeps the full array and its alignment; filtering a covered actor breaks hop alignment (step 7 of {{consumer-processing}}), so the array cannot be kept ({{consumer-introspection}}).
 
 Whether or not the chain was filtered, recipients that rely on both signals MUST evaluate `chain_complete` and `actor_receipts_complete` independently.
 
@@ -432,6 +433,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  verify that all REQUIRED receipt claims are present and have the expected JSON types, including `iss`, `sub`, `act`, `iat`, `exp`, and `jti`;
     *  verify that OPTIONAL claims used by this profile have the expected JSON types when present, including `sub_iss`, `sub_profile`, `cnf`, `prh`, `prh_alg`, and `origin_jti`;
     *  verify that the receipt `act` object is single-hop, contains no nested `act`, and contains no `cnf`;
+    *  reject a receipt that contains `aud` ({{receipt-claims}});
     *  enforce `exp`, `iat`, and other JWT validity rules.  An expired receipt is invalid even for an older hop; only the small clock-skew leeway of {{RFC7519, Section 4.1.4}} applies.
     *  for `receipt[0]`, apply {{receipt-instance-binding}}.  For older receipts, `origin_jti` is historical information only.
 6.  Verify receipt-chain linkage:
@@ -478,7 +480,7 @@ Only `receipt[0].sub` must match the outer token.  Older receipts can carry diff
 
 Matching actors alone do not establish subject continuity.  A receipt from an unrelated subject chain that shares the same actor identity can satisfy the hop-alignment check, whether by accident or because a compromised upstream issuer minted it for insertion.  Recipients need to account for this cross-subject insertion risk.
 
-Deployments requiring subject continuity SHOULD establish it either by exact, namespace-aware matching of subject identifiers throughout (the same `sub` under the same namespace authority; see `sub_iss` in {{receipt-claims}}) or by positive reconciliation through trusted mappings.  When neither applies, recipients MUST treat continuity as unverified and MUST NOT use the differing older receipts to support authorization that requires subject continuity.
+Deployments requiring subject continuity SHOULD establish it either by exact, namespace-aware matching of subject identifiers throughout (the same `sub` under the same namespace authority; see `sub_iss` in {{receipt-claims}}) or by positive reconciliation through trusted mappings.  When neither applies, recipients MUST treat continuity as unverified and MUST NOT use the differing older receipts to support authorization that requires subject continuity (for example, a decision that treats every covered hop as having acted for the current token's subject).
 
 ## Complete Receipt Coverage
 
@@ -513,7 +515,7 @@ An introspection response carrying receipts MUST include the members needed for 
 
 An RS receiving both inline and introspected receipts MUST select an authoritative source under local policy.  If it consumes both, differing arrays or completeness values MUST cause rejection of receipt-based provenance.
 
-An introspection server MUST return the full stored array or omit `actor_receipts`.  Removing an older entry breaks `prh`; removing the newest breaks hop alignment.  When the introspection server returns a stored array that it knows has partial coverage, it MUST include `actor_receipts_complete: false`.
+An introspection server MUST return the full stored array or omit `actor_receipts`.  Removing an older entry breaks `prh`; removing the newest breaks hop alignment.  A server that filters the visible `act` chain can still return the full array when it filters only inner actors that no receipt covers; if it filters a covered actor, it MUST omit both `actor_receipts` and `actor_receipts_complete`.  When the introspection server returns a stored array that it knows has partial coverage, it MUST include `actor_receipts_complete: false`.
 
 For an inactive token, the introspection server MUST NOT return `actor_receipts` or `actor_receipts_complete`.
 
@@ -585,7 +587,7 @@ Receipt validation failures use the underlying protocol's error mechanism for th
 
 ## Authorization Server and Transaction Token Service Errors
 
-When an authorization server or Transaction Token Service rejects a token-exchange request because inbound `actor_receipts` cannot be validated under {{extending-an-existing-receipt-chain}} (signature failure, expired receipt, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment, or untrusted receipt issuer), it SHOULD return `invalid_grant`, constructed per {{RFC8693}} Section 2.2.2 and {{RFC6749}} Section 5.2, consistent with the core actor profile's error mapping for actor information that fails validation.
+When an authorization server or Transaction Token Service rejects a request because inbound `actor_receipts` cannot be validated under {{extending-an-existing-receipt-chain}} (signature failure, expired receipt, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment, or untrusted receipt issuer), it returns an error response per {{RFC6749, Section 5.2}}: `invalid_request` for a Token Exchange request, as {{RFC8693, Section 2.2.2}} requires, or `invalid_grant` for a JWT bearer grant request ({{RFC7523, Section 3.1}}).
 
 When the failure reflects an actor-authorization decision rather than a structural validation failure, an issuer MAY use `actor_unauthorized` as defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}} where applicable.
 
@@ -631,7 +633,7 @@ Conflict resolution: when a recipient implements multiple companion profiles who
 
 # Security Considerations
 
-Actor receipts strengthen provenance for visible actor hops, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}}, except its audience validation for receipt JWTs (see `aud` in {{receipt-claims}}), apply to systems implementing this profile.
+Actor receipts strengthen provenance for visible actor hops, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}}, except its audience requirements for receipt JWTs (see `aud` in {{receipt-claims}}), apply to systems implementing this profile.
 
 ## Threat Model {#threat-model}
 
@@ -852,32 +854,32 @@ This document requests registration of the following JWT Claims in the "JSON Web
 
 *  Claim Name: `actor_receipts`
 *  Claim Description: Array of signed actor-hop receipts providing delegation provenance
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `actor_receipts_complete`
 *  Claim Description: Boolean indicating whether actor_receipts covers every visible hop in the token's act chain
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `sub_iss`
 *  Claim Description: Issuer or namespace authority for the subject in an Actor Receipt JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `prh`
 *  Claim Description: Base64url-encoded hash of the immediately preceding (older) receipt in an Actor Receipt JWT chain
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `prh_alg`
 *  Claim Description: Hash algorithm identifier (from the IANA Named Information Hash Algorithm Registry) naming the algorithm used to compute prh in an Actor Receipt JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `origin_jti`
 *  Claim Description: The jti of the outer token at the time an Actor Receipt JWT was created (the receipt's origin outer token)
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Authorization Server Metadata Registration
@@ -886,7 +888,7 @@ This document requests registration of the following metadata name in the "OAuth
 
 *  Metadata Name: `actor_receipts_supported`
 *  Metadata Description: Indicates support for validating, originating, preserving, or extending actor-receipt chains
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Protected Resource Metadata Registration
@@ -895,12 +897,12 @@ This document requests registration of the following metadata names in the "OAut
 
 *  Metadata Name: `actor_receipts_required`
 *  Metadata Description: Indicates that the resource expects delegated requests to carry valid actor receipts covering at minimum the outermost visible actor hop
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Metadata Name: `actor_receipts_complete_required`
 *  Metadata Description: Indicates that the resource requires complete receipt coverage for all visible actor hops
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Token Introspection Response Registration
@@ -909,12 +911,12 @@ This document requests registration of the following names in the "OAuth Token I
 
 *  Name: `actor_receipts`
 *  Description: Array of signed actor-hop receipts returned by introspection
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Name: `actor_receipts_complete`
 *  Description: Indicates whether the returned actor receipts provide complete visible-hop coverage
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 # Acknowledgments
@@ -1173,13 +1175,21 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * Gathered the receipt instance-binding rules for `origin_jti`, strict mode, and reissuance into one section.
 * Defined reissuance divergence as a mismatch between `receipt[0]` and the outer token's `iss` or `jti`.
 * Clarified that the claim-pair naming convention and its metadata apply to companion profiles that define parallel per-hop artifact arrays.
-* Reconciled `exp` guidance, aligned expiry handling with {{RFC7519}}, and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
+* Receipt `exp` now has a floor: no earlier than the `exp` of the outer token issued with it.  Covering the lifetime of tokens that inherit the receipt is now recommended rather than required.
+* An expired receipt is now invalid even for an older hop, with only the clock-skew leeway of {{RFC7519, Section 4.1.4}}; -00 only recommended rejection and let local policy allow a margin.
+* A reissuer that carries receipts forward cannot set the outer token's `exp` later than the earliest receipt `exp`; a reissuer that needs a later `exp` drops the array.
+* Refresh beyond the bounded delegated-session lifetime now stops emitting receipts, or fails when local policy requires them.  Refresh no longer starts a new receipt chain; that requires a new delegated issuance that adds a hop.
+* Removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
-* Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, {{RFC8725}} applies except its audience validation, introspection flags known partial coverage, and subject continuity allows namespace-aware matching or trusted mapping.
+* Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, and subject continuity allows namespace-aware matching or trusted mapping.
+* Prohibited `aud` in receipts (-00 discouraged it); consumers reject a receipt that carries it, and {{RFC8725}} applies except {{RFC8725, Section 3.9}}.
+* An introspection server that returns a stored array it knows has partial coverage is now required to include `actor_receipts_complete: false`.
+* Stated how filtering the visible `act` chain interacts with all-or-nothing receipt disclosure.
+* Receipt validation failures on Token Exchange requests now use `invalid_request`, as {{RFC8693, Section 2.2.2}} requires; JWT bearer grant requests use `invalid_grant` ({{RFC7523, Section 3.1}}).
+* Named the IETF, rather than the IESG, as change controller for the claim, metadata, and introspection registrations.
 * A recipient that requires instance binding rejects any chain not bound by a matching leading `origin_jti`, and the completeness assurances share one home.
 * Used the base profile's example identifiers for the travel assistant and booking tool.
 * Clarified that receipt actor-object restrictions apply separately from the token's actor chain, and that historical binding comes from the issued token's top-level `cnf`.
-* Restored the Introduction's defining sentence and design-center list, and the list of what this document defines.
 
 -00
 
