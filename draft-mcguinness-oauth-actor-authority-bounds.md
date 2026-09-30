@@ -370,7 +370,7 @@ When requested authority exceeds the recorded bound without re-authorization and
 | Dimension | Error |
 |-----------|-------|
 | `scope` | `invalid_scope` ({{RFC6749, Section 5.2}}) |
-| `aud` or `resource` | `invalid_target` ({{RFC8693, Section 2.2.2}}) |
+| `aud` or `resource` | `invalid_target` ({{RFC8693, Section 2.2.2}} for Token Exchange; {{RFC8707, Section 2}} otherwise) |
 | `authorization_details` | `invalid_authorization_details` {{RFC9396}} |
 
 The issuer uses `actor_unauthorized` as defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}} when the failure reflects an actor-authorization decision.  An absent required artifact is an input-validation failure: `invalid_request` on a Token Exchange request, `invalid_grant` on a JWT bearer grant or refresh request.
