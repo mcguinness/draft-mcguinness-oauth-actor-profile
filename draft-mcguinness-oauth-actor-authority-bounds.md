@@ -335,7 +335,7 @@ Bounds evidence records non-expansion across covered hops, with explicit re-auth
 
 ## Introspection {#consumer-introspection}
 
-Receipt-attested bounds travel inside receipts and are returned wherever receipts are returned; the introspection rules of {{I-D.mcguinness-oauth-actor-receipts}} apply unchanged, including all-or-nothing receipt disclosure and the requirement list for outer-token members.
+Receipt-attested bounds travel inside receipts and are returned wherever receipts are returned; the introspection rules of {{I-D.mcguinness-oauth-actor-receipts}} apply unchanged, including all-or-nothing receipt disclosure and the requirement list for outer-token members.  An introspection response whose `receipt[0]` carries `bounds` MUST also include the token's `scope`, `aud`, and `authorization_details` ({{RFC9396, Section 9.2}}) members for each of those dimensions that `receipt[0].bounds` records, so that step 4 of {{consumer-processing}} can be applied.
 
 # Discovery and Capability Signaling {#discovery-capability-signaling}
 
