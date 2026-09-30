@@ -310,6 +310,9 @@ The JWT payload of a bounds event:
 `iat`, `exp`, `jti`:
 : REQUIRED, as defined in {{RFC7519}}.  `exp` MUST cover the expected maximum lifetime of any token that will carry this event.
 
+`aud`:
+: Prohibited.  The event issuer MUST NOT include `aud`, and consumers MUST reject an event that carries it.  An event is validated as part of outer-token processing, and the outer token carries the audience for the request; this document departs from {{RFC8725, Section 3.9}} for events on those grounds.
+
 An event MAY contain additional claims; consumers ignore unrecognized claims unless a specification or local agreement defines their meaning, per {{RFC7519, Section 4}}.
 
 ## Event Lifecycle
