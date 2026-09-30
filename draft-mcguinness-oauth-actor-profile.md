@@ -1039,11 +1039,11 @@ For each accepted input, the TTS MUST apply the rules listed for it in the refer
 
 | Input | Rules applied | Section |
 |-------|---------------|---------|
-| JWT assertion grant | Validation, presenter continuity, and scope ceiling | [JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token) |
+| JWT assertion grant | Validation and presenter continuity | [JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token) |
 | JWT access token | Validation and extraction | [JWT Access Token as subject_token](#jwt-access-token-as-subject-token) |
 | Transaction Token | Validation and extraction | [Transaction Token as subject_token](#txn-token-as-subject-token) |
 
-The resulting subject, classification, chain, and binding state feeds [Transaction Token Output Rules](#transaction-token-output-rules) instead of JWT access token issuance.  For a JWT assertion grant, this state also includes the effective scope ceiling; for an inbound Transaction Token, it also includes `req_wl`.
+The resulting subject, classification, chain, and binding state feeds [Transaction Token Output Rules](#transaction-token-output-rules) instead of JWT access token issuance.  For an inbound Transaction Token, this state also includes `req_wl`.  The scope ceilings in the referenced sections do not apply: Transaction Token `scope` follows {{I-D.ietf-oauth-transaction-tokens, Section 9.2}}, which does not require it to match the scope of any supplied token, and a replacement Transaction Token cannot expand the scope of permitted actions ({{I-D.ietf-oauth-transaction-tokens, Section 13.15}}).
 
 ## Transaction Token Output Rules {#transaction-token-output-rules}
 
