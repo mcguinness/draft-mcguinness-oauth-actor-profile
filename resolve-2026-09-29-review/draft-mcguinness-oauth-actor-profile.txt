@@ -1487,10 +1487,11 @@ Table of Contents
 
    The AS can reduce scope under local policy.  The effective scope of
    the issued token MUST NOT exceed the grant's effective scope ceiling:
-   the grant's scope claim when present, otherwise the scope the AS
-   would authorize if the grant were redeemed directly under
-   Authorization Grant Processing (Section 4.2).  The AS MUST then apply
-   JWT Access Token Output (Section 6.5.2).
+   the grant's scope claim when present (such as the ID-JAG scope claim
+   of [I-D.ietf-oauth-identity-assertion-authz-grant]), otherwise the
+   scope the AS would authorize if the grant were redeemed directly
+   under Authorization Grant Processing (Section 4.2).  The AS MUST then
+   apply JWT Access Token Output (Section 6.5.2).
 
 6.2.1.2.  JWT Access Token
 
