@@ -316,6 +316,8 @@ Proofs define no subject `sub_profile` claim; subject classification remains iss
 
   This requires provisioning the prospective token identifier before signing.  A matching `actor_proofs[0].origin_jti` binds the chain to that token instance; a present but differing value causes rejection unless the outer issuer is a trusted reissuing issuer.  Without `origin_jti`, instance binding requires receipt composition; see {{proof-to-token-binding-limits}} and consumer step 9.
 
+  A Transaction Token Service MAY include `jti` in a Transaction Token, because {{I-D.ietf-oauth-transaction-tokens, Section 9.2}} permits additional claims; without it, a Transaction Token's proof chain is never instance-bound.
+
 ### Excluded Standard Claims
 
 `aud`:
@@ -615,7 +617,7 @@ When the failure reflects an actor-authorization decision rather than a structur
 
 ## Resource Server Errors
 
-When a resource server rejects a request because `actor_proofs` validation fails under {{consumer-processing}}, it SHOULD return `invalid_token` per the bearer-token error model in {{RFC6750}} Section 3.1.
+When a resource server rejects a request because `actor_proofs` validation fails under {{consumer-processing}}, it SHOULD return `invalid_token` per the bearer-token error model in {{RFC6750}} Section 3.1.  For a Transaction Token, the recipient instead rejects the token through the deployment's Txn-Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response for a rejected Transaction Token.
 
 When the failure is specifically that required proofs are absent or coverage is incomplete (per `actor_proofs_required` or `actor_proofs_complete_required`), the resource server SHOULD include an `error_description` value identifying proof-coverage failure so that clients and operators can distinguish it from generic token-validation failures.
 
