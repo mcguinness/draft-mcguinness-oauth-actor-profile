@@ -99,7 +99,7 @@ Re-Authorization Event:
 : An explicit event in which an authorized principal consents to new, possibly broader, authority.  Recorded in the `reauthorized` claim of the receipt for the new actor hop at which it occurs.
 
 Monotonicity Basis:
-: The point in the chain from which non-expansion of a dimension is measured.  The origin hop is the initial basis; each re-authorization event establishes a new basis for the dimensions it lists.
+: The point in the chain from which non-expansion of a dimension is measured.  The origin hop is the initial basis; each re-authorization recorded at a hop establishes a new basis for the dimensions it lists.
 
 Dense Coverage:
 : A condition in which every receipt in the chain carries `bounds` for a given dimension, so that monotonicity for that dimension is verified across every adjacency.
@@ -120,7 +120,7 @@ Receipt signing, linkage, byte preservation, and coverage rules continue to appl
 The goals of this document are:
 
 *  record the authority values in effect at each receipt-covered hop, signed by that hop's issuer;
-*  let recipients verify offline that monotonic dimensions never expanded across the covered chain except at explicit re-authorization events;
+*  let recipients verify offline that monotonic dimensions never expanded across the covered chain except at explicit re-authorizations recorded at a hop;
 *  make re-authorization at a hop an explicit, signed, dimension-scoped record rather than an out-of-band assumption;
 *  compose with the receipts companion's coverage, disclosure, and introspection machinery, and with the proofs companion's actor-consented target bindings;
 *  support progressive deployment: sparse per-dimension recording supports audit, and verifying a dimension needs every receipt to record it.
@@ -146,7 +146,7 @@ Verifying a dimension across the chain requires every receipt to record it.  Dep
 An issuer that adds an actor hop and supports this profile records, inside the receipt it signs for that hop, the authority values it applied to the issued token.  Recipients walk the validated receipt chain from oldest to newest, comparing recorded values for each monotonic dimension:
 
 *  values may narrow or stay the same across each adjacency;
-*  values may not expand, unless a signed re-authorization event establishes a new basis;
+*  values may not expand, unless a signed re-authorization recorded at a hop establishes a new basis for that dimension;
 *  the current outer token's values may narrow further relative to the newest recorded bounds, but may not expand.
 
 Re-authorization is carried by the `reauthorized` receipt claim, recorded on the receipt for a new actor hop, signed by the hop's issuer, and scoped to the dimensions it lists.
@@ -243,7 +243,7 @@ A receipt MAY omit `bounds` entirely, and a chain MAY mix receipts with and with
     *  `domain_transition`: the hop crosses a trust-domain boundary at which authority vocabularies change ({{domain-transitions}}).
 
   `iat`:
-  : REQUIRED.  Time of the re-authorization event.
+  : REQUIRED.  Time of the re-authorization.
 
   `dimensions`:
   : REQUIRED.  A non-empty array of the governed dimension names this re-authorization resets.  The receipt MUST carry `bounds` for each listed dimension.
