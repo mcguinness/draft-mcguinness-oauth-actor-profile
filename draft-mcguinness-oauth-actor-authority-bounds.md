@@ -596,37 +596,37 @@ This document requests registration of the following JWT Claims in the "JSON Web
 
 *  Claim Name: `bounds`
 *  Claim Description: Authority bounds in effect for the token issued at the hop attested by an Actor Receipt JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `reauthorized`
 *  Claim Description: Record of explicit re-authorization of delegated authority at a hop or event
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `bounds_events`
 *  Claim Description: Array of signed bounds-event JWTs recording non-hop re-authorization of delegated authority
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `bounds_events_complete`
 *  Claim Description: Boolean indicating whether bounds_events covers every non-hop bounds-changing event as of issuance
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `authority_bounds_enforced`
 *  Claim Description: Array of authority-dimension names for which the issuer attests issuance-time monotonicity enforcement
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `event_type`
 *  Claim Description: Type discriminator for a delegation-evidence event JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `new_bounds`
 *  Claim Description: Authority bounds in effect after the re-authorization recorded by a bounds-event JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 This document reuses the `prh` and `prh_alg` claims registered by {{ACTOR-RECEIPTS}} and the `receipt_jti` claim registered by {{ACTOR-PROOFS}}, applied to bounds-event JWTs as profiled in this document.  This document requests that IANA add this document to the Specification Document(s) entries for those three registrations.  The Claim Description wording requested by {{ACTOR-PROOFS}} for `prh` and `prh_alg` already covers the delegation-evidence artifact family; for `receipt_jti`, this document requests that the Claim Description be updated to:
@@ -656,12 +656,12 @@ This document requests registration of the following metadata names in the "OAut
 
 *  Metadata Name: `authority_bounds_supported`
 *  Metadata Description: Array of authority-dimension names for which the server records receipt-attested bounds and enforces issuance-time monotonicity
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Metadata Name: `bounds_events_supported`
 *  Metadata Description: Indicates support for creating, preserving, and returning bounds-event arrays
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Protected Resource Metadata Registration
@@ -670,12 +670,12 @@ This document requests registration of the following metadata names in the "OAut
 
 *  Metadata Name: `authority_bounds_required`
 *  Metadata Description: Array of authority-dimension names for which the resource requires dense receipt-attested bounds enforcement
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Metadata Name: `bounds_events_complete_required`
 *  Metadata Description: Indicates that the resource requires an issuer attestation of complete bounds-event coverage
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Token Introspection Response Registration
@@ -684,17 +684,17 @@ This document requests registration of the following names in the "OAuth Token I
 
 *  Name: `authority_bounds_enforced`
 *  Description: Array of authority-dimension names for which the issuer attests issuance-time monotonicity enforcement
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Name: `bounds_events`
 *  Description: Array of signed bounds-event JWTs returned by introspection
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Name: `bounds_events_complete`
 *  Description: Indicates whether the returned bounds events provide complete coverage of non-hop re-authorization
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 # Acknowledgments

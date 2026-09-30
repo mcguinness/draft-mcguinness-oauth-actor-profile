@@ -825,27 +825,27 @@ This document requests registration of the following JWT Claims in the "JSON Web
 
 *  Claim Name: `actor_proofs`
 *  Claim Description: Array of actor-signed hop proofs providing delegation participation evidence
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `actor_proofs_complete`
 *  Claim Description: Boolean indicating whether actor_proofs covers every visible hop in the token's act chain
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `target`
 *  Claim Description: Target binding (audience and resource constraints) authorized by the signer of an Actor Proof JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `receipt_jti`
 *  Claim Description: jti of the sibling Actor Receipt JWT created for the same delegation hop as an Actor Proof JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `proof_jti`
 *  Claim Description: jti of the sibling Actor Proof JWT validated for the same delegation hop as an Actor Receipt JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 This document reuses the `prh`, `prh_alg`, `origin_jti`, and `sub_iss` claims registered by {{I-D.mcguinness-oauth-actor-receipts}}, with the semantics defined there, applied to Actor Proof JWTs as profiled in this document.  This document requests that IANA add this document to the Specification Document(s) entries for those four registrations, and requests that their Claim Description entries be updated to cover both artifact types:
@@ -861,7 +861,7 @@ This document requests registration of the following parameter in the "OAuth Par
 
 *  Parameter name: `actor_proof`
 *  Parameter usage location: token request
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Authorization Server Metadata Registration
@@ -870,7 +870,7 @@ This document requests registration of the following metadata name in the "OAuth
 
 *  Metadata Name: `actor_proofs_supported`
 *  Metadata Description: Indicates support for accepting, validating, embedding, preserving, and extending actor-signed hop proofs
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Protected Resource Metadata Registration
@@ -879,12 +879,12 @@ This document requests registration of the following metadata names in the "OAut
 
 *  Metadata Name: `actor_proofs_required`
 *  Metadata Description: Indicates that the resource expects delegated requests to carry valid actor proofs covering at minimum the outermost visible actor hop
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Metadata Name: `actor_proofs_complete_required`
 *  Metadata Description: Indicates that the resource requires complete proof coverage for all visible actor hops
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Token Introspection Response Registration
@@ -893,12 +893,12 @@ This document requests registration of the following names in the "OAuth Token I
 
 *  Name: `actor_proofs`
 *  Description: Array of actor-signed hop proofs returned by introspection
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Name: `actor_proofs_complete`
 *  Description: Indicates whether the returned actor proofs provide complete visible-hop coverage
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 # Acknowledgments

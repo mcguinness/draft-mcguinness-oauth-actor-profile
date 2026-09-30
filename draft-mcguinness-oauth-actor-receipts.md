@@ -851,32 +851,32 @@ This document requests registration of the following JWT Claims in the "JSON Web
 
 *  Claim Name: `actor_receipts`
 *  Claim Description: Array of signed actor-hop receipts providing delegation provenance
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `actor_receipts_complete`
 *  Claim Description: Boolean indicating whether actor_receipts covers every visible hop in the token's act chain
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `sub_iss`
 *  Claim Description: Issuer or namespace authority for the subject in an Actor Receipt JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `prh`
 *  Claim Description: Base64url-encoded hash of the immediately preceding (older) receipt in an Actor Receipt JWT chain
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `prh_alg`
 *  Claim Description: Hash algorithm identifier (from the IANA Named Information Hash Algorithm Registry) naming the algorithm used to compute prh in an Actor Receipt JWT
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Claim Name: `origin_jti`
 *  Claim Description: The jti of the outer token at the time an Actor Receipt JWT was created (the receipt's origin outer token)
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Authorization Server Metadata Registration
@@ -885,7 +885,7 @@ This document requests registration of the following metadata name in the "OAuth
 
 *  Metadata Name: `actor_receipts_supported`
 *  Metadata Description: Indicates support for validating, originating, preserving, or extending actor-receipt chains
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Protected Resource Metadata Registration
@@ -894,12 +894,12 @@ This document requests registration of the following metadata names in the "OAut
 
 *  Metadata Name: `actor_receipts_required`
 *  Metadata Description: Indicates that the resource expects delegated requests to carry valid actor receipts covering at minimum the outermost visible actor hop
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Metadata Name: `actor_receipts_complete_required`
 *  Metadata Description: Indicates that the resource requires complete receipt coverage for all visible actor hops
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 ## OAuth Token Introspection Response Registration
@@ -908,12 +908,12 @@ This document requests registration of the following names in the "OAuth Token I
 
 *  Name: `actor_receipts`
 *  Description: Array of signed actor-hop receipts returned by introspection
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 *  Name: `actor_receipts_complete`
 *  Description: Indicates whether the returned actor receipts provide complete visible-hop coverage
-*  Change Controller: IESG
+*  Change Controller: IETF
 *  Specification Document(s): This document
 
 # Acknowledgments
