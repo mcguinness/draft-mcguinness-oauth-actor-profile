@@ -300,7 +300,7 @@ Proofs define no subject `sub_profile` claim; subject classification remains iss
 
   `exp` needs to cover the lifetime of any token that will carry or inherit this proof; otherwise consumers reject older proofs in a valid chain prematurely.
 
-  A proof expiring before the issued outer token causes propagation failure ({{extending-an-existing-proof-chain}}).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse ({{proof-to-token-binding-limits}}).
+  A proof expiring before the issued outer token causes propagation failure ({{extending-an-existing-proof-chain}}, {{reissuance-without-a-new-actor-hop}}).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse ({{proof-to-token-binding-limits}}).
 
   With instance binding through receipts in strict mode or a provisioned `origin_jti` ({{proof-to-token-binding-limits}}), `exp` MAY cover the delegated session.  Without instance binding, `exp` SHOULD be short to limit proof reuse.
 
@@ -394,6 +394,7 @@ An issuer that reissues, translates, or introspects and re-emits a token without
 *  MUST preserve `actor_proofs_complete` when carrying the array unchanged.  If it cannot attest that value, the issuer MUST drop the whole array.
 *  MUST NOT continue to carry an inherited `actor_proofs` array if it cannot preserve the visible hop alignment required by {{consumer-processing}};
 *  MUST NOT change top-level `sub` while retaining proofs; doing so breaks alignment with `actor_proofs[0].sub`.
+*  MUST NOT set the outer token's `exp` later than the earliest `exp` among the retained proofs; an issuer that needs a later `exp` MUST drop the array, or MUST instead fail the request under the error model of {{error-handling}} when local policy or the deployment's resource requirements require actor-signed evidence.
 
 If such an issuer changes the visible outermost actor, it has added a new hop and MUST follow {{extending-an-existing-proof-chain}}.
 
@@ -404,8 +405,8 @@ If proofs are dropped while receipts remain, inherited `proof_jti` references be
 An AS that supports refresh tokens for delegated access tokens carrying proofs:
 
 *  needs to retain the `actor_proofs` array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the proofs forward unchanged.
-*  MUST rely on proof `exp` values set per {{proof-claims}} to accommodate the bounded maximum delegated-session lifetime.  Otherwise downstream issuers reject inbound chains under {{extending-an-existing-proof-chain}} as proofs approach expiry, and refresh loses actor-signed evidence.
-*  When that bounded lifetime would be exceeded, MUST either obtain fresh delegation state with fresh proofs or stop emitting `actor_proofs`, unless local policy permits partial or absent coverage.
+*  applies the `exp` limit above to each refreshed access token.  How long refresh can carry the proofs therefore depends on the conditional proof `exp` sizing in {{proof-claims}}, which lets `exp` cover the delegated session with instance binding and calls for a short `exp` without it.
+*  when a refreshed access token needs a later `exp` than that limit allows, drops `actor_proofs` from it or fails the refresh request, as the rule above requires.  Refresh adds no actor hop, so actor-signed evidence resumes only through a new delegated issuance that adds a hop with a fresh proof.
 
 ## Partial Coverage and Full Coverage {#partial-coverage-and-full-coverage}
 
@@ -743,7 +744,7 @@ Each proof is a full signed JWT, and the chain grows linearly with delegation de
 
 ## Proof Freshness and Replay {#proof-freshness}
 
-Proofs are historical attestations of hop-time consent.  They MAY outlive the validity period of the outer token they were originally embedded in, and MAY be carried forward across reissuance and refresh as long as their `exp` permits.
+Proofs are historical attestations of hop-time consent.  They can outlive the validity period of the outer token they were originally embedded in, and can be carried forward across reissuance and refresh only in tokens that expire no later than they do ({{reissuance-without-a-new-actor-hop}}).
 
 *  Proofs attest participation and target consent at signing time; they do not assert that the represented delegation is still active or that the actor would consent today.
 *  Runtime policy evaluation, including current authorization and current revocation state, is separate from proof validation.
