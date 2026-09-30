@@ -2134,6 +2134,14 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * A resource server rejects a failed Transaction Token through the deployment's Transaction Token handling, since {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
 * Authorization policy identifies the outermost actor by its (`act.iss`, `act.sub`) pair.
 * Metadata: the `actor_profile_required` issuance rule applies to an AS that knows the value by configuration or from metadata; the `txn_token` listing is required only of an AS or TTS that publishes `actor_profile_token_exchange`; and `requested_token_types_supported` lists `urn:ietf:params:oauth:token-type:id-jag`.
+* Transaction Token presenter proof follows the deployment profile, since {{I-D.ietf-oauth-transaction-tokens}} defines none; the cross-domain example states that its deployment profile defines the `cnf.jkt` binding.
+* A JWT access token used as `actor_token` receives the same `aud` relaxation as one used as `subject_token`.
+* A JWT `actor_token` not presented as `client_assertion` is a client assertion when its `iss` and `sub` equal the authenticated client's `client_id`, and `iss = sub = client_id` is attributed to {{RFC7521, Section 5.2}} and {{RFC7523, Section 3}}.
+* A WIMSE workload credential without `iss` has its issuer established through its trust domain's trust anchors, and a DPoP proof for it uses the key in its `cnf.jwk`.
+* A client certificate that does not match a JWT assertion grant's `cnf.x5t#S256` is rejected with `invalid_grant`, or `invalid_request` on Token Exchange.
+* Transaction Token `subject_token` processing applies at a TTS as well as an AS; its JWT access token output steps apply only to that output.
+* An assertion-grant actor without `act.iss` is rejected when profile conformance is required, and otherwise follows Migration and Adoption.
+* TTS presenter rebind can name the existing outermost actor, the Transaction Token request example uses `request_context`, and companion introspection response parameters can apply to delegated opaque access tokens.
 
 -00
 
