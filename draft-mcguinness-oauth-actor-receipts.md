@@ -342,6 +342,7 @@ When an issuer creates a delegated token with a new outermost actor hop and no i
 If it does so, the new receipt:
 
 *  MUST describe the new outermost actor hop;
+*  MUST set `iss` to the issued token's `iss`;
 *  MUST set `sub` to the issued token's top-level `sub`;
 *  MUST set `act.sub` and `act.iss` to the new outermost actor;
 *  MAY copy the issued token's top-level `cnf`, if any, into the receipt `cnf`, subject to the disclosure considerations in {{historical-cnf-disclosure}};
@@ -352,12 +353,12 @@ A one-element array is complete coverage only when the visible `act` chain has d
 
 ## Extending an Existing Receipt Chain
 
-When an issuer adds a new outermost actor hop and also preserves an inbound `actor_receipts` array, it:
+When an issuer adds a new outermost actor hop and also preserves the `actor_receipts` array of the token carrying the inbound delegation chain ({{I-D.mcguinness-oauth-actor-profile}}), such as the `subject_token` of a Token Exchange request, it:
 
 1.  MUST validate the inbound receipt chain by applying the consumer processing rules in {{consumer-processing}} before relying on it or carrying it forward.
 2.  MUST apply the receipt lifetime rule in {{receipt-claims}} when an inbound receipt's `exp` is earlier than the issued outer token's `exp`.  Issuers MAY allow a small, deployment-defined clock-skew margin consistent with consumer validation, but MUST NOT accept a larger expiry gap.
 3.  MUST preserve each inbound receipt byte-for-byte unchanged.
-4.  MUST create exactly one new receipt for the new outermost actor hop.
+4.  MUST create exactly one new receipt for the new outermost actor hop, with claims set as in {{creating-the-first-receipt}} except `prh` and `prh_alg`, which steps 6 and 7 govern.
 5.  MUST prepend that new receipt to the inherited array.
 6.  When the inherited array is non-empty, MUST set the new receipt's `prh` to the hash of the exact compact serialization of the receipt now at the next array index, computed using the algorithm named by `prh_alg` (defaulting to SHA-256 when `prh_alg` is absent).
 7.  MUST set the new receipt's `prh_alg` to the inherited value, or omit `prh_alg` if the inherited chain omits it (preserving the SHA-256 default for the chain).  An issuer that does not support the inbound `prh_alg` value MUST reject the chain rather than rehash; rehashing would invalidate prior issuers' signatures.
