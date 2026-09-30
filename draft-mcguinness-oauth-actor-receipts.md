@@ -524,7 +524,7 @@ An introspection response carrying receipts MUST include the members needed for 
 
 An RS receiving both inline and introspected receipts MUST select an authoritative source under local policy.  If it consumes both, differing arrays or completeness values MUST cause rejection of receipt-based provenance.
 
-An introspection server MUST return the full stored array or omit `actor_receipts`.  Removing an older entry breaks `prh`; removing the newest breaks hop alignment.  A server that filters the visible `act` chain can still return the full array when it filters only inner actors that no receipt covers; if it filters a covered actor, it MUST omit both `actor_receipts` and `actor_receipts_complete`.  When the introspection server returns a stored array that it knows has partial coverage, it MUST include `actor_receipts_complete: false`.
+An introspection server MUST return the full stored array or omit `actor_receipts`.  Removing an older entry breaks `prh`; removing the newest breaks hop alignment.  A server that filters the visible `act` chain can still return the full array when it filters only inner actors that no receipt covers; if it filters a covered actor, it MUST omit both `actor_receipts` and `actor_receipts_complete`.  When the returned array does not cover every hop of the returned `act` chain, the introspection server MUST include `actor_receipts_complete: false`.
 
 For an inactive token, the introspection server MUST NOT return `actor_receipts` or `actor_receipts_complete`.
 
@@ -608,7 +608,7 @@ When the failure is specifically that required receipts are absent or coverage i
 
 ## Introspection Server Behavior {#introspection-errors}
 
-When an introspection server cannot return receipts that the requesting resource server requires, it returns the introspection response per {{RFC7662}} with `actor_receipts` absent or with `actor_receipts_complete: false`; the resource server then applies its local policy to decide whether to accept the token.
+When an introspection server cannot return receipts that the requesting resource server requires, it returns the introspection response per {{RFC7662}} with `actor_receipts` absent or with a partial array and `actor_receipts_complete: false`; the resource server then applies its local policy to decide whether to accept the token.
 
 The introspection server itself does not return an OAuth error for missing receipts; receipt presence is a property of the introspection response, not a precondition for it.
 
