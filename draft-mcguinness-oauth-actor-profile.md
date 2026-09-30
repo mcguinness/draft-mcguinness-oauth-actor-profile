@@ -1266,7 +1266,7 @@ The following parameters are defined for use in the AS metadata document ({{RFC8
 
   *  `actor_token_types_supported`: OPTIONAL.  A JSON array of token-type URI strings indicating the `actor_token_type` values the AS accepts for Token Exchange requests in which actor-profile processing can apply.  Values defined by this document are:
 
-     -  `urn:ietf:params:oauth:token-type:jwt`: JWT client assertions ([JWT Client Assertion](#jwt-client-assertion-as-actor-token)) and workload identity credentials ([Workload Credential Processing](#workload-identity-as-actor-token))
+     -  `urn:ietf:params:oauth:token-type:jwt`: JWT client assertions ([JWT Client Assertion](#jwt-client-assertion-as-actor-token)) and workload identity credentials ([Workload Credential Processing](#workload-identity-as-actor-token)), which [Token Exchange Processing](#token-exchange-processing) distinguishes
      -  `urn:ietf:params:oauth:token-type:access_token`: JWT access tokens ([JWT Access Token as actor_token](#jwt-access-token-as-actor-token))
 
   *  `requested_token_types_supported`: OPTIONAL.  A JSON array of token-type URI strings indicating the `requested_token_type` values the AS accepts for Token Exchange requests in which actor-profile processing can apply.  Values defined by this document are:
