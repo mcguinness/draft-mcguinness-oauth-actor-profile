@@ -664,7 +664,7 @@ The following threats and limits assume the trust and validation rules in this d
 
 ### Trust Model Summary
 
-Trust is per-issuer and per-deployment, and not transitive across the chain.  A receipt chain breaks at the first inner receipt whose issuer is not trusted, even when the outer token's issuer and earlier receipts are trusted.  Companion profiles ({{extensibility}}) can extend the addressed adversary set; for example, an actor-signed-proofs companion can mitigate the compromised-current-outer-token-issuer adversary.
+Trust is per-issuer and per-deployment, and not transitive across the chain.  A receipt chain fails validation if any receipt's issuer is not trusted, even when the outer token's issuer and the other receipts are trusted ({{trust-in-receipt-issuers}}).  Companion profiles ({{extensibility}}) can extend the addressed adversary set; for example, an actor-signed-proofs companion can mitigate the compromised-current-outer-token-issuer adversary.
 
 ## Current Presenter Validation
 
