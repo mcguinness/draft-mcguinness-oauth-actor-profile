@@ -864,11 +864,11 @@ When a Token Exchange request ({{RFC8693}}) includes an `actor_token` that is a 
 
 1.  The AS MUST validate the workload identity credential per its type specification.  For WIMSE workload identity credentials ({{I-D.ietf-wimse-workload-creds}}), validation follows the rules defined in that specification.  If validation fails, the AS MUST reject the request with `invalid_request`.
 
-2.  The AS MUST verify that the workload credential's issuer (`iss`) is trusted under local policy to assert the workload's identity.  If not, the AS MUST reject the request with `invalid_request`.
+2.  The AS MUST verify that the workload credential's issuer is trusted under local policy to assert the workload's identity.  If not, the AS MUST reject the request with `invalid_request`.  The issuer is identified by `iss` or, for a WIMSE credential without `iss` ({{I-D.ietf-wimse-workload-creds, Section 5.1}}), by the trust anchors configured for the trust domain of its `sub` ({{I-D.ietf-wimse-workload-creds, Section 3}}).
 
 3.  The AS MUST derive the outermost actor and handle any inbound chain as specified in [Actor Tokens](#actor-tokens).
 
-4.  The AS MUST validate any proof the workload-credential profile requires, such as a WIMSE Workload Proof Token (WPT, {{I-D.ietf-wimse-wpt}}) per its specification, whether or not the output token is sender-constrained.  When the request uses this credential to establish a sender-constrained output token in presenter-rebind mode, the AS MUST also validate proof for the new presenter binding: the WPT, or a DPoP proof ({{RFC9449}}) over the token endpoint URI when the credential carries `cnf.jkt`.  If a required proof is absent or invalid, the AS MUST reject under [Error Responses](#actor-profile-error-responses), using the proof mechanism's error when specified and `invalid_request` otherwise.
+4.  The AS MUST validate any proof the workload-credential profile requires, such as a WIMSE Workload Proof Token (WPT, {{I-D.ietf-wimse-wpt}}) per its specification, whether or not the output token is sender-constrained.  When the request uses this credential to establish a sender-constrained output token in presenter-rebind mode, the AS MUST also validate proof for the new presenter binding: the WPT, or a DPoP proof ({{RFC9449}}) over the token endpoint URI whose key is the confirmation key in the credential's `cnf` claim (`cnf.jwk` for a WIMSE credential).  If a required proof is absent or invalid, the AS MUST reject under [Error Responses](#actor-profile-error-responses), using the proof mechanism's error when specified and `invalid_request` otherwise.
 
 
 ### JWT Access Token {#jwt-access-token-as-actor-token}
