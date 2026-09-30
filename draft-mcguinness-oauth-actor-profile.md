@@ -880,7 +880,7 @@ A non-delegated JWT access token may be presented as `actor_token` to establish 
 
 When a Token Exchange request includes an `actor_token` that is a JWT access token (`actor_token_type=urn:ietf:params:oauth:token-type:access_token`), the AS MUST apply the following steps.  Use of an opaque access token as the `actor_token` is outside the interoperable scope of this profile (see [Profile Scope](#profile-scope)).
 
-1.  The AS MUST validate the `actor_token` per {{RFC9068}}.  If validation fails, the AS MUST reject the request with `invalid_request`.
+1.  The AS MUST validate the `actor_token` per {{RFC9068}}, with the `aud` relaxation in step 1 of [JWT Access Token as subject_token](#jwt-access-token-as-subject-token).  If validation fails, the AS MUST reject the request with `invalid_request`.
 
 2.  The AS MUST verify that the `actor_token`'s `iss` is trusted under local policy to assert the acting party's identity in the top-level `sub`.  If trust cannot be established, the AS MUST reject the request with `invalid_request`.
 
