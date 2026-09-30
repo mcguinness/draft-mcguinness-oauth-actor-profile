@@ -2682,7 +2682,9 @@ Table of Contents
    [RFC6749], Section 5.2.  On Token Exchange requests, including TTS
    requests, an invalid or policy-unacceptable subject_token or
    actor_token uses invalid_request, as [RFC8693], Section 2.2.2
-   requires; on JWT bearer grant requests, an invalid grant uses
+   requires, except that a denial under actor authorization policy uses
+   actor_unauthorized, one of the other error codes that section
+   permits; on JWT bearer grant requests, an invalid grant uses
    invalid_grant, as [RFC7523], Section 3.1 requires.  These error codes
    do not override invalid_client when a request fails client
    authentication per [RFC6749] or [RFC7523].
@@ -4502,8 +4504,9 @@ Document History
 
    *  Token Exchange and TTS requests reject invalid or policy-
       unacceptable subject_token and actor_token inputs with
-      invalid_request, per [RFC8693], Section 2.2.2; JWT bearer grant
-      requests keep invalid_grant.
+      invalid_request, per [RFC8693], Section 2.2.2, while actor-policy
+      denials keep actor_unauthorized; JWT bearer grant requests keep
+      invalid_grant.
 
    *  [RFC6749], [RFC7800], [OpenID.Core], and ID-JAG are now normative
       references, and ID-JAG is cited at -04.
