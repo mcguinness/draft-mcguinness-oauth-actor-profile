@@ -1229,6 +1229,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * The threat model no longer claims that actor-signed proofs address a compromised actor or a compromised outer token issuer; they prevent issuer fabrication of actor participation at proof-covered hops only.
 * Receipt and outer-token `sub_profile` values are now compared as sets: case-insensitively, ignoring order and duplicate values, without rewriting a signed receipt.  -00 required the same value.
 * Redemption of an ID-JAG or other JWT assertion grant at a Resource Authorization Server without a new hop is now named as a common case of different-issuer reissuance, accepted only under explicit trusted-reissuer policy and without current-instance binding.
+* On refresh, an authorization server takes retained receipts from its issuance state: it validates the refresh request per {{RFC6749, Section 6}} and checks the retained receipts against that state, without requiring the previous access token to remain valid.
 
 -00
 

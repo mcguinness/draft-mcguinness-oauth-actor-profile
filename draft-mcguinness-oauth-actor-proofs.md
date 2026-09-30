@@ -1151,8 +1151,9 @@ The single proof covers the outermost hop:
 * In an introspection response, `actor_proofs_complete: false` makes no attestation of complete coverage rather than asserting partial coverage.
 * A Transaction Token request made over HTTP carries the proof in `actor_proof`, because it is a Token Exchange request ({{I-D.ietf-oauth-transaction-tokens, Section 11}}).
 * Consumers compare a proof's `act.sub_profile` with the visible `act.sub_profile` as a set of case-insensitive values (-00 required the same value), and an issuer accepting a proof that carries `act.sub_profile` verifies that it matches the `act.sub_profile` emitted for the new outermost actor.
-* Replaced the strongest-first ranking of instance bindings with the trust each relies on, and limited the RECOMMENDED receipts composition to deployments that already use receipts.
+* Replaced the strongest-first ranking of instance bindings with the trust each relies on, and limited the recommendation of receipts composition to deployments that already use receipts.
 * An actor can include known downstream audiences in `target.aud` so that its proof survives a later redemption without a new hop; this addresses audience divergence only.
+* On refresh, an authorization server takes retained proofs from its issuance state: it validates the refresh request per {{RFC6749, Section 6}} and checks the retained proofs against that state, without requiring the previous access token to remain valid.
 
 -00
 
