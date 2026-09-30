@@ -1728,7 +1728,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-8.2-2.1.1"><span class="bcp14">MUST NOT</span> issue an outer token whose value for any monotonic dimension exceeds <code>receipt[0]</code>'s recorded bound; narrowing further is always permitted;<a href="#section-8.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.2-2.2">
-            <p id="section-8.2-2.2.1">when broader authority is authorized without a new hop (for example, a refresh grant following step-up or an approver widening a governing authority object), <span class="bcp14">MUST</span> fail the request or, where local policy and resource requirements permit absent receipt coverage, drop the inherited <code>actor_receipts</code> array and with it the bounds evidence.<a href="#section-8.2-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-8.2-2.2.1">when the issued value would exceed the recorded bound for a monotonic dimension, even because broader authority was authorized without a new hop (for example, a refresh grant following step-up or an approver widening a governing authority object), <span class="bcp14">MUST</span> fail the request or, where local policy and resource requirements permit absent receipt coverage, drop the inherited <code>actor_receipts</code> array and with it the bounds evidence.<a href="#section-8.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>

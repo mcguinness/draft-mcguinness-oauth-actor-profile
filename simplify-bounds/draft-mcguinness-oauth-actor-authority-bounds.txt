@@ -563,12 +563,13 @@ Table of Contents
       dimension exceeds receipt[0]'s recorded bound; narrowing further
       is always permitted;
 
-   *  when broader authority is authorized without a new hop (for
-      example, a refresh grant following step-up or an approver widening
-      a governing authority object), MUST fail the request or, where
-      local policy and resource requirements permit absent receipt
-      coverage, drop the inherited actor_receipts array and with it the
-      bounds evidence.
+   *  when the issued value would exceed the recorded bound for a
+      monotonic dimension, even because broader authority was authorized
+      without a new hop (for example, a refresh grant following step-up
+      or an approver widening a governing authority object), MUST fail
+      the request or, where local policy and resource requirements
+      permit absent receipt coverage, drop the inherited actor_receipts
+      array and with it the bounds evidence.
 
 8.3.  Domain Transitions
 
