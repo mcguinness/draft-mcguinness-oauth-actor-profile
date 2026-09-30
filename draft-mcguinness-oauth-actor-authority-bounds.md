@@ -130,7 +130,7 @@ The non-goals of this document are:
 *  interpreting scope grammars: comparison is syntactic set membership, and semantic subsumption is out of scope ({{scope-dimension}});
 *  constraining the origin issuer's initial authority choice; no upstream value exists to compare against;
 *  defining cross-domain equivalence of authority vocabularies; a trust-domain boundary is an explicit basis reset ({{domain-transitions}});
-*  recording re-authorization between hops (a refresh or step-up without a new hop), which a later extension can add;
+*  recording re-authorization between hops (a refresh or step-up without a new hop), which a later extension can add ({{extensibility}});
 *  asserting that recorded authority remains active, authorized, or acceptable under current policy;
 *  governing `exp`, `cnf`, `sub`, or `sub_profile`, which are lifecycle, presenter, and identity concerns handled by the base profiles;
 *  replacing current-token authorization at the resource server.
@@ -268,7 +268,7 @@ When an issuer adds a new outermost actor hop and creates the receipt for it, an
 
 ## Reissuance and Refresh Without a New Hop {#reissuance-and-refresh}
 
-Reissuance without a new actor hop creates no receipt, so recorded bounds cannot change through the receipt chain.  This document does not define recording re-authorization between hops.  An issuer that reissues or refreshes while carrying a bounds-bearing receipt chain forward:
+Reissuance without a new actor hop creates no receipt, so recorded bounds cannot change through the receipt chain.  This document does not define recording re-authorization between hops; {{extensibility}} lets another specification define it.  An issuer that reissues or refreshes while carrying a bounds-bearing receipt chain forward:
 
 *  MUST NOT issue an outer token whose value for any monotonic dimension exceeds `receipt[0]`'s recorded bound; narrowing further is always permitted;
 *  when the issued value would exceed the recorded bound for a monotonic dimension, even because broader authority was authorized without a new hop (for example, a refresh grant following step-up or an approver widening a governing authority object), MUST fail the request or, where local policy and resource requirements permit absent receipt coverage, drop the inherited `actor_receipts` array and with it the bounds evidence.
@@ -308,7 +308,7 @@ An issuer, resource server, or other recipient relying on this profile MUST perf
 
 5.  Enforce dimensions required by `authority_bounds_required` or local policy.  Each required D must be recorded on every receipt and pass steps 3 and 4; a step-4 comparison that cannot be made because the token's effective value for D cannot be determined fails D.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt coverage ({{protected-resource-metadata}}).
 
-6.  Apply any additional rules defined by companion profiles whose claims appear in the artifacts ({{extensibility}}).  They can add rejection conditions but cannot relax any requirement needed for conformance to this profile.
+6.  Apply any additional rules defined by companion profiles whose claims appear in the artifacts ({{extensibility}}).  They can add rejection conditions but cannot relax any requirement needed for conformance to this profile, other than through a replacement bound ({{extensibility}}).
 
 If any required check fails, the recipient MUST reject the token's bounds-based evidence and MUST apply the underlying protocol's error handling for the stage at which the failure occurred.  Rejection of bounds-based evidence does not by itself invalidate the receipt chain under {{I-D.mcguinness-oauth-actor-receipts}}; whether the token remains acceptable without bounds evidence is local policy, except where step 5 applies.
 
@@ -384,8 +384,9 @@ This profile composes with the extensibility framework of {{I-D.mcguinness-oauth
 *  **New governed dimensions**, registered in the dimension registry ({{iana-dimensions}}) with a defined comparison rule and a declared governance class (monotonic by default, or record-only).  Consumers ignore unregistered `bounds` members they do not recognize.
 *  **New re-authorization methods**, registered in the methods registry ({{iana-methods}}) or expressed as collision-resistant URIs.
 *  **Per-type RAR refinement rules**, defined by the specifications that define RAR types; such rules extend {{rar-dimension}} for their types without modifying this document.
+*  **Re-authorization without a new hop.**  This profile defines no mechanism for recording re-authorization without a new actor hop.  Another specification can define one, including how a validated re-authorization establishes a replacement bound for the dimensions it covers, and the evidence, trust, ordering, expiry, preservation, and discovery rules it needs.  An issuer or recipient that supports such a mechanism uses the replacement bound in place of the affected receipt's `bounds[D]` wherever this document compares against it, for the covered dimensions only.  One that does not support it MUST apply the recorded bounds defined here.
 
-Companion rules MUST NOT relax any requirement needed for conformance to this profile; they MAY add rejection conditions.  A companion's partial-validation mode, defined under its own normative scope as {{I-D.mcguinness-oauth-actor-receipts}} requires, is not conformance to this profile.
+Companion rules MUST NOT relax any requirement needed for conformance to this profile, other than through a replacement bound as described above; they MAY add rejection conditions.  A companion's partial-validation mode, defined under its own normative scope as {{I-D.mcguinness-oauth-actor-receipts}} requires, is not conformance to this profile.
 
 # Security Considerations
 
