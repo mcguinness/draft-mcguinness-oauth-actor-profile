@@ -47,6 +47,7 @@ normative:
 
 informative:
   RFC9700:
+  I-D.ietf-oauth-transaction-tokens:
   I-D.niyikiza-oauth-attenuating-agent-tokens:
   PIC-MODEL:
     title: "PIC Model Specification (Provenance Identity Continuity)"
@@ -374,7 +375,7 @@ When requested authority exceeds the recorded bound without re-authorization, th
 
 The issuer uses `actor_unauthorized` as defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}} when the failure reflects an actor-authorization decision.  An absent required artifact is an input-validation failure: `invalid_request` on a Token Exchange request, `invalid_grant` on a JWT bearer grant or refresh request.
 
-When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it SHOULD return `invalid_token` per {{RFC6750}} Section 3.1, and SHOULD include an `error_description` identifying bounds-verification failure so operators can distinguish it from generic token validation.
+When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it SHOULD return `invalid_token` per {{RFC6750}} Section 3.1, and SHOULD include an `error_description` identifying bounds-verification failure so operators can distinguish it from generic token validation.  For a Transaction Token, the resource server rejects it through the deployment's Txn-Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
 
 An introspection server does not return an OAuth error for missing bounds artifacts; their presence is a property of the response.  This document defines no new OAuth error codes.
 
