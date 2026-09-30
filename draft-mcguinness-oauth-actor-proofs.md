@@ -411,7 +411,7 @@ If such an issuer changes the visible outermost actor, it has added a new hop an
 
 If reissuance exceeds the newest proof's target, the issuer MUST drop `actor_proofs` unless deployment agreement designates it, for the recipients of the reissued token, as a trusted reissuing issuer permitted to retarget ({{target-binding-strict-mode}}).  Narrowing or preserving the target keeps the token within the target binding.  A reissued token with a new `jti` diverges from a present `actor_proofs[0].origin_jti` ({{target-binding-strict-mode}}).
 
-If proofs are dropped while receipts remain, inherited `proof_jti` references become informational.  Recipients requiring bound siblings enforce proof presence through metadata or local policy.
+If proofs are dropped while receipts remain, inherited `proof_jti` references become informational.  Recipients requiring bound siblings enforce proof presence through `actor_proofs_required`, `actor_proofs_complete_required`, or local policy.
 
 An AS that supports refresh tokens for delegated access tokens carrying proofs:
 
