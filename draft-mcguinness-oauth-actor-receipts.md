@@ -420,6 +420,8 @@ A TTS that adds a presenter as the new outermost actor follows {{extending-an-ex
 
 This profile defines no Transaction Token-specific receipt claims.  Transaction semantics follow the underlying specification and deployment profile.
 
+{{I-D.ietf-oauth-transaction-tokens}} defines no `jti` claim but permits additional claims ({{I-D.ietf-oauth-transaction-tokens, Section 9.2}}), so a TTS MAY include `jti` in a Transaction Token.  Without it, a Transaction Token's receipt chain is never instance-bound, because case 1 of {{receipt-instance-binding}} requires the outer token's `jti`; recipients that require instance binding need a TTS that includes `jti`.
+
 # Consumer Processing {#consumer-processing}
 
 An issuer, resource server, or other recipient that relies on `actor_receipts` MUST perform the following steps.
