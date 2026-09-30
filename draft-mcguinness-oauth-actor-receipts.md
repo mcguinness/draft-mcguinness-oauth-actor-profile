@@ -284,9 +284,9 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 `exp`:
 : REQUIRED.  Expiration time for the receipt, as defined in {{RFC7519}}.
 
-  The `exp` of a newly created receipt MUST NOT be earlier than the `exp` of the outer token issued with it.  Beyond that floor, `exp` needs to cover the lifetime of any token that will carry or inherit this receipt; otherwise consumers reject older receipts in a valid chain prematurely.
+  The `exp` of a newly created receipt MUST NOT be earlier than the `exp` of the outer token issued with it, and SHOULD cover the expected maximum token lifetime of any token that will carry or inherit this receipt.  An under-set `exp` causes propagation failure: an issuer extending the chain rejects a receipt that expires before its issued token (step 2 of {{extending-an-existing-receipt-chain}}), and a reissuer caps the reissued token's `exp` or drops the array ({{reissuance-without-a-new-actor-hop}}).
 
-  Downstream issuers reject receipts that expire before the issued outer token.  Deployments typically coordinate a bounded delegated-session lifetime to avoid propagation failure while limiting signing-key exposure; see {{reissuance-without-a-new-actor-hop}}.
+  Because the originating issuer cannot enumerate every downstream issuer that may inherit a receipt, deployments typically coordinate a bounded delegated-session lifetime to avoid propagation failure while limiting signing-key exposure; see {{reissuance-without-a-new-actor-hop}}.
 
 `jti`:
 : REQUIRED.  A unique identifier for the receipt, as defined in {{RFC7519}}.
@@ -369,10 +369,11 @@ An issuer that reissues, translates, or introspects and re-emits a token without
 *  MUST preserve `actor_receipts_complete` when carrying the array unchanged.  If the issuer cannot attest that value, it MUST drop the array entirely; disclosure is all-or-nothing ({{consumer-introspection}}).
 *  MUST NOT continue to carry an inherited `actor_receipts` array if it cannot preserve the visible hop alignment required by {{consumer-processing}};
 *  MUST NOT change top-level `sub` while retaining receipts.  Subject re-expression breaks alignment with `receipt[0].sub` and requires dropping the array.
+*  MUST NOT set the outer token's `exp` later than the earliest `exp` among the retained receipts; an issuer that needs a later `exp` MUST drop the array.
 
 If such an issuer changes the visible outermost actor, it has added a new hop and MUST follow {{extending-an-existing-receipt-chain}}.
 
-Reissuance MAY change `aud`, `scope`, `cnf`, `exp`, and other current-request claims without changing receipts.  Receipt `cnf` remains historical, so key rotation alone does not invalidate the chain.  The `sub` and hop-alignment restrictions above still apply.
+Reissuance MAY change `aud`, `scope`, `cnf`, and other current-request claims without changing receipts, and MAY change `exp` within the limit above.  Receipt `cnf` remains historical, so key rotation alone does not invalidate the chain.  The `sub` and hop-alignment restrictions above still apply.
 
 Reissuance is the only case in which `receipt[0]` may legitimately diverge from the current outer-token instance.  Two patterns of divergence are possible:
 
