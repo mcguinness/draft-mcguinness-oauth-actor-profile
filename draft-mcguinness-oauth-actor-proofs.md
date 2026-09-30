@@ -459,11 +459,11 @@ An issuer, resource server, or other recipient that relies on `actor_proofs` MUS
 4.  Verify that the number of proofs does not exceed the visible actor-chain depth of the outer token.  If the outer token carries `actor_proofs_complete: true`, verify that the proof count exactly equals the visible actor-chain depth; if it does not, the check fails.
 5.  For each proof, in array order:
     *  parse the string as a compact JWT;
+    *  verify that the JOSE header uses an asymmetric digital-signature `alg` value accepted for that actor, and reject proofs that use `alg: none` or a MAC-based symmetric algorithm ({{RFC8725, Section 3.1}});
+    *  verify that `typ` equals `actor-proof+jwt`;
     *  verify that the proof's (`act.iss`, `act.sub`) pair is within the scope of an actor-key source the recipient trusts, before performing any network retrieval keyed by the proof's content;
     *  resolve the actor's verification key from that source ({{actor-key-resolution}});
     *  validate the JWT signature;
-    *  verify that the JOSE header uses an asymmetric digital-signature `alg` value accepted for that actor, and reject proofs that use `alg: none` or a MAC-based symmetric algorithm;
-    *  verify that `typ` equals `actor-proof+jwt`;
     *  reject a proof whose `crit` header lists an extension header the consumer does not understand;
     *  verify that all REQUIRED proof claims are present and have the expected JSON types, including `iss`, `sub`, `act`, `target` with `target.aud`, `iat`, `exp`, and `jti`;
     *  verify that OPTIONAL claims used by this profile have the expected JSON types when present, including `sub_iss`, `target.resource`, `prh`, `prh_alg`, `receipt_jti`, and `origin_jti`;
