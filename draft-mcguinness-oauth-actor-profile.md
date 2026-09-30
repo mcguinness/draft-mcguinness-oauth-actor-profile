@@ -731,7 +731,7 @@ After completing these steps, the AS MUST apply the propagation rules in [JWT Ac
 
 #### Transaction Token {#txn-token-as-subject-token}
 
-When a Token Exchange request ({{RFC8693}}) presents a Transaction Token as the `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:txn_token`) to a regular AS (not a TTS), the AS MUST apply the following steps.
+When a Token Exchange request ({{RFC8693}}) presents a Transaction Token as the `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:txn_token`) to an AS or TTS, the AS or TTS MUST apply the following steps.  Steps 5 and 6 apply only when the output is a JWT access token; for a Transaction Token output, [Transaction Token Output Rules](#transaction-token-output-rules) apply instead.
 
 1.  The AS MUST validate the signature, `aud`, `exp`, `iat`, and issuer identity per {{I-D.ietf-oauth-transaction-tokens}}:
 
