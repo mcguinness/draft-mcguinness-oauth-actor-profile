@@ -1,0 +1,1336 @@
+
+
+
+
+Web Authorization Protocol                                 K. McGuinness
+Internet-Draft                                               Independent
+Intended status: Standards Track                       30 September 2026
+Expires: 3 April 2027
+
+
+                   OAuth Actor Chain Authority Bounds
+          draft-mcguinness-oauth-actor-authority-bounds-latest
+
+Abstract
+
+   This document defines OAuth Actor Chain Authority Bounds, an optional
+   companion to the OAuth Actor Profile for Delegation and Actor
+   Receipts.  Receipt claims record authority at each hop so recipients
+   can detect expansion in scope and authorization_details, and in aud
+   and resource where a deployment requires it, unless an explicit re-
+   authorization establishes new bounds.  This document specifies
+   comparison rules and metadata.
+
+About This Document
+
+   This note is to be removed before publishing as an RFC.
+
+   The latest revision of this draft can be found at
+   https://mcguinness.github.io/draft-mcguinness-oauth-actor-profile/
+   draft-mcguinness-oauth-actor-authority-bounds.html.  Status
+   information for this document may be found at
+   https://datatracker.ietf.org/doc/draft-mcguinness-oauth-actor-
+   authority-bounds/.
+
+   Discussion of this document takes place on the Web Authorization
+   Protocol Working Group mailing list (mailto:oauth@ietf.org), which is
+   archived at https://mailarchive.ietf.org/arch/browse/oauth/.
+   Subscribe at https://www.ietf.org/mailman/listinfo/oauth/.
+
+   Source for this draft and an issue tracker can be found at
+   https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 3 April 2027.
+
+Copyright Notice
+
+   Copyright (c) 2026 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction
+   2.  Conventions and Definitions
+   3.  Relationship to the Receipts Companion
+   4.  Design Goals and Non-Goals
+     4.1.  Deployment Fit
+   5.  Authority Bounds Overview
+   6.  Governed Dimensions and Comparison Rules
+     6.1.  scope
+     6.2.  aud and Audience Governance
+     6.3.  resource
+     6.4.  authorization_details
+     6.5.  Dimensions Explicitly Not Governed
+   7.  Receipt Extension Claims
+     7.1.  The bounds Claim
+     7.2.  The reauthorized Claim
+   8.  Issuer Processing
+     8.1.  Recording Bounds at a New Hop
+     8.2.  Reissuance and Refresh Without a New Hop
+     8.3.  Domain Transitions
+     8.4.  Partial and Sparse Coverage
+   9.  Consumer Processing
+     9.1.  Composition with Actor-Signed Hop Proofs
+     9.2.  Use by Resource Servers
+     9.3.  Introspection
+   10. Discovery and Capability Signaling
+     10.1.  Authorization Server Metadata
+     10.2.  Protected Resource Metadata
+   11. Error Handling
+   12. Extensibility
+   13. Security Considerations
+     13.1.  Threat Model
+       13.1.1.  Adversaries Mitigated by This Profile
+       13.1.2.  Adversaries Not Mitigated
+       13.1.3.  Trust Model Summary
+     13.2.  Re-Authorization Abuse
+     13.3.  Scope Subsumption Gaps
+     13.4.  Recorded Values and Token Reality
+   14. Privacy Considerations
+   15. IANA Considerations
+     15.1.  JSON Web Token Claims Registration
+     15.2.  OAuth Actor Authority Bounds Dimensions Registry
+     15.3.  OAuth Actor Re-Authorization Methods Registry
+     15.4.  OAuth Authorization Server Metadata Registration
+     15.5.  OAuth Protected Resource Metadata Registration
+   16. Acknowledgments
+   17. References
+     17.1.  Normative References
+     17.2.  Informative References
+   Appendix A.  Examples
+     A.1.  Example: Two-Hop Chain with Narrowing Bounds
+   Document History
+   Author's Address
+
+1.  Introduction
+
+   The OAuth Actor Profile [I-D.mcguinness-oauth-actor-profile]
+   identifies delegated actors.  Actor Receipts
+   [I-D.mcguinness-oauth-actor-receipts] attest issuer participation,
+   and Actor Proofs [I-D.mcguinness-oauth-actor-proofs] attest actor
+   participation and target consent.  OAuth 2.0 Token Exchange [RFC8693]
+   does not define a record of authority changes across hops, and these
+   profiles do not add one.  Actor Receipts lists historical authority
+   as a non-goal.  An actor proof binds only the target its actor
+   authorized at one hop.  A recipient can therefore verify who
+   participated at every hop without detecting that an intermediate
+   issuer widened the authority flowing through the chain.
+
+   This document defines OAuth Actor Chain Authority Bounds, an optional
+   companion profile that closes that gap for deployments that use actor
+   receipts.  Receipt claims record the authority in effect at each hop;
+   recipients compare those values across hops and against the current
+   token, and expansion requires an explicit re-authorization recorded
+   in the receipt for a new hop.  The design center is:
+
+   *  keep the visible actor chain in act and per-hop provenance in
+      actor_receipts;
+
+   *  carry per-hop authority as receipt claims, so it inherits the
+      receipt issuer's signature and the chain's integrity;
+
+   *  make authority expansion an explicit, signed, auditable event
+      rather than a silent change.
+
+   The profile adds bounds claims and discovery metadata; deployments
+   opt in per resource or trust domain.
+
+   Attenuating Authorization Tokens
+   [I-D.niyikiza-oauth-attenuating-agent-tokens] address a related
+   problem with a different model: a token holder derives a token with
+   equal or narrower tool-level authority offline, and any enforcement
+   point holding the root issuer's trust anchor verifies the derivation
+   chain.  This profile instead adds evidence to issuance by
+   authorization servers and Transaction Token Services, recording the
+   authority each issuer applied in its signed receipt and permitting
+   expansion only under a signed re-authorization.
+
+2.  Conventions and Definitions
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in
+   BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.
+
+   This document uses OAuth terminology from [RFC6749] and [RFC8693].
+   Actor Receipt, Receipt Chain, and Outer Token follow
+   [I-D.mcguinness-oauth-actor-receipts].  receipt[i] denotes entry i of
+   the outer token's actor_receipts array, which that document orders
+   newest first: receipt[0] is the receipt for the newest hop, whose
+   actor is the outermost act.  AS, RS, and TTS denote authorization
+   server, resource server, and Transaction Token Service.
+
+   The following terms are used in this document:
+
+   Governed Dimension:  An authority dimension whose per-hop values are
+      recorded under this profile and, when the dimension is monotonic,
+      compared across hops.  This document defines four: scope, aud,
+      resource, and authorization_details.
+
+   Monotonic Dimension:  A governed dimension whose recorded values are
+      required not to expand across hops.  scope and
+      authorization_details are monotonic by default; aud and resource
+      are recorded but not monotonic unless a resource server names them
+      in authority_bounds_required or local policy requires it
+      (Section 6.2, Section 6.3).
+
+   Authority Bounds:  The values of governed dimensions in effect for
+      the token issued at a given hop, recorded in the receipt's bounds
+      claim.
+
+   Re-Authorization Event:  An explicit event in which an authorized
+      principal consents to new, possibly broader, authority.  Recorded
+      in the reauthorized claim of the receipt for the new actor hop at
+      which it occurs.
+
+   Monotonicity Basis:  The point in the chain from which non-expansion
+      of a dimension is measured.  The origin hop is the initial basis;
+      each re-authorization recorded at a hop establishes a new basis
+      for the dimensions it lists.
+
+   Dense Coverage:  A condition in which every receipt in the chain
+      carries bounds for a given dimension, so that monotonicity for
+      that dimension is verified across every adjacency.
+
+   Examples in this document are illustrative and omit unrelated claims,
+   signatures, and validation steps that a complete deployment would
+   need.
+
+3.  Relationship to the Receipts Companion
+
+   This profile uses two extension points in
+   [I-D.mcguinness-oauth-actor-receipts]:
+
+   *  Receipt claims bounds and reauthorized, protected by the receipt
+      signature.
+
+   *  Comparisons across receipts, tolerating sparse coverage by
+      verifying a dimension only when every receipt records it.
+
+   Receipt signing, linkage, byte preservation, and coverage rules
+   continue to apply.  Receipts without bounds remain valid.  Bounds
+   evidence requires a validated receipt chain.
+
+4.  Design Goals and Non-Goals
+
+   The goals of this document are:
+
+   *  record the authority values in effect at each receipt-covered hop,
+      signed by that hop's issuer;
+
+   *  let recipients verify offline that monotonic dimensions never
+      expanded across the covered chain except at explicit re-
+      authorizations recorded at a hop;
+
+   *  make re-authorization at a hop an explicit, signed, dimension-
+      scoped record rather than an out-of-band assumption;
+
+   *  compose with the receipts companion's coverage, disclosure, and
+      introspection machinery, and with the proofs companion's actor-
+      consented target bindings;
+
+   *  support progressive deployment: sparse per-dimension recording
+      supports audit, and verifying a dimension needs every receipt to
+      record it.
+
+   The non-goals of this document are:
+
+   *  interpreting scope grammars: comparison is syntactic set
+      membership, and semantic subsumption is out of scope
+      (Section 6.1);
+
+   *  constraining the origin issuer's initial authority choice; no
+      upstream value exists to compare against;
+
+   *  defining cross-domain equivalence of authority vocabularies; a
+      trust-domain boundary is an explicit basis reset (Section 8.3);
+
+   *  recording re-authorization between hops (a refresh or step-up
+      without a new hop), which a later extension can add (Section 12);
+
+   *  asserting that recorded authority remains active, authorized, or
+      acceptable under current policy;
+
+   *  governing exp, cnf, sub, or sub_profile, which are lifecycle,
+      presenter, and identity concerns handled by the base profiles;
+
+   *  replacing current-token authorization at the resource server.
+
+4.1.  Deployment Fit
+
+   This profile is most useful where issuers share authority
+   vocabularies.  Changes to scope registries or resource namespaces at
+   domain boundaries require explicit resets (Section 8.3), limiting
+   comparisons to each domain segment.  Deployments whose chains cross
+   domains at every hop gain recording and audit value from this profile
+   but little enforcement value.
+
+   Verifying a dimension across the chain requires every receipt to
+   record it.  Deployments needing that guarantee enforce dense coverage
+   through Section 10.  Sparse recording supports audit, but a dimension
+   recorded on only some receipts is not verified.
+
+5.  Authority Bounds Overview
+
+   An issuer that adds an actor hop and supports this profile records,
+   inside the receipt it signs for that hop, the authority values it
+   applied to the issued token.  Recipients walk the validated receipt
+   chain from oldest to newest, comparing recorded values for each
+   monotonic dimension:
+
+   *  values may narrow or stay the same across each adjacency;
+
+   *  values may not expand, unless a signed re-authorization recorded
+      at a hop establishes a new basis for that dimension;
+
+   *  the current outer token's values may narrow further relative to
+      the newest recorded bounds, but may not expand.
+
+   Re-authorization is carried by the reauthorized receipt claim,
+   recorded on the receipt for a new actor hop, signed by the hop's
+   issuer, and scoped to the dimensions it lists.
+
+   Verified bounds establish non-expansion of recorded authority,
+   subject to re-authorization.  They confer no authority and do not
+   establish that the current request is authorized.
+
+6.  Governed Dimensions and Comparison Rules
+
+   This section defines the four governed dimensions and the comparison
+   rule for each.  Consumer verification (Section 9) applies these
+   rules.  A comparison is evaluated only when both compared values are
+   present; absence of a recorded bound is missing evidence, not a
+   successful comparison (Section 7.1).
+
+6.1.  scope
+
+   The scope dimension records the space-separated scope string of
+   [RFC6749] Section 3.3.  Comparison:
+
+   *  parse both values into sets of distinct scope tokens (separator:
+      ASCII space, U+0020);
+
+   *  scope_a is within scope_b if and only if every token in scope_a is
+      also in scope_b;
+
+   *  the empty string is the empty set and is within every scope set.
+
+   Comparison does not interpret scope semantics: read:user/* does not
+   automatically cover read:user/123, and preserved strings may acquire
+   broader meanings through configuration changes (Section 13.3).
+   Deployments whose scope grammars carry hierarchy or wildcard
+   semantics follow Section 13.3 rather than relying on grammar-
+   dependent subsumption.
+
+6.2.  aud and Audience Governance
+
+   The aud dimension records the audience of the token issued at the
+   hop, as a string or array of strings with the value space of
+   [RFC7519] Section 4.1.3.  Comparison treats a single string as a one-
+   element set; aud_a is within aud_b if and only if every value in
+   aud_a is in aud_b.
+
+   Audience is recorded without monotonicity enforcement by default
+   because token exchange commonly retargets tokens.  Recorded audiences
+   remain useful for audit and comparison with actor-consented targets
+   (Section 9.1).
+
+   A deployment whose chains do not retarget, or that treats retargeting
+   as a policy-controlled event, MAY require audience governance through
+   the metadata in Section 10 or local policy.  It then applies the same
+   monotonicity rules to aud; retargeting MUST be covered by re-
+   authorization or verification fails.
+
+6.3.  resource
+
+   bounds.resource records the effective resource-indicator set applied
+   by the issuer: an array of absolute URIs using [RFC8707] semantics.
+   It records the set even when the token has no corresponding claim.
+   An issuer that applied no resource indicator omits bounds.resource
+   rather than recording an empty array; where a resource server
+   requires resource (Section 10.2), the omission fails that dimension.
+
+   Comparison:
+
+   *  compare URIs by simple string comparison ([RFC3986],
+      Section 6.2.1); issuers need to record each resource indicator in
+      the same form at every hop;
+
+   *  resource_a is within resource_b if and only if every URI in
+      resource_a is also in resource_b;
+
+   URI prefix subsumption (for example, treating https://api.travel-
+   provider.example/v1/ as covering https://api.travel-
+   provider.example/v1/users) is NOT applied.  Issuers wishing to
+   express prefix relationships MUST emit explicit URIs at each hop.
+
+   resource is recorded without monotonicity enforcement by default
+   because Token Exchange uses resource to retarget tokens ([RFC8693],
+   Section 2.1).  A deployment MAY require monotonicity for resource
+   through the same metadata or local policy as audience governance
+   (Section 6.2).  It then applies the same monotonicity rules to
+   resource; retargeting MUST be covered by re-authorization or
+   verification fails.
+
+6.4.  authorization_details
+
+   The authorization_details dimension records the Rich Authorization
+   Requests array of [RFC9396].  Refinement is per-object and per-type:
+
+   *  an array ad_a refines ad_b if and only if every object in ad_a
+      refines some object in ad_b; objects present in ad_b but absent
+      from ad_a represent narrowing and are permitted; objects in ad_a
+      that refine no object in ad_b represent expansion and fail the
+      comparison;
+
+   *  two objects refine only when they share the same type;
+
+   *  for the common members defined by [RFC9396], Section 2.2,
+      refinement requires: actions a subset, locations a subset under
+      the URI rules of Section 6.3, datatypes a subset, privileges a
+      subset, and identifier equal; a common member present in the ad_b
+      object but absent from the ad_a object is expansion and fails the
+      comparison, and one absent from the ad_b object but present in the
+      ad_a object also fails the comparison unless the refinement rules
+      for that type establish that it preserves or narrows authority,
+      because the effect of a member depends on the API's semantics
+      ([RFC9396], Section 6.1).
+
+   For type-specific members the recipient cannot evaluate, the
+   recipient MUST reject verification of that dimension by default, or
+   skip the object's refinement under explicit local policy.  RAR type
+   specifications SHOULD define their own refinement rules; see
+   Section 12.
+
+6.5.  Dimensions Explicitly Not Governed
+
+   This profile does not govern token lifetime (exp), presenter binding
+   (cnf), subject identity (sub), or entity classification
+   (sub_profile).  The base profiles define those rules.
+
+7.  Receipt Extension Claims
+
+   This section defines two extension claims for Actor Receipt JWTs,
+   under the extension-claims rule of
+   [I-D.mcguinness-oauth-actor-receipts].  Both inherit the receipt's
+   signature and byte-preservation.
+
+7.1.  The bounds Claim
+
+   bounds:  OPTIONAL.  A JSON object recording the authority bounds in
+      effect for the token issued at this hop.  Members correspond to
+      the governed dimensions:
+
+      *  scope: a string of space-separated scope tokens;
+
+      *  aud: a string or array of strings;
+
+      *  resource: an array of URI strings;
+
+      *  authorization_details: an array of [RFC9396] objects.
+
+      Each member, when present, MUST equal the corresponding effective
+      value applied to the token issued at this hop: for scope, aud, and
+      authorization_details, ordinarily the issued token's top-level
+      claim of the same name; for resource, the resource-indicator set
+      the issuer applied whether or not the token carries a claim.
+
+      An absent member is missing evidence, not an assertion that
+      authority was unconstrained or unchanged.  Recipients MUST treat
+      it accordingly.  Additional dimensions MAY be registered under
+      Section 15.2; consumers MUST ignore unrecognized members unless a
+      specification or local agreement supplies their comparison rule.
+
+   A receipt MAY omit bounds entirely, and a chain MAY mix receipts with
+   and without it.  A dimension recorded on only some receipts is
+   recorded for audit but not verified across the chain (Section 9).
+
+7.2.  The reauthorized Claim
+
+   reauthorized:  OPTIONAL.  A JSON object recording that the authority
+      issued at this hop was expanded relative to the inbound authority
+      under an explicit re-authorization.  Members:
+
+      sub:  REQUIRED.  Identifier of the principal or authority that re-
+         authorized the delegation, such as the subject, an approver, or
+         the authority whose policy or agreement applies.  When the
+         subject itself re-authorized, it equals the top-level sub of
+         the token issued at this hop.  Recipients evaluate whether to
+         trust the re-authorization under Section 13.2.
+
+      iss:  REQUIRED.  Identifier of the authorization server or other
+         authority that captured the re-authorization.
+
+      method:  REQUIRED.  A value from the re-authorization methods
+         registry established in Section 15.3, or a collision-resistant
+         URI.  Initial registered values:
+
+         *  interactive_consent: the principal re-authorized through an
+            interactive prompt;
+
+         *  step_up: re-authorization through step-up authentication;
+
+         *  policy_grant: programmatic re-authorization under a
+            deployment policy artifact;
+
+         *  domain_transition: the hop crosses a trust-domain boundary
+            at which authority vocabularies change (Section 8.3).
+
+      iat:  REQUIRED.  Time of the re-authorization.
+
+      dimensions:  REQUIRED.  A non-empty array of the governed
+         dimension names this re-authorization resets.  The receipt MUST
+         carry bounds for each listed dimension.
+
+      artifact:  OPTIONAL.  A URI or token identifier referencing an
+         external artifact evidencing the re-authorization (for example,
+         a consent record or step-up assertion).  Recipients MAY resolve
+         and validate the artifact under local policy; Section 13.2
+         covers when deployments require it.
+
+   When reauthorized is present on a receipt, that hop is a new
+   monotonicity basis only for the dimensions listed in
+   reauthorized.dimensions: the hop's bounds for a listed dimension are
+   not compared against older bounds, and newer artifacts are compared
+   against the post-re-authorization bounds (Section 9).  Every other
+   dimension is compared as usual.  A receipt carrying reauthorized
+   SHOULD carry bounds for every governed dimension in effect at the
+   hop.
+
+8.  Issuer Processing
+
+   This section defines how an authorization server or Transaction Token
+   Service records, checks, and re-bases authority bounds.  It extends
+   the issuer processing of [I-D.mcguinness-oauth-actor-receipts]; all
+   receipt creation, extension, preservation, and reissuance rules of
+   that document apply unchanged.
+
+8.1.  Recording Bounds at a New Hop
+
+   When an issuer adds a new outermost actor hop and creates the receipt
+   for it, and the deployment uses this profile, the issuer:
+
+   1.  MUST determine the issued token's effective scope, aud, resource,
+       and authorization_details under the underlying grant rules.
+
+   2.  MUST include in the new receipt's bounds each dimension it
+       attests, with each member equal to the effective issued value per
+       Section 7.1.
+
+   3.  For each monotonic dimension it enforces, MUST verify that the
+       issued value is within the inbound token's effective value for
+       that dimension, and, when the inbound token's validated
+       receipt[0] carries bounds for the dimension, within that
+       receipt's recorded bound.
+
+   4.  When the requested authority would fail step 3, MAY narrow the
+       issued scope or resource value to fit, as [RFC6749], Section 3.3
+       permits for scope and [RFC8707], Section 2.2 leaves acceptable
+       resources to its policy, but does not drop a requested audience;
+       steps 1 to 3 then apply to the narrowed value.  When the issuer
+       has a re-authorization for the expansion, captured under one of
+       the methods of Section 7.2 by the issuer itself or by an
+       authority it trusts, it MAY instead proceed by recording
+       reauthorized on the new receipt, listing each expanded dimension
+       in reauthorized.dimensions.  An issuer that does neither, or
+       whose narrowing leaves nothing permitted, MUST reject the request
+       under Section 11.
+
+8.2.  Reissuance and Refresh Without a New Hop
+
+   Reissuance without a new actor hop creates no receipt, so recorded
+   bounds cannot change through the receipt chain.  This document does
+   not define recording re-authorization between hops; Section 12 lets
+   another specification define it.  An issuer that reissues or
+   refreshes while carrying a bounds-bearing receipt chain forward:
+
+   *  MUST NOT issue an outer token whose value for any monotonic
+      dimension exceeds receipt[0]'s recorded bound; narrowing further
+      is always permitted;
+
+   *  when the issued value would exceed the recorded bound for a
+      monotonic dimension, even because broader authority was authorized
+      without a new hop (for example, a refresh grant following step-up
+      or an approver widening the underlying grant), MUST narrow the
+      issued value to fit, fail the request, or, where local policy and
+      resource requirements permit absent receipt coverage, drop the
+      inherited actor_receipts array and with it the bounds evidence.
+
+8.3.  Domain Transitions
+
+   A domain boundary can change the authority vocabulary, making
+   syntactic comparison unsuitable.  This profile records an explicit
+   reset rather than assuming equivalence.
+
+   An issuer that adds a hop whose authority vocabulary differs from the
+   inbound token's:
+
+   *  MUST record reauthorized on the new receipt with method:
+      domain_transition and with dimensions listing every governed
+      dimension, establishing a new monotonicity basis at the boundary;
+
+   *  MUST record the new domain's authority values in the new receipt's
+      bounds;
+
+   *  SHOULD reference, via reauthorized.artifact, the policy or
+      agreement under which the cross-domain translation is authorized.
+
+   Comparison applies within each domain segment.  A recipient requiring
+   end-to-end monotonicity MUST reject chains containing
+   domain_transition bases unless explicit trusted mappings establish
+   cross-domain equivalence.
+
+8.4.  Partial and Sparse Coverage
+
+   A partial receipt chain can record bounds on any subset of its
+   receipts.  Such sparse recording supports audit, but consumer
+   processing verifies a dimension across the chain only when every
+   receipt records it.  Deployments needing origin-hop evidence should
+   enable recording at the origin issuer first.
+
+9.  Consumer Processing
+
+   An issuer, resource server, or other recipient relying on this
+   profile MUST perform the following steps:
+
+   1.  Validate the outer token and receipt chain under
+       [I-D.mcguinness-oauth-actor-receipts].  Bounds in receipts that
+       fail that validation MUST NOT be used.
+
+   2.  Check claim types:
+
+       *  bounds is an object whose recognized members have the types
+          defined in Section 6.
+
+       *  reauthorized contains its required, correctly typed members,
+          and the receipt carries bounds for each dimension named in
+          reauthorized.dimensions.
+
+   3.  Compare adjacent receipts for each monotonic dimension D (aud and
+       resource are monotonic only when required):
+
+       *  Apply this step to D only when every receipt in the chain
+          records bounds[D]; a dimension recorded on only some receipts
+          is recorded for audit but not verified.
+
+       *  Skip comparison for D when the newer receipt carries
+          reauthorized listing D in dimensions, establishing a new basis
+          for D.
+
+       *  Otherwise, the newer receipt's bounds[D] must be within the
+          older receipt's bounds[D] under Section 6.  Failure MUST
+          reject bounds evidence.
+
+   4.  Compare the current token with receipt[0] for each monotonic D
+       that receipt[0] carries in bounds and whose effective token value
+       is available from claims, introspection, or trusted context.  The
+       token's value MUST be within receipt[0].bounds[D].  Skip resource
+       comparison when its effective value cannot be determined.
+
+   5.  Enforce dimensions required by authority_bounds_required or local
+       policy.  Each required D must be recorded on every receipt and
+       pass steps 3 and 4; a step-4 comparison that cannot be made
+       because the token's effective value for D cannot be determined
+       fails D.  Sparse coverage does not satisfy this requirement.
+       Full-chain enforcement also needs complete receipt coverage
+       (Section 10.2).
+
+   6.  Apply any additional rules defined by companion profiles whose
+       claims appear in the artifacts (Section 12).  They can add
+       rejection conditions but cannot relax any requirement needed for
+       conformance to this profile, other than through a replacement
+       bound (Section 12).
+
+   If any required check fails, the recipient MUST reject the token's
+   bounds-based evidence and MUST apply the underlying protocol's error
+   handling for the stage at which the failure occurred.  Rejection of
+   bounds-based evidence does not by itself invalidate the receipt chain
+   under [I-D.mcguinness-oauth-actor-receipts]; whether the token
+   remains acceptable without bounds evidence is local policy, except
+   where step 5 applies.
+
+9.1.  Composition with Actor-Signed Hop Proofs
+
+   When the token also carries actor_proofs validated under
+   [I-D.mcguinness-oauth-actor-proofs], recorded bounds and actor-
+   consented target bindings are comparable at each hop covered by both
+   artifacts.  For each index i covered by a bounds-bearing receipt and
+   a proof:
+
+   *  when receipt[i].bounds.aud is present, it MUST be within
+      actor_proofs[i].target.aud;
+
+   *  when both receipt[i].bounds.resource and
+      actor_proofs[i].target.resource are present, the recorded set MUST
+      be within the consented set;
+
+   *  when both receipt[i].bounds.scope and actor_proofs[i].target.scope
+      (defined below) are present, the recorded scope set MUST be within
+      the consented scope set.
+
+   A failed comparison means the issuer recorded authority broader than
+   the actor consented to at that hop; recipients validating both
+   companions MUST treat it as a failed required check for both
+   artifacts' evidence.
+
+   An issuer that supports this profile and accepts a proof carrying
+   target.scope MUST NOT embed that proof in a token whose scope exceeds
+   target.scope.  A recipient that supports this profile and relies on
+   the proof chain MUST verify, independently of receipt coverage, that
+   the current token's effective scope is within
+   actor_proofs[0].target.scope when that member is present, under
+   Section 6.1; a token whose scope exceeds it has diverged from the
+   proof chain, and the target-binding strict mode of
+   [I-D.mcguinness-oauth-actor-proofs] decides whether the recipient
+   rejects the chain.  A recipient that cannot determine the token's
+   effective scope MUST NOT infer scope-level consent from the proof.
+
+   This document defines one extension member for the proof target
+   object, under the constraining-extension rule of
+   [I-D.mcguinness-oauth-actor-proofs]:
+
+   target.scope:  OPTIONAL.  A string of space-separated scope tokens
+      the actor authorizes for the token issued at its hop, compared
+      under the rules of Section 6.1.  As a constraining member, its
+      presence narrows the actor's target binding; consumers that do not
+      recognize it ignore it per [I-D.mcguinness-oauth-actor-proofs].
+
+9.2.  Use by Resource Servers
+
+   Bounds evidence records non-expansion across covered hops, with
+   explicit re-authorization for expansion.  An RS MUST still evaluate
+   the current token under current policy; verified history alone does
+   not authorize access.
+
+9.3.  Introspection
+
+   Receipt-attested bounds travel inside receipts and are returned
+   wherever receipts are returned; the introspection rules of
+   [I-D.mcguinness-oauth-actor-receipts] apply unchanged, including all-
+   or-nothing receipt disclosure and the requirement list for outer-
+   token members.  An introspection response whose receipt[0] carries
+   bounds MUST also include the token's scope, aud, and
+   authorization_details ([RFC9396], Section 9.2) members for each of
+   those dimensions that receipt[0].bounds records, so that step 4 of
+   Section 9 can be applied.
+
+10.  Discovery and Capability Signaling
+
+   This section defines metadata for advertising authority-bounds
+   support.  It follows the discovery conventions of
+   [I-D.mcguinness-oauth-actor-receipts], with dimension-valued
+   parameters where a boolean would hide which dimensions are covered.
+
+10.1.  Authorization Server Metadata
+
+   The following parameters are defined for use in Authorization Server
+   Metadata [RFC8414]:
+
+   authority_bounds_supported:  OPTIONAL.  A non-empty array of
+      governed-dimension names.  The authorization server advertises
+      that, for each named dimension, it can record receipt-attested
+      bounds and enforce issuance-time monotonicity per Section 8.1.
+      Absence, or absence of a dimension from the array, means no such
+      advertisement; omission makes no claim of support.
+
+   This parameter applies equally to a Transaction Token Service
+   publishing metadata through the same framework.
+
+10.2.  Protected Resource Metadata
+
+   The following parameters are defined for use in Protected Resource
+   Metadata [RFC9728]:
+
+   authority_bounds_required:  OPTIONAL.  A non-empty array of governed-
+      dimension names.  For each named dimension, the resource server
+      requires the dense receipt-attested enforcement of consumer step
+      5: bounds for the dimension on every receipt and successful
+      verification.  Naming aud or resource makes that dimension
+      monotonic (Section 6.2, Section 6.3).  This is a deployment policy
+      declaration, satisfied by configuring the authorization servers
+      that serve the resource; clients MAY combine it with
+      authority_bounds_supported to select an AS.
+
+   A resource server that needs full-chain rather than covered-prefix
+   enforcement SHOULD pair authority_bounds_required with the receipts
+   companion's actor_receipts_complete_required.  That completeness
+   signal does not attest that the visible act chain is itself
+   unfiltered; that separate assurance is chain_complete
+   ([I-D.mcguinness-oauth-actor-profile]).
+
+11.  Error Handling
+
+   Bounds validation extends the underlying OAuth or Transaction Token
+   validation.  Failures are reported through the error mechanism
+   applicable to the stage at which they occur.
+
+   When an authorization server or Transaction Token Service rejects a
+   token request because inbound bounds evidence fails validation under
+   Section 9 (for example, a monotonicity failure in the inbound chain),
+   it returns an error response per [RFC6749], Section 5.2:
+   invalid_request for a Token Exchange request, as [RFC8693],
+   Section 2.2.2 requires, or invalid_grant for a JWT bearer grant
+   request ([RFC7523], Section 3.1), consistent with the core actor
+   profile's error mapping for actor information that fails validation.
+
+   When requested authority exceeds the recorded bound without re-
+   authorization and the issuer does not narrow the issued value to fit,
+   or narrowing leaves nothing permitted (Section 8.1), the issuer
+   SHOULD return:
+
+       +=======================+===================================+
+       | Dimension             | Error                             |
+       +=======================+===================================+
+       | scope                 | invalid_scope ([RFC6749],         |
+       |                       | Section 5.2)                      |
+       +-----------------------+-----------------------------------+
+       | aud or resource       | invalid_target ([RFC8693],        |
+       |                       | Section 2.2.2 for Token Exchange; |
+       |                       | [RFC8707], Section 2 otherwise)   |
+       +-----------------------+-----------------------------------+
+       | authorization_details | invalid_authorization_details     |
+       |                       | [RFC9396]                         |
+       +-----------------------+-----------------------------------+
+
+                                  Table 1
+
+   The issuer uses actor_unauthorized as defined in the core actor
+   profile [I-D.mcguinness-oauth-actor-profile] when the failure
+   reflects an actor-authorization decision.  An absent required
+   artifact is an input-validation failure: invalid_request on a Token
+   Exchange request, invalid_grant on a JWT bearer grant or refresh
+   request.
+
+   When a resource server rejects a request because bounds verification
+   fails or required dimensions are unsatisfied, it SHOULD return
+   invalid_token per [RFC6750] Section 3.1, and SHOULD include an
+   error_description identifying bounds-verification failure so
+   operators can distinguish it from generic token validation.  For a
+   Transaction Token, the resource server rejects it through the
+   deployment's Txn-Token handling, because
+   [I-D.ietf-oauth-transaction-tokens] defines no error response.
+
+   An introspection server does not return an OAuth error for missing
+   bounds artifacts; their presence is a property of the response.  This
+   document defines no new OAuth error codes.
+
+12.  Extensibility
+
+   This profile composes with the extensibility framework of
+   [I-D.mcguinness-oauth-actor-receipts] and adds its own surfaces:
+
+   *  *New governed dimensions*, registered in the dimension registry
+      (Section 15.2) with a defined comparison rule and a declared
+      governance class (monotonic by default, or record-only).
+      Consumers ignore unregistered bounds members they do not
+      recognize.
+
+   *  *New re-authorization methods*, registered in the methods registry
+      (Section 15.3) or expressed as collision-resistant URIs.
+
+   *  *Per-type RAR refinement rules*, defined by the specifications
+      that define RAR types; such rules extend Section 6.4 for their
+      types without modifying this document.
+
+   *  *Re-authorization without a new hop.* This profile defines no
+      mechanism for recording re-authorization without a new actor hop.
+      Another specification can define one, including how a validated
+      re-authorization establishes a replacement bound for the
+      dimensions it covers, and the evidence, trust, ordering, expiry,
+      preservation, and discovery rules it needs.  An issuer or
+      recipient that supports such a mechanism uses the replacement
+      bound in place of the affected receipt's bounds[D] wherever this
+      document compares against it, for the covered dimensions only.
+      One that does not support it MUST apply the recorded bounds
+      defined here.
+
+   Companion rules MUST NOT relax any requirement needed for conformance
+   to this profile, other than through a replacement bound as described
+   above; they MAY add rejection conditions.  A companion's partial-
+   validation mode, defined under its own normative scope as
+   [I-D.mcguinness-oauth-actor-receipts] requires, is not conformance to
+   this profile.
+
+13.  Security Considerations
+
+   Authority bounds strengthen authority provenance for receipt-covered
+   hops, but they do not replace token validation or authorization.  The
+   general OAuth 2.0 Security Best Current Practice [RFC9700] and the
+   JWT best practices in [RFC8725] apply.
+
+13.1.  Threat Model
+
+13.1.1.  Adversaries Mitigated by This Profile
+
+   *  *Intermediate authority expansion.* Detection requires every
+      receipt in the chain to record the dimension.  Recording a wider
+      value fails comparison; recording less than issued fails the next
+      enforcing issuer's check or the terminal token comparison;
+      omission fails dense-coverage enforcement.  Sparse coverage leaves
+      gaps in this protection.
+
+   *  *Silent basis change.* Expansion requires a signed artifact: a
+      reauthorized claim inside a trusted issuer's receipt, scoped to
+      the dimensions it lists.
+
+   *  *Issuance beyond actor consent, when proofs are present.* The
+      cross-checks of Section 9.1 detect recorded authority broader than
+      the actor-signed target binding at the same hop.
+
+13.1.2.  Adversaries Not Mitigated
+
+   *  *Origin issuer choosing broad initial bounds.* Monotonicity is
+      relative; no upstream value constrains the origin.  Constraint on
+      origin authority requires policy at the origin issuer, pre-
+      authorization artifacts, or transparency mechanisms outside this
+      document.
+
+   *  *Fabricated re-authorization by a trusted issuer.* Any issuer
+      trusted to record re-authorization can convert detected expansion
+      into authorized expansion (Section 13.2).
+
+   *  *Full-chain collusion.* Colluding issuers fabricate a monotonic
+      chain at any level; this matches the receipts companion's trust
+      boundary.
+
+   *  *Semantic expansion within syntactic subsets.* See Section 13.3.
+
+   *  *Cross-domain expansion.* A domain_transition basis reset is
+      exactly an unverified re-expression of authority; recipients
+      requiring end-to-end guarantees must reject or map it
+      (Section 8.3).
+
+   *  *Compromised current outer-token issuer.* Out of scope here as in
+      the receipts companion; a compromised outer issuer can omit this
+      profile's claims entirely.  Absence of bounds evidence is a
+      downgrade recipients detect only by requiring the evidence
+      (Section 10).
+
+13.1.3.  Trust Model Summary
+
+   Bounds inherit the receipts companion's per-issuer, non-transitive
+   trust model, and add one axis: trust to record re-authorization.  A
+   recipient can trust an issuer's receipts while refusing its
+   reauthorized claims (Section 13.2).  Composition with proofs adds an
+   actor-side check with an independent trust anchor.
+
+13.2.  Re-Authorization Abuse
+
+   A compromised or over-trusted issuer that is trusted to record re-
+   authorization can use it to justify arbitrary expansion.
+
+   *  Recipients MUST evaluate re-authorization trust separately from
+      receipt trust: which issuers are trusted to capture re-
+      authorization, for which subjects, and by which methods, is
+      explicit local policy.  A recipient MAY accept an issuer's
+      receipts while rejecting its re-authorization records; a rejected
+      re-authorization is a failed basis reset, and the chain is then
+      evaluated without it, which typically fails monotonicity and
+      rejects the token's bounds evidence.
+
+   *  Deployments needing strong re-authorization integrity SHOULD
+      require reauthorized.artifact and SHOULD validate the referenced
+      artifact against the authority that captured the event (for
+      example, verifying a consent receipt's signature), rather than
+      accepting the recording issuer's bare assertion.
+
+   *  domain_transition bases deserve the most scrutiny: they legitimize
+      non-comparability, and an attacker who can insert one launders any
+      expansion.  Recipients SHOULD restrict which issuers may record
+      domain transitions to the deployment's known boundary issuers.
+
+13.3.  Scope Subsumption Gaps
+
+   Set-membership comparison catches verbatim expansion only.  A scope
+   token that is lexically new at a hop fails the subset check even when
+   semantically narrower, and a lexically preserved token can be
+   semantically broadened by configuration changes at the AS that
+   defines it.  Deployments whose scope grammars carry hierarchy or
+   wildcard semantics MUST either emit explicit narrowest-form scopes at
+   every hop, or define and apply a deployment-specific comparison rule;
+   this document does not define scope subsumption, and a general
+   solution belongs in its own specification.
+
+13.4.  Recorded Values and Token Reality
+
+   bounds members are attested copies of issued-token values, signed by
+   the issuer that produced both.  An issuer that records values
+   differing from what it actually issued produces either a detectable
+   mismatch (the outer-token comparison at the terminal hop, or the next
+   enforcing issuer's inbound check) or a consistent lie spanning its
+   receipt and its token, which is the intermediate authority expansion
+   case in Section 13.1.  Step 4 of Section 9 compares bounds against
+   the effective values the token actually carries, not request-time
+   values.
+
+14.  Privacy Considerations
+
+   The privacy considerations of [I-D.mcguinness-oauth-actor-receipts]
+   apply, including cross-service correlation and retention beyond token
+   lifetime.  Bounds add authority-shaped disclosure:
+
+   *  bounds exposes per-hop scope, audience, resource, and
+      authorization-detail values to every recipient of the token or
+      introspection response, revealing internal permission vocabulary,
+      resource topology, and orchestration structure.  Issuers SHOULD
+      record only the dimensions recipients need, and MAY enforce
+      monotonicity at issuance without recording bounds where disclosure
+      outweighs evidence value.
+
+   *  reauthorized reveals consent prompts, step-up authentication, and
+      policy decisions, with timing; this is sensitive activity
+      metadata.
+
+   *  A fully bounds-covered chain is a detailed narrative of authority
+      narrowing across an organization; deployments SHOULD scope
+      disclosure to audiences with adequate agreements, using the
+      receipts companion's all-or-nothing granularity deliberately.
+
+15.  IANA Considerations
+
+15.1.  JSON Web Token Claims Registration
+
+   This document requests registration of the following JWT Claims in
+   the "JSON Web Token Claims" registry [RFC7519]:
+
+   *  Claim Name: bounds
+
+   *  Claim Description: Authority bounds in effect for the token issued
+      at the hop attested by an Actor Receipt JWT
+
+   *  Change Controller: IETF
+
+   *  Specification Document(s): This document
+
+   *  Claim Name: reauthorized
+
+   *  Claim Description: Record of explicit re-authorization of
+      delegated authority at a hop
+
+   *  Change Controller: IETF
+
+   *  Specification Document(s): This document
+
+   This document does not request separate registration for the members
+   of the bounds, reauthorized, and proof target objects it defines;
+   sub-object keys within a registered claim are scoped to that claim's
+   JSON object, following the convention of
+   [I-D.mcguinness-oauth-actor-profile].
+
+15.2.  OAuth Actor Authority Bounds Dimensions Registry
+
+   This document requests that IANA establish a registry titled "OAuth
+   Actor Authority Bounds Dimensions", with the registration policy
+   Specification Required.  Each entry records: Dimension Name,
+   Governance Class (monotonic or record-only), Comparison Rule
+   reference, and Specification Document(s).  Initial contents:
+
+   *  scope, monotonic, Section 6.1 of this document
+
+   *  aud, record-only, Section 6.2 of this document
+
+   *  resource, record-only, Section 6.3 of this document
+
+   *  authorization_details, monotonic, Section 6.4 of this document
+
+   Designated experts SHOULD verify that a requested dimension has a
+   deterministic comparison rule, a declared governance class, and
+   semantics that do not overlap an existing entry.
+
+15.3.  OAuth Actor Re-Authorization Methods Registry
+
+   This document requests that IANA establish a registry titled "OAuth
+   Actor Re-Authorization Methods", with the registration policy
+   Specification Required.  Each entry records: Method Name,
+   Description, and Specification Document(s).  Initial contents:
+   interactive_consent, step_up, policy_grant, and domain_transition, as
+   defined in Section 7.2.  Values not in the registry MUST be
+   collision-resistant URIs.
+
+15.4.  OAuth Authorization Server Metadata Registration
+
+   This document requests registration of the following metadata names
+   in the "OAuth Authorization Server Metadata" registry [RFC8414]:
+
+   *  Metadata Name: authority_bounds_supported
+
+   *  Metadata Description: Array of authority-dimension names for which
+      the server records receipt-attested bounds and enforces issuance-
+      time monotonicity
+
+   *  Change Controller: IETF
+
+   *  Specification Document(s): This document
+
+15.5.  OAuth Protected Resource Metadata Registration
+
+   This document requests registration of the following metadata names
+   in the "OAuth Protected Resource Metadata" registry [RFC9728]:
+
+   *  Metadata Name: authority_bounds_required
+
+   *  Metadata Description: Array of authority-dimension names for which
+      the resource requires dense receipt-attested bounds enforcement
+
+   *  Change Controller: IETF
+
+   *  Specification Document(s): This document
+
+16.  Acknowledgments
+
+   The author thanks the OAuth Working Group for the specifications
+   underlying this profile.  The PIC Model [PIC-MODEL] also informed the
+   non-expansion property, which this document represents through signed
+   OAuth evidence.
+
+   Contributors and reviewers will be acknowledged in future revisions.
+
+17.  References
+
+17.1.  Normative References
+
+   [RFC3986]  Berners-Lee, T., Fielding, R., and L. Masinter, "Uniform
+              Resource Identifier (URI): Generic Syntax", STD 66,
+              RFC 3986, DOI 10.17487/RFC3986, January 2005,
+              <https://www.rfc-editor.org/info/rfc3986>.
+
+   [RFC6749]  Hardt, D., Ed., "The OAuth 2.0 Authorization Framework",
+              RFC 6749, DOI 10.17487/RFC6749, October 2012,
+              <https://www.rfc-editor.org/info/rfc6749>.
+
+   [RFC6750]  Jones, M. and D. Hardt, "The OAuth 2.0 Authorization
+              Framework: Bearer Token Usage", RFC 6750,
+              DOI 10.17487/RFC6750, October 2012,
+              <https://www.rfc-editor.org/info/rfc6750>.
+
+   [RFC7519]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web Token
+              (JWT)", RFC 7519, DOI 10.17487/RFC7519, May 2015,
+              <https://www.rfc-editor.org/info/rfc7519>.
+
+   [RFC7523]  Jones, M., Campbell, B., and C. Mortimore, "JSON Web Token
+              (JWT) Profile for OAuth 2.0 Client Authentication and
+              Authorization Grants", RFC 7523, DOI 10.17487/RFC7523, May
+              2015, <https://www.rfc-editor.org/info/rfc7523>.
+
+   [RFC8414]  Jones, M., Sakimura, N., and J. Bradley, "OAuth 2.0
+              Authorization Server Metadata", RFC 8414,
+              DOI 10.17487/RFC8414, June 2018,
+              <https://www.rfc-editor.org/info/rfc8414>.
+
+   [RFC8693]  Jones, M., Nadalin, A., Campbell, B., Ed., Bradley, J.,
+              and C. Mortimore, "OAuth 2.0 Token Exchange", RFC 8693,
+              DOI 10.17487/RFC8693, January 2020,
+              <https://www.rfc-editor.org/info/rfc8693>.
+
+   [RFC8707]  Campbell, B., Bradley, J., and H. Tschofenig, "Resource
+              Indicators for OAuth 2.0", RFC 8707, DOI 10.17487/RFC8707,
+              February 2020, <https://www.rfc-editor.org/info/rfc8707>.
+
+   [RFC8725]  Sheffer, Y., Hardt, D., and M. Jones, "JSON Web Token Best
+              Current Practices", BCP 225, RFC 8725,
+              DOI 10.17487/RFC8725, February 2020,
+              <https://www.rfc-editor.org/info/rfc8725>.
+
+   [RFC9396]  Lodderstedt, T., Richer, J., and B. Campbell, "OAuth 2.0
+              Rich Authorization Requests", RFC 9396,
+              DOI 10.17487/RFC9396, May 2023,
+              <https://www.rfc-editor.org/info/rfc9396>.
+
+   [RFC9728]  Jones, M.B., Hunt, P., and A. Parecki, "OAuth 2.0
+              Protected Resource Metadata", RFC 9728,
+              DOI 10.17487/RFC9728, April 2025,
+              <https://www.rfc-editor.org/info/rfc9728>.
+
+   [I-D.mcguinness-oauth-actor-profile]
+              McGuinness, K., "OAuth Actor Profile for Delegation", Work
+              in Progress, Internet-Draft, draft-mcguinness-oauth-actor-
+              profile-00, 30 April 2026,
+              <https://datatracker.ietf.org/doc/html/draft-mcguinness-
+              oauth-actor-profile-00>.
+
+   [I-D.mcguinness-oauth-actor-receipts]
+              McGuinness, K., "OAuth Actor Receipts for Delegation
+              Provenance", Work in Progress, Internet-Draft, draft-
+              mcguinness-oauth-actor-receipts-00, 4 July 2026,
+              <https://datatracker.ietf.org/doc/html/draft-mcguinness-
+              oauth-actor-receipts-00>.
+
+   [I-D.mcguinness-oauth-actor-proofs]
+              McGuinness, K., "OAuth Actor-Signed Hop Proofs", Work in
+              Progress, Internet-Draft, draft-mcguinness-oauth-actor-
+              proofs-00, 4 July 2026,
+              <https://datatracker.ietf.org/doc/html/draft-mcguinness-
+              oauth-actor-proofs-00>.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/info/rfc8174>.
+
+17.2.  Informative References
+
+   [RFC9700]  Lodderstedt, T., Bradley, J., Labunets, A., and D. Fett,
+              "Best Current Practice for OAuth 2.0 Security", BCP 240,
+              RFC 9700, DOI 10.17487/RFC9700, January 2025,
+              <https://www.rfc-editor.org/info/rfc9700>.
+
+   [I-D.ietf-oauth-transaction-tokens]
+              Tulshibagwale, A., Fletcher, G., and P. Kasselman,
+              "Transaction Tokens", Work in Progress, Internet-Draft,
+              draft-ietf-oauth-transaction-tokens-11, 30 July 2026,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
+              transaction-tokens-11>.
+
+   [I-D.niyikiza-oauth-attenuating-agent-tokens]
+              Aimable, N., "Attenuating Authorization Tokens for Agentic
+              Delegation Chains", Work in Progress, Internet-Draft,
+              draft-niyikiza-oauth-attenuating-agent-tokens-01, 15 June
+              2026, <https://datatracker.ietf.org/doc/html/draft-
+              niyikiza-oauth-attenuating-agent-tokens-01>.
+
+   [PIC-MODEL]
+              PIC Protocol Project, "PIC Model Specification (Provenance
+              Identity Continuity)", 2026,
+              <https://github.com/pic-protocol/pic-spec>.
+
+Appendix A.  Examples
+
+   The examples in this appendix show decoded contents; real receipts
+   are compact-signed JWT strings.  Timestamps are illustrative.  The
+   scenario continues the two-hop travel example of
+   [I-D.mcguinness-oauth-actor-receipts]: Alice delegates to an AI
+   travel-assistant agent through the enterprise AS, and the agent's
+   token is exchanged at the travel-provider AS, which adds a booking
+   tool as the outermost actor.  Because these receipts carry bounds,
+   they are different byte strings from the receipts shown in that
+   document's examples and carry their own identifiers.
+
+A.1.  Example: Two-Hop Chain with Narrowing Bounds
+
+   The outer token:
+
+   {
+     "jti": "3c9f5a1e-7d2b-4e8c-a6f0-1b4d7e0a3c6f",
+     "iss": "https://as.travel-provider.example",
+     "aud": "https://api.travel-provider.example",
+     "scope": "trips:book",
+     "sub": "https://idp.enterprise.example/users/alice",
+     "act": {
+       "sub": "https://tools.travel-provider.example/booking-tool",
+       "iss": "https://as.travel-provider.example",
+       "sub_profile": "service",
+       "act": {
+         "sub": "https://agents.enterprise.example/travel-assistant",
+         "iss": "https://as.enterprise.example",
+         "sub_profile": "ai_agent"
+       }
+     },
+     "actor_receipts": [
+       "<receipt-0>",
+       "<receipt-1>"
+     ],
+     "actor_receipts_complete": true
+   }
+
+   actor_receipts[1], signed by the enterprise AS at the first hop,
+   records the authority granted to the agent:
+
+   {
+     "iss": "https://as.enterprise.example",
+     "sub": "https://idp.enterprise.example/users/alice",
+     "act": {
+       "sub": "https://agents.enterprise.example/travel-assistant",
+       "iss": "https://as.enterprise.example",
+       "sub_profile": "ai_agent"
+     },
+     "bounds": {
+       "scope": "trips:read trips:book profile:read",
+       "aud": ["https://as.travel-provider.example"],
+       "resource": [
+         "https://api.travel-provider.example/bookings",
+         "https://api.travel-provider.example/trips"
+       ]
+     },
+     "iat": 1776741600,
+     "exp": 1776832000,
+     "jti": "6e2a8c4f-9b1d-4f7a-8e3c-5a0b2d9f7e1a"
+   }
+
+   actor_receipts[0], signed by the travel-provider AS when it added the
+   booking tool, records narrower authority:
+
+   {
+     "iss": "https://as.travel-provider.example",
+     "sub": "https://idp.enterprise.example/users/alice",
+     "act": {
+       "sub": "https://tools.travel-provider.example/booking-tool",
+       "iss": "https://as.travel-provider.example",
+       "sub_profile": "service"
+     },
+     "bounds": {
+       "scope": "trips:book",
+       "aud": ["https://api.travel-provider.example"],
+       "resource": ["https://api.travel-provider.example/bookings"]
+     },
+     "prh": "Vt7RcW2yQm9ZpKd4Xa6bEu8sHf1jLn3iTg5oAw0eCkY",
+     "iat": 1776745200,
+     "exp": 1776832000,
+     "jti": "8d4b2f6a-1c3e-4a5d-9f7b-0e2c4a6d8f0b",
+     "origin_jti": "3c9f5a1e-7d2b-4e8c-a6f0-1b4d7e0a3c6f"
+   }
+
+   The example verifies as follows:
+
+   *  Scope narrows to trips:book.
+
+   *  Resources narrow to the bookings endpoint, so the chain also
+      verifies where resource is required.  URI prefixes do not imply
+      containment.
+
+   *  The outer token's scope equals the newest recorded scope.
+
+   *  Audience changes are recorded without comparison under the default
+      audience rules.
+
+Document History
+
+   [[ To be removed from the final specification ]]
+
+   -00
+
+   *  Initial version.
+
+Author's Address
+
+   Karl McGuinness
+   Independent
+   Email: public@karlmcguinness.com
