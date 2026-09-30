@@ -34,6 +34,7 @@ normative:
   RFC6838:
   RFC7515:
   RFC7519:
+  RFC7523:
   RFC7662:
   RFC7800:
   RFC8259:
@@ -599,7 +600,7 @@ Proof validation failures use the underlying protocol's error mechanism for the 
 
 ## Authorization Server and Transaction Token Service Errors
 
-When an authorization server or Transaction Token Service rejects a token request because an inbound `actor_proofs` chain or a newly submitted proof cannot be validated (signature failure, key-resolution failure for an actor outside the trusted key sources, expired proof, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment), it SHOULD return `invalid_grant`, constructed per {{RFC8693}} Section 2.2.2 and {{RFC6749}} Section 5.2, consistent with the core actor profile's error mapping for actor information that fails validation.
+When an authorization server or Transaction Token Service rejects a token request because an inbound `actor_proofs` chain or a newly submitted proof cannot be validated (signature failure, key-resolution failure for an actor outside the trusted key sources, expired proof, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment), it returns an error response per {{RFC6749, Section 5.2}}: `invalid_request` for a Token Exchange request, as {{RFC8693, Section 2.2.2}} requires, or `invalid_grant` for a JWT bearer grant request ({{RFC7523, Section 3.1}}), consistent with the core actor profile's error mapping for actor information that fails validation.
 
 When the requested token's audience or resources cannot be satisfied within the submitted proof's target binding in a Token Exchange request, the issuer SHOULD return `invalid_target` per {{RFC8693}} Section 2.2.2.
 
