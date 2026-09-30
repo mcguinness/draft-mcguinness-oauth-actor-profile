@@ -565,7 +565,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
     *  **mTLS**: When the inbound assertion grant is mTLS-bound, it MUST carry a top-level `cnf.x5t#S256`; reject with `invalid_grant` if absent.  The AS MUST:
        *  Validate the client certificate presented at the token endpoint against `cnf.x5t#S256`.
        *  Use the `cnf.x5t#S256` value set by the upstream issuer; MUST NOT substitute a locally registered certificate.
-       *  Reject per {{RFC8705}} if the presented certificate does not match.
+       *  Reject with `invalid_grant` if the presented certificate does not match `cnf.x5t#S256`.
     *  When this JWT assertion grant is later used as a `subject_token` in Token Exchange, presenter continuation and presenter rebind are determined by [Presenter Transition Model](#token-exchange-presenter-model) and [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation), not by nested `act` contents.  In presenter rebind, this step's match against the grant's top-level `cnf` is not performed ([JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token)).
 
 7.  If the assertion or authenticated request context identifies an OAuth client separately from `act.sub`:
