@@ -207,7 +207,7 @@ The JOSE header of an actor receipt:
 *  SHOULD include `kid` when the issuer publishes multiple verification keys;
 *  MAY include `crit` per {{RFC7515, Section 4.1.11}}; step 5 of {{consumer-processing}} rejects a receipt whose `crit` header lists an extension header the consumer does not understand.
 
-Receipt issuers and consumers MUST apply the JWT best practices in {{RFC8725}} when creating and validating receipts, except for the audience validation of {{RFC8725, Section 3.9}}, from which this profile departs as described for `aud` in {{receipt-claims}}.
+Receipt issuers and consumers MUST apply the JWT best practices in {{RFC8725}} when creating and validating receipts, except for the audience requirements of {{RFC8725, Section 3.9}}, from which this profile departs by prohibiting `aud` as described in {{receipt-claims}}.
 
 ## Receipt Claims
 
@@ -303,9 +303,9 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 ### Excluded Standard Claims
 
 `aud`:
-: NOT RECOMMENDED.  Issuers SHOULD omit `aud` from receipts.
+: Prohibited.  Issuers MUST NOT include `aud` in a receipt, and consumers MUST reject a receipt that carries it (step 5 of {{consumer-processing}}).
 
-  Receipts are validated as part of outer-token processing, not as independent JWTs against an audience; the outer token carries the audience scoping for the request.  This profile diverges from the audience-validation guidance in {{RFC8725}} Section 3.9 on those grounds.  Including `aud` in a receipt has no defined meaning under this profile and would create ambiguity about whether the receipt asserts an independent audience constraint, which it does not.
+  Receipts are validated as part of outer-token processing, not as independent JWTs against an audience; the outer token carries the audience scoping for the request.  This profile departs from {{RFC8725, Section 3.9}} on those grounds.  A present `aud` would suggest an independent audience constraint, which receipts do not assert; rejecting it gives the result that {{RFC7519, Section 4.1.3}} requires when the processing principal does not identify itself with the `aud` value.
 
 ### Extension Claims
 
@@ -431,6 +431,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  verify that all REQUIRED receipt claims are present and have the expected JSON types, including `iss`, `sub`, `act`, `iat`, `exp`, and `jti`;
     *  verify that OPTIONAL claims used by this profile have the expected JSON types when present, including `sub_iss`, `sub_profile`, `cnf`, `prh`, `prh_alg`, and `origin_jti`;
     *  verify that the receipt `act` object is single-hop, contains no nested `act`, and contains no `cnf`;
+    *  reject a receipt that contains `aud` ({{receipt-claims}});
     *  enforce `exp`, `iat`, and other JWT validity rules.  An expired receipt is invalid even for an older hop; only the small clock-skew leeway of {{RFC7519, Section 4.1.4}} applies.
     *  for `receipt[0]`, apply {{receipt-instance-binding}}.  For older receipts, `origin_jti` is historical information only.
 6.  Verify receipt-chain linkage:
@@ -630,7 +631,7 @@ Conflict resolution: when a recipient implements multiple companion profiles who
 
 # Security Considerations
 
-Actor receipts strengthen provenance for visible actor hops, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}}, except its audience validation for receipt JWTs (see `aud` in {{receipt-claims}}), apply to systems implementing this profile.
+Actor receipts strengthen provenance for visible actor hops, but they do not replace ordinary token validation.  The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practices in {{RFC8725}}, except its audience requirements for receipt JWTs (see `aud` in {{receipt-claims}}), apply to systems implementing this profile.
 
 ## Threat Model {#threat-model}
 
