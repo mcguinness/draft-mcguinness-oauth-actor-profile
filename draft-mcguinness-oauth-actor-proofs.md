@@ -498,7 +498,7 @@ An issuer, resource server, or other recipient that relies on `actor_proofs` MUS
      *  when receipts are absent or not validated, `receipt_jti` values are informational only.
 11.  Apply any additional consumer-processing rules defined by companion profiles whose claims appear in the proof or outer token (see {{extensibility}}).  Companion-profile rules can add rejection conditions but cannot relax any requirement needed for conformance to this profile.
 
-If any required check fails, the recipient MUST reject the proof chain and treat the token as lacking actor-signed evidence (step 2).  It rejects the token only when local policy or Protected Resource Metadata requires that evidence, using the underlying protocol's error handling for the stage at which the failure occurred.
+Step 1 is a prerequisite: an outer token that fails its own validation is rejected under the rules for its token type, not treated as lacking proofs.  If any later required check fails, the recipient MUST reject the proof chain and treat the token as lacking actor-signed evidence (step 2).  It rejects the token only when local policy or Protected Resource Metadata requires that evidence, using the underlying protocol's error handling for the stage at which the failure occurred.
 
 A recipient that has rejected a proof chain under this profile MAY, under explicit local policy, extract structural information from the chain for use by companion profiles.  The recipient MUST NOT treat such partial validation as conformance with this profile, and MUST NOT relax the rejection requirements defined above.
 
@@ -1112,7 +1112,7 @@ The single proof covers the outermost hop:
 * A resource indicator is within a proof's target binding only when it equals an entry of `target.resource` under simple string comparison ({{RFC3986, Section 6.2.1}}).
 * When `target.resource` is present and the request supplies no resource indicators, the issuer uses `target.resource` as the effective resources; a recipient that cannot determine the token's resources treats the proof as audience-level consent.
 * Named the IETF, rather than the IESG, as change controller for the claim, parameter, metadata, and introspection registrations.
-* A failed proof check, including a false `actor_proofs_complete: true`, now drops only the actor-signed evidence; the recipient rejects the token only when policy or metadata requires that evidence, and an issuer that cannot propagate inbound proofs can begin a partial chain at its own hop.
+* A failed proof check, including a false `actor_proofs_complete: true`, now drops only the actor-signed evidence; an outer token that fails its own validation is still rejected, and otherwise the recipient rejects the token only when policy or metadata requires that evidence, and an issuer that cannot propagate inbound proofs can begin a partial chain at its own hop.
 * A reissued or refreshed token with a new `jti` diverges from a present `actor_proofs[0].origin_jti`; trusted-reissuer designation excuses only that divergence unless policy also permits retargeting, and proof `exp` covers a delegated session only while the outer token stays instance-bound.
 * Removed receipt-attested presenter keys as an actor-key resolution pattern; the examples use pre-established keys.
 * An issuer that adds a hop without a valid new proof drops the inbound proofs, and a request that adds no hop but carries `actor_proof` is rejected with `invalid_request`.
