@@ -435,7 +435,7 @@ A confirmation member such as `act.cnf` is permitted as extension data under [Ac
 
 ### Token Exchange Continuation
 
-Presenter continuation requires a PoP-capable `subject_token` with top-level `cnf`.  The requester MUST prove possession of that binding using the mechanism applicable to the token type and deployment.  This profile does not define continuation without that binding.
+Presenter continuation requires either a PoP-capable `subject_token` with top-level `cnf` or a bearer `subject_token` presented by an authenticated requester that corresponds, under Identifier Reconciliation ([Conventions and Definitions](#conventions)), to the token's outermost (`act.iss`, `act.sub`) pair, or to its `sub` when the token carries no `act`.  For a PoP-capable `subject_token`, the requester MUST prove possession of its binding using the mechanism applicable to the token type and deployment.  A bearer continuation yields a bearer output.
 
 ### Token Exchange Rebind
 
@@ -679,12 +679,14 @@ Token-state inputs (JWT assertion grants, JWT access tokens, Transaction Tokens)
 
 Token Exchange under this profile runs in exactly one of two presenter-transition modes:
 
-*  **Presenter continuation**: no new presenter is established, either by a validated `actor_token` or on the [`may_act`](#may-act) path without `actor_token`.  The issued token keeps the presenter of a PoP-capable token-state `subject_token`.
+*  **Presenter continuation**: no new presenter is established, either by a validated `actor_token` or on the [`may_act`](#may-act) path without `actor_token`.  The issued token keeps the presenter of a token-state `subject_token`: the holder of its top-level `cnf` binding or, for a bearer `subject_token`, its authenticated outermost actor or subject, as [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation) requires.
 *  **Presenter rebind**: a validated `actor_token`, or the authenticated client on the [`may_act`](#may-act) path without `actor_token`, establishes a new presenter for the issued token.  When the output token is sender-constrained, its top-level `cnf` is bound to that new presenter.
+
+A request that satisfies neither mode MUST be rejected with `invalid_request`.
 
 Outside the [`may_act`](#may-act) path without `actor_token`, presenter rebind requires a **direct presenter credential**: an `actor_token` whose top-level `sub` names the new presenter.  The request proves possession as required by that credential profile whether or not the output is sender-constrained, and proves possession for the new presenter binding when establishing a sender-constrained output.  Other means of installing a presenter are deployment-specific.
 
-Bearer and identity-only inputs cannot support continuation.  To upgrade them to sender-constrained tokens, present the existing credential as `subject_token` and a direct presenter credential as `actor_token`.  To preserve a delegation chain while changing presenters, deployments SHOULD likewise present the delegated credential as `subject_token` and a separate direct credential as `actor_token`.
+Identity-only inputs cannot support continuation, and bearer inputs support only bearer continuation.  To upgrade them to sender-constrained tokens, present the existing credential as `subject_token` and a direct presenter credential as `actor_token`.  To preserve a delegation chain while changing presenters, deployments SHOULD likewise present the delegated credential as `subject_token` and a separate direct credential as `actor_token`.
 
 JWT assertion grants are not suitable for use as `actor_token` in Token Exchange.  Their `sub` identifies the subject of delegation rather than the acting party.  Requests that need to establish an agent, workload, or client as the actor SHOULD use one of the actor credential types defined in this section instead.
 
@@ -1024,7 +1026,7 @@ The booking tool is the current presenter, identified by `req_wl` and outermost 
 
 The TTS applies the same two presenter-transition modes defined in [Presenter Transition Model](#token-exchange-presenter-model), but only for token-state `subject_token` inputs:
 
-*  **Presenter continuation**: the authenticated requester is the same current presenter as the inbound token.  This mode is available only when the inbound token carries a top-level presenter binding and the TTS validates proof for that binding under {{I-D.ietf-oauth-transaction-tokens}} and the applicable deployment profile.  When the inbound token carries `act`, the authenticated requester corresponds to the outermost (`act.iss`, `act.sub`) pair, as step 5 of [Transaction Token Output Rules](#transaction-token-output-rules) requires.  In this mode the TTS preserves the inbound `act` chain unchanged and MUST NOT add a new outermost `act`.
+*  **Presenter continuation**: the authenticated requester is the same current presenter as the inbound token.  When the inbound token carries a top-level presenter binding, the TTS validates proof for that binding under {{I-D.ietf-oauth-transaction-tokens}} and the applicable deployment profile; a bearer inbound token yields a bearer Transaction Token, as in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).  When the inbound token carries `act`, the authenticated requester corresponds to the outermost (`act.iss`, `act.sub`) pair, as step 5 of [Transaction Token Output Rules](#transaction-token-output-rules) requires.  In this mode the TTS preserves the inbound `act` chain unchanged and MUST NOT add a new outermost `act`.
 *  **Presenter rebind**: a validated `actor_token` direct presenter credential establishes a different current presenter for the issued Transaction Token.  In this mode the TTS creates a new outermost `act` for that presenter and nests any inbound `act` chain beneath it.
 
 A bearer input can be upgraded to a sender-constrained Transaction Token through presenter rebind with a validated `actor_token`, as in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).
