@@ -359,7 +359,7 @@ When an issuer adds a new outermost actor hop and also preserves an inbound `act
 
 Byte-for-byte preservation ({{receipt-chain-linkage}}) rules out reserializing, re-signing, normalizing, trimming, or otherwise altering a prior receipt.
 
-If inbound receipts fail validation, the issuer MUST NOT propagate them.  It MAY continue without `actor_receipts` only when local policy permits partial coverage; otherwise it MUST fail the request under the error model of the underlying protocol.
+If inbound receipts fail validation, the issuer MUST NOT propagate them.  It MAY continue without them only when local policy permits the issued token to lack them, and it MAY then begin a new chain at its own hop under {{creating-the-first-receipt}}; the result is partial coverage and MUST NOT carry `actor_receipts_complete: true`.  Otherwise it MUST fail the request under the error model of the underlying protocol.
 
 ## Reissuance Without a New Actor Hop
 
@@ -421,7 +421,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
 1.  Validate the outer token according to its token type and the core actor profile.
 2.  If `actor_receipts` is absent, treat the token as lacking receipt-based provenance.  Whether that is acceptable is determined by local policy or by Protected Resource Metadata signals such as `actor_receipts_required` and `actor_receipts_complete_required` defined in {{discovery-capability-signaling}}.  If `actor_receipts_complete` is present with the value `true` while `actor_receipts` is absent, the combination is malformed; the recipient MUST treat this as a failed required check and apply the rejection rule following step 11.
 3.  Verify that `actor_receipts`, if present, is a non-empty JSON array of strings.  Verify that `actor_receipts_complete`, if present, is a JSON boolean.
-4.  Verify that the number of receipts does not exceed the visible actor-chain depth of the outer token.  If the outer token carries `actor_receipts_complete: true`, verify that the receipt count exactly equals the visible actor-chain depth; if it does not, reject the token.
+4.  Verify that the number of receipts does not exceed the visible actor-chain depth of the outer token.  If the outer token carries `actor_receipts_complete: true`, verify that the receipt count exactly equals the visible actor-chain depth; if it does not, the check fails.
 5.  For each receipt, in array order:
     *  parse the string as a compact JWT;
     *  verify that the receipt issuer is within the recipient's pre-configured trusted-issuer set before performing any network retrieval for that issuer's metadata or keys;
@@ -459,7 +459,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
 10.  Receipt `cnf` values MUST NOT replace validation of the current request against the outer token's top-level `cnf`.
 11.  Apply any additional consumer-processing rules defined by companion profiles whose claims appear in the receipt or outer token (see {{extensibility}}).  Companion-profile rules can add rejection conditions but cannot relax any requirement needed for conformance to this profile.
 
-If any required check fails, the recipient MUST reject the receipt chain for the purposes of this profile and MUST apply the underlying protocol's error handling for the stage at which the failure occurred.
+If any required check fails, the recipient MUST reject the receipt chain and treat the token as lacking receipt-based provenance (step 2).  It rejects the token only when local policy or Protected Resource Metadata requires that evidence, using the underlying protocol's error handling for the stage at which the failure occurred.
 
 A recipient that has rejected a receipt chain under this profile MAY, under explicit local policy, extract structural information from the chain for use by companion profiles (for example, applying a companion's verification rules to the trusted prefix of an otherwise-invalid chain).  The recipient MUST NOT treat such partial validation as conformance with this profile; the rejection requirements defined above still apply.  Companion profiles defining partial-validation modes MUST do so under their own normative scope.
 
