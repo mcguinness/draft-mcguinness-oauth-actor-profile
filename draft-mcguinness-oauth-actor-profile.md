@@ -1205,7 +1205,7 @@ Resource servers that cache introspection responses for delegated tokens should 
 
 # Error Responses {#actor-profile-error-responses}
 
-When an AS or TTS rejects a request under this profile for reasons related to actor-profile processing, its error response follows {{RFC6749, Section 5.2}}.  On Token Exchange requests, including TTS requests, an invalid or policy-unacceptable `subject_token` or `actor_token` uses `invalid_request`, as {{RFC8693, Section 2.2.2}} requires; on JWT bearer grant requests, an invalid grant uses `invalid_grant`, as {{RFC7523, Section 3.1}} requires.  These error codes do not override `invalid_client` when a request fails client authentication per {{RFC6749}} or {{RFC7523}}.
+When an AS or TTS rejects a request under this profile for reasons related to actor-profile processing, its error response follows {{RFC6749, Section 5.2}}.  On Token Exchange requests, including TTS requests, an invalid or policy-unacceptable `subject_token` or `actor_token` uses `invalid_request`, as {{RFC8693, Section 2.2.2}} requires, except that a denial under actor authorization policy uses `actor_unauthorized`, one of the other error codes that section permits; on JWT bearer grant requests, an invalid grant uses `invalid_grant`, as {{RFC7523, Section 3.1}} requires.  These error codes do not override `invalid_client` when a request fails client authentication per {{RFC6749}} or {{RFC7523}}.
 
 The following errors apply to both AS and TTS endpoints:
 
@@ -2112,7 +2112,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * In presenter rebind, the new presenter's binding supersedes a sender-constrained JWT assertion grant's `cnf`, and the grant is then single-use; Security Considerations states the trade-off.
 * On the `may_act` path without `actor_token`, the authenticated client is the new presenter, and a sender-constrained output is bound to the key it demonstrates.
 * The scope issued from a JWT assertion grant used as `subject_token` is capped by the grant's `scope`, or, when that is absent, by the scope the AS would authorize for the grant directly.
-* Token Exchange and TTS requests reject invalid or policy-unacceptable `subject_token` and `actor_token` inputs with `invalid_request`, per {{RFC8693, Section 2.2.2}}; JWT bearer grant requests keep `invalid_grant`.
+* Token Exchange and TTS requests reject invalid or policy-unacceptable `subject_token` and `actor_token` inputs with `invalid_request`, per {{RFC8693, Section 2.2.2}}, while actor-policy denials keep `actor_unauthorized`; JWT bearer grant requests keep `invalid_grant`.
 * {{RFC6749}}, {{RFC7800}}, {{OpenID.Core}}, and ID-JAG are now normative references, and ID-JAG is cited at -04.
 * The `actor_unauthorized` registration uses the error usage location names of {{RFC6749}}.
 
