@@ -54,6 +54,22 @@ informative:
   I-D.mw-oauth-actor-chain:
   I-D.liu-oauth-chain-delegation:
   I-D.liu-oauth-authorization-evidence:
+  I-D.mora-oauth-entity-profiles:
+    title: "OAuth Entity Profiles"
+    author:
+     -
+        fullname: Sreyantha Chary Mora
+        organization: Microsoft
+     -
+        fullname: Pamela Dingle
+        organization: Microsoft
+     -
+        fullname: Karl McGuinness
+        organization: Independent
+    date: 2026-04-17
+    seriesinfo:
+      Internet-Draft: draft-mora-oauth-entity-profiles-01
+    target: https://www.ietf.org/archive/id/draft-mora-oauth-entity-profiles-01.txt
 
 ...
 
@@ -457,11 +473,12 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  `receipt[1].act.sub` MUST equal the outer token's `act.act.sub`, and `receipt[1].act.iss` MUST equal the outer token's `act.act.iss`;
     *  and so on for the number of receipts present;
     *  when `act.sub_profile` is present in the receipt `act` object, the corresponding visible `act` object MUST contain `act.sub_profile` with the same value;
+    *  `sub_profile` values are compared as sets: the space-delimited values are compared case-insensitively, their order is insignificant, and duplicate values are ignored ({{I-D.mora-oauth-entity-profiles, Section 3.3}}); comparison never rewrites a signed receipt;
     *  when `act.sub_profile` is present only in the visible `act` object, the receipt remains aligned for this profile.  The visible value is not independently attested by that receipt, and recipients that require receipt coverage for actor classification MUST reject the receipt chain or apply explicit local mapping rules.
 8.  Verify subject alignment:
     *  `receipt[0].sub` MUST equal the outer token's top-level `sub`;
     *  when `receipt[0].sub_iss` is present and the recipient has a top-level subject namespace authority for the outer token's `sub` from local configuration, an inbound subject token's claims, or another deployment-defined source, the two MUST identify the same namespace authority, evaluated by case-sensitive string comparison; treating lexically distinct identifiers as the same authority requires explicit trusted local mapping rules;
-    *  when `receipt[0].sub_profile` is present and the outer token contains top-level `sub_profile`, the values MUST match;
+    *  when `receipt[0].sub_profile` is present and the outer token contains top-level `sub_profile`, the values MUST match under the set comparison of step 7;
     *  when `receipt[0].sub_profile` is present but the outer token does not contain top-level `sub_profile`, recipients that require receipt coverage for subject classification MUST reject the receipt chain or apply explicit local mapping rules;
     *  when `receipt[0].sub_profile` is absent but the outer token contains top-level `sub_profile`, the receipt remains aligned for this profile.  The visible value is not independently attested by that receipt, and recipients that require receipt coverage for subject classification MUST reject the receipt chain or apply explicit local mapping rules;
     *  older receipts MAY carry differing `sub`, `sub_iss`, or `sub_profile` values; see {{subject-re-expression-across-hops}}.
