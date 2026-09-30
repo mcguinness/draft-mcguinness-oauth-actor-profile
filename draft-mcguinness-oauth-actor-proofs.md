@@ -1095,10 +1095,10 @@ The single proof covers the outermost hop:
 -01
 
 * Consolidated and tightened the text throughout.
-* An issuer now drops inherited proofs when reissuance exceeds any part of the newest proof's target, not only its audience.
+* An issuer now drops inherited proofs when reissuance exceeds any part of the newest proof's target, not only its audience, unless deployment agreement designates it a trusted reissuing issuer permitted to retarget for the reissued token's recipients.
 * Distinguished a mismatched `origin_jti`, which consumer processing rejects unless the outer issuer is a trusted reissuer, from an absent one.
 * Removed an example claim that receipt composition stops a compromised issuer from re-embedding a proof.
-* Reconciled `exp` guidance and removed BCP 14 keywords from storage, trust-setup, and rollout guidance.
+* Reconciled `exp` guidance and removed BCP 14 keywords from storage, trust-setup, rollout, opaque-input, and freshness-signal guidance.
 * An expired proof, including one for an older hop, is now invalid; only the clock-skew leeway of {{RFC7519, Section 4.1.4}} applies.
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
 * Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, and Strict Mode governs every divergence.
@@ -1123,6 +1123,12 @@ The single proof covers the outermost hop:
 * Consumers check `alg` and `typ` before key resolution and signature validation ({{RFC8725, Section 3.1}}).
 * Issuers use `actor_unauthorized` for actor-authorization failures, as the core actor profile requires, and treat an absent required proof as an input-validation failure.
 * An introspection server that filters a proof-covered actor from the visible `act` chain omits `actor_proofs` and `actor_proofs_complete`.
+* An issuer validates an inbound proof array under consumer processing before carrying it forward on reissuance.
+* An issuer may narrow the issued resource indicators, but not a requested audience, to fit the proof's target binding and returns `invalid_target` when the requested target cannot be issued within it after any narrowing; requests other than Token Exchange ground `invalid_target` in {{RFC8707, Section 2}}.
+* Deployment configuration supplies the actor with the `act.iss` value the issuer will emit.
+* An issuer embeds a proof only when its `origin_jti` and `receipt_jti`, when present, equal the issued token's `jti` and the `jti` of any sibling receipt the issuer creates.
+* In an introspection response, `actor_proofs_complete: false` makes no attestation of complete coverage rather than asserting partial coverage.
+* A Transaction Token request made over HTTP carries the proof in `actor_proof`, because it is a Token Exchange request ({{I-D.ietf-oauth-transaction-tokens, Section 11}}).
 
 -00
 
