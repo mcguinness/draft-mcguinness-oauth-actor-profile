@@ -57,6 +57,22 @@ informative:
   I-D.jiang-oauth-intent-admission:
   I-D.ietf-oauth-attestation-based-client-auth:
   I-D.ietf-oauth-spiffe-client-auth:
+  I-D.mora-oauth-entity-profiles:
+    title: "OAuth Entity Profiles"
+    author:
+     -
+        fullname: Sreyantha Chary Mora
+        organization: Microsoft
+     -
+        fullname: Pamela Dingle
+        organization: Microsoft
+     -
+        fullname: Karl McGuinness
+        organization: Independent
+    date: 2026-04-17
+    seriesinfo:
+      Internet-Draft: draft-mora-oauth-entity-profiles-01
+    target: https://www.ietf.org/archive/id/draft-mora-oauth-entity-profiles-01.txt
 
 ...
 
@@ -366,7 +382,7 @@ When a proof the issuer retains from an inbound token or refresh state has an `e
 When an issuer adds a new outermost actor hop and the token request carries `actor_proof`, the issuer:
 
 1.  MUST validate the proof's structure per {{actor-proof-jwt-format}}: `typ` value, asymmetric `alg`, presence and JSON types of the REQUIRED claims `iss`, `sub`, `act`, `target` (including `target.aud`), `iat`, `exp`, and `jti`, the absence of `aud`, and the single-hop `act` rules.
-2.  MUST verify that the proof's (`act.iss`, `act.sub`) pair equals the actor identifier pair the issuer will emit as the new outermost visible `act` object, and that the proof `iss` equals the proof `act.sub`.  Deployment configuration supplies the actor with the `act.iss` value the issuer will emit.
+2.  MUST verify that the proof's (`act.iss`, `act.sub`) pair equals the actor identifier pair the issuer will emit as the new outermost visible `act` object, and that the proof `iss` equals the proof `act.sub`.  Deployment configuration supplies the actor with the `act.iss` value the issuer will emit.  When the proof carries `act.sub_profile`, the issuer MUST verify that it matches, under the set comparison of step 7 of {{consumer-processing}}, the `act.sub_profile` the issuer emits for the new outermost actor.
 3.  MUST verify that the proof `sub` equals the top-level `sub` of the token being issued.  An issuer that re-expresses the subject at this hop MUST NOT embed the proof; re-expression breaks the alignment between `actor_proofs[0].sub` and the outer token's top-level `sub` that consumers verify under {{consumer-processing}}.
 4.  MUST resolve the actor's verification key through an actor-key source trusted under the issuer's local policy and validate the proof's signature ({{actor-key-resolution}}).
 5.  MUST verify that the proof's `exp` is no earlier than the issued outer token's `exp`, and that `iat` is plausible under the issuer's clock-skew policy.
@@ -482,7 +498,7 @@ An issuer, resource server, or other recipient that relies on `actor_proofs` MUS
     *  `actor_proofs[0].act.sub` MUST equal the outer token's `act.sub`, and `actor_proofs[0].act.iss` MUST equal the outer token's `act.iss`;
     *  `actor_proofs[1].act.sub` MUST equal the outer token's `act.act.sub`, and `actor_proofs[1].act.iss` MUST equal the outer token's `act.act.iss`;
     *  and so on for the number of proofs present;
-    *  when `act.sub_profile` is present in the proof `act` object, the corresponding visible `act` object MUST contain `act.sub_profile` with the same value;
+    *  when `act.sub_profile` is present in the proof `act` object, the corresponding visible `act` object MUST contain `act.sub_profile` with the same value.  `sub_profile` values are compared as sets: the space-delimited values are compared case-insensitively, their order is insignificant, and duplicate values are ignored ({{I-D.mora-oauth-entity-profiles, Section 3.3}}); comparison never rewrites a signed proof;
     *  when `act.sub_profile` is present only in the visible `act` object, the proof remains aligned for this profile.  The visible value is not attested by the actor, and recipients that require actor-signed evidence for actor classification MUST reject the proof chain or apply explicit local mapping rules.
 8.  Verify subject alignment:
     *  `actor_proofs[0].sub` MUST equal the outer token's top-level `sub`;
