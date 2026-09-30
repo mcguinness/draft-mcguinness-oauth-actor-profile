@@ -1073,12 +1073,14 @@ Table of Contents
         rejection conditions but cannot relax any requirement needed for
         conformance to this profile.
 
-   If any required check fails, the recipient MUST reject the receipt
-   chain and treat the token as lacking receipt-based provenance (step
-   2).  It rejects the token only when local policy or Protected
-   Resource Metadata requires that evidence, using the underlying
-   protocol's error handling for the stage at which the failure
-   occurred.
+   Step 1 is a prerequisite: an outer token that fails its own
+   validation is rejected under the rules for its token type, not
+   treated as lacking receipts.  If any later required check fails, the
+   recipient MUST reject the receipt chain and treat the token as
+   lacking receipt-based provenance (step 2).  It rejects the token only
+   when local policy or Protected Resource Metadata requires that
+   evidence, using the underlying protocol's error handling for the
+   stage at which the failure occurred.
 
    A recipient that has rejected a receipt chain under this profile MAY,
    under explicit local policy, extract structural information from the
@@ -2661,13 +2663,14 @@ Document History
       from the issued token's top-level cnf.
 
    *  A failed receipt chain now removes only receipt-based provenance:
-      the recipient rejects the token only when local policy or
-      Protected Resource Metadata requires receipts, and a count
-      mismatch under actor_receipts_complete: true fails that check
-      instead of rejecting the token.  An issuer that discards failed
-      inbound receipts can begin a new, partial chain at its own hop.
-      -00 applied the underlying protocol's error handling to every
-      failure.
+      an outer token that fails its own validation is still rejected,
+      and otherwise the recipient rejects the token only when local
+      policy or Protected Resource Metadata requires receipts, and a
+      count mismatch under actor_receipts_complete: true fails that
+      check instead of rejecting the token.  An issuer that discards
+      failed inbound receipts can begin a new, partial chain at its own
+      hop.  -00 applied the underlying protocol's error handling to
+      every failure.
 
    *  An issuer extending a chain can set actor_receipts_complete: true
       whenever every inbound receipt validated and the receipt count

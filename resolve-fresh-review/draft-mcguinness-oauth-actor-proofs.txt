@@ -1164,11 +1164,14 @@ Table of Contents
         rejection conditions but cannot relax any requirement needed for
         conformance to this profile.
 
-   If any required check fails, the recipient MUST reject the proof
-   chain and treat the token as lacking actor-signed evidence (step 2).
-   It rejects the token only when local policy or Protected Resource
-   Metadata requires that evidence, using the underlying protocol's
-   error handling for the stage at which the failure occurred.
+   Step 1 is a prerequisite: an outer token that fails its own
+   validation is rejected under the rules for its token type, not
+   treated as lacking proofs.  If any later required check fails, the
+   recipient MUST reject the proof chain and treat the token as lacking
+   actor-signed evidence (step 2).  It rejects the token only when local
+   policy or Protected Resource Metadata requires that evidence, using
+   the underlying protocol's error handling for the stage at which the
+   failure occurred.
 
    A recipient that has rejected a proof chain under this profile MAY,
    under explicit local policy, extract structural information from the
@@ -2560,10 +2563,11 @@ Document History
       claim, parameter, metadata, and introspection registrations.
 
    *  A failed proof check, including a false actor_proofs_complete:
-      true, now drops only the actor-signed evidence; the recipient
-      rejects the token only when policy or metadata requires that
-      evidence, and an issuer that cannot propagate inbound proofs can
-      begin a partial chain at its own hop.
+      true, now drops only the actor-signed evidence; an outer token
+      that fails its own validation is still rejected, and otherwise the
+      recipient rejects the token only when policy or metadata requires
+      that evidence, and an issuer that cannot propagate inbound proofs
+      can begin a partial chain at its own hop.
 
    *  A reissued or refreshed token with a new jti diverges from a
       present actor_proofs[0].origin_jti; trusted-reissuer designation

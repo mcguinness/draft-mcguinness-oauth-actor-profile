@@ -2271,11 +2271,15 @@ Table of Contents
    The resulting subject, classification, chain, and binding state feeds
    Transaction Token Output Rules (Section 7.4) instead of JWT access
    token issuance.  For an inbound Transaction Token, this state also
-   includes req_wl.  The scope ceilings in the referenced sections do
-   not apply: Transaction Token scope follows
-   [I-D.ietf-oauth-transaction-tokens], Section 9.2, which does not
-   require it to match the scope of any supplied token, and a
-   replacement Transaction Token cannot expand the scope of permitted
+   includes req_wl.  Transaction Token scope can use a different
+   vocabulary from the inbound token
+   ([I-D.ietf-oauth-transaction-tokens], Section 9.2), so the literal
+   scope-subset rules in the referenced sections do not apply.  The TTS
+   still ensures that the requested scope does not exceed the authority
+   of the subject_token ([I-D.ietf-oauth-transaction-tokens],
+   Section 13.6) and rejects the request when that authority cannot be
+   determined ([I-D.ietf-oauth-transaction-tokens], Section 13.14), and
+   a replacement Transaction Token cannot expand the scope of permitted
    actions ([I-D.ietf-oauth-transaction-tokens], Section 13.15).
 
 7.4.  Transaction Token Output Rules
@@ -4593,9 +4597,10 @@ Document History
       [I-D.ietf-oauth-identity-assertion-authz-grant], Section 3.1, and
       the examples use that identifier.
 
-   *  Transaction Token scope follows
-      [I-D.ietf-oauth-transaction-tokens] rather than the scope ceiling
-      of the inbound token.
+   *  Transaction Token scope can use the Transaction Token vocabulary
+      rather than a literal subset of the inbound token's scope, while
+      the TTS keeps it within the subject_token's authority, per
+      [I-D.ietf-oauth-transaction-tokens].
 
    *  An introspection response without act is an inconsistency only
       when policy or token context indicates delegation;
