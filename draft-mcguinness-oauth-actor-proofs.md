@@ -596,7 +596,7 @@ The following members are defined for use in OAuth Token Introspection responses
 : OPTIONAL.  An array of strings using the same syntax as the JWT claim of the same name.
 
 `actor_proofs_complete`:
-: OPTIONAL.  A boolean.  When `true`, the introspection response indicates that the returned `actor_proofs` cover every visible hop in the token chain as known to the introspection server.  When `false`, the response indicates that the returned proofs provide only partial coverage of the visible chain.
+: OPTIONAL.  A boolean.  When `true`, the introspection response indicates that the returned `actor_proofs` cover every visible hop in the token chain as known to the introspection server.  When `false`, the response makes no attestation of complete coverage.
 
 Consumer use of these members is described in {{consumer-introspection}}; introspection-server failure handling is addressed in {{introspection-errors}}.
 
@@ -624,7 +624,7 @@ When the failure is specifically that required proofs are absent or coverage is 
 
 ## Introspection Server Behavior {#introspection-errors}
 
-When an introspection server cannot return proofs that the requesting resource server requires, it returns the introspection response per {{RFC7662}} with `actor_proofs` absent or with `actor_proofs_complete: false`; the resource server then applies its local policy to decide whether to accept the token.
+When an introspection server cannot return proofs that the requesting resource server requires, it returns the introspection response per {{RFC7662}} with `actor_proofs` absent, or with a partial array and `actor_proofs_complete: false`; the resource server then applies its local policy to decide whether to accept the token.
 
 The introspection server itself does not return an OAuth error for missing proofs; proof presence is a property of the introspection response, not a precondition for it.
 
