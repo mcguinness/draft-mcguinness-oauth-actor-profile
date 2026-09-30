@@ -36,6 +36,7 @@ normative:
   RFC6838:
   RFC7515:
   RFC7519:
+  RFC7523:
   RFC7662:
   RFC8414:
   RFC8693:
@@ -466,7 +467,7 @@ The following members are defined for use in OAuth Token Introspection responses
 
 Bounds validation extends the underlying OAuth or Transaction Token validation.  Failures are reported through the error mechanism applicable to the stage at which they occur.
 
-When an authorization server or Transaction Token Service rejects a token request because inbound bounds evidence fails validation under {{consumer-processing}} (signature failure on an event, broken event chain, unresolvable anchor, monotonicity failure in the inbound chain), it SHOULD return `invalid_grant`, constructed per {{RFC8693}} Section 2.2.2 and {{RFC6749}} Section 5.2, consistent with the core actor profile's error mapping for actor information that fails validation.
+When an authorization server or Transaction Token Service rejects a token request because inbound bounds evidence fails validation under {{consumer-processing}} (signature failure on an event, broken event chain, unresolvable anchor, monotonicity failure in the inbound chain), it returns an error response per {{RFC6749, Section 5.2}}: `invalid_request` for a Token Exchange request, as {{RFC8693, Section 2.2.2}} requires, or `invalid_grant` for a JWT bearer grant request ({{RFC7523, Section 3.1}}), consistent with the core actor profile's error mapping for actor information that fails validation.
 
 When requested authority exceeds the effective upper bound without re-authorization, the issuer SHOULD return:
 
