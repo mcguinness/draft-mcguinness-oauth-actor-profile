@@ -2087,6 +2087,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 
 -01
 
+* Changes that break a -00 implementation: JWT access tokens require `client_id`; an AS keeps an (`iss`, `jti`) replay cache for assertion grants unless the grant itself is sender-constrained; a Transaction Token without delegation omits `act`; `may_act.iss`, when present, takes precedence over the `subject_token` issuer; rebind requires proof for the new presenter only for sender-constrained output; and Token Exchange requests, including TTS requests, reject invalid or policy-unacceptable inputs with `invalid_request` rather than `invalid_grant`.
 * Consolidated and tightened the text throughout; claim roles, supported token types, and error mappings now use tables.
 * Added hop and visible-hop terminology, and token-size guidance for extensions that attach per-hop signed material.
 * JWT access tokens now require `client_id`, per {{RFC9068}}.
@@ -2099,13 +2100,21 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Resolved conflicting requirements on inherited extension members, inner-actor validation, and `req_wl` reconciliation, and pointed Security and Privacy restatements at their normative rules.
 * Removed BCP 14 keywords from operational guidance that no other party can observe.
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
-* Resolved the remaining duplicate-rule conflicts: `act` in Transaction Tokens follows Delegation Chains, identifier reconciliation keeps both outcomes under explicit conditions, client identity must not substitute for `act`, inner-actor failures use the shared error mapping, and proof for a new presenter is required for sender-constrained output while any proof the credential's own profile requires is always validated.
+* Resolved the remaining duplicate-rule conflicts: identifier reconciliation keeps both outcomes under explicit conditions, client identity must not substitute for `act`, inner-actor failures use the shared error mapping, and proof for a new presenter is required for sender-constrained output while any proof the credential's own profile requires is always validated.
 * Actor `sub_profile` is recommended when the issuer can authoritatively classify the actor, and Transaction Token `sub` re-expression requires a trusted mapping.
 * Unrecognized but syntactically valid values in a carried-forward top-level `sub_profile` are preserved.
 * Used one set of example identifiers for the travel scenario, matching the cross-domain example's parties.
 * Clarified confirmation members in token actor objects as extension data, including preservation and their distinction from the current presenter's binding.
 * Corrected grant replay requirements to depend on an enforced grant-level sender constraint, with accepted grants identified by (`iss`, `jti`) for their full acceptance window, and aligned the self-issued grant controls with that rule.
-* Revised the Introduction to state what Token Exchange leaves open, restore the profile's design center, and name the ID-JAG extension point it fills.
+* Revised the Introduction to state what Token Exchange leaves open and to name the ID-JAG extension point this profile fills.
+* Transaction Tokens now use the delegation conditions in Delegation Chains: delegation can also rest on `may_act` or another independent basis such as a policy rule, and a Transaction Token without delegation omits `act` (-00 left it optional).
+* The JWT access token structure, including `client_id`, applies only to JWT access token output; JWT assertion grant and Transaction Token outputs share the other output rules.
+* In presenter rebind, the new presenter's binding supersedes a sender-constrained JWT assertion grant's `cnf`, and the grant is then single-use; Security Considerations states the trade-off.
+* On the `may_act` path without `actor_token`, the authenticated client is the new presenter, and a sender-constrained output is bound to the key it demonstrates.
+* The scope issued from a JWT assertion grant used as `subject_token` is capped by the grant's `scope`, or, when that is absent, by the scope the AS would authorize for the grant directly.
+* Token Exchange and TTS requests reject invalid or policy-unacceptable `subject_token` and `actor_token` inputs with `invalid_request`, per {{RFC8693, Section 2.2.2}}; JWT bearer grant requests keep `invalid_grant`.
+* {{RFC6749}}, {{RFC7800}}, {{OpenID.Core}}, and ID-JAG are now normative references, and ID-JAG is cited at -04.
+* The `actor_unauthorized` registration uses the error usage location names of {{RFC6749}}.
 
 -00
 
