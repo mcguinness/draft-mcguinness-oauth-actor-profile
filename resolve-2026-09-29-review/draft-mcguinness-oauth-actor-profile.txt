@@ -640,9 +640,11 @@ Table of Contents
 
    Implementations MUST define and enforce a local maximum delegation
    depth.  Implementations that receive a token exceeding their
-   configured local maximum MUST reject it with invalid_request.  When a
-   request would result in a chain exceeding that limit, the AS MUST
-   reject with invalid_request; it MUST NOT silently truncate the chain.
+   configured local maximum MUST reject it as an invalid input under the
+   applicable token-processing rules; AS and TTS errors follow Error
+   Responses (Section 9).  When a request would add an actor that
+   exceeds that limit, the AS MUST reject with invalid_request; it MUST
+   NOT silently truncate the chain.
 
    A token represents delegation when the party exercising the token's
    authorization at runtime (the actor) is distinct from the token
@@ -723,15 +725,14 @@ Table of Contents
    For the outermost act object the AS MUST:
 
    1.  Verify that both act.sub and act.iss are present.  If either is
-       absent, reject with invalid_request.
+       absent, reject the input under Error Responses (Section 9).
 
    2.  Verify that local policy trusts the token issuer to assert
-       (act.iss, act.sub); otherwise, reject with invalid_request on a
-       Token Exchange request or invalid_grant on a JWT bearer grant
-       request (Error Responses (Section 9)).  This does not make
-       act.iss the token issuer or independently authenticate prior
-       hops.  Trusting Actor Identifier Pairs (Section 12.2) gives
-       examples of this deployment-specific trust decision.
+       (act.iss, act.sub); otherwise, reject the input under Error
+       Responses (Section 9).  This does not make act.iss the token
+       issuer or independently authenticate prior hops.  Trusting Actor
+       Identifier Pairs (Section 12.2) gives examples of this
+       deployment-specific trust decision.
 
    3.  Evaluate delegation under local policy:
 
@@ -758,12 +759,8 @@ Table of Contents
    that entry's act.sub and act.iss pair and MUST evaluate its
    delegation relationship, as in Validate Outermost Actor
    (Section 3.6.2.2), before using it as a security input.  Failures use
-   that step's errors: invalid_request for a missing act.sub or act.iss,
-   invalid_request on a Token Exchange request or invalid_grant on a JWT
-   bearer grant request when the token issuer is not trusted to assert
-   the identifier pair, and actor_unauthorized when the delegation
-   relationship is prohibited or cannot be confirmed.  Such use of inner
-   actors is deployment-specific.
+   that step's errors under Error Responses (Section 9).  Such use of
+   inner actors is deployment-specific.
 
 3.6.2.4.  Carry Prior-Actor Context
 
@@ -781,7 +778,9 @@ Table of Contents
    Compute the depth of the resulting chain, including any new outermost
    actor added by Extend Chain with New Actor (Section 3.6.3.1).  If
    that depth exceeds the locally configured maximum (Delegation Chains
-   (Section 3.5)), reject with invalid_request.
+   (Section 3.5)), reject under Error Responses (Section 9),
+   distinguishing an excessive inbound chain from an extension that
+   would exceed the limit.
 
 3.6.3.  Construction Steps
 
@@ -1070,8 +1069,7 @@ Table of Contents
    3.  The AS MUST verify that the JWT iss is trusted under local policy
        to assert the (act.iss, act.sub) actor identifier pair.
 
-       *  If act.iss is absent: reject with invalid_request (structural
-          violation).
+       *  If act.iss is absent: reject with invalid_grant.
 
        *  If the JWT iss is not trusted to assert the actor identifier
           pair: reject with invalid_grant.
@@ -1134,7 +1132,7 @@ Table of Contents
        (Section 3.7).
 
        *  *DPoP*: When the inbound assertion grant is DPoP-bound, it
-          MUST carry a top-level cnf.jkt; reject with invalid_request if
+          MUST carry a top-level cnf.jkt; reject with invalid_grant if
           absent.  The AS MUST:
 
           -  Verify the DPoP proof is valid per [RFC9449] with
@@ -1148,8 +1146,10 @@ Table of Contents
           -  Use the assertion's cnf.jkt as set by the upstream issuer;
              MUST NOT substitute a locally registered key.
 
-          -  Reject with invalid_dpop_proof or invalid_grant if the
-             proof is absent or invalid.
+          -  Reject with invalid_dpop_proof if the proof is absent or
+             invalid, subject to the nonce challenge rules of [RFC9449],
+             Section 8.  If a valid proof's key does not match the
+             assertion's cnf.jkt, reject with invalid_grant.
 
              Note: The ath claim is not applicable at the token endpoint
              and MUST NOT be required.  See also
@@ -1157,8 +1157,8 @@ Table of Contents
              DPoP-bound JWT grants.
 
        *  *mTLS*: When the inbound assertion grant is mTLS-bound, it
-          MUST carry a top-level cnf.x5t#S256; reject with
-          invalid_request if absent.  The AS MUST:
+          MUST carry a top-level cnf.x5t#S256; reject with invalid_grant
+          if absent.  The AS MUST:
 
           -  Validate the client certificate presented at the token
              endpoint against cnf.x5t#S256.
@@ -1796,9 +1796,10 @@ Table of Contents
        the AS MAY derive the actor identity from the already-
        authenticated client context rather than re-validating the
        actor_token separately, provided the result is an identical
-       act.sub value.  Actor-profile-specific policy failures that occur
-       after successful client authentication are invalid_request, not
-       invalid_client.
+       act.sub value.  Actor-profile-specific policy failures after
+       successful client authentication follow Error Responses
+       (Section 9), including actor_unauthorized for actor-authorization
+       denials.
 
    5.  When the request uses this client assertion to establish a
        sender-constrained output token in presenter-rebind mode, the AS
@@ -1855,8 +1856,9 @@ Table of Contents
        presenter-rebind mode, the AS MUST also validate proof for the
        new presenter binding: the WPT, or a DPoP proof ([RFC9449]) over
        the token endpoint URI when the credential carries cnf.jkt.  If a
-       required proof is absent or invalid, the AS MUST reject the
-       request with invalid_request.
+       required proof is absent or invalid, the AS MUST reject under
+       Error Responses (Section 9), using the proof mechanism's error
+       when specified and invalid_request otherwise.
 
 6.3.3.  JWT Access Token
 
@@ -2028,11 +2030,8 @@ Table of Contents
        endorsed by its issuer.
 
    4.  The AS MUST reject if actor validation fails or the resulting
-       chain exceeds the depth limit.  It MUST use invalid_request for
-       excessive depth, for an inbound actor missing act.sub or act.iss,
-       and for other validation failures on a Token Exchange request,
-       and invalid_grant for other validation failures on a JWT bearer
-       grant request.  It MUST NOT issue a partially preserved chain.
+       chain exceeds the depth limit, using Error Responses (Section 9).
+       It MUST NOT issue a partially preserved chain.
 
    5.  Top-level sub_profile follows Actor Object Structure
        (Section 3.4), which recommends it when the AS can
@@ -2678,51 +2677,55 @@ Table of Contents
 
 9.  Error Responses
 
-   When an AS or TTS rejects a request under this profile for reasons
-   related to actor-profile processing, its error response follows
-   [RFC6749], Section 5.2.  On Token Exchange requests, including TTS
-   requests, an invalid or policy-unacceptable subject_token or
-   actor_token uses invalid_request, as [RFC8693], Section 2.2.2
-   requires, except that a denial under actor authorization policy uses
-   actor_unauthorized, one of the other error codes that section
-   permits; on JWT bearer grant requests, an invalid grant uses
-   invalid_grant, as [RFC7523], Section 3.1 requires.  These error codes
-   do not override invalid_client when a request fails client
-   authentication per [RFC6749] or [RFC7523].
+   When an AS or TTS rejects a request for reasons related to actor-
+   profile processing, it MUST use the error mappings in this section
+   and construct the response per [RFC6749], Section 5.2.
+
+   Input validation errors follow the request's grant type.  On Token
+   Exchange requests, including TTS requests, an invalid or policy-
+   unacceptable subject_token or actor_token uses invalid_request
+   ([RFC8693], Section 2.2.2).  On JWT bearer grant requests, an invalid
+   assertion uses invalid_grant ([RFC7523], Section 3.1).  This
+   distinction also applies to missing required claims, invalid actor
+   structure, and excessive inbound chain depth.
+
+   Client-authentication and proof-mechanism errors take precedence over
+   these generic input-validation errors.  Failed client authentication
+   uses invalid_client per [RFC6749] or [RFC7523].  DPoP errors use
+   invalid_dpop_proof, or use_dpop_nonce for a nonce challenge, per
+   Sections 5 and 8 of [RFC9449].  Actor-authorization denials use
+   actor_unauthorized, an extension error permitted by [RFC8693],
+   Section 2.2.2.
 
    The following errors apply to both AS and TTS endpoints:
 
-    +====================+===========================================+
-    | Error              | Condition                                 |
-    +====================+===========================================+
-    | invalid_request    | Invalid actor structure, missing required |
-    |                    | claim, or excessive chain depth; on a     |
-    |                    | Token Exchange request, also an invalid   |
-    |                    | credential, untrusted issuer, failed      |
-    |                    | actor validation, or failed presenter     |
-    |                    | proof ([RFC8693], Section 2.2.2)          |
-    +--------------------+-------------------------------------------+
-    | invalid_grant      | On a JWT bearer grant request ([RFC7523], |
-    |                    | Section 3.1): invalid grant, untrusted    |
-    |                    | issuer, failed actor validation, or       |
-    |                    | failed grant proof                        |
-    +--------------------+-------------------------------------------+
-    | invalid_scope      | No effective scope remains for reasons    |
-    |                    | other than categorical actor denial       |
-    +--------------------+-------------------------------------------+
-    | actor_unauthorized | Actor policy prohibits the request,       |
-    |                    | rejects the actor type, or cannot confirm |
-    |                    | the required delegation relationship      |
-    +--------------------+-------------------------------------------+
+   +====================+=============================================+
+   | Error              | Condition                                   |
+   +====================+=============================================+
+   | invalid_request    | Malformed request, missing required request |
+   |                    | parameter, or an actor addition that would  |
+   |                    | exceed the depth limit; on a Token Exchange |
+   |                    | request, also input-validation failures     |
+   +--------------------+---------------------------------------------+
+   | invalid_grant      | On a JWT bearer grant request: input-       |
+   |                    | validation failures, including an invalid   |
+   |                    | assertion, untrusted issuer, or failed      |
+   |                    | grant binding                               |
+   +--------------------+---------------------------------------------+
+   | invalid_scope      | No effective scope remains for reasons      |
+   |                    | other than categorical actor denial         |
+   +--------------------+---------------------------------------------+
+   | actor_unauthorized | Actor policy prohibits the request, rejects |
+   |                    | the actor type, or cannot confirm the       |
+   |                    | required delegation relationship            |
+   +--------------------+---------------------------------------------+
 
                                  Table 5
 
    Missing required claims include act.sub, act.iss, the binding claim
    of a sender-constrained JWT assertion grant, and top-level iss on a
    delegated Transaction Token.  TTS failures to preserve the subject or
-   to trust inbound actor identifiers also use invalid_request.
-   Mechanism-specific proof errors, such as invalid_dpop_proof, follow
-   the applicable processing section.
+   to trust inbound actor identifiers use invalid_request.
 
    The error_description field SHOULD be included and SHOULD describe
    which aspect of actor-profile processing failed, to the extent
@@ -3049,7 +3052,7 @@ Table of Contents
    When an AS receives such an object:
 
    *  If profile conformance is required by policy or metadata, the AS
-      MUST reject with invalid_request.
+      MUST reject the input under Error Responses (Section 9).
 
    *  Otherwise, the AS MAY apply local rules for non-profile
       processing.  It MUST NOT add iss to an inherited actor, silently
@@ -4508,6 +4511,12 @@ Document History
       invalid_request, per [RFC8693], Section 2.2.2, while actor-policy
       denials keep actor_unauthorized; JWT bearer grant requests keep
       invalid_grant.
+
+   *  Centralized error precedence: client-authentication and proof-
+      mechanism errors take precedence over generic input-validation
+      errors.  Missing required assertion claims and other structural
+      failures use invalid_grant on JWT bearer grant requests and
+      invalid_request on Token Exchange requests.
 
    *  [RFC6749], [RFC7800], [OpenID.Core], and ID-JAG are now normative
       references, and ID-JAG is cited at -04.
