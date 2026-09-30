@@ -197,7 +197,7 @@ The `authorization_details` dimension records the Rich Authorization Requests ar
 *  two objects refine only when they share the same `type`;
 *  for the common members defined by {{RFC9396, Section 2.2}}, refinement requires: `actions` a subset, `locations` a subset under the URI rules of {{resource-dimension}}, `datatypes` a subset, `privileges` a subset, and `identifier` equal; a common member present in the `ad_b` object but absent from the `ad_a` object is expansion and fails the comparison, and one absent from the `ad_b` object but present in the `ad_a` object also fails the comparison unless the refinement rules for that `type` establish that it preserves or narrows authority, because the effect of a member depends on the API's semantics ({{RFC9396, Section 6.1}}).
 
-For type-specific members the recipient cannot evaluate, the recipient MUST reject verification of that dimension by default, or skip the object's refinement under explicit local policy.  RAR type specifications SHOULD define their own refinement rules; see {{extensibility}}.
+The common-member rules above apply to objects of a `type` whose members the recipient can evaluate, because it knows that the `type` defines no other members, or because it has a refinement rule for them.  For any other `type`, an object refines another object of the same `type` only when the two are equal as whole JSON objects (the same member names with equal values; member order is insignificant), and any change requires a type-specific refinement rule.  RAR type specifications SHOULD define their own refinement rules; see {{extensibility}}.
 
 ## Dimensions Explicitly Not Governed
 
