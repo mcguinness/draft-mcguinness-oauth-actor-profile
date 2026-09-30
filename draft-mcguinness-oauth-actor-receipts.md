@@ -372,7 +372,7 @@ If inbound receipts fail validation, the issuer MUST NOT propagate them.  It MAY
 
 An issuer that reissues, translates, or introspects and re-emits a token without adding a new outermost actor hop:
 
-*  MAY carry an inbound `actor_receipts` array forward unchanged;
+*  MAY carry an `actor_receipts` array received in an inbound token or its introspection response forward unchanged, and MUST first validate it against that token under {{consumer-processing}}, as step 1 of {{extending-an-existing-receipt-chain}} requires for extension.  If the array fails validation, the issuer MUST NOT carry it forward, and MUST fail the request under the error model of the underlying protocol unless local policy permits the issued token to lack it;
 *  MUST NOT create a new receipt;
 *  MUST preserve `actor_receipts_complete` when carrying the array unchanged.  If the issuer cannot attest that value, it MUST drop the array entirely; disclosure is all-or-nothing ({{consumer-introspection}}).
 *  MUST NOT continue to carry an inherited `actor_receipts` array if it cannot preserve the visible hop alignment required by {{consumer-processing}};
@@ -596,7 +596,7 @@ Receipt validation failures use the underlying protocol's error mechanism for th
 
 ## Authorization Server and Transaction Token Service Errors
 
-When an authorization server or Transaction Token Service rejects a request because inbound `actor_receipts` cannot be validated under {{extending-an-existing-receipt-chain}} (signature failure, expired receipt, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment, or untrusted receipt issuer), it returns an error response per {{RFC6749, Section 5.2}}: `invalid_request` for a Token Exchange request, as {{RFC8693, Section 2.2.2}} requires, or `invalid_grant` for a JWT bearer grant request ({{RFC7523, Section 3.1}}).  An absent receipt array that local policy requires, whether missing from the inbound token or from retained refresh state, is an input-validation failure: `invalid_request` for a Token Exchange request, or `invalid_grant` for a JWT bearer grant or refresh request.
+When an authorization server or Transaction Token Service rejects a request because inbound `actor_receipts` cannot be validated under {{extending-an-existing-receipt-chain}} or {{reissuance-without-a-new-actor-hop}} (signature failure, expired receipt, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment, or untrusted receipt issuer), it returns an error response per {{RFC6749, Section 5.2}}: `invalid_request` for a Token Exchange request, as {{RFC8693, Section 2.2.2}} requires, or `invalid_grant` for a JWT bearer grant request ({{RFC7523, Section 3.1}}) or a refresh request.  An absent receipt array that local policy requires, whether missing from the inbound token or from retained refresh state, is an input-validation failure: `invalid_request` for a Token Exchange request, or `invalid_grant` for a JWT bearer grant or refresh request.
 
 When the failure reflects an actor-authorization decision rather than a structural validation failure, the issuer uses `actor_unauthorized`, as the core actor profile {{I-D.mcguinness-oauth-actor-profile}} requires.
 
