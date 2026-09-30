@@ -87,7 +87,7 @@ Actor Receipt:
 : A signed JWT that attests one visible actor hop in a delegated token chain.
 
 Outer Token:
-: The access token or Transaction Token (JWT-formatted or opaque) with which a receipt chain is associated.  JWT outputs carry the `actor_receipts` claim inline; opaque tokens have their receipts returned via introspection (see {{consumer-introspection}}).  Distinguished from the receipt JWTs nested within it.
+: The access token (JWT-formatted or opaque), JWT assertion grant, or Transaction Token with which a receipt chain is associated.  JWT outputs carry the `actor_receipts` claim inline; opaque tokens have their receipts returned via introspection (see {{consumer-introspection}}).  Distinguished from the receipt JWTs nested within it.
 
 Receipt Chain:
 : The ordered `actor_receipts` array carried in a token or introspection response.
