@@ -1662,7 +1662,7 @@ This document requests IANA to register the following values in the "OAuth Prote
 This document requests IANA to register the following value in the "OAuth Extensions Error Registry" ({{RFC6749, Section 11.4}}):
 
 *  Error Name: `actor_unauthorized`
-*  Error Usage Location: Token endpoint response, resource server response
+*  Error Usage Location: token error response, resource access error response
 *  Related Protocol Extension: OAuth Actor Profile for Delegation
 *  Change Controller: IETF
 *  Reference: [Error Responses](#actor-profile-error-responses) of this document
