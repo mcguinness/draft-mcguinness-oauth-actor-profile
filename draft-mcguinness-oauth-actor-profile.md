@@ -30,6 +30,7 @@ author:
 
 normative:
   RFC3986:
+  RFC6749:
   RFC6750:
   RFC7009:
   RFC7519:
@@ -60,21 +61,9 @@ normative:
         fullname: Karl McGuinness
         organization: Independent
     date: 2026-04-17
+    seriesinfo:
+      Internet-Draft: draft-mora-oauth-entity-profiles-01
     target: https://www.ietf.org/archive/id/draft-mora-oauth-entity-profiles-01.txt
-
-informative:
-  RFC6749:
-  RFC9700:
-  RFC8792:
-  I-D.parecki-oauth-jwt-dpop-grant:
-    title: "JWT Authorization Grants with DPoP"
-    author:
-     -
-        fullname: Aaron Parecki
-        organization: Okta
-    date: 2026-01-30
-    target: https://datatracker.ietf.org/doc/html/draft-parecki-oauth-jwt-dpop-grant-01
-  I-D.ietf-oauth-identity-chaining:
   I-D.ietf-oauth-identity-assertion-authz-grant:
     title: "Identity Assertion JWT Authorization Grant"
     author:
@@ -87,14 +76,31 @@ informative:
      -
         fullname: Brian Campbell
         organization: Ping Identity
-    date: 2026-04-22
-    target: https://www.ietf.org/archive/id/draft-ietf-oauth-identity-assertion-authz-grant-03.txt
+    date: 2026-05-21
+    seriesinfo:
+      Internet-Draft: draft-ietf-oauth-identity-assertion-authz-grant-04
+    target: https://www.ietf.org/archive/id/draft-ietf-oauth-identity-assertion-authz-grant-04.txt
   OpenID.Core:
     title: "OpenID Connect Core 1.0"
     author:
       org: OpenID Foundation
     date: 2014-11-08
     target: https://openid.net/specs/openid-connect-core-1_0.html
+
+informative:
+  RFC9700:
+  RFC8792:
+  I-D.parecki-oauth-jwt-dpop-grant:
+    title: "JWT Authorization Grants with DPoP"
+    author:
+     -
+        fullname: Aaron Parecki
+        organization: Okta
+    date: 2026-01-30
+    seriesinfo:
+      Internet-Draft: draft-parecki-oauth-jwt-dpop-grant-01
+    target: https://datatracker.ietf.org/doc/html/draft-parecki-oauth-jwt-dpop-grant-01
+  I-D.ietf-oauth-identity-chaining:
   OpenID.Federation:
     title: "OpenID Federation 1.0"
     author:
