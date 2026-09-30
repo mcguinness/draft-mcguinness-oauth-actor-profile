@@ -432,12 +432,12 @@ Presenter continuation requires a PoP-capable `subject_token` with top-level `cn
 
 ### Token Exchange Rebind
 
-Presenter rebind requires a validated `actor_token` whose top-level `sub` identifies the new presenter, as specified in [Actor Tokens](#actor-tokens).
+Presenter rebind requires a validated `actor_token` whose top-level `sub` identifies the new presenter, as specified in [Actor Tokens](#actor-tokens), except on the [`may_act`](#may-act) path without `actor_token`, where the authenticated client is the new presenter.
 
 *  The issuer validates the credential per {{RFC8693, Section 2.1}} and MUST validate any proof required by its profile or deployment, whether or not the output token is sender-constrained.
 *  When the output token is sender-constrained, the issuer MUST validate proof of possession for the new presenter.  A bearer output does not waive validation of the credential or of any proof its profile requires.  A sender-constrained `subject_token` does not, by itself, require proof for its prior presenter during rebind.
 
-Actors that become presenters therefore need a direct credential: a workload credential, JWT client assertion, or non-delegated JWT access token.
+Other actors that become presenters therefore need a direct credential: a workload credential, JWT client assertion, or non-delegated JWT access token.
 
 ### Bearer-to-PoP Upgrade
 
@@ -671,10 +671,10 @@ Token-state inputs (JWT assertion grants, JWT access tokens, Transaction Tokens)
 
 Token Exchange under this profile runs in exactly one of two presenter-transition modes:
 
-*  **Presenter continuation**: no validated `actor_token` establishing a new presenter is supplied.  The issued token keeps the presenter of a PoP-capable token-state `subject_token`.
-*  **Presenter rebind**: a validated `actor_token` establishes a new presenter for the issued token.  When the output token is sender-constrained, its top-level `cnf` is bound to that new presenter.
+*  **Presenter continuation**: no new presenter is established, either by a validated `actor_token` or on the [`may_act`](#may-act) path without `actor_token`.  The issued token keeps the presenter of a PoP-capable token-state `subject_token`.
+*  **Presenter rebind**: a validated `actor_token`, or the authenticated client on the [`may_act`](#may-act) path without `actor_token`, establishes a new presenter for the issued token.  When the output token is sender-constrained, its top-level `cnf` is bound to that new presenter.
 
-Presenter rebind requires a **direct presenter credential**: an `actor_token` whose top-level `sub` names the new presenter.  The request proves possession as required by that credential profile whether or not the output is sender-constrained, and proves possession for the new presenter binding when establishing a sender-constrained output.  Other means of installing a presenter are deployment-specific.
+Outside the [`may_act`](#may-act) path without `actor_token`, presenter rebind requires a **direct presenter credential**: an `actor_token` whose top-level `sub` names the new presenter.  The request proves possession as required by that credential profile whether or not the output is sender-constrained, and proves possession for the new presenter binding when establishing a sender-constrained output.  Other means of installing a presenter are deployment-specific.
 
 Bearer and identity-only inputs cannot support continuation.  To upgrade them to sender-constrained tokens, present the existing credential as `subject_token` and a direct presenter credential as `actor_token`.  To preserve a delegation chain while changing presenters, deployments SHOULD likewise present the delegated credential as `subject_token` and a separate direct credential as `actor_token`.
 
@@ -894,7 +894,7 @@ If `may_act.iss` is present but is not a valid StringOrURI, the AS MUST NOT use 
 Actor identity is established as follows:
 
 *  **With `actor_token`**: derive (`act.iss`, `act.sub`) under the credential's type-specific rules and reconcile it with the canonical `may_act` identifier.  `may_act` MUST NOT override the derived actor.
-*  **Without `actor_token`**: the requesting client MUST be a confidential client that has authenticated in the request; public clients MUST NOT use this path.  Reconcile the authenticated client with the canonical `may_act` identifier and set `act.sub` to the client's canonical identifier.  The AS MUST set `act.iss` to the issuer or namespace context that locally registered the client, typically the AS's own issuer URI.
+*  **Without `actor_token`**: the requesting client MUST be a confidential client that has authenticated in the request; public clients MUST NOT use this path.  Reconcile the authenticated client with the canonical `may_act` identifier and set `act.sub` to the client's canonical identifier.  The AS MUST set `act.iss` to the issuer or namespace context that locally registered the client, typically the AS's own issuer URI.  The authenticated client is then the new presenter in presenter-rebind mode ([Presenter Transition Model](#token-exchange-presenter-model)), and a sender-constrained output is bound to the key or certificate the client demonstrates in the request.
 
 The second path supports a token that pre-authorizes a particular client to present it without a separate actor credential.
 
@@ -918,7 +918,7 @@ Issuing such a grant is subject to AS configuration and to [Validate Outermost A
 
 When the output is a JWT access token, the issued token MUST satisfy [JWT Access Token Structure](#jwt-access-tokens-structure); [JWT Assertion Grant Structure](#jwt-assertion-grants-structure) and [Transaction Tokens](#transaction-tokens) define the structure of the other outputs.  After the applicable grant, subject-token, actor-token, or TTS input processing, the AS MUST apply the rules below.
 
-For a sender-constrained output, the AS MUST set top-level `cnf` according to [Presenter Transition Model](#token-exchange-presenter-model): retain the presenter's binding in continuation mode, or bind to the validated `actor_token` presenter in rebind mode.  The latter also supports bearer-to-PoP upgrades.
+For a sender-constrained output, the AS MUST set top-level `cnf` according to [Presenter Transition Model](#token-exchange-presenter-model): retain the presenter's binding in continuation mode, or bind to the new presenter in rebind mode.  The latter also supports bearer-to-PoP upgrades.
 
 If a Token Exchange request explicitly seeks a delegated output, for example by supplying an `actor_token` or by presenting a `subject_token` that already carries `act`, and the AS cannot validate the actor information, it MUST reject the request with `invalid_grant`.  If the AS can validate the actor information but cannot establish or confirm the required delegation basis, or if local policy prohibits the relationship, it MUST reject the request with `actor_unauthorized`.  The AS MUST NOT issue a non-delegated token in place of the requested delegated output.
 
