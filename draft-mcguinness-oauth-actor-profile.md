@@ -2096,7 +2096,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 
 -01
 
-* Changes that break a -00 implementation: JWT access tokens require `client_id`; an AS keeps an (`iss`, `jti`) replay cache for assertion grants unless the grant itself is sender-constrained; a Transaction Token without delegation omits `act`; `may_act.iss`, when present, takes precedence over the `subject_token` issuer; rebind requires proof for the new presenter only for sender-constrained output; and Token Exchange requests, including TTS requests, reject invalid or policy-unacceptable inputs with `invalid_request` rather than `invalid_grant`.
+* Changes that break a -00 implementation: JWT access tokens require `client_id`; an AS keeps an (`iss`, `jti`) replay cache for assertion grants unless the grant itself is sender-constrained; a Transaction Token without delegation omits `act`; `may_act.iss`, when present, takes precedence over the `subject_token` issuer; rebind requires proof for the new presenter only for sender-constrained output; Token Exchange requests, including TTS requests, reject invalid or policy-unacceptable inputs with `invalid_request` rather than `invalid_grant`; an ID-JAG issued as Token Exchange output carries the Resource Authorization Server's issuer identifier in `aud` rather than the downstream token endpoint; and a replacement Transaction Token keeps `sub` unchanged.
 * Consolidated and tightened the text throughout; claim roles, supported token types, and error mappings now use tables.
 * Added hop and visible-hop terminology, and token-size guidance for extensions that attach per-hop signed material.
 * JWT access tokens now require `client_id`, per {{RFC9068}}.
@@ -2110,7 +2110,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Removed BCP 14 keywords from operational guidance that no other party can observe.
 * Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.
 * Resolved the remaining duplicate-rule conflicts: identifier reconciliation keeps both outcomes under explicit conditions, client identity must not substitute for `act`, inner-actor failures use the shared error mapping, and proof for a new presenter is required for sender-constrained output while any proof the credential's own profile requires is always validated.
-* Actor `sub_profile` is recommended when the issuer can authoritatively classify the actor, and Transaction Token `sub` re-expression requires a trusted mapping.
+* Actor `sub_profile` is recommended when the issuer can authoritatively classify the actor.  A replacement Transaction Token keeps `sub` unchanged, per {{I-D.ietf-oauth-transaction-tokens, Section 13.15}}; `sub` re-expression under a trusted mapping applies only when a TTS issues a Transaction Token from a JWT access token or JWT assertion grant.
 * Unrecognized but syntactically valid values in a carried-forward top-level `sub_profile` are preserved.
 * Used one set of example identifiers for the travel scenario, matching the cross-domain example's parties.
 * Clarified confirmation members in token actor objects as extension data, including preservation and their distinction from the current presenter's binding.
@@ -2125,6 +2125,14 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Centralized error precedence: client-authentication and proof-mechanism errors take precedence over generic input-validation errors.  Missing required assertion claims, missing required grant proofs, and other structural failures use `invalid_grant` on JWT bearer grant requests and `invalid_request` on Token Exchange requests; supplied invalid DPoP proofs retain `invalid_dpop_proof`.
 * {{RFC6749}}, {{RFC7800}}, {{OpenID.Core}}, and ID-JAG are now normative references, and ID-JAG is cited at -04.
 * The `actor_unauthorized` registration uses the error usage location names of {{RFC6749}}.
+* Presenter continuation also covers a bearer `subject_token` presented by its authenticated outermost actor, or by its subject when it carries no `act`, and yields a bearer output.  A Token Exchange request that satisfies neither presenter-transition mode is rejected with `invalid_request`.
+* A JWT assertion grant output sets `aud` to the Resource Authorization Server's issuer identifier for an ID-JAG, per {{I-D.ietf-oauth-identity-assertion-authz-grant, Section 3.1}}, and the examples use that identifier.
+* Transaction Token `scope` follows {{I-D.ietf-oauth-transaction-tokens}} rather than the scope ceiling of the inbound token.
+* An introspection response without `act` is an inconsistency only when policy or token context indicates delegation; `actor_profile_required` alone no longer causes rejection.
+* Resource servers validate a `cnf.x5t#S256` binding against the mutual-TLS client certificate, per {{RFC8705, Section 3}}.
+* A resource server rejects a failed Transaction Token through the deployment's Transaction Token handling, since {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
+* Authorization policy identifies the outermost actor by its (`act.iss`, `act.sub`) pair.
+* Metadata: the `actor_profile_required` issuance rule applies to an AS that knows the value by configuration or from metadata; the `txn_token` listing is required only of an AS or TTS that publishes `actor_profile_token_exchange`; and `requested_token_types_supported` lists `urn:ietf:params:oauth:token-type:id-jag`.
 
 -00
 
