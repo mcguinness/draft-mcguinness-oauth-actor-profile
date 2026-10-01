@@ -222,9 +222,9 @@ The JOSE header of an actor receipt:
 *  MUST NOT use `alg: none` or a MAC-based symmetric algorithm;
 *  MUST include `typ` with the value `actor-receipt+jwt`;
 *  SHOULD include `kid` when the issuer publishes multiple verification keys;
-*  MAY include `crit` per {{RFC7515, Section 4.1.11}}; step 5 of {{consumer-processing}} rejects a receipt whose `crit` header lists an extension header the consumer does not understand.
+*  MAY include `crit` per {{Section 4.1.11 of RFC7515}}; step 5 of {{consumer-processing}} rejects a receipt whose `crit` header lists an extension header the consumer does not understand.
 
-Receipt issuers and consumers MUST apply the JWT best practices in {{RFC8725}} when creating and validating receipts, except for the audience requirements of {{RFC8725, Section 3.9}}, from which this profile departs by prohibiting `aud` as described in {{receipt-claims}}.
+Receipt issuers and consumers MUST apply the JWT best practices in {{RFC8725}} when creating and validating receipts, except for the audience requirements of {{Section 3.9 of RFC8725}}, from which this profile departs by prohibiting `aud` as described in {{receipt-claims}}.
 
 ## Receipt Claims
 
@@ -307,7 +307,7 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 
   1.  MAY lower the issued token's `exp` to the earliest retained receipt `exp`;
   2.  otherwise, where local policy permits the issued token to lack the retained receipts, MUST drop the array;
-  3.  otherwise MUST fail the request, with `invalid_grant` on a refresh or JWT bearer grant request ({{RFC6749, Section 5.2}}) or `invalid_request` on a Token Exchange request ({{RFC8693, Section 2.2.2}}).
+  3.  otherwise MUST fail the request, with `invalid_grant` on a refresh or JWT bearer grant request ({{Section 5.2 of RFC6749}}) or `invalid_request` on a Token Exchange request ({{Section 2.2.2 of RFC8693}}).
 
   Because the originating issuer cannot enumerate every downstream issuer that may inherit a receipt, deployments typically coordinate a bounded delegated-session lifetime to avoid propagation failure while limiting signing-key exposure; see {{reissuance-without-a-new-actor-hop}}.
 
@@ -328,11 +328,11 @@ The JWT payload of an actor receipt uses the claims defined below, grouped by pu
 `aud`:
 : Prohibited.  Issuers MUST NOT include `aud` in a receipt, and consumers MUST reject a receipt that carries it (step 5 of {{consumer-processing}}).
 
-  Receipts are validated as part of outer-token processing, not as independent JWTs against an audience; the outer token carries the audience scoping for the request.  This profile departs from {{RFC8725, Section 3.9}} on those grounds.  A present `aud` would suggest an independent audience constraint, which receipts do not assert; rejecting it gives the result that {{RFC7519, Section 4.1.3}} requires when the processing principal does not identify itself with the `aud` value.
+  Receipts are validated as part of outer-token processing, not as independent JWTs against an audience; the outer token carries the audience scoping for the request.  This profile departs from {{Section 3.9 of RFC8725}} on those grounds.  A present `aud` would suggest an independent audience constraint, which receipts do not assert; rejecting it gives the result that {{Section 4.1.3 of RFC7519}} requires when the processing principal does not identify itself with the `aud` value.
 
 ### Extension Claims
 
-A receipt MAY contain additional claims defined by another specification or by deployment policy.  Consumers ignore unrecognized claims unless another specification or local agreement defines their meaning, per {{RFC7519, Section 4}}.
+A receipt MAY contain additional claims defined by another specification or by deployment policy.  Consumers ignore unrecognized claims unless another specification or local agreement defines their meaning, per {{Section 4 of RFC7519}}.
 
 ## Receipt-Chain Linkage
 
@@ -412,7 +412,7 @@ An AS that supports refresh tokens for delegated access tokens:
 
 *  needs to retain the `actor_receipts` array associated with the original access token in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so each refreshed access token can carry the receipts forward unchanged.
 *  needs receipt `exp` values ({{receipt-claims}}) that accommodate the bounded maximum delegated-session lifetime.  Otherwise, as receipts approach expiry, refresh and downstream extension fall under the receipt lifetime rule in {{receipt-claims}}, shortening tokens or losing receipt-based provenance.
-*  takes the array from that retained state rather than from the previous access token: it validates the refresh request per {{RFC6749, Section 6}}, checks the retained receipts against its issuance state, and does not require the previous access token to remain unexpired or re-run {{consumer-processing}} against it.
+*  takes the array from that retained state rather than from the previous access token: it validates the refresh request per {{Section 6 of RFC6749}}, checks the retained receipts against its issuance state, and does not require the previous access token to remain unexpired or re-run {{consumer-processing}} against it.
 *  applies the receipt lifetime rule in {{receipt-claims}} when a retained receipt's `exp` is earlier than the `exp` it would set for the refreshed token.  Refresh adds no actor hop, so receipt provenance resumes only through a new delegated issuance that adds a hop and begins a chain under {{creating-the-first-receipt}}.
 
 ## Partial Coverage and Full Coverage
@@ -438,7 +438,7 @@ A TTS that adds a presenter as the new outermost actor follows {{extending-an-ex
 
 This profile defines no Transaction Token-specific receipt claims.  Transaction semantics follow the underlying specification and deployment profile.
 
-{{I-D.ietf-oauth-transaction-tokens}} defines no `jti` claim but permits additional claims ({{I-D.ietf-oauth-transaction-tokens, Section 9.2}}), so a TTS MAY include `jti` in a Transaction Token.  Without it, a Transaction Token's receipt chain is never instance-bound, because case 1 of {{receipt-instance-binding}} requires the outer token's `jti`; recipients that require instance binding need a TTS that includes `jti`.
+{{I-D.ietf-oauth-transaction-tokens}} defines no `jti` claim but permits additional claims ({{Section 9.2 of I-D.ietf-oauth-transaction-tokens}}), so a TTS MAY include `jti` in a Transaction Token.  Without it, a Transaction Token's receipt chain is never instance-bound, because case 1 of {{receipt-instance-binding}} requires the outer token's `jti`; recipients that require instance binding need a TTS that includes `jti`.
 
 # Consumer Processing {#consumer-processing}
 
@@ -460,7 +460,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  verify that OPTIONAL claims used by this profile have the expected JSON types when present, including `sub_iss`, `sub_profile`, `cnf`, `prh`, `prh_alg`, and `origin_jti`;
     *  verify that the receipt `act` object is single-hop, contains no nested `act`, and contains no `cnf`;
     *  reject a receipt that contains `aud` ({{receipt-claims}});
-    *  enforce `exp`, `iat`, and other JWT validity rules.  An expired receipt is invalid even for an older hop; only the small clock-skew leeway of {{RFC7519, Section 4.1.4}} applies.
+    *  enforce `exp`, `iat`, and other JWT validity rules.  An expired receipt is invalid even for an older hop; only the small clock-skew leeway of {{Section 4.1.4 of RFC7519}} applies.
     *  for `receipt[0]`, apply {{receipt-instance-binding}}.  For older receipts, `origin_jti` is historical information only.
 6.  Verify receipt-chain linkage:
     *  each receipt other than the oldest MUST include `prh`;
@@ -473,7 +473,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  `receipt[1].act.sub` MUST equal the outer token's `act.act.sub`, and `receipt[1].act.iss` MUST equal the outer token's `act.act.iss`;
     *  and so on for the number of receipts present;
     *  when `act.sub_profile` is present in the receipt `act` object, the corresponding visible `act` object MUST contain `act.sub_profile` with the same value;
-    *  `sub_profile` values are compared as sets: the space-delimited values are compared case-insensitively, their order is insignificant, and duplicate values are ignored ({{I-D.mora-oauth-entity-profiles, Section 3.3}}); comparison never rewrites a signed receipt;
+    *  `sub_profile` values are compared as sets: the space-delimited values are compared case-insensitively, their order is insignificant, and duplicate values are ignored ({{Section 3.3 of I-D.mora-oauth-entity-profiles}}); comparison never rewrites a signed receipt;
     *  when `act.sub_profile` is present only in the visible `act` object, the receipt remains aligned for this profile.  The visible value is not independently attested by that receipt, and recipients that require receipt coverage for actor classification MUST reject the receipt chain or apply explicit local mapping rules.
 8.  Verify subject alignment:
     *  `receipt[0].sub` MUST equal the outer token's top-level `sub`;
@@ -614,13 +614,13 @@ Receipt validation failures use the underlying protocol's error mechanism for th
 
 ## Authorization Server and Transaction Token Service Errors
 
-When an authorization server or Transaction Token Service rejects a request because inbound `actor_receipts` cannot be validated under {{extending-an-existing-receipt-chain}} or {{reissuance-without-a-new-actor-hop}} (signature failure, expired receipt, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment, or untrusted receipt issuer), it returns an error response per {{RFC6749, Section 5.2}}: `invalid_request` for a Token Exchange request, as {{RFC8693, Section 2.2.2}} requires, or `invalid_grant` for a JWT bearer grant request ({{RFC7523, Section 3.1}}) or a refresh request.  An absent receipt array that local policy requires, whether missing from the inbound token or from retained refresh state, is an input-validation failure: `invalid_request` for a Token Exchange request, or `invalid_grant` for a JWT bearer grant or refresh request.
+When an authorization server or Transaction Token Service rejects a request because inbound `actor_receipts` cannot be validated under {{extending-an-existing-receipt-chain}} or {{reissuance-without-a-new-actor-hop}} (signature failure, expired receipt, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment, or untrusted receipt issuer), it returns an error response per {{Section 5.2 of RFC6749}}: `invalid_request` for a Token Exchange request, as {{Section 2.2.2 of RFC8693}} requires, or `invalid_grant` for a JWT bearer grant request ({{Section 3.1 of RFC7523}}) or a refresh request.  An absent receipt array that local policy requires, whether missing from the inbound token or from retained refresh state, is an input-validation failure: `invalid_request` for a Token Exchange request, or `invalid_grant` for a JWT bearer grant or refresh request.
 
 When the failure reflects an actor-authorization decision rather than a structural validation failure, the issuer uses `actor_unauthorized`, as the core actor profile {{I-D.mcguinness-oauth-actor-profile}} requires.
 
 ## Resource Server Errors
 
-When a resource server rejects a request because `actor_receipts` validation fails under {{consumer-processing}}, it SHOULD return `invalid_token` per the bearer-token error model in {{RFC6750}} Section 3.1.  For a Transaction Token, the recipient instead rejects the request through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
+When a resource server rejects a request because `actor_receipts` validation fails under {{consumer-processing}}, it SHOULD return `invalid_token` per the bearer-token error model in {{Section 3.1. of RFC6750}}  For a Transaction Token, the recipient instead rejects the request through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
 
 When the failure is specifically that required receipts are absent or coverage is incomplete (per `actor_receipts_required` or `actor_receipts_complete_required`), the resource server SHOULD include an `error_description` value identifying receipt-coverage failure so that clients and operators can distinguish it from generic token-validation failures.
 
@@ -654,7 +654,7 @@ Companion profile authoring rules:
 *  Companions whose artifacts do not form a chain (for example, independent per-hop attestations or recipient acknowledgments that are not linked to one another) MAY define their own integrity structure.
 *  Companion profiles MAY define cross-receipt verification rules (for example, monotonicity rules over per-hop authority bounds, alignment rules between per-hop attestations, or aggregation rules over per-hop assertions) that compare claims across receipts in the chain.  The chain structure preserved by `prh` and the byte-for-byte preservation requirement make such cross-receipt verification possible.  Companion profiles defining cross-receipt rules MUST tolerate sparse coverage (not every receipt is required to carry the companion's claims) unless they explicitly require completeness.
 
-Cross-companion alignment: companion artifacts that need to reference a specific receipt (for example, an actor-signed proof at hop N referencing the corresponding AS-signed receipt at hop N) SHOULD do so by the receipt's `jti`, which is REQUIRED on receipts and, as {{RFC7519, Section 4.1.7}} requires when an application uses multiple issuers, free of collisions across issuers.  This profile does not define a hop-index claim; cross-companion alignment is established through `jti` reference plus the `prh` chain's structural integrity, not through array-position metadata.
+Cross-companion alignment: companion artifacts that need to reference a specific receipt (for example, an actor-signed proof at hop N referencing the corresponding AS-signed receipt at hop N) SHOULD do so by the receipt's `jti`, which is REQUIRED on receipts and, as {{Section 4.1.7 of RFC7519}} requires when an application uses multiple issuers, free of collisions across issuers.  This profile does not define a hop-index claim; cross-companion alignment is established through `jti` reference plus the `prh` chain's structural integrity, not through array-position metadata.
 
 Conflict resolution: when a recipient implements multiple companion profiles whose rules conflict, local policy determines precedence.  Companion profiles SHOULD be designed to add, not contradict, other profiles' rejection conditions, so that conflicts arise only between profiles whose threat models are genuinely incompatible.
 
