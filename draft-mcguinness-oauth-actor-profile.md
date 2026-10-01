@@ -699,7 +699,7 @@ For `subject_token` inputs:
 | JWT assertion grant | [Authorization Grant Processing](#jwt-assertion-grants-processing) | In validation | `sub`; `act`, `cnf` if present; continuity | See subsection |
 | JWT access token | {{RFC9068}}, `aud` relaxed | Trusted for its delegation chain | `sub`; `act`, `cnf` if present; continuity | Its effective scope |
 | Transaction Token | Transaction Token specification ({{txn-token-as-subject-token}}) | Trusted issuer | `sub`; `act`, `cnf` if present; continuity | Not defined here |
-| ID Token | {{OpenID.Core}}, local policy | No separate check | `sub` only | None |
+| ID Token | {{OpenID.Core}}, local policy | No separate check | `sub`; no `act`, `cnf`, or continuity | None |
 | Refresh token | Token store or trusted back-channel | No separate check | `sub`, scope | Its authorized scope |
 
 For `actor_token` inputs, each of which establishes the outermost actor:
@@ -974,13 +974,13 @@ Through presenter rebind with a validated `actor_token`, the TTS can upgrade a b
 
 This profile defines TTS processing for whichever of the following inputs a TTS supports: JWT assertion grants, JWT access tokens, and Transaction Tokens.  This document does not define TTS processing of ID Tokens or refresh tokens.
 
-For each accepted input, the TTS MUST apply the rules listed for it in the referenced section:
+For each accepted input, the TTS MUST apply the rules listed for it in the referenced sections:
 
 | Input | Rules applied | Section |
 |-------|---------------|---------|
-| JWT assertion grant | Validation and presenter continuity | [JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token) |
-| JWT access token | Validation and extraction | [JWT Access Token as subject_token](#jwt-access-token-as-subject-token) |
-| Transaction Token | Validation and extraction | [Transaction Token as subject_token](#txn-token-as-subject-token) |
+| JWT assertion grant | Validation and presenter continuity | [Input Processing](#token-exchange-input-processing); [JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token) |
+| JWT access token | Validation and extraction | [Input Processing](#token-exchange-input-processing); [JWT Access Token as subject_token](#jwt-access-token-as-subject-token) |
+| Transaction Token | Validation and extraction | [Input Processing](#token-exchange-input-processing); [Transaction Token as subject_token](#txn-token-as-subject-token) |
 
 The resulting state (subject, classification, chain, and binding) is input to [Transaction Token Output Rules](#transaction-token-output-rules) instead of to JWT access token issuance.  For an inbound Transaction Token, this state also includes `req_wl`.  The `scope` claim of a Transaction Token can use a different vocabulary from that of the inbound token ({{Section 9.2 of I-D.ietf-oauth-transaction-tokens}}), so the literal scope-subset rules of [Input Processing](#token-exchange-input-processing) step 5 do not apply.  The TTS still ensures that the requested scope does not exceed the authority of the `subject_token` ({{Section 13.6 of I-D.ietf-oauth-transaction-tokens}}) and rejects the request when that authority cannot be determined ({{Section 13.14 of I-D.ietf-oauth-transaction-tokens}}).  A replacement Transaction Token cannot expand the scope of permitted actions ({{Section 13.15 of I-D.ietf-oauth-transaction-tokens}}).
 
