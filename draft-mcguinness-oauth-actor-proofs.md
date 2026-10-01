@@ -524,6 +524,8 @@ The following parameters are defined for use in Protected Resource Metadata {{RF
 `actor_proofs_complete_required`:
 : OPTIONAL.  A boolean.  When `true`, the resource server indicates that it requires complete proof coverage: the proof count needs to equal the visible actor-chain depth and `actor_proofs_complete` needs to be `true` in the outer token or the introspection response.  This parameter refines `actor_proofs_required`; a resource server SHOULD NOT set `actor_proofs_complete_required: true` without also setting `actor_proofs_required: true`.  When `false` or absent, partial proof coverage is acceptable to the resource server, subject to any further local policy.
 
+No metadata parameter indicates that a resource server requires bound siblings (`proof_jti` on receipts); deployments that need bound siblings coordinate that requirement through deployment policy.
+
 ## Introspection Response Members {#introspection-response-members}
 
 The following members are defined for use in OAuth Token Introspection responses {{RFC7662}}:
@@ -538,7 +540,7 @@ Consumer use of these members is described in {{consumer-introspection}}; intros
 
 # Error Handling {#error-handling}
 
-Proof validation failures use the underlying protocol's error mechanism for the stage at which validation occurs.
+Proof validation failures use the underlying protocol's error mechanism for the stage at which validation occurs.  This document defines no new OAuth error codes.
 
 ## Authorization Server and Transaction Token Service Errors
 
@@ -596,7 +598,7 @@ The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT bes
 *  **Issuer omission of proofs.**  Omission is a downgrade, not merely denial of service, against recipients that do not require proofs ({{downgrade-by-omission}}).
 *  **Proof re-embedding within the validity window.**  Any holder of a valid proof, including the issuer it was submitted to, can embed it in another token with matching context ({{proof-to-token-binding-limits}}).
 *  **Malicious or coerced actor.**  Proofs attest that the actor's key signed the participation, not the actor's intent; neither companion detects an actor colluding with a compromised issuer.
-*  **Cross-subject graft with a compromised actor key.**  Mitigation: exact, namespace-aware subject matching across proofs or trusted subject mapping ({{subject-re-expression-across-hops}}).
+*  **Cross-subject graft with a compromised actor key.**  Deployments where subject continuity is a security requirement limit this threat through the subject-matching options in {{subject-re-expression-across-hops}}.
 *  **Replay of an entire token plus its proofs.**  This profile does not define replay detection; proofs inherit the outer token's replay characteristics.
 
 ## Current Presenter Validation
@@ -617,7 +619,7 @@ Trust establishment requirements:
 *  A recipient needs to establish its trusted actor-key sources before relying on `actor_proofs`, through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.
 *  A recipient MUST NOT treat the presence of a syntactically valid signed proof as sufficient grounds to trust the key that signed it.
 *  A recipient MUST NOT dereference key references supplied by the proof itself (such as `jku` or `x5u` header parameters) outside a pre-established trust framework, per {{RFC8725}}.
-*  Key resolution and trust evaluation use the (`act.iss`, `act.sub`) pair, checked in step 5 of {{consumer-processing}} before any retrieval; identical `act.sub` strings under different namespace authorities are different actors ({{identity-claims}}).
+*  Key resolution and trust evaluation use the (`act.iss`, `act.sub`) pair, checked in step 5 of {{consumer-processing}} before any retrieval.  The bare proof `iss` string is not a resolution index on its own ({{identity-claims}}), and identical `act.sub` strings under different namespace authorities are different actors.
 
 This document profiles two resolution patterns; a deployment can support either or both:
 
