@@ -228,7 +228,7 @@ Opaque access tokens used as Token Exchange inputs are outside the interoperable
 
 | Role | Supported credentials |
 |------|-----------------------|
-| Token Exchange `subject_token` | JWT assertion grant, JWT access token, ID token, refresh token, Transaction Token |
+| Token Exchange `subject_token` | JWT assertion grant, JWT access token, ID Token, refresh token, Transaction Token |
 | Token Exchange `actor_token` | Workload identity credential, JWT client assertion, non-delegated JWT access token |
 | TTS `subject_token` | JWT assertion grant, JWT access token, Transaction Token |
 | Issued token | JWT assertion grant, JWT access token, Transaction Token |
@@ -509,12 +509,12 @@ In this example, the receiving AS trusts the enterprise AS both to issue the gra
 
 This document defines two issuer patterns:
 
-*  an AS-issued delegated assertion, where the JWT `iss` is a trusted AS and `act.sub` identifies the actor (recommended);
+*  an AS-issued delegated assertion, where the assertion's `iss` is a trusted AS and `act.sub` identifies the actor (recommended);
 *  an assertion carrying a pre-existing nested `act` chain, where the current JWT `iss` is a trusted AS carrying forward prior actor assertions.
 
 The issuing AS sets a new actor's `act.iss` to the issuer or namespace context in which that actor's `act.sub` is interpreted, as required by [Actor Object Structure](#actor-object-structure); for actors registered in the AS's own namespace, this is often the AS's own issuer URI.
 
-A deployment MAY additionally accept a self-issued actor assertion when explicitly enabled by another specification or local policy, but that behavior is outside the scope of this document.  Implementations MUST reject self-issued assertion grants by default; see [Self-Issued Authorization Grants](#security-self-issued-grants) for the security controls any such deployment needs to establish independently.
+A deployment MAY additionally accept a self-issued actor assertion when explicitly enabled by another specification or local policy, but that behavior is outside the interoperable scope of this document.  Implementations MUST reject self-issued assertion grants by default; see [Self-Issued Authorization Grants](#security-self-issued-grants) for the security controls any such deployment needs to establish independently.
 
 ## Authorization Grant Processing {#jwt-assertion-grants-processing}
 
@@ -525,14 +525,14 @@ When an AS receives a JWT assertion grant containing an `act` claim:
     *  **Grants without an enforced grant-level sender constraint**: The AS MUST reject with `invalid_grant` an assertion whose validated (`iss`, `jti`) pair it has already accepted, for as long as the assertion remains acceptable, including any allowed clock skew.  A proof used only for client authentication or to bind the issued token is not a grant-level sender constraint, and neither is a top-level `cnf` that presenter rebind supersedes ([JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token)).
     *  **Sender-constrained grants**: When the AS validates the request's proof of possession against the assertion's top-level `cnf` claim as specified in step 6, the AS SHOULD additionally apply replay prevention to the validated (`iss`, `jti`) pair as defense in depth.  Any permitted reuse requires validation of that binding on each redemption and remains subject to the single-use requirements in [Self-Issued Authorization Grants](#security-self-issued-grants) or the applicable grant profile.
 
-2.  The AS MUST verify that the JWT `iss` is trusted under local policy to assert delegation on behalf of the actor identified by `act.sub`.
+2.  The AS MUST verify that the assertion's `iss` is trusted under local policy to assert delegation on behalf of the actor identified by `act.sub`.
 
-    > Note: This document expects the JWT `iss` to be a trusted AS.  Self-issued grants, where the acting entity is also the assertion issuer, are a deployment-specific extension outside the scope of this document; see [Self-Issued Authorization Grants](#security-self-issued-grants).
+    > Note: This document expects the assertion's `iss` to be a trusted AS.  Self-issued grants, where the acting entity is also the assertion issuer, are a deployment-specific extension outside the interoperable scope of this document; see [Self-Issued Authorization Grants](#security-self-issued-grants).
 
-3.  The AS MUST verify that the JWT `iss` is trusted under local policy to assert the (`act.iss`, `act.sub`) actor identifier pair.
+3.  The AS MUST verify that the assertion's `iss` is trusted under local policy to assert the (`act.iss`, `act.sub`) actor identifier pair.
 
     *  If `act.iss` is absent: when policy or metadata requires profile conformance, reject with `invalid_grant`; otherwise, apply [Migration and Adoption](#migration-and-adoption).
-    *  If the JWT `iss` is not trusted to assert the actor identifier pair: reject with `invalid_grant`.
+    *  If the assertion's `iss` is not trusted to assert the actor identifier pair: reject with `invalid_grant`.
 
     > Note: See [Validate Outermost Actor](#validate-outermost-actor) for the trust-validation framing and [Trusting Actor Identifier Pairs](#act-iss-authority-guidance) for non-normative examples.
 
@@ -545,7 +545,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
     *  If the delegation relationship is prohibited by AS policy or cannot be confirmed: reject with `actor_unauthorized`.
 
-5.  If the inbound assertion's `act` object contains a nested `act` claim (indicating that the asserted actor is itself a delegatee), the AS MUST handle the inner chain as follows:
+5.  If the inbound assertion's `act` object contains a nested `act` object (indicating that the asserted actor is itself a delegatee), the AS MUST handle the inner chain as follows:
 
     *  **Propagation decision**: The AS SHOULD propagate the inner chain by preserving its nested structure, provided the resulting chain depth does not exceed the limit in [Delegation Chains](#delegation-chains).  If the AS does not accept pre-chained assertions, it MUST reject the request.
 
@@ -660,7 +660,7 @@ For JWT `actor_token` inputs, the AS identifies the credential profile as follow
 
 *  A JWT also presented as `client_assertion` with a `client_assertion_type` of `urn:ietf:params:oauth:client-assertion-type:jwt-bearer` is a client assertion when its `sub` equals the authenticating client's `client_id`.
 *  A JWT `actor_token` not presented as `client_assertion` is a client assertion when its `iss` and `sub` both equal the authenticated client's `client_id` ({{Section 5.2 of RFC7521}}).
-*  If `sub` differs from `client_id`, the AS MUST NOT classify the JWT as a client assertion solely because it appears in `client_assertion`.  It MUST apply workload credential processing if that profile matches, or reject with `invalid_request`.
+*  If `sub` differs from `client_id`, the AS MUST NOT classify the JWT as a client assertion solely because it appears in `client_assertion`.  It MUST apply workload identity credential processing if that profile matches, or reject with `invalid_request`.
 *  If exactly one supported actor-credential profile cannot be identified, the AS MUST reject with `invalid_request`.
 *  If `client_assertion` and `actor_token` are different JWTs, the AS MUST process each independently.  These disambiguation rules apply only to `actor_token`.
 
@@ -670,13 +670,13 @@ For PoP migration, this profile distinguishes two classes of `subject_token` inp
 
 | Input type | Carries inbound `act` state | Carries top-level `cnf` | Presenter continuity |
 |---|---|---|---|
-| ID token | No | No | Not available |
+| ID Token | No | No | Not available |
 | Refresh token | No | No | Not available |
 | JWT assertion grant | Yes (if present) | Yes (if present) | Available |
 | JWT access token | Yes (if present) | Yes (if present) | Available |
 | Transaction Token | Yes (if present) | Yes (if present) | Available |
 
-Identity-only inputs (ID tokens and refresh tokens) establish `sub` and MAY establish supporting subject state such as `sub_profile` or an authorization ceiling.  They do not establish inbound `act` state or presenter continuity, and do not by themselves justify carrying `act` into the issued token.
+Identity-only inputs (ID Tokens and refresh tokens) establish `sub` and MAY establish supporting subject state such as `sub_profile` or an authorization ceiling.  They do not establish inbound `act` state or presenter continuity, and do not by themselves justify carrying `act` into the issued token.
 
 Token-state inputs (JWT assertion grants, JWT access tokens, and Transaction Tokens) establish `sub` and MAY establish `sub_profile`, inbound `act` chain state, and current-presenter binding through top-level `cnf`.  They are the only `subject_token` inputs from which this document defines interoperable delegation-chain preservation and presenter continuation.
 
@@ -717,7 +717,7 @@ The AS can reduce scope under local policy.  The effective scope of the issued t
 
 #### JWT Access Token {#jwt-access-token-as-subject-token}
 
-When a Token Exchange request ({{RFC8693}}) presents a JWT access token as the `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:access_token`), the AS MUST apply the following steps.  Use of an opaque access token as the `subject_token` is outside the interoperable scope of this profile (see [Profile Scope](#profile-scope)).
+When a Token Exchange request ({{RFC8693}}) presents a JWT access token as the `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:access_token`), the AS MUST apply the following steps.  Use of an opaque access token as the `subject_token` is outside the interoperable scope of this document (see [Profile Scope](#profile-scope)).
 
 1.  The AS MUST validate the inbound JWT access token per {{RFC9068}}: its signature and its `iss`, `sub`, `exp`, `nbf`, and `jti` claims.  Because a JWT access token used as `subject_token` was issued for a resource server, its `aud` does not ordinarily include the Token Exchange AS's token endpoint; the AS MUST NOT reject the inbound token solely because its `aud` does not include the AS's token endpoint URI.
 
@@ -753,7 +753,7 @@ When a Token Exchange request ({{RFC8693}}) presents a Transaction Token as the 
 
 ### Identity-Only Subject Tokens
 
-ID tokens and refresh tokens are identity-only `subject_token` inputs.  For these inputs, this document defines the following common model:
+ID Tokens and refresh tokens are identity-only `subject_token` inputs.  For these inputs, this document defines the following common model:
 
 *  the validated input establishes `sub`;
 *  `sub_profile`, if available from the validated input or trusted state, becomes supporting subject state;
@@ -766,21 +766,21 @@ ID tokens and refresh tokens are identity-only `subject_token` inputs.  For thes
 
 ##### Overview {#id-token-overview}
 
-An OpenID Connect ID token {{OpenID.Core}} identifies an authenticated user in `sub` and the relying party in `aud` (and possibly `azp`).  Under this profile, it establishes subject identity only.  The acting party comes from `actor_token`; `aud` and `azp` remain client identifiers.
+An OpenID Connect ID Token {{OpenID.Core}} identifies an authenticated user in `sub` and the relying party in `aud` (and possibly `azp`).  Under this profile, it establishes subject identity only.  The acting party comes from `actor_token`; `aud` and `azp` remain client identifiers.
 
 ##### Processing {#id-token-as-subject-token}
 
-When a Token Exchange request ({{RFC8693}}) presents an ID token as the `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:id_token`), the AS MUST apply the following steps.
+When a Token Exchange request ({{RFC8693}}) presents an ID Token as the `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:id_token`), the AS MUST apply the following steps.
 
-1.  The AS MUST validate the ID token per {{OpenID.Core}} and local policy before using it as actor-profile input.  Any checks on `aud` or `azp` remain OpenID Connect and client-identity checks; they do not by themselves establish the delegated actor under this profile.
+1.  The AS MUST validate the ID Token per {{OpenID.Core}} and local policy before using it as actor-profile input.  Any checks on `aud` or `azp` remain OpenID Connect and client-identity checks; they do not by themselves establish the delegated actor under this profile.
 
-2.  The AS MUST use the validated ID token's `sub` as the subject identity for the issued token, subject to the same-subject preservation rule in [JWT Access Token Output](#jwt-access-token-propagation).
+2.  The AS MUST use the validated ID Token's `sub` as the subject identity for the issued token, subject to the same-subject preservation rule in [JWT Access Token Output](#jwt-access-token-propagation).
 
-3.  The AS SHOULD set `sub_profile` to `user` in the issued token if it can authoritatively classify the ID token's `sub` as a human user identity and no conflicting subject classification is available under local policy.
+3.  The AS SHOULD set `sub_profile` to `user` in the issued token if it can authoritatively classify the ID Token's `sub` as a human user identity and no conflicting subject classification is available under local policy.
 
-4.  Under [Presenter Transition Model](#token-exchange-presenter-model), the ID token is an identity-only `subject_token`.  It does not establish actor identity or presenter continuity.  If an `actor_token` is present, the AS processes it per its type-specific rules and derives `act.sub` from it as specified in [Actor Tokens](#actor-tokens).  If the issued token is sender-constrained, that `actor_token` also establishes the new presenter for presenter-rebind mode.  If no `actor_token` or independent delegation basis is present, the AS MUST NOT include `act` in the issued token.
+4.  Under [Presenter Transition Model](#token-exchange-presenter-model), the ID Token is an identity-only `subject_token`.  It does not establish actor identity or presenter continuity.  If an `actor_token` is present, the AS processes it per its type-specific rules and derives `act.sub` from it as specified in [Actor Tokens](#actor-tokens).  If the issued token is sender-constrained, that `actor_token` also establishes the new presenter for presenter-rebind mode.  If no `actor_token` or independent delegation basis is present, the AS MUST NOT include `act` in the issued token.
 
-5.  The AS MUST apply the propagation rules in [JWT Access Token Output](#jwt-access-token-propagation) to determine the remaining claims in the issued token.  Because an ID token carries no inbound `act` chain and no OAuth scope ceiling, delegation-chain construction and scope determination come from the `actor_token` (if any), {{RFC8693}}, and local policy rather than from the ID token itself.
+5.  The AS MUST apply the propagation rules in [JWT Access Token Output](#jwt-access-token-propagation) to determine the remaining claims in the issued token.  Because an ID Token carries no inbound `act` chain and no OAuth scope ceiling, delegation-chain construction and scope determination come from the `actor_token` (if any), {{RFC8693}}, and local policy rather than from the ID Token itself.
 
 #### Refresh Token {#refresh-tokens}
 
@@ -866,7 +866,7 @@ When a Token Exchange request ({{RFC8693}}) includes an `actor_token` that is a 
 
 1.  The AS MUST validate the workload identity credential per its type specification.  For WIMSE workload identity credentials ({{I-D.ietf-wimse-workload-creds}}), validation follows the rules defined in that specification.  If validation fails, the AS MUST reject the request with `invalid_request`.
 
-2.  The AS MUST verify that the workload credential's issuer is trusted under local policy to assert the workload's identity.  If not, the AS MUST reject the request with `invalid_request`.  The issuer is identified by `iss` or, for a WIMSE credential without `iss` ({{Section 5.1 of I-D.ietf-wimse-workload-creds}}), by the trust anchors configured for the trust domain of its `sub` ({{Section 3 of I-D.ietf-wimse-workload-creds}}).
+2.  The AS MUST verify that the workload identity credential's issuer is trusted under local policy to assert the workload's identity.  If not, the AS MUST reject the request with `invalid_request`.  The issuer is identified by `iss` or, for a WIMSE credential without `iss` ({{Section 5.1 of I-D.ietf-wimse-workload-creds}}), by the trust anchors configured for the trust domain of its `sub` ({{Section 3 of I-D.ietf-wimse-workload-creds}}).
 
 3.  The AS MUST derive the outermost actor and handle any inbound chain as specified in [Actor Tokens](#actor-tokens).
 
@@ -881,7 +881,7 @@ A non-delegated JWT access token can be presented as `actor_token` to establish 
 
 #### Processing
 
-When a Token Exchange request includes an `actor_token` that is a JWT access token (`actor_token_type=urn:ietf:params:oauth:token-type:access_token`), the AS MUST apply the following steps.  Use of an opaque access token as the `actor_token` is outside the interoperable scope of this profile (see [Profile Scope](#profile-scope)).
+When a Token Exchange request includes an `actor_token` that is a JWT access token (`actor_token_type=urn:ietf:params:oauth:token-type:access_token`), the AS MUST apply the following steps.  Use of an opaque access token as the `actor_token` is outside the interoperable scope of this document (see [Profile Scope](#profile-scope)).
 
 1.  The AS MUST validate the `actor_token` per {{RFC9068}}, with the `aud` relaxation in step 1 of [JWT Access Token as subject_token](#jwt-access-token-as-subject-token).  If validation fails, the AS MUST reject the request with `invalid_request`.
 
@@ -1036,7 +1036,7 @@ Through presenter rebind with a validated `actor_token`, the TTS can upgrade a b
 
 ## Supported Subject Tokens
 
-This profile defines TTS processing for whichever of the following inputs a TTS supports: JWT assertion grants, JWT access tokens, and Transaction Tokens.  This document does not define TTS processing of ID tokens or refresh tokens.
+This profile defines TTS processing for whichever of the following inputs a TTS supports: JWT assertion grants, JWT access tokens, and Transaction Tokens.  This document does not define TTS processing of ID Tokens or refresh tokens.
 
 For each accepted input, the TTS MUST apply the rules listed for it in the referenced section:
 
@@ -1052,7 +1052,7 @@ The resulting state (subject, classification, chain, and binding) is input to [T
 
 The TTS applies [Delegation Chain Validation and Construction](#delegation-chain-algorithm) and [JWT Access Token Output](#jwt-access-token-propagation), with the Transaction Token adaptations below.
 
-When a TTS receives a token-exchange request to issue or refresh a Transaction Token from an inbound JWT assertion grant, JWT access token, or Transaction Token that carries actor-profile claims, it MUST apply the following rules:
+When a TTS receives a Token Exchange request to issue or refresh a Transaction Token from an inbound JWT assertion grant, JWT access token, or Transaction Token that carries actor-profile claims, it MUST apply the following rules:
 
 1.  The TTS preserves `sub` from the inbound token, as step 2 of [JWT Access Token Output](#jwt-access-token-propagation) requires.
 
@@ -1270,7 +1270,7 @@ This profile uses the following parameters in the AS metadata document ({{RFC841
 
      -  `urn:ietf:params:oauth:token-type:jwt`: JWT assertion grants ([JWT Assertion Grants](#jwt-assertion-grants))
      -  `urn:ietf:params:oauth:token-type:access_token`: JWT access tokens ([JWT Access Tokens](#jwt-access-tokens))
-     -  `urn:ietf:params:oauth:token-type:id_token`: OpenID Connect ID tokens ([OpenID Connect ID Token](#id-tokens))
+     -  `urn:ietf:params:oauth:token-type:id_token`: OpenID Connect ID Tokens ([OpenID Connect ID Token](#id-tokens))
      -  `urn:ietf:params:oauth:token-type:refresh_token`: refresh tokens ([Refresh Token](#refresh-tokens))
      -  `urn:ietf:params:oauth:token-type:txn_token`: Transaction Tokens ([Transaction Tokens](#transaction-tokens))
 
@@ -1527,7 +1527,7 @@ As described in [Representation and Policy](#representation-and-policy), this do
 
 An attacker who can inject or forge `act` claims can impersonate an arbitrary actor and exercise a subject's permissions without authorization.  The primary mitigation is to accept `act` claims only in tokens whose issuer is trusted to assert the delegated actor relationship.  RS implementations validate the token signature before extracting actor claims, as the applicable token specification and [Resource Server Processing](#resource-server-processing) require, and MUST verify that the token issuer is trusted to convey the claims it carries.
 
-Because inner `act` objects are set by upstream ASes and not re-signed at each hop, the integrity of the entire delegation chain depends on the signature of the outermost token.  Implementations SHOULD use short token lifetimes, and an expired token is rejected per {{Section 4.1.4 of RFC7519}} regardless of chain depth.
+Because inner `act` objects are set by upstream ASes and not re-signed at each hop, the integrity of the entire delegation chain depends on the signature of the token that carries it.  Implementations SHOULD use short token lifetimes, and an expired token is rejected per {{Section 4.1.4 of RFC7519}} regardless of chain depth.
 
 Inner `act` objects are prior-actor context under [Carry Prior-Actor Context](#carry-prior-actor-context).  Security policies that rely on inner actor identities for access control are deployment-specific and generally lower-assurance than policies based on `sub` and the outermost `act.sub`.
 
@@ -1744,11 +1744,11 @@ The Enterprise AS issues the following JWT access token for the Payroll API:
 }
 ~~~
 
-This token carries a single-hop actor object: the `act` claim is present but contains no nested `act` claim.  The `sub` claim identifies the payroll administrator, while `act.sub` identifies the service exercising that administrator's authorization.
+This token carries a single-hop actor object: the `act` claim is present but contains no nested `act` object.  The `sub` claim identifies the payroll administrator, while `act.sub` identifies the service exercising that administrator's authorization.
 
 ## Transaction Token
 
-After processing the payroll request, the Payroll API exchanges the inbound access token at the Audit TTS to call the internal Audit Service.  The Payroll API is the requesting workload (`req_wl`).  The TTS validates the inbound delegation chain, preserves it as an inner `act` claim, and adds a new outermost actor for the Payroll API:
+After processing the payroll request, the Payroll API exchanges the inbound access token at the Audit TTS to call the internal Audit Service.  The Payroll API is the requesting workload (`req_wl`).  The TTS validates the inbound delegation chain, preserves it as an inner `act` object, and adds a new outermost actor for the Payroll API:
 
 ~~~json
 {
@@ -1934,7 +1934,7 @@ In this ID-JAG, the `client_id`, `azp`, and `act.sub` claims carry the same URI 
 
 ## Step 3: Agent Exchanges ID-JAG for Access Token at Travel Provider AS
 
-The agent presents the ID-JAG as a JWT Bearer authorization grant ({{RFC7523}}) to the Travel Provider AS, which processes it as an ID-JAG per {{I-D.ietf-oauth-identity-assertion-authz-grant}} with the actor-profile rules in [Authorization Grant Processing](#jwt-assertion-grants-processing):
+The agent presents the ID-JAG as a JWT bearer grant ({{RFC7523}}) to the Travel Provider AS, which processes it as an ID-JAG per {{I-D.ietf-oauth-identity-assertion-authz-grant}} with the actor-profile rules in [Authorization Grant Processing](#jwt-assertion-grants-processing):
 
 ~~~
 POST /token HTTP/1.1

@@ -75,7 +75,7 @@ informative:
 
 --- abstract
 
-This document defines OAuth Actor Receipts, an optional companion to the OAuth Actor Profile for Delegation.  Each receipt is a signed JSON Web Token (JWT) attesting which issuer added an actor hop and, optionally, the hop's historical presenter binding.  The `actor_receipts` claim carries a hash-linked chain of receipts that recipients verify against each hop's issuer.  This document specifies receipt processing rules and the associated metadata and introspection parameters.
+This document defines OAuth Actor Receipts, an optional companion to the OAuth Actor Profile for Delegation.  Each receipt is a signed JSON Web Token (JWT) attesting which issuer added an actor hop and, optionally, the hop's historical presenter binding.  The `actor_receipts` claim carries a hash-linked chain of receipts that recipients verify against each hop's issuer.  This document specifies receipt processing rules and the associated metadata parameters and introspection response members.
 
 --- middle
 
@@ -125,7 +125,7 @@ This profile does not redefine the request semantics of {{RFC8693}} or of Transa
 *  the `actor_receipts` claim;
 *  the signed JWT format of each receipt;
 *  issuer and consumer processing rules for receipts;
-*  the associated metadata and introspection parameters.
+*  the associated metadata parameters and introspection response members.
 
 ## Relationship to Token Introspection
 
@@ -614,7 +614,7 @@ Receipt validation failures use the underlying protocol's error mechanism for th
 
 ## Authorization Server and Transaction Token Service Errors
 
-When an authorization server or Transaction Token Service rejects a request because inbound `actor_receipts` cannot be validated under {{extending-an-existing-receipt-chain}} or {{reissuance-without-a-new-actor-hop}} (signature failure, expired receipt, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment, or untrusted receipt issuer), it returns an error response per {{Section 5.2 of RFC6749}}: the `invalid_request` error code for a Token Exchange request, as {{Section 2.2.2 of RFC8693}} requires, or the `invalid_grant` error code for a JWT bearer grant request ({{Section 3.1 of RFC7523}}) or a refresh request.  An absent receipt array that local policy requires, whether missing from the inbound token or from retained refresh state, is an input-validation failure: `invalid_request` for a Token Exchange request, or `invalid_grant` for a JWT bearer grant or refresh request.
+When an authorization server or Transaction Token Service rejects a request because inbound `actor_receipts` cannot be validated under {{extending-an-existing-receipt-chain}} or {{reissuance-without-a-new-actor-hop}} (signature failure, expired receipt, unsupported `prh_alg`, broken `prh` chain, hop or subject misalignment, or untrusted receipt issuer), it returns an error response per {{Section 5.2 of RFC6749}}: the `invalid_request` error code for a Token Exchange request, as {{Section 2.2.2 of RFC8693}} requires, or the `invalid_grant` error code for a JWT bearer grant request ({{Section 3.1 of RFC7523}}) or a refresh request.  An absent receipt array that local policy requires, whether missing from the inbound token or from retained refresh state, is an input-validation failure: the `invalid_request` error code for a Token Exchange request, or the `invalid_grant` error code for a JWT bearer grant or refresh request.
 
 When the failure reflects an actor-authorization decision rather than a structural validation failure, the issuer uses the `actor_unauthorized` error code, as the core actor profile {{I-D.mcguinness-oauth-actor-profile}} requires.
 
@@ -789,7 +789,7 @@ Deployments SHOULD verify that the outer token plus its `actor_receipts` array f
 
 ## Historical `cnf` Disclosure {#historical-cnf-disclosure}
 
-Receipt `cnf` values reveal prior-hop public-key identifiers or certificate thumbprints to any party that receives the token or introspection response.  These are stable identifiers that enable cross-request and cross-service correlation of actors and services over time.  Issuers SHOULD NOT include `cnf` in receipts unless the relying parties that will receive the token have been evaluated for that disclosure risk and the risk is acceptable.  Omitting `cnf` does not invalidate the receipt; it means that hop lacks independently attested historical presenter binding, which is acceptable for many deployments.
+Receipt `cnf` values reveal prior-hop public-key identifiers or certificate thumbprints to any party that receives the token or introspection response.  These are stable identifiers that enable cross-request and cross-service correlation of actors and services over time.  Issuers SHOULD NOT include `cnf` in receipts unless the recipients that will receive the token have been evaluated for that disclosure risk and the risk is acceptable.  Omitting `cnf` does not invalidate the receipt; it means that hop lacks independently attested historical presenter binding, which is acceptable for many deployments.
 
 # Privacy Considerations
 
@@ -822,15 +822,15 @@ This profile does not define a per-claim selective-disclosure mechanism for rece
 *  Issuers MAY emit partial-coverage chains that cover only the outermost hops (see {{partial-coverage-and-full-coverage}}); this is the only mechanism for omitting individual hops, and it operates at issuance time.
 *  Issuers and introspection servers MAY withhold the `actor_receipts` array entirely; a strict subset of an existing array cannot validate under {{consumer-processing}} (see {{consumer-introspection}}).
 
-Deployments needing finer-grained selective disclosure require a future companion profile.  Such a companion must alter the chain-linkage construction (for example, by linking against a stable hash that survives claim redaction); a companion that only adds a selective-disclosure claim cannot achieve per-claim disclosure within the current `prh` construction.
+Deployments needing finer-grained selective disclosure require a future companion profile.  Such a companion would need to alter the chain-linkage construction (for example, by linking against a stable hash that survives claim redaction); a companion that only adds a selective-disclosure claim cannot achieve per-claim disclosure within the current `prh` construction.
 
 ## Audience Restriction
 
-A receipt travels with the outer token to whichever audiences the outer token serves; receipts have no independent audience scoping ({{receipt-claims}}).  Deployments needing audience-specific disclosure constraints SHOULD partition receipt issuance by audience at issuance time (for example, issue receipt-bearing tokens only to audiences with adequate disclosure agreements) rather than relying on receipt-level audience restriction, which this profile does not provide.
+A receipt is carried with the outer token to whichever audiences the outer token serves; receipts have no independent audience scoping ({{receipt-claims}}).  Deployments needing audience-specific disclosure constraints SHOULD partition receipt issuance by audience at issuance time (for example, issue receipt-bearing tokens only to audiences with adequate disclosure agreements) rather than relying on receipt-level audience restriction, which this profile does not provide.
 
 ## Unnecessary Hop Disclosure
 
-Receipts expose every hop the issuer chose to include.  Some hops might be deployment-internal (orchestration layers, internal workload-identity services) that the deployment would not otherwise expose to relying parties.  Issuers SHOULD evaluate, at issuance time, which hops are appropriate to expose to which audiences.  Where inner hops are not appropriate to expose, issuers SHOULD use partial coverage (omitting the inner-hop receipts) rather than fabricating, suppressing, or rewriting visible `act` chain entries; the latter would violate the core actor profile.
+Receipts expose every hop the issuer chose to include.  Some hops might be deployment-internal (orchestration layers, internal workload-identity services) that the deployment would not otherwise expose to recipients.  Issuers SHOULD evaluate, at issuance time, which hops are appropriate to expose to which audiences.  Where inner hops are not appropriate to expose, issuers SHOULD use partial coverage (omitting the inner-hop receipts) rather than fabricating, suppressing, or rewriting visible `act` chain entries; the latter would violate the core actor profile.
 
 ## Cross-Service Correlation
 

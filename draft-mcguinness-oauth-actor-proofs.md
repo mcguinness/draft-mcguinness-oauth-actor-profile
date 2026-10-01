@@ -155,7 +155,7 @@ The receipts companion's distinction between historical evidence and current int
 
 ## Relationship to Other Actor-Evidence Work {#related-work}
 
-Several contemporaneous efforts add actor-side or issuer-side delegation evidence to OAuth deployments; they differ from this profile chiefly in where the evidence is carried, who signs it, and who can verify it.  This section is informative.
+Several concurrent efforts add actor-side or issuer-side delegation evidence to OAuth deployments; they differ from this profile chiefly in where the evidence is carried, who signs it, and who can verify it.  This section is informative.
 
 *  {{I-D.mw-oauth-actor-chain}} retains actor-signed step proofs at the AS and carries an issuer-signed cumulative commitment in the token.  Actor-signature verification therefore depends on AS retention.  This profile instead carries the proofs for direct recipient verification, increasing token size at each hop.
 *  {{I-D.liu-oauth-chain-delegation}} carries AS-signed hop records inline, optionally countersigned by the delegator.  Those fields carry no target binding, and records are re-signed at domain boundaries.
@@ -633,11 +633,11 @@ When an authorization server or Transaction Token Service rejects a token reques
 
 When the requested target cannot be issued within the submitted proof's target binding after any narrowing under {{accepting-a-proof}}, the issuer SHOULD return `invalid_target`, per {{Section 2.2.2 of RFC8693}} for a Token Exchange request and {{Section 2 of RFC8707}} for other token requests.
 
-When the failure reflects an actor-authorization decision rather than a structural validation failure, the issuer uses the `actor_unauthorized` error code, as the core actor profile {{I-D.mcguinness-oauth-actor-profile}} requires.  An absent required proof, whether an `actor_proof` parameter or an inbound `actor_proofs` array, is an input-validation failure: the issuer returns `invalid_request` for a Token Exchange request and `invalid_grant` for a JWT bearer grant or refresh request.
+When the failure reflects an actor-authorization decision rather than a structural validation failure, the issuer uses the `actor_unauthorized` error code, as the core actor profile {{I-D.mcguinness-oauth-actor-profile}} requires.  An absent required proof, whether an `actor_proof` parameter or an inbound `actor_proofs` array, is an input-validation failure: the issuer returns the `invalid_request` error code for a Token Exchange request and the `invalid_grant` error code for a JWT bearer grant or refresh request.
 
 ## Resource Server Errors
 
-When a resource server rejects a request because `actor_proofs` validation fails under {{consumer-processing}}, it SHOULD return `invalid_token` per the bearer-token error model in {{Section 3.1 of RFC6750}}.  For a Transaction Token, the recipient instead rejects the token through the deployment's Txn-Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response for a rejected Transaction Token.
+When a resource server rejects a request because `actor_proofs` validation fails under {{consumer-processing}}, it SHOULD return `invalid_token` per the bearer-token error model in {{Section 3.1 of RFC6750}}.  For a Transaction Token, the recipient instead rejects the token through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response for a rejected Transaction Token.
 
 When the failure is specifically that required proofs are absent or coverage is incomplete (per `actor_proofs_required` or `actor_proofs_complete_required`), the resource server SHOULD include an `error_description` value identifying proof-coverage failure so that clients and operators can distinguish it from generic token-validation failures.
 
@@ -817,7 +817,7 @@ This profile does not define a per-claim selective-disclosure mechanism for proo
 
 ## Audience Restriction
 
-A proof travels with the outer token to whichever audiences the outer token serves; proofs have no independent audience scoping ({{proof-claims}}).  Deployments needing audience-specific disclosure constraints SHOULD partition proof issuance by audience at issuance time rather than relying on proof-level audience restriction, which this profile does not provide.
+A proof is carried with the outer token to whichever audiences the outer token serves; proofs have no independent audience scoping ({{proof-claims}}).  Deployments needing audience-specific disclosure constraints SHOULD partition proof issuance by audience at issuance time rather than relying on proof-level audience restriction, which this profile does not provide.
 
 ## Detached Provability
 

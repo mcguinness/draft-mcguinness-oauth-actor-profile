@@ -373,9 +373,9 @@ When requested authority exceeds the recorded bound without re-authorization and
 | `aud` or `resource` | `invalid_target` ({{Section 2.2.2 of RFC8693}} for Token Exchange; {{Section 2 of RFC8707}} otherwise) |
 | `authorization_details` | `invalid_authorization_details` {{RFC9396}} |
 
-When the failure reflects an actor-authorization decision, the issuer uses the `actor_unauthorized` error code defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}.  An absent required artifact is an input-validation failure: `invalid_request` on a Token Exchange request, `invalid_grant` on a JWT bearer grant or refresh request.
+When the failure reflects an actor-authorization decision, the issuer uses the `actor_unauthorized` error code defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}.  An absent required artifact is an input-validation failure: the `invalid_request` error code for a Token Exchange request and the `invalid_grant` error code for a JWT bearer grant or refresh request.
 
-When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it SHOULD return `invalid_token` per {{Section 3.1 of RFC6750}}, and SHOULD include an `error_description` identifying bounds-verification failure so operators can distinguish it from generic token validation.  For a Transaction Token, the resource server rejects it through the deployment's Txn-Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
+When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it SHOULD return `invalid_token` per {{Section 3.1 of RFC6750}}, and SHOULD include an `error_description` identifying bounds-verification failure so operators can distinguish it from generic token validation.  For a Transaction Token, the resource server rejects it through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
 
 An introspection server does not return an OAuth error for missing bounds artifacts; their presence is a property of the response.  This document defines no new OAuth error codes.
 
