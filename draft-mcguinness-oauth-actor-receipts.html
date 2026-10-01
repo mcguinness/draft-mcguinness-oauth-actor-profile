@@ -3561,100 +3561,49 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="appendix-B-2">-01<a href="#appendix-B-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-B-3.1">
-          <p id="appendix-B-3.1.1">Consolidated and tightened the text throughout; the claim-pair naming convention now uses a table.<a href="#appendix-B-3.1.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.1.1">Restructured and tightened the text: each rule has one home, dependencies are cited rather than restated, and a table covers the claim-pair convention.<a href="#appendix-B-3.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.2">
-          <p id="appendix-B-3.2.1">Gathered the receipt instance-binding rules for <code>origin_jti</code>, strict mode, and reissuance into one section.<a href="#appendix-B-3.2.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.2.1">Added Receipt Instance Binding; strict mode rejects only issuer divergence, and a same-issuer chain whose <code>origin_jti</code> differs, as after refresh, is accepted without instance binding.<a href="#appendix-B-3.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.3">
-          <p id="appendix-B-3.3.1">Defined reissuance divergence as a mismatch between <code>receipt[0]</code> and the outer token's <code>iss</code> or <code>jti</code>.  Strict mode now rejects only issuer divergence; a same-issuer chain whose leading <code>origin_jti</code> is absent or differs from the outer token's <code>jti</code>, as after refresh, is accepted under local policy without instance binding.  -00 rejected a differing <code>origin_jti</code> unless the recipient trusted the reissuing issuer.<a href="#appendix-B-3.3.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.3.1">Named ID-JAG and other assertion-grant redemption without a new hop as different-issuer reissuance.<a href="#appendix-B-3.3.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.4">
-          <p id="appendix-B-3.4.1">Clarified that the claim-pair naming convention and its metadata apply to companion profiles that define parallel per-hop artifact arrays.<a href="#appendix-B-3.4.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.4.1">Defined one lifetime rule for extension, reissuance, and refresh (lower the token's <code>exp</code>, drop the array, or fail), added a floor for receipt <code>exp</code>, and made an expired older receipt invalid.<a href="#appendix-B-3.4.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.5">
-          <p id="appendix-B-3.5.1">Receipt <code>exp</code> now has a floor: no earlier than the <code>exp</code> of the outer token issued with it.  Covering the lifetime of tokens that inherit the receipt is now recommended rather than required.<a href="#appendix-B-3.5.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.5.1">Refresh no longer starts a new chain, and retained receipts are validated against the issuer's state rather than the previous access token.<a href="#appendix-B-3.5.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.6">
-          <p id="appendix-B-3.6.1">An expired receipt is now invalid even for an older hop, with only the clock-skew leeway of <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>], <a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.4" class="relref">Section 4.1.4</a></span>; -00 only recommended rejection and let local policy allow a margin.<a href="#appendix-B-3.6.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.6.1">An extending issuer takes the inbound receipts from the token carrying the delegation chain, a new receipt's <code>iss</code> equals the issued token's <code>iss</code>, and a reissuer validates a chain before carrying it forward.<a href="#appendix-B-3.6.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.7">
-          <p id="appendix-B-3.7.1">One receipt lifetime rule now covers chain extension, reissuance, and refresh: when a retained receipt's <code>exp</code> is earlier than the <code>exp</code> the issuer would set, the issuer lowers the issued token's <code>exp</code>, drops the array where local policy permits, or fails the request (<code>invalid_grant</code> on refresh or a JWT bearer grant, <code>invalid_request</code> on Token Exchange).  -00 treated an extension <code>exp</code> gap as an inbound validation failure and let a reissuer set any <code>exp</code>.<a href="#appendix-B-3.7.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.7.1">A failed receipt chain removes only receipt-based provenance unless policy or metadata requires receipts, and a failed companion rule removes only that companion's evidence unless the companion specifies otherwise.<a href="#appendix-B-3.7.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.8">
-          <p id="appendix-B-3.8.1">Refresh no longer starts a new receipt chain; that requires a new delegated issuance that adds a hop.  The bounded delegated-session lifetime is now guidance for sizing receipt <code>exp</code> rather than a separate trigger.<a href="#appendix-B-3.8.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.8.1">Prohibited <code>aud</code> in receipts.<a href="#appendix-B-3.8.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.9">
-          <p id="appendix-B-3.9.1">Removed BCP 14 keywords from storage, trust-setup, rollout, coordination, freshness, and completeness-evaluation guidance.<a href="#appendix-B-3.9.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.9.1">Aligned error codes with <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> and <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>: <code>invalid_request</code> on Token Exchange, <code>invalid_grant</code> on JWT bearer grants and refresh, and <code>actor_unauthorized</code> for actor-authorization failures.<a href="#appendix-B-3.9.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.10">
-          <p id="appendix-B-3.10.1">Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.<a href="#appendix-B-3.10.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.10.1">Clarified completeness: an extending issuer sets <code>actor_receipts_complete: true</code> when the receipt count matches, an introspection <code>false</code> makes no completeness attestation, and filtering is limited to introspection servers.<a href="#appendix-B-3.10.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.11">
-          <p id="appendix-B-3.11.1">Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, and subject continuity allows namespace-aware matching or trusted mapping.<a href="#appendix-B-3.11.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.11.1">Compared <code>sub_profile</code> values as sets.<a href="#appendix-B-3.11.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.12">
-          <p id="appendix-B-3.12.1">Prohibited <code>aud</code> in receipts (-00 discouraged it); consumers reject a receipt that carries it, and <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> applies except <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.9" class="relref">Section 3.9</a></span>.<a href="#appendix-B-3.12.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.12.1">Allowed a TTS to include <code>jti</code> for instance binding, and deferred Transaction Token rejection at the resource server to the deployment.<a href="#appendix-B-3.12.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.13">
-          <p id="appendix-B-3.13.1">An introspection server whose returned array does not cover every hop of the returned <code>act</code> chain is now required to include <code>actor_receipts_complete: false</code>.  A <code>false</code> value no longer asserts partial coverage; it makes no attestation of complete coverage.<a href="#appendix-B-3.13.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.13.1">Checked <code>typ</code> and <code>alg</code> before key resolution, and rejected a chain with any untrusted receipt issuer.<a href="#appendix-B-3.13.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.14">
-          <p id="appendix-B-3.14.1">Stated how filtering the visible <code>act</code> chain interacts with all-or-nothing receipt disclosure.<a href="#appendix-B-3.14.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.14.1">Narrowed the threat-model claims about actor-signed proofs.<a href="#appendix-B-3.14.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.15">
-          <p id="appendix-B-3.15.1">Receipt validation failures on Token Exchange requests now use <code>invalid_request</code>, as <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.2" class="relref">Section 2.2.2</a></span> requires; JWT bearer grant requests use <code>invalid_grant</code> (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3.1" class="relref">Section 3.1</a></span>).  An absent required receipt array is an input-validation failure with the same codes, or <code>invalid_grant</code> on refresh.  Actor-authorization failures use <code>actor_unauthorized</code>, as the core profile requires; -00 made it optional.<a href="#appendix-B-3.15.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.16">
-          <p id="appendix-B-3.16.1">Named the IETF, rather than the IESG, as change controller for the claim, metadata, and introspection registrations.<a href="#appendix-B-3.16.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.17">
-          <p id="appendix-B-3.17.1">A recipient that requires instance binding rejects any chain not bound by a matching leading <code>origin_jti</code>, and the completeness assurances share one home.<a href="#appendix-B-3.17.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.18">
-          <p id="appendix-B-3.18.1">Used the base profile's example identifiers for the travel assistant and booking tool.<a href="#appendix-B-3.18.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.19">
-          <p id="appendix-B-3.19.1">Clarified that receipt actor-object restrictions apply separately from the token's actor chain, and that historical binding comes from the issued token's top-level <code>cnf</code>.<a href="#appendix-B-3.19.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.20">
-          <p id="appendix-B-3.20.1">A failed receipt chain now removes only receipt-based provenance: an outer token that fails its own validation is still rejected, and otherwise the recipient rejects the token only when local policy or Protected Resource Metadata requires receipts, and a count mismatch under <code>actor_receipts_complete: true</code> fails that check instead of rejecting the token.  An issuer that discards failed inbound receipts can begin a new, partial chain at its own hop.  -00 applied the underlying protocol's error handling to every failure.<a href="#appendix-B-3.20.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.21">
-          <p id="appendix-B-3.21.1">An issuer extending a chain can set <code>actor_receipts_complete: true</code> whenever every inbound receipt validated and the receipt count equals the visible actor-chain depth.  -00 required an inbound <code>true</code> attestation and required carrying it forward.<a href="#appendix-B-3.21.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.22">
-          <p id="appendix-B-3.22.1">A TTS may include <code>jti</code> in a Transaction Token; without it, the token's receipt chain is never instance-bound.  A resource server rejects a Transaction Token through the deployment's Transaction Token handling rather than the <span>[<a href="#RFC6750" class="cite xref">RFC6750</a>]</span> error model.<a href="#appendix-B-3.22.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.23">
-          <p id="appendix-B-3.23.1">The trust model summary now states that a chain with any untrusted receipt issuer fails validation, matching <a href="#trust-in-receipt-issuers" class="auto internal xref">Section 13.3</a>.<a href="#appendix-B-3.23.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.24">
-          <p id="appendix-B-3.24.1">Consumer step 5 checks <code>typ</code> and <code>alg</code> before resolving keys and validating the signature.<a href="#appendix-B-3.24.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.25">
-          <p id="appendix-B-3.25.1">Outer tokens include JWT assertion grants, and filtering of the visible <code>act</code> chain is attributed to the introspection server.<a href="#appendix-B-3.25.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.26">
-          <p id="appendix-B-3.26.1">An issuer extending a chain takes the inbound receipts from the token carrying the inbound delegation chain and sets the new receipt's claims as for a first receipt; a new receipt's <code>iss</code> is now required to equal the issued token's <code>iss</code>.<a href="#appendix-B-3.26.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.27">
-          <p id="appendix-B-3.27.1">A reissuer now validates an inbound receipt chain before carrying it forward.  When the chain fails, the reissuer drops it, or fails the request when local policy requires receipts; -00 let it carry an unvalidated chain.<a href="#appendix-B-3.27.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.28">
-          <p id="appendix-B-3.28.1">Unless a companion profile states otherwise, a failed companion rule now rejects only that companion's evidence, not the receipt chain.<a href="#appendix-B-3.28.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.29">
-          <p id="appendix-B-3.29.1">The threat model no longer claims that actor-signed proofs address a compromised actor or a compromised outer token issuer; they prevent issuer fabrication of actor participation at proof-covered hops only.<a href="#appendix-B-3.29.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.30">
-          <p id="appendix-B-3.30.1">Receipt and outer-token <code>sub_profile</code> values are now compared as sets: case-insensitively, ignoring order and duplicate values, without rewriting a signed receipt.  -00 required the same value.<a href="#appendix-B-3.30.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.31">
-          <p id="appendix-B-3.31.1">Redemption of an ID-JAG or other JWT assertion grant at a Resource Authorization Server without a new hop is now named as a common case of different-issuer reissuance, accepted only under explicit trusted-reissuer policy and without current-instance binding.<a href="#appendix-B-3.31.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.32">
-          <p id="appendix-B-3.32.1">On refresh, an authorization server takes retained receipts from its issuance state: it validates the refresh request per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-6" class="relref">Section 6</a></span> and checks the retained receipts against that state, without requiring the previous access token to remain valid.<a href="#appendix-B-3.32.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.15.1">Removed BCP 14 keywords from guidance no other party can observe, named the IETF as change controller, and aligned the examples with the base profile.<a href="#appendix-B-3.15.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-B-4">-00<a href="#appendix-B-4" class="pilcrow">¶</a></p>

@@ -3497,121 +3497,49 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="appendix-B-2">-01<a href="#appendix-B-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-B-3.1">
-          <p id="appendix-B-3.1.1">Consolidated and tightened the text throughout.<a href="#appendix-B-3.1.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.1.1">Restructured and tightened the text: each rule has one home and dependencies are cited rather than restated.<a href="#appendix-B-3.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.2">
-          <p id="appendix-B-3.2.1">An issuer now drops inherited proofs when reissuance exceeds any part of the newest proof's target, not only its audience, unless deployment agreement designates it a trusted reissuing issuer permitted to retarget for the reissued token's recipients.<a href="#appendix-B-3.2.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.2.1">Defined one lifetime rule for extension, reissuance, and refresh, and made an expired older proof invalid; retained proofs are validated against the issuer's state on refresh.<a href="#appendix-B-3.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.3">
-          <p id="appendix-B-3.3.1">Distinguished a mismatched <code>origin_jti</code>, which consumer processing rejects unless the outer issuer is a trusted reissuer, from an absent one.<a href="#appendix-B-3.3.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.3.1">Clarified instance binding: a new <code>jti</code> diverges from a provisioned <code>origin_jti</code>, trusted-reissuer designation excuses only that divergence unless retargeting is permitted, and the binding options are described by the trust each relies on.<a href="#appendix-B-3.3.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.4">
-          <p id="appendix-B-3.4.1">Removed an example claim that receipt composition stops a compromised issuer from re-embedding a proof.<a href="#appendix-B-3.4.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.4.1">Tightened target binding: resource indicators match by simple string comparison, <code>target.resource</code> supplies the effective resources when a request names none, consent is audience-only when the token's resources are unknown, Token Exchange targets are not narrowed, and the issuer checks <code>origin_jti</code> and <code>receipt_jti</code>.<a href="#appendix-B-3.4.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.5">
-          <p id="appendix-B-3.5.1">Reconciled <code>exp</code> guidance and removed BCP 14 keywords from storage, trust-setup, rollout, opaque-input, and freshness-signal guidance.<a href="#appendix-B-3.5.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.5.1">Added guidance for proofs that need to survive assertion-grant redemption.<a href="#appendix-B-3.5.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.6">
-          <p id="appendix-B-3.6.1">An expired proof, including one for an older hop, is now invalid; only the clock-skew leeway of <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>], <a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.4" class="relref">Section 4.1.4</a></span> applies.<a href="#appendix-B-3.6.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.6.1">An issuer adding a hop without a valid new proof drops the inbound proofs, a request that adds no hop but carries <code>actor_proof</code> is rejected, and a reissuer validates proofs before carrying them forward.<a href="#appendix-B-3.6.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.7">
-          <p id="appendix-B-3.7.1">Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.<a href="#appendix-B-3.7.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.7.1">A failed proof check removes only actor-signed evidence unless policy or metadata requires proofs.<a href="#appendix-B-3.7.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.8">
-          <p id="appendix-B-3.8.1">Resolved the remaining duplicate-rule conflicts: companion rules cannot relax conformance requirements, and Strict Mode governs every divergence.<a href="#appendix-B-3.8.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.8.1">Prohibited <code>aud</code> in proofs.<a href="#appendix-B-3.8.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.9">
-          <p id="appendix-B-3.9.1">Removed the unconditional recommendation for short proof <code>exp</code> in favor of the claim's conditional sizing rule.<a href="#appendix-B-3.9.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.9.1">Removed receipt-attested presenter keys as an actor-key source, and rejected a chain with any untrusted signing key.<a href="#appendix-B-3.9.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.10">
-          <p id="appendix-B-3.10.1">Aligned subject-continuity handling and the proof actor object's <code>sub_profile</code> rule with Receipts.<a href="#appendix-B-3.10.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.10.1">Aligned error codes with <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> and <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>, and required <code>actor_unauthorized</code> for actor-authorization failures.<a href="#appendix-B-3.10.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.11">
-          <p id="appendix-B-3.11.1">An introspection server that returns a stored array it knows has partial coverage is now required to include <code>actor_proofs_complete: false</code>.<a href="#appendix-B-3.11.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.11.1">Clarified completeness and introspection: <code>actor_proofs_complete</code> after extension depends on the proof count, an introspection <code>false</code> makes no completeness attestation, and filtering a covered actor omits the proofs.<a href="#appendix-B-3.11.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.12">
-          <p id="appendix-B-3.12.1">Used the base profile's example identifiers for the travel assistant and booking tool.<a href="#appendix-B-3.12.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.12.1">Compared <code>sub_profile</code> values as sets with a matching issuer check, and had deployment configuration supply the <code>act.iss</code> the actor signs.<a href="#appendix-B-3.12.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.13">
-          <p id="appendix-B-3.13.1">Clarified that proof actor-object restrictions apply separately from confirmation extensions in the token's actor chain.<a href="#appendix-B-3.13.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.13.1">Allowed a TTS to include <code>jti</code>, carried <code>actor_proof</code> in Transaction Token requests, and deferred Transaction Token rejection at the resource server to the deployment.<a href="#appendix-B-3.13.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.14">
-          <p id="appendix-B-3.14.1">Prohibited <code>aud</code> in proofs (-00 discouraged it); consumers reject a proof that carries it, and <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> applies except <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.9" class="relref">Section 3.9</a></span>.<a href="#appendix-B-3.14.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.14.1">Checked <code>alg</code> and <code>typ</code> before key resolution.<a href="#appendix-B-3.14.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.15">
-          <p id="appendix-B-3.15.1">One lifetime rule now governs hop extension, reissuance, and refresh when a retained proof expires before the token the issuer would set: lower the token's <code>exp</code>, otherwise drop the proofs where policy permits absent coverage, otherwise fail with <code>invalid_grant</code> on refresh or a JWT bearer grant or <code>invalid_request</code> on Token Exchange.<a href="#appendix-B-3.15.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.16">
-          <p id="appendix-B-3.16.1">Proof validation failures on Token Exchange requests now use <code>invalid_request</code>, as <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.2" class="relref">Section 2.2.2</a></span> requires; JWT bearer grant requests use <code>invalid_grant</code> (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3.1" class="relref">Section 3.1</a></span>).<a href="#appendix-B-3.16.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.17">
-          <p id="appendix-B-3.17.1">A resource indicator is within a proof's target binding only when it equals an entry of <code>target.resource</code> under simple string comparison (<span>[<a href="#RFC3986" class="cite xref">RFC3986</a>], <a href="https://rfc-editor.org/rfc/rfc3986#section-6.2.1" class="relref">Section 6.2.1</a></span>).<a href="#appendix-B-3.17.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.18">
-          <p id="appendix-B-3.18.1">When <code>target.resource</code> is present and the request supplies no resource indicators, the issuer uses <code>target.resource</code> as the effective resources; a recipient that cannot determine the token's resources treats the proof as audience-level consent.<a href="#appendix-B-3.18.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.19">
-          <p id="appendix-B-3.19.1">Named the IETF, rather than the IESG, as change controller for the claim, parameter, metadata, and introspection registrations.<a href="#appendix-B-3.19.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.20">
-          <p id="appendix-B-3.20.1">A failed proof check, including a false <code>actor_proofs_complete: true</code>, now drops only the actor-signed evidence; an outer token that fails its own validation is still rejected, and otherwise the recipient rejects the token only when policy or metadata requires that evidence, and an issuer that cannot propagate inbound proofs can begin a partial chain at its own hop.<a href="#appendix-B-3.20.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.21">
-          <p id="appendix-B-3.21.1">A reissued or refreshed token with a new <code>jti</code> diverges from a present <code>actor_proofs[0].origin_jti</code>; trusted-reissuer designation excuses only that divergence unless policy also permits retargeting, and proof <code>exp</code> covers a delegated session only while the outer token stays instance-bound.<a href="#appendix-B-3.21.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.22">
-          <p id="appendix-B-3.22.1">Removed receipt-attested presenter keys as an actor-key resolution pattern; the examples use pre-established keys.<a href="#appendix-B-3.22.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.23">
-          <p id="appendix-B-3.23.1">An issuer that adds a hop without a valid new proof drops the inbound proofs, and a request that adds no hop but carries <code>actor_proof</code> is rejected with <code>invalid_request</code>.<a href="#appendix-B-3.23.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.24">
-          <p id="appendix-B-3.24.1">A Transaction Token Service can include <code>jti</code> so that a Transaction Token's proof chain can be instance-bound; resource servers reject a Transaction Token through the deployment's Txn-Token handling.<a href="#appendix-B-3.24.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.25">
-          <p id="appendix-B-3.25.1">An extending issuer sets <code>actor_proofs_complete: true</code> only when every inbound proof validated and the proof count equals the visible actor-chain depth.<a href="#appendix-B-3.25.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.26">
-          <p id="appendix-B-3.26.1">A proof chain fails validation when any proof's signing key is untrusted.<a href="#appendix-B-3.26.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.27">
-          <p id="appendix-B-3.27.1">Consumers check <code>alg</code> and <code>typ</code> before key resolution and signature validation (<span>[<a href="#RFC8725" class="cite xref">RFC8725</a>], <a href="https://rfc-editor.org/rfc/rfc8725#section-3.1" class="relref">Section 3.1</a></span>).<a href="#appendix-B-3.27.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.28">
-          <p id="appendix-B-3.28.1">Issuers use <code>actor_unauthorized</code> for actor-authorization failures, as the core actor profile requires, and treat an absent required proof as an input-validation failure.<a href="#appendix-B-3.28.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.29">
-          <p id="appendix-B-3.29.1">An introspection server that filters a proof-covered actor from the visible <code>act</code> chain omits <code>actor_proofs</code> and <code>actor_proofs_complete</code>.<a href="#appendix-B-3.29.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.30">
-          <p id="appendix-B-3.30.1">An issuer validates an inbound proof array under consumer processing before carrying it forward on reissuance.<a href="#appendix-B-3.30.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.31">
-          <p id="appendix-B-3.31.1">An issuer may narrow resource indicators to fit the proof's target binding on requests other than Token Exchange, keeps every requested audience and every Token Exchange target, and returns <code>invalid_target</code> when the requested target cannot be issued within the binding; requests other than Token Exchange ground <code>invalid_target</code> in <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>], <a href="https://rfc-editor.org/rfc/rfc8707#section-2" class="relref">Section 2</a></span>.<a href="#appendix-B-3.31.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.32">
-          <p id="appendix-B-3.32.1">Deployment configuration supplies the actor with the <code>act.iss</code> value the issuer will emit.<a href="#appendix-B-3.32.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.33">
-          <p id="appendix-B-3.33.1">An issuer embeds a proof only when its <code>origin_jti</code> and <code>receipt_jti</code>, when present, equal the issued token's <code>jti</code> and the <code>jti</code> of any sibling receipt the issuer creates.<a href="#appendix-B-3.33.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.34">
-          <p id="appendix-B-3.34.1">In an introspection response, <code>actor_proofs_complete: false</code> makes no attestation of complete coverage rather than asserting partial coverage.<a href="#appendix-B-3.34.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.35">
-          <p id="appendix-B-3.35.1">A Transaction Token request made over HTTP carries the proof in <code>actor_proof</code>, because it is a Token Exchange request (<span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11#section-11" class="relref">Section 11</a></span>).<a href="#appendix-B-3.35.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.36">
-          <p id="appendix-B-3.36.1">Consumers compare a proof's <code>act.sub_profile</code> with the visible <code>act.sub_profile</code> as a set of case-insensitive values (-00 required the same value), and an issuer accepting a proof that carries <code>act.sub_profile</code> verifies that it matches the <code>act.sub_profile</code> emitted for the new outermost actor.<a href="#appendix-B-3.36.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.37">
-          <p id="appendix-B-3.37.1">Replaced the strongest-first ranking of instance bindings with the trust each relies on, and limited the recommendation of receipts composition to deployments that already use receipts.<a href="#appendix-B-3.37.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.38">
-          <p id="appendix-B-3.38.1">An actor can include known downstream audiences in <code>target.aud</code> so that its proof survives a later redemption without a new hop; this addresses audience divergence only.<a href="#appendix-B-3.38.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-B-3.39">
-          <p id="appendix-B-3.39.1">On refresh, an authorization server takes retained proofs from its issuance state: it validates the refresh request per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-6" class="relref">Section 6</a></span> and checks the retained proofs against that state, without requiring the previous access token to remain valid.<a href="#appendix-B-3.39.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.15.1">Removed BCP 14 keywords from guidance no other party can observe, named the IETF as change controller, and aligned the examples with the base profile.<a href="#appendix-B-3.15.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-B-4">-00<a href="#appendix-B-4" class="pilcrow">¶</a></p>

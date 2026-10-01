@@ -5109,142 +5109,46 @@ Workload-Proof-Token: &lt;tool-wpt-with-wth-and-tth&gt;
 <p id="appendix-D-2">-01<a href="#appendix-D-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-D-3.1">
-          <p id="appendix-D-3.1.1">Changes that break a -00 implementation: JWT access tokens require <code>client_id</code>; an AS keeps an (<code>iss</code>, <code>jti</code>) replay cache for assertion grants unless the grant itself is sender-constrained; a Transaction Token without delegation omits <code>act</code>; <code>may_act.iss</code>, when present, takes precedence over the <code>subject_token</code> issuer; rebind requires proof for the new presenter only for sender-constrained output; Token Exchange requests, including TTS requests, reject invalid or policy-unacceptable inputs with <code>invalid_request</code> rather than <code>invalid_grant</code>; an ID-JAG issued as Token Exchange output carries the Resource Authorization Server's issuer identifier in <code>aud</code> rather than the downstream token endpoint; and a replacement Transaction Token keeps <code>sub</code> unchanged.<a href="#appendix-D-3.1.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.1.1">Restructured and tightened the text: each rule has one home, dependencies are cited rather than restated, and tables cover claim roles, token types, and error mappings.<a href="#appendix-D-3.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.2">
-          <p id="appendix-D-3.2.1">Consolidated and tightened the text throughout; claim roles, supported token types, and error mappings now use tables.<a href="#appendix-D-3.2.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.2.1">Revised the Introduction to state what Token Exchange leaves open and the ID-JAG extension point this profile fills.<a href="#appendix-D-3.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.3">
-          <p id="appendix-D-3.3.1">Added hop and visible-hop terminology, and token-size guidance for extensions that attach per-hop signed material.<a href="#appendix-D-3.3.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.3.1">Added hop and visible-hop terminology; only an introspection server filters the visible <code>act</code> chain.<a href="#appendix-D-3.3.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.4">
-          <p id="appendix-D-3.4.1">JWT access tokens now require <code>client_id</code>, per <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>.<a href="#appendix-D-3.4.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.4.1">Required <code>client_id</code> in JWT access tokens, per <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>, and limited the JWT access token structure to JWT access token output.<a href="#appendix-D-3.4.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.5">
-          <p id="appendix-D-3.5.1">Corrected citations: scope reduction and resource indicators are no longer attributed to <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, and the DPoP key comparison cites Sections 4.3 and 6.1 of <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>.<a href="#appendix-D-3.5.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.5.1">Reworked presenter transitions: bearer continuation by the authenticated outermost actor, rebind by a direct presenter credential or the <code>may_act</code> client, rejection of requests that fit neither mode, and new-presenter proof only for sender-constrained output.<a href="#appendix-D-3.5.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.6">
-          <p id="appendix-D-3.6.1"><code>may_act</code> now uses <code>may_act.iss</code> as the identifier context when present, and the <code>subject_token</code> issuer otherwise.<a href="#appendix-D-3.6.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.6.1">Rebind now supersedes a sender-constrained assertion grant's binding and makes the grant single-use; grant replay protection depends on an enforced grant-level sender constraint and the (<code>iss</code>, <code>jti</code>) pair.<a href="#appendix-D-3.6.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.7">
-          <p id="appendix-D-3.7.1">Removed guidance on merging an <code>actor_token</code>'s own <code>act</code> chain, which conflicted with rejecting any <code>actor_token</code> that carries <code>act</code>.<a href="#appendix-D-3.7.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.7.1">Aligned error codes with <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.2" class="relref">Section 2.2.2</a></span> and <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3.1" class="relref">Section 3.1</a></span>: <code>invalid_request</code> on Token Exchange, <code>invalid_grant</code> on JWT bearer grants, and <code>actor_unauthorized</code> for actor-policy denials, with explicit error precedence.<a href="#appendix-D-3.7.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.8">
-          <p id="appendix-D-3.8.1">The <code>act.iss</code> rule for AS-issued grants and the privacy guidance on suppressing <code>act.sub_profile</code> now apply only to new actor objects, consistent with inherited-actor immutability.<a href="#appendix-D-3.8.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.8.1">Set an ID-JAG's <code>aud</code> to the Resource Authorization Server's issuer identifier, and capped the scope issued from an assertion-grant <code>subject_token</code>.<a href="#appendix-D-3.8.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.9">
-          <p id="appendix-D-3.9.1">Aligned the error-response table with the processing rules.<a href="#appendix-D-3.9.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.9.1">Aligned Transaction Token rules with <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>: <code>act</code> only for delegation, <code>sub</code> unchanged on replacement, scope within the <code>subject_token</code>'s authority, and presenter proof and rejection per the deployment profile.<a href="#appendix-D-3.9.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.10">
-          <p id="appendix-D-3.10.1">Redrew the cross-domain example diagram and added <span>[<a href="#RFC8792" class="cite xref">RFC8792</a>]</span> line-wrapping headers to folded examples.<a href="#appendix-D-3.10.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.10.1">Used <code>may_act.iss</code> as the identifier context when present, and preserved inherited actor objects, their extension and confirmation members, and unrecognized <code>sub_profile</code> values unchanged.<a href="#appendix-D-3.10.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.11">
-          <p id="appendix-D-3.11.1">Resolved conflicting requirements on inherited extension members, inner-actor validation, and <code>req_wl</code> reconciliation, and pointed Security and Privacy restatements at their normative rules.<a href="#appendix-D-3.11.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.11.1">Resource servers validate mTLS-bound tokens, require <code>iss</code> on every visible actor object when conformance is required, identify the outermost actor by its (<code>act.iss</code>, <code>act.sub</code>) pair, and treat a missing <code>act</code> in introspection as an error only when delegation is indicated.<a href="#appendix-D-3.11.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.12">
-          <p id="appendix-D-3.12.1">Removed BCP 14 keywords from operational guidance that no other party can observe.<a href="#appendix-D-3.12.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.12.1">Clarified actor-token classification and validation for standalone JWT client assertions, JWT access tokens, and WIMSE workload credentials.<a href="#appendix-D-3.12.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.13">
-          <p id="appendix-D-3.13.1">Consolidated duplicated requirements into single homes and cited dependencies instead of restating them.<a href="#appendix-D-3.13.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.13.1">Tightened the metadata triggers and added the ID-JAG token type to <code>requested_token_types_supported</code>.<a href="#appendix-D-3.13.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-D-3.14">
-          <p id="appendix-D-3.14.1">Resolved the remaining duplicate-rule conflicts: identifier reconciliation keeps both outcomes under explicit conditions, client identity must not substitute for <code>act</code>, inner-actor failures use the shared error mapping, and proof for a new presenter is required for sender-constrained output while any proof the credential's own profile requires is always validated.<a href="#appendix-D-3.14.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.15">
-          <p id="appendix-D-3.15.1">Actor <code>sub_profile</code> is recommended when the issuer can authoritatively classify the actor.  A replacement Transaction Token keeps <code>sub</code> unchanged, per <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11#section-13.15" class="relref">Section 13.15</a></span>; <code>sub</code> re-expression under a trusted mapping applies only when a TTS issues a Transaction Token from a JWT access token or JWT assertion grant.<a href="#appendix-D-3.15.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.16">
-          <p id="appendix-D-3.16.1">Unrecognized but syntactically valid values in a carried-forward top-level <code>sub_profile</code> are preserved.<a href="#appendix-D-3.16.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.17">
-          <p id="appendix-D-3.17.1">Used one set of example identifiers for the travel scenario, matching the cross-domain example's parties.<a href="#appendix-D-3.17.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.18">
-          <p id="appendix-D-3.18.1">Clarified confirmation members in token actor objects as extension data, including preservation and their distinction from the current presenter's binding.<a href="#appendix-D-3.18.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.19">
-          <p id="appendix-D-3.19.1">Corrected grant replay requirements to depend on an enforced grant-level sender constraint, with accepted grants identified by (<code>iss</code>, <code>jti</code>) for their full acceptance window, and aligned the self-issued grant controls with that rule.<a href="#appendix-D-3.19.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.20">
-          <p id="appendix-D-3.20.1">Revised the Introduction to state what Token Exchange leaves open and to name the ID-JAG extension point this profile fills.<a href="#appendix-D-3.20.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.21">
-          <p id="appendix-D-3.21.1">Transaction Tokens now use the delegation conditions in Delegation Chains: delegation can also rest on <code>may_act</code> or another independent basis such as a policy rule, and a Transaction Token without delegation omits <code>act</code> (-00 left it optional).<a href="#appendix-D-3.21.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.22">
-          <p id="appendix-D-3.22.1">The JWT access token structure, including <code>client_id</code>, applies only to JWT access token output; JWT assertion grant and Transaction Token outputs share the other output rules.<a href="#appendix-D-3.22.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.23">
-          <p id="appendix-D-3.23.1">In presenter rebind, the new presenter's binding supersedes a sender-constrained JWT assertion grant's <code>cnf</code>, and the grant is then single-use; Security Considerations states the trade-off.<a href="#appendix-D-3.23.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.24">
-          <p id="appendix-D-3.24.1">On the <code>may_act</code> path without <code>actor_token</code>, the authenticated client is the new presenter, and a sender-constrained output is bound to the key it demonstrates.<a href="#appendix-D-3.24.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.25">
-          <p id="appendix-D-3.25.1">The scope issued from a JWT assertion grant used as <code>subject_token</code> is capped by the grant's <code>scope</code>, or, when that is absent, by the scope the AS would authorize for the grant directly.<a href="#appendix-D-3.25.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.26">
-          <p id="appendix-D-3.26.1">Token Exchange and TTS requests reject invalid or policy-unacceptable <code>subject_token</code> and <code>actor_token</code> inputs with <code>invalid_request</code>, per <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.2" class="relref">Section 2.2.2</a></span>, while actor-policy denials keep <code>actor_unauthorized</code>; JWT bearer grant requests keep <code>invalid_grant</code>.<a href="#appendix-D-3.26.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.27">
-          <p id="appendix-D-3.27.1">Centralized error precedence: client-authentication and proof-mechanism errors take precedence over generic input-validation errors.  Missing required assertion claims, missing required grant proofs, and other structural failures use <code>invalid_grant</code> on JWT bearer grant requests and <code>invalid_request</code> on Token Exchange requests; supplied invalid DPoP proofs retain <code>invalid_dpop_proof</code>.<a href="#appendix-D-3.27.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.28">
-          <p id="appendix-D-3.28.1"><span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>, <span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>, <span>[<a href="#OpenID.Core" class="cite xref">OpenID.Core</a>]</span>, and ID-JAG are now normative references, and ID-JAG is cited at -04.<a href="#appendix-D-3.28.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.29">
-          <p id="appendix-D-3.29.1">The <code>actor_unauthorized</code> registration uses the error usage location names of <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>.<a href="#appendix-D-3.29.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.30">
-          <p id="appendix-D-3.30.1">Presenter continuation also covers a bearer <code>subject_token</code> presented by its authenticated outermost actor, or by its subject when it carries no <code>act</code>, and yields a bearer output.  A Token Exchange request that satisfies neither presenter-transition mode is rejected with <code>invalid_request</code>.<a href="#appendix-D-3.30.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.31">
-          <p id="appendix-D-3.31.1">A JWT assertion grant output sets <code>aud</code> to the Resource Authorization Server's issuer identifier for an ID-JAG, per <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>], <a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-04#section-3.1" class="relref">Section 3.1</a></span>, and the examples use that identifier.<a href="#appendix-D-3.31.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.32">
-          <p id="appendix-D-3.32.1">Transaction Token <code>scope</code> can use the Transaction Token vocabulary rather than a literal subset of the inbound token's scope, while the TTS keeps it within the <code>subject_token</code>'s authority, per <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>.<a href="#appendix-D-3.32.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.33">
-          <p id="appendix-D-3.33.1">An introspection response without <code>act</code> is an inconsistency only when policy or token context indicates delegation; <code>actor_profile_required</code> alone no longer causes rejection.<a href="#appendix-D-3.33.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.34">
-          <p id="appendix-D-3.34.1">Resource servers validate a <code>cnf.x5t#S256</code> binding against the mutual-TLS client certificate, per <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>], <a href="https://rfc-editor.org/rfc/rfc8705#section-3" class="relref">Section 3</a></span>.<a href="#appendix-D-3.34.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.35">
-          <p id="appendix-D-3.35.1">A resource server rejects a failed Transaction Token through the deployment's Transaction Token handling, since <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> defines no error response.<a href="#appendix-D-3.35.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.36">
-          <p id="appendix-D-3.36.1">Authorization policy identifies the outermost actor by its (<code>act.iss</code>, <code>act.sub</code>) pair.<a href="#appendix-D-3.36.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.37">
-          <p id="appendix-D-3.37.1">Metadata: the <code>actor_profile_required</code> issuance rule applies to an AS that knows the value by configuration or from metadata; the <code>txn_token</code> listing is required only of an AS or TTS that publishes <code>actor_profile_token_exchange</code>; and <code>requested_token_types_supported</code> lists <code>urn:ietf:params:oauth:token-type:id-jag</code>.<a href="#appendix-D-3.37.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.38">
-          <p id="appendix-D-3.38.1">Transaction Token presenter proof follows the deployment profile, since <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> defines none; the cross-domain example states that its deployment profile defines the <code>cnf.jkt</code> binding.<a href="#appendix-D-3.38.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.39">
-          <p id="appendix-D-3.39.1">A JWT access token used as <code>actor_token</code> receives the same <code>aud</code> relaxation as one used as <code>subject_token</code>.<a href="#appendix-D-3.39.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.40">
-          <p id="appendix-D-3.40.1">A JWT <code>actor_token</code> not presented as <code>client_assertion</code> is a client assertion when its <code>iss</code> and <code>sub</code> equal the authenticated client's <code>client_id</code>, and <code>iss = sub = client_id</code> is attributed to <span>[<a href="#RFC7521" class="cite xref">RFC7521</a>], <a href="https://rfc-editor.org/rfc/rfc7521#section-5.2" class="relref">Section 5.2</a></span> and <span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3" class="relref">Section 3</a></span>.<a href="#appendix-D-3.40.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.41">
-          <p id="appendix-D-3.41.1">A WIMSE workload credential without <code>iss</code> has its issuer established through its trust domain's trust anchors, and a DPoP proof for it uses the key in its <code>cnf.jwk</code>.<a href="#appendix-D-3.41.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.42">
-          <p id="appendix-D-3.42.1">A client certificate that does not match a JWT assertion grant's <code>cnf.x5t#S256</code> is rejected with <code>invalid_grant</code>, or <code>invalid_request</code> on Token Exchange.<a href="#appendix-D-3.42.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.43">
-          <p id="appendix-D-3.43.1">Transaction Token <code>subject_token</code> processing applies at a TTS as well as an AS; its JWT access token output steps apply only to that output.<a href="#appendix-D-3.43.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.44">
-          <p id="appendix-D-3.44.1">An assertion-grant actor without <code>act.iss</code> is rejected when profile conformance is required, and otherwise follows Migration and Adoption.<a href="#appendix-D-3.44.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.45">
-          <p id="appendix-D-3.45.1">TTS presenter rebind can name the existing outermost actor, the Transaction Token request example uses <code>request_context</code>, and companion introspection response parameters can apply to delegated opaque access tokens.<a href="#appendix-D-3.45.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="appendix-D-3.46">
-          <p id="appendix-D-3.46.1">When actor-profile conformance is required, a resource server rejects a delegated token in which any actor object in the visible <code>act</code> chain lacks <code>iss</code>; this is structural validation, not independent authentication of historical actors.<a href="#appendix-D-3.46.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-3.14.1">Removed BCP 14 keywords from guidance no other party can observe, made RFC 6749, RFC 7800, OpenID Connect Core, and ID-JAG normative, corrected citations, and aligned the examples on one travel scenario.<a href="#appendix-D-3.14.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-D-4">-00<a href="#appendix-D-4" class="pilcrow">¶</a></p>

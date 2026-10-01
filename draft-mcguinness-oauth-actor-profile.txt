@@ -4487,203 +4487,67 @@ Document History
 
    -01
 
-   *  Changes that break a -00 implementation: JWT access tokens require
-      client_id; an AS keeps an (iss, jti) replay cache for assertion
-      grants unless the grant itself is sender-constrained; a
-      Transaction Token without delegation omits act; may_act.iss, when
-      present, takes precedence over the subject_token issuer; rebind
-      requires proof for the new presenter only for sender-constrained
-      output; Token Exchange requests, including TTS requests, reject
-      invalid or policy-unacceptable inputs with invalid_request rather
-      than invalid_grant; an ID-JAG issued as Token Exchange output
-      carries the Resource Authorization Server's issuer identifier in
-      aud rather than the downstream token endpoint; and a replacement
-      Transaction Token keeps sub unchanged.
-
-   *  Consolidated and tightened the text throughout; claim roles,
-      supported token types, and error mappings now use tables.
-
-   *  Added hop and visible-hop terminology, and token-size guidance for
-      extensions that attach per-hop signed material.
-
-   *  JWT access tokens now require client_id, per [RFC9068].
-
-   *  Corrected citations: scope reduction and resource indicators are
-      no longer attributed to [RFC8693], and the DPoP key comparison
-      cites Sections 4.3 and 6.1 of [RFC9449].
-
-   *  may_act now uses may_act.iss as the identifier context when
-      present, and the subject_token issuer otherwise.
-
-   *  Removed guidance on merging an actor_token's own act chain, which
-      conflicted with rejecting any actor_token that carries act.
-
-   *  The act.iss rule for AS-issued grants and the privacy guidance on
-      suppressing act.sub_profile now apply only to new actor objects,
-      consistent with inherited-actor immutability.
-
-   *  Aligned the error-response table with the processing rules.
-
-   *  Redrew the cross-domain example diagram and added [RFC8792] line-
-      wrapping headers to folded examples.
-
-   *  Resolved conflicting requirements on inherited extension members,
-      inner-actor validation, and req_wl reconciliation, and pointed
-      Security and Privacy restatements at their normative rules.
-
-   *  Removed BCP 14 keywords from operational guidance that no other
-      party can observe.
-
-   *  Consolidated duplicated requirements into single homes and cited
-      dependencies instead of restating them.
-
-   *  Resolved the remaining duplicate-rule conflicts: identifier
-      reconciliation keeps both outcomes under explicit conditions,
-      client identity must not substitute for act, inner-actor failures
-      use the shared error mapping, and proof for a new presenter is
-      required for sender-constrained output while any proof the
-      credential's own profile requires is always validated.
-
-   *  Actor sub_profile is recommended when the issuer can
-      authoritatively classify the actor.  A replacement Transaction
-      Token keeps sub unchanged, per
-      [I-D.ietf-oauth-transaction-tokens], Section 13.15; sub re-
-      expression under a trusted mapping applies only when a TTS issues
-      a Transaction Token from a JWT access token or JWT assertion
-      grant.
-
-   *  Unrecognized but syntactically valid values in a carried-forward
-      top-level sub_profile are preserved.
-
-   *  Used one set of example identifiers for the travel scenario,
-      matching the cross-domain example's parties.
-
-   *  Clarified confirmation members in token actor objects as extension
-      data, including preservation and their distinction from the
-      current presenter's binding.
-
-   *  Corrected grant replay requirements to depend on an enforced
-      grant-level sender constraint, with accepted grants identified by
-      (iss, jti) for their full acceptance window, and aligned the self-
-      issued grant controls with that rule.
+   *  Restructured and tightened the text: each rule has one home,
+      dependencies are cited rather than restated, and tables cover
+      claim roles, token types, and error mappings.
 
    *  Revised the Introduction to state what Token Exchange leaves open
-      and to name the ID-JAG extension point this profile fills.
+      and the ID-JAG extension point this profile fills.
 
-   *  Transaction Tokens now use the delegation conditions in Delegation
-      Chains: delegation can also rest on may_act or another independent
-      basis such as a policy rule, and a Transaction Token without
-      delegation omits act (-00 left it optional).
+   *  Added hop and visible-hop terminology; only an introspection
+      server filters the visible act chain.
 
-   *  The JWT access token structure, including client_id, applies only
-      to JWT access token output; JWT assertion grant and Transaction
-      Token outputs share the other output rules.
+   *  Required client_id in JWT access tokens, per [RFC9068], and
+      limited the JWT access token structure to JWT access token output.
 
-   *  In presenter rebind, the new presenter's binding supersedes a
-      sender-constrained JWT assertion grant's cnf, and the grant is
-      then single-use; Security Considerations states the trade-off.
+   *  Reworked presenter transitions: bearer continuation by the
+      authenticated outermost actor, rebind by a direct presenter
+      credential or the may_act client, rejection of requests that fit
+      neither mode, and new-presenter proof only for sender-constrained
+      output.
 
-   *  On the may_act path without actor_token, the authenticated client
-      is the new presenter, and a sender-constrained output is bound to
-      the key it demonstrates.
+   *  Rebind now supersedes a sender-constrained assertion grant's
+      binding and makes the grant single-use; grant replay protection
+      depends on an enforced grant-level sender constraint and the (iss,
+      jti) pair.
 
-   *  The scope issued from a JWT assertion grant used as subject_token
-      is capped by the grant's scope, or, when that is absent, by the
-      scope the AS would authorize for the grant directly.
+   *  Aligned error codes with [RFC8693], Section 2.2.2 and [RFC7523],
+      Section 3.1: invalid_request on Token Exchange, invalid_grant on
+      JWT bearer grants, and actor_unauthorized for actor-policy
+      denials, with explicit error precedence.
 
-   *  Token Exchange and TTS requests reject invalid or policy-
-      unacceptable subject_token and actor_token inputs with
-      invalid_request, per [RFC8693], Section 2.2.2, while actor-policy
-      denials keep actor_unauthorized; JWT bearer grant requests keep
-      invalid_grant.
+   *  Set an ID-JAG's aud to the Resource Authorization Server's issuer
+      identifier, and capped the scope issued from an assertion-grant
+      subject_token.
 
-   *  Centralized error precedence: client-authentication and proof-
-      mechanism errors take precedence over generic input-validation
-      errors.  Missing required assertion claims, missing required grant
-      proofs, and other structural failures use invalid_grant on JWT
-      bearer grant requests and invalid_request on Token Exchange
-      requests; supplied invalid DPoP proofs retain invalid_dpop_proof.
+   *  Aligned Transaction Token rules with
+      [I-D.ietf-oauth-transaction-tokens]: act only for delegation, sub
+      unchanged on replacement, scope within the subject_token's
+      authority, and presenter proof and rejection per the deployment
+      profile.
 
-   *  [RFC6749], [RFC7800], [OpenID.Core], and ID-JAG are now normative
-      references, and ID-JAG is cited at -04.
+   *  Used may_act.iss as the identifier context when present, and
+      preserved inherited actor objects, their extension and
+      confirmation members, and unrecognized sub_profile values
+      unchanged.
 
-   *  The actor_unauthorized registration uses the error usage location
-      names of [RFC6749].
+   *  Resource servers validate mTLS-bound tokens, require iss on every
+      visible actor object when conformance is required, identify the
+      outermost actor by its (act.iss, act.sub) pair, and treat a
+      missing act in introspection as an error only when delegation is
+      indicated.
 
-   *  Presenter continuation also covers a bearer subject_token
-      presented by its authenticated outermost actor, or by its subject
-      when it carries no act, and yields a bearer output.  A Token
-      Exchange request that satisfies neither presenter-transition mode
-      is rejected with invalid_request.
+   *  Clarified actor-token classification and validation for standalone
+      JWT client assertions, JWT access tokens, and WIMSE workload
+      credentials.
 
-   *  A JWT assertion grant output sets aud to the Resource
-      Authorization Server's issuer identifier for an ID-JAG, per
-      [I-D.ietf-oauth-identity-assertion-authz-grant], Section 3.1, and
-      the examples use that identifier.
+   *  Tightened the metadata triggers and added the ID-JAG token type to
+      requested_token_types_supported.
 
-   *  Transaction Token scope can use the Transaction Token vocabulary
-      rather than a literal subset of the inbound token's scope, while
-      the TTS keeps it within the subject_token's authority, per
-      [I-D.ietf-oauth-transaction-tokens].
-
-   *  An introspection response without act is an inconsistency only
-      when policy or token context indicates delegation;
-      actor_profile_required alone no longer causes rejection.
-
-   *  Resource servers validate a cnf.x5t#S256 binding against the
-      mutual-TLS client certificate, per [RFC8705], Section 3.
-
-   *  A resource server rejects a failed Transaction Token through the
-      deployment's Transaction Token handling, since
-      [I-D.ietf-oauth-transaction-tokens] defines no error response.
-
-   *  Authorization policy identifies the outermost actor by its
-      (act.iss, act.sub) pair.
-
-   *  Metadata: the actor_profile_required issuance rule applies to an
-      AS that knows the value by configuration or from metadata; the
-      txn_token listing is required only of an AS or TTS that publishes
-      actor_profile_token_exchange; and requested_token_types_supported
-      lists urn:ietf:params:oauth:token-type:id-jag.
-
-   *  Transaction Token presenter proof follows the deployment profile,
-      since [I-D.ietf-oauth-transaction-tokens] defines none; the cross-
-      domain example states that its deployment profile defines the
-      cnf.jkt binding.
-
-   *  A JWT access token used as actor_token receives the same aud
-      relaxation as one used as subject_token.
-
-   *  A JWT actor_token not presented as client_assertion is a client
-      assertion when its iss and sub equal the authenticated client's
-      client_id, and iss = sub = client_id is attributed to [RFC7521],
-      Section 5.2 and [RFC7523], Section 3.
-
-   *  A WIMSE workload credential without iss has its issuer established
-      through its trust domain's trust anchors, and a DPoP proof for it
-      uses the key in its cnf.jwk.
-
-   *  A client certificate that does not match a JWT assertion grant's
-      cnf.x5t#S256 is rejected with invalid_grant, or invalid_request on
-      Token Exchange.
-
-   *  Transaction Token subject_token processing applies at a TTS as
-      well as an AS; its JWT access token output steps apply only to
-      that output.
-
-   *  An assertion-grant actor without act.iss is rejected when profile
-      conformance is required, and otherwise follows Migration and
-      Adoption.
-
-   *  TTS presenter rebind can name the existing outermost actor, the
-      Transaction Token request example uses request_context, and
-      companion introspection response parameters can apply to delegated
-      opaque access tokens.
-
-   *  When actor-profile conformance is required, a resource server
-      rejects a delegated token in which any actor object in the visible
-      act chain lacks iss; this is structural validation, not
-      independent authentication of historical actors.
+   *  Removed BCP 14 keywords from guidance no other party can observe,
+      made RFC 6749, RFC 7800, OpenID Connect Core, and ID-JAG
+      normative, corrected citations, and aligned the examples on one
+      travel scenario.
 
    -00
 

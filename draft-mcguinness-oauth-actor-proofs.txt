@@ -2554,161 +2554,61 @@ Document History
 
    -01
 
-   *  Consolidated and tightened the text throughout.
+   *  Restructured and tightened the text: each rule has one home and
+      dependencies are cited rather than restated.
 
-   *  An issuer now drops inherited proofs when reissuance exceeds any
-      part of the newest proof's target, not only its audience, unless
-      deployment agreement designates it a trusted reissuing issuer
-      permitted to retarget for the reissued token's recipients.
+   *  Defined one lifetime rule for extension, reissuance, and refresh,
+      and made an expired older proof invalid; retained proofs are
+      validated against the issuer's state on refresh.
 
-   *  Distinguished a mismatched origin_jti, which consumer processing
-      rejects unless the outer issuer is a trusted reissuer, from an
-      absent one.
+   *  Clarified instance binding: a new jti diverges from a provisioned
+      origin_jti, trusted-reissuer designation excuses only that
+      divergence unless retargeting is permitted, and the binding
+      options are described by the trust each relies on.
 
-   *  Removed an example claim that receipt composition stops a
-      compromised issuer from re-embedding a proof.
+   *  Tightened target binding: resource indicators match by simple
+      string comparison, target.resource supplies the effective
+      resources when a request names none, consent is audience-only when
+      the token's resources are unknown, Token Exchange targets are not
+      narrowed, and the issuer checks origin_jti and receipt_jti.
 
-   *  Reconciled exp guidance and removed BCP 14 keywords from storage,
-      trust-setup, rollout, opaque-input, and freshness-signal guidance.
+   *  Added guidance for proofs that need to survive assertion-grant
+      redemption.
 
-   *  An expired proof, including one for an older hop, is now invalid;
-      only the clock-skew leeway of [RFC7519], Section 4.1.4 applies.
+   *  An issuer adding a hop without a valid new proof drops the inbound
+      proofs, a request that adds no hop but carries actor_proof is
+      rejected, and a reissuer validates proofs before carrying them
+      forward.
 
-   *  Consolidated duplicated requirements into single homes and cited
-      dependencies instead of restating them.
+   *  A failed proof check removes only actor-signed evidence unless
+      policy or metadata requires proofs.
 
-   *  Resolved the remaining duplicate-rule conflicts: companion rules
-      cannot relax conformance requirements, and Strict Mode governs
-      every divergence.
+   *  Prohibited aud in proofs.
 
-   *  Removed the unconditional recommendation for short proof exp in
-      favor of the claim's conditional sizing rule.
+   *  Removed receipt-attested presenter keys as an actor-key source,
+      and rejected a chain with any untrusted signing key.
 
-   *  Aligned subject-continuity handling and the proof actor object's
-      sub_profile rule with Receipts.
+   *  Aligned error codes with [RFC8693] and [RFC7523], and required
+      actor_unauthorized for actor-authorization failures.
 
-   *  An introspection server that returns a stored array it knows has
-      partial coverage is now required to include actor_proofs_complete:
-      false.
+   *  Clarified completeness and introspection: actor_proofs_complete
+      after extension depends on the proof count, an introspection false
+      makes no completeness attestation, and filtering a covered actor
+      omits the proofs.
 
-   *  Used the base profile's example identifiers for the travel
-      assistant and booking tool.
+   *  Compared sub_profile values as sets with a matching issuer check,
+      and had deployment configuration supply the act.iss the actor
+      signs.
 
-   *  Clarified that proof actor-object restrictions apply separately
-      from confirmation extensions in the token's actor chain.
+   *  Allowed a TTS to include jti, carried actor_proof in Transaction
+      Token requests, and deferred Transaction Token rejection at the
+      resource server to the deployment.
 
-   *  Prohibited aud in proofs (-00 discouraged it); consumers reject a
-      proof that carries it, and [RFC8725] applies except [RFC8725],
-      Section 3.9.
+   *  Checked alg and typ before key resolution.
 
-   *  One lifetime rule now governs hop extension, reissuance, and
-      refresh when a retained proof expires before the token the issuer
-      would set: lower the token's exp, otherwise drop the proofs where
-      policy permits absent coverage, otherwise fail with invalid_grant
-      on refresh or a JWT bearer grant or invalid_request on Token
-      Exchange.
-
-   *  Proof validation failures on Token Exchange requests now use
-      invalid_request, as [RFC8693], Section 2.2.2 requires; JWT bearer
-      grant requests use invalid_grant ([RFC7523], Section 3.1).
-
-   *  A resource indicator is within a proof's target binding only when
-      it equals an entry of target.resource under simple string
-      comparison ([RFC3986], Section 6.2.1).
-
-   *  When target.resource is present and the request supplies no
-      resource indicators, the issuer uses target.resource as the
-      effective resources; a recipient that cannot determine the token's
-      resources treats the proof as audience-level consent.
-
-   *  Named the IETF, rather than the IESG, as change controller for the
-      claim, parameter, metadata, and introspection registrations.
-
-   *  A failed proof check, including a false actor_proofs_complete:
-      true, now drops only the actor-signed evidence; an outer token
-      that fails its own validation is still rejected, and otherwise the
-      recipient rejects the token only when policy or metadata requires
-      that evidence, and an issuer that cannot propagate inbound proofs
-      can begin a partial chain at its own hop.
-
-   *  A reissued or refreshed token with a new jti diverges from a
-      present actor_proofs[0].origin_jti; trusted-reissuer designation
-      excuses only that divergence unless policy also permits
-      retargeting, and proof exp covers a delegated session only while
-      the outer token stays instance-bound.
-
-   *  Removed receipt-attested presenter keys as an actor-key resolution
-      pattern; the examples use pre-established keys.
-
-   *  An issuer that adds a hop without a valid new proof drops the
-      inbound proofs, and a request that adds no hop but carries
-      actor_proof is rejected with invalid_request.
-
-   *  A Transaction Token Service can include jti so that a Transaction
-      Token's proof chain can be instance-bound; resource servers reject
-      a Transaction Token through the deployment's Txn-Token handling.
-
-   *  An extending issuer sets actor_proofs_complete: true only when
-      every inbound proof validated and the proof count equals the
-      visible actor-chain depth.
-
-   *  A proof chain fails validation when any proof's signing key is
-      untrusted.
-
-   *  Consumers check alg and typ before key resolution and signature
-      validation ([RFC8725], Section 3.1).
-
-   *  Issuers use actor_unauthorized for actor-authorization failures,
-      as the core actor profile requires, and treat an absent required
-      proof as an input-validation failure.
-
-   *  An introspection server that filters a proof-covered actor from
-      the visible act chain omits actor_proofs and
-      actor_proofs_complete.
-
-   *  An issuer validates an inbound proof array under consumer
-      processing before carrying it forward on reissuance.
-
-   *  An issuer may narrow resource indicators to fit the proof's target
-      binding on requests other than Token Exchange, keeps every
-      requested audience and every Token Exchange target, and returns
-      invalid_target when the requested target cannot be issued within
-      the binding; requests other than Token Exchange ground
-      invalid_target in [RFC8707], Section 2.
-
-   *  Deployment configuration supplies the actor with the act.iss value
-      the issuer will emit.
-
-   *  An issuer embeds a proof only when its origin_jti and receipt_jti,
-      when present, equal the issued token's jti and the jti of any
-      sibling receipt the issuer creates.
-
-   *  In an introspection response, actor_proofs_complete: false makes
-      no attestation of complete coverage rather than asserting partial
-      coverage.
-
-   *  A Transaction Token request made over HTTP carries the proof in
-      actor_proof, because it is a Token Exchange request
-      ([I-D.ietf-oauth-transaction-tokens], Section 11).
-
-   *  Consumers compare a proof's act.sub_profile with the visible
-      act.sub_profile as a set of case-insensitive values (-00 required
-      the same value), and an issuer accepting a proof that carries
-      act.sub_profile verifies that it matches the act.sub_profile
-      emitted for the new outermost actor.
-
-   *  Replaced the strongest-first ranking of instance bindings with the
-      trust each relies on, and limited the recommendation of receipts
-      composition to deployments that already use receipts.
-
-   *  An actor can include known downstream audiences in target.aud so
-      that its proof survives a later redemption without a new hop; this
-      addresses audience divergence only.
-
-   *  On refresh, an authorization server takes retained proofs from its
-      issuance state: it validates the refresh request per [RFC6749],
-      Section 6 and checks the retained proofs against that state,
-      without requiring the previous access token to remain valid.
+   *  Removed BCP 14 keywords from guidance no other party can observe,
+      named the IETF as change controller, and aligned the examples with
+      the base profile.
 
    -00
 
