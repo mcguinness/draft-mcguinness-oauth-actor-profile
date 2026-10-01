@@ -1046,11 +1046,11 @@ svg {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">OAuth Actor Bounds</td>
-<td class="right">September 2026</td>
+<td class="right">October 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">McGuinness</td>
-<td class="center">Expires 3 April 2027</td>
+<td class="center">Expires 4 April 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1063,12 +1063,12 @@ svg {
 <dd class="internet-draft">draft-mcguinness-oauth-actor-authority-bounds-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-09-30" class="published">30 September 2026</time>
+<time datetime="2026-10-01" class="published">1 October 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-04-03">3 April 2027</time></dd>
+<dd class="expires"><time datetime="2027-04-04">4 April 2027</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1118,7 +1118,7 @@ svg {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 3 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 4 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1316,6 +1316,12 @@ svg {
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18.2.1">
                 <p id="section-toc.1-1.18.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-example-two-hop-chain-with-" class="internal xref">Example: Two-Hop Chain with Narrowing Bounds</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18.2.2">
+                <p id="section-toc.1-1.18.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-example-re-authorization-at" class="internal xref">Example: Re-Authorization at a Hop</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18.2.3">
+                <p id="section-toc.1-1.18.2.3.1"><a href="#appendix-A.3" class="auto internal xref">A.3</a>.  <a href="#name-example-expansion-not-cover" class="internal xref">Example: Expansion Not Covered by Re-Authorization</a></p>
 </li>
             </ul>
 </li>
@@ -1565,7 +1571,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-6.4-2.3.1">for the common members defined by <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>], <a href="https://rfc-editor.org/rfc/rfc9396#section-2.2" class="relref">Section 2.2</a></span>, refinement requires: <code>actions</code> a subset, <code>locations</code> a subset under the URI rules of <a href="#resource-dimension" class="auto internal xref">Section 6.3</a>, <code>datatypes</code> a subset, <code>privileges</code> a subset, and <code>identifier</code> equal; a common member present in the <code>ad_b</code> object but absent from the <code>ad_a</code> object is expansion and fails the comparison, and one absent from the <code>ad_b</code> object but present in the <code>ad_a</code> object also fails the comparison unless the refinement rules for that <code>type</code> establish that it preserves or narrows authority, because the effect of a member depends on the API's semantics (<span>[<a href="#RFC9396" class="cite xref">RFC9396</a>], <a href="https://rfc-editor.org/rfc/rfc9396#section-6.1" class="relref">Section 6.1</a></span>).<a href="#section-6.4-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-6.4-3">For type-specific members the recipient cannot evaluate, the recipient <span class="bcp14">MUST</span> reject verification of that dimension by default, or skip the object's refinement under explicit local policy.  RAR type specifications <span class="bcp14">SHOULD</span> define their own refinement rules; see <a href="#extensibility" class="auto internal xref">Section 12</a>.<a href="#section-6.4-3" class="pilcrow">¶</a></p>
+<p id="section-6.4-3">The common-member rules above apply to objects of a <code>type</code> whose members the recipient can evaluate, because it knows that the <code>type</code> defines no other members, or because it has a refinement rule for them.  For any other <code>type</code>, an object refines another object of the same <code>type</code> only when the two are equal as whole JSON objects (the same member names with equal values; member order is insignificant), and any change requires a type-specific refinement rule.  RAR type specifications <span class="bcp14">SHOULD</span> define their own refinement rules; see <a href="#extensibility" class="auto internal xref">Section 12</a>.<a href="#section-6.4-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="dimensions-explicitly-not-governed">
@@ -1630,7 +1636,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <dt id="section-7.2-1.2.2.1">
 <code>sub</code>:</dt>
               <dd style="margin-left: 1.5em" id="section-7.2-1.2.2.2">
-                <p id="section-7.2-1.2.2.2.1"><span class="bcp14">REQUIRED</span>.  Identifier of the principal that re-authorized the delegation.  It <span class="bcp14">MUST</span> equal the top-level <code>sub</code> of the token issued at this hop, or an upstream subject identifier recorded in the chain.<a href="#section-7.2-1.2.2.2.1" class="pilcrow">¶</a></p>
+                <p id="section-7.2-1.2.2.2.1"><span class="bcp14">REQUIRED</span>.  Identifier of the principal or authority that re-authorized the delegation, such as the subject, an approver, or the authority whose policy or agreement applies.  When the subject itself re-authorized, it equals the top-level <code>sub</code> of the token issued at this hop.  Recipients evaluate whether to trust the re-authorization under <a href="#reauthorization-abuse" class="auto internal xref">Section 13.2</a>.<a href="#section-7.2-1.2.2.2.1" class="pilcrow">¶</a></p>
 </dd>
               <dd class="break"></dd>
 <dt id="section-7.2-1.2.2.3">
@@ -1706,10 +1712,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-8.1-2.2.1"><span class="bcp14">MUST</span> include in the new receipt's <code>bounds</code> each dimension it attests, with each member equal to the effective issued value per <a href="#bounds-claim" class="auto internal xref">Section 7.1</a>.<a href="#section-8.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.1-2.3">
-            <p id="section-8.1-2.3.1">For each monotonic dimension it enforces, <span class="bcp14">MUST</span> verify that the issued value is within the effective inbound value, and, when the inbound token's validated <code>receipt[0]</code> carries bounds for the dimension, within that receipt's recorded bound.<a href="#section-8.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-8.1-2.3.1">For each monotonic dimension it enforces, <span class="bcp14">MUST</span> verify that the issued value is within the inbound token's effective value for that dimension, and, when the inbound token's validated <code>receipt[0]</code> carries bounds for the dimension, within that receipt's recorded bound.<a href="#section-8.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.1-2.4">
-            <p id="section-8.1-2.4.1">When step 3 fails and the deployment holds an authoritative re-authorization for the expansion, <span class="bcp14">MAY</span> proceed by recording <code>reauthorized</code> on the new receipt, listing each expanded dimension in <code>reauthorized.dimensions</code>, per <a href="#reauthorized-claim" class="auto internal xref">Section 7.2</a>; otherwise <span class="bcp14">MUST</span> reject the request under <a href="#error-handling" class="auto internal xref">Section 11</a>.<a href="#section-8.1-2.4.1" class="pilcrow">¶</a></p>
+            <p id="section-8.1-2.4.1">When the requested authority would fail step 3, <span class="bcp14">MAY</span> narrow the issued <code>scope</code> to fit (<span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-3.3" class="relref">Section 3.3</a></span>; a Token Exchange response then reports the issued scope, <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.1" class="relref">Section 2.2.1</a></span>), and, on a request other than Token Exchange, the issued <code>resource</code> value (<span>[<a href="#RFC8707" class="cite xref">RFC8707</a>], <a href="https://rfc-editor.org/rfc/rfc8707#section-2.2" class="relref">Section 2.2</a></span>); it does not drop a requested audience, or a requested resource on a Token Exchange request, and steps 1 to 3 then apply to the narrowed value.  When the issuer has a re-authorization for the expansion, captured under one of the methods of <a href="#reauthorized-claim" class="auto internal xref">Section 7.2</a> by the issuer itself or by an authority it trusts, it <span class="bcp14">MAY</span> instead proceed by recording <code>reauthorized</code> on the new receipt, listing each expanded dimension in <code>reauthorized.dimensions</code>.  An issuer that does neither, or whose narrowing leaves nothing permitted, <span class="bcp14">MUST</span> reject the request under <a href="#error-handling" class="auto internal xref">Section 11</a>.<a href="#section-8.1-2.4.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -1725,7 +1731,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-8.2-2.1.1"><span class="bcp14">MUST NOT</span> issue an outer token whose value for any monotonic dimension exceeds <code>receipt[0]</code>'s recorded bound; narrowing further is always permitted;<a href="#section-8.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-8.2-2.2">
-            <p id="section-8.2-2.2.1">when the issued value would exceed the recorded bound for a monotonic dimension, even because broader authority was authorized without a new hop (for example, a refresh grant following step-up or an approver widening a governing authority object), <span class="bcp14">MUST</span> fail the request or, where local policy and resource requirements permit absent receipt coverage, drop the inherited <code>actor_receipts</code> array and with it the bounds evidence.<a href="#section-8.2-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-8.2-2.2.1">when the issued value would exceed the recorded bound for a monotonic dimension, even because broader authority was authorized without a new hop (for example, a refresh grant following step-up or an approver widening the underlying grant), <span class="bcp14">MUST</span> narrow the issued value to fit, fail the request, or, where local policy and resource requirements permit absent receipt coverage, drop the inherited <code>actor_receipts</code> array and with it the bounds evidence.<a href="#section-8.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1850,7 +1856,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-introspection">
 <a href="#section-9.3" class="section-number selfRef">9.3. </a><a href="#name-introspection" class="section-name selfRef">Introspection</a>
         </h3>
-<p id="section-9.3-1">Receipt-attested bounds travel inside receipts and are returned wherever receipts are returned; the introspection rules of <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> apply unchanged, including all-or-nothing receipt disclosure and the requirement list for outer-token members.<a href="#section-9.3-1" class="pilcrow">¶</a></p>
+<p id="section-9.3-1">Receipt-attested bounds travel inside receipts and are returned wherever receipts are returned; the introspection rules of <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> apply unchanged, including all-or-nothing receipt disclosure and the requirement list for outer-token members.  An introspection response whose <code>receipt[0]</code> carries <code>bounds</code> <span class="bcp14">MUST</span> also include the token's <code>scope</code>, <code>aud</code>, and <code>authorization_details</code> (<span>[<a href="#RFC9396" class="cite xref">RFC9396</a>], <a href="https://rfc-editor.org/rfc/rfc9396#section-9.2" class="relref">Section 9.2</a></span>) members for each of those dimensions that <code>receipt[0].bounds</code> records, so that step 4 of <a href="#consumer-processing" class="auto internal xref">Section 9</a> can be applied.<a href="#section-9.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1904,7 +1910,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
       </h2>
 <p id="section-11-1">Bounds validation extends the underlying OAuth or Transaction Token validation.  Failures are reported through the error mechanism applicable to the stage at which they occur.<a href="#section-11-1" class="pilcrow">¶</a></p>
 <p id="section-11-2">When an authorization server or Transaction Token Service rejects a token request because inbound bounds evidence fails validation under <a href="#consumer-processing" class="auto internal xref">Section 9</a> (for example, a monotonicity failure in the inbound chain), it returns an error response per <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>], <a href="https://rfc-editor.org/rfc/rfc6749#section-5.2" class="relref">Section 5.2</a></span>: <code>invalid_request</code> for a Token Exchange request, as <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.2" class="relref">Section 2.2.2</a></span> requires, or <code>invalid_grant</code> for a JWT bearer grant request (<span>[<a href="#RFC7523" class="cite xref">RFC7523</a>], <a href="https://rfc-editor.org/rfc/rfc7523#section-3.1" class="relref">Section 3.1</a></span>), consistent with the core actor profile's error mapping for actor information that fails validation.<a href="#section-11-2" class="pilcrow">¶</a></p>
-<p id="section-11-3">When requested authority exceeds the recorded bound without re-authorization, the issuer <span class="bcp14">SHOULD</span> return:<a href="#section-11-3" class="pilcrow">¶</a></p>
+<p id="section-11-3">When requested authority exceeds the recorded bound without re-authorization and the issuer does not narrow the issued value to fit, or narrowing leaves nothing permitted (<a href="#recording-bounds" class="auto internal xref">Section 8.1</a>), the issuer <span class="bcp14">SHOULD</span> return:<a href="#section-11-3" class="pilcrow">¶</a></p>
 <table class="center" id="table-1">
         <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
 <thead>
@@ -1926,7 +1932,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <code>aud</code> or <code>resource</code>
 </td>
             <td class="text-left" rowspan="1" colspan="1">
-              <code>invalid_target</code> (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.2" class="relref">Section 2.2.2</a></span>)</td>
+              <code>invalid_target</code> (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.2" class="relref">Section 2.2.2</a></span> for Token Exchange; <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>], <a href="https://rfc-editor.org/rfc/rfc8707#section-2" class="relref">Section 2</a></span> otherwise)</td>
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">
@@ -2324,8 +2330,8 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
       <h2 id="name-examples">
 <a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-examples" class="section-name selfRef">Examples</a>
       </h2>
-<p id="appendix-A-1">The examples in this appendix show decoded contents; real receipts are compact-signed JWT strings.  Timestamps are illustrative.  The scenario continues the two-hop travel example of <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span>: Alice delegates to an AI travel-assistant agent through the enterprise AS, and the agent's token is exchanged at the travel-provider AS, which adds a booking tool as the outermost actor.  Because these receipts carry <code>bounds</code>, they are different byte strings from the receipts shown in that document's examples and carry their own identifiers.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
-<div id="example-two-hop-chain-with-narrowing-bounds">
+<p id="appendix-A-1">The examples in this appendix show decoded contents; real receipts are compact-signed JWT strings.  Timestamps are illustrative.  The scenario continues the two-hop travel example of <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span>: Alice delegates to an AI travel-assistant agent through the enterprise AS, and the agent's token is exchanged at the travel-provider AS, which adds a booking tool as the outermost actor.  Because these receipts carry <code>bounds</code>, they are different byte strings from the receipts shown in that document's examples and carry their own identifiers.  The later examples vary <a href="#example-narrowing" class="auto internal xref">Appendix A.1</a> and show only the members that change; a token or receipt that changes is a different byte string with its own <code>jti</code>, and the <code>origin_jti</code> or <code>prh</code> that references it changes with it.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<div id="example-narrowing">
 <section id="appendix-A.1">
         <h3 id="name-example-two-hop-chain-with-">
 <a href="#appendix-A.1" class="section-number selfRef">A.1. </a><a href="#name-example-two-hop-chain-with-" class="section-name selfRef">Example: Two-Hop Chain with Narrowing Bounds</a>
@@ -2421,6 +2427,80 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="appendix-A.1-8.4.1">Audience changes are recorded without comparison under the default audience rules.<a href="#appendix-A.1-8.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
+</section>
+</div>
+<div id="example-reauthorization">
+<section id="appendix-A.2">
+        <h3 id="name-example-re-authorization-at">
+<a href="#appendix-A.2" class="section-number selfRef">A.2. </a><a href="#name-example-re-authorization-at" class="section-name selfRef">Example: Re-Authorization at a Hop</a>
+        </h3>
+<p id="appendix-A.2-1">Here Alice completes step-up authentication at the travel-provider AS before it adds the booking tool, so that the tool can also cancel trips.  The outer token's <code>scope</code> is <code>trips:book trips:cancel</code>.  <code>actor_receipts[1]</code> is unchanged; <code>actor_receipts[0]</code> records the broader scope in <code>bounds</code> and adds <code>reauthorized</code>:<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-A.2-2">
+<pre>
+{
+  "bounds": {
+    "scope": "trips:book trips:cancel",
+    "aud": ["https://api.travel-provider.example"],
+    "resource": ["https://api.travel-provider.example/bookings"]
+  },
+  "reauthorized": {
+    "sub": "https://idp.enterprise.example/users/alice",
+    "iss": "https://as.travel-provider.example",
+    "method": "step_up",
+    "iat": 1776745140,
+    "dimensions": ["scope"]
+  }
+}
+</pre><a href="#appendix-A.2-2" class="pilcrow">¶</a>
+</div>
+<p id="appendix-A.2-3">The example verifies as follows, for a recipient whose policy trusts the travel-provider AS to record <code>step_up</code> re-authorization for Alice (<a href="#reauthorization-abuse" class="auto internal xref">Section 13.2</a>):<a href="#appendix-A.2-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-A.2-4.1">
+            <p id="appendix-A.2-4.1.1">Step 3 of <a href="#consumer-processing" class="auto internal xref">Section 9</a> skips the <code>scope</code> comparison between the receipts because <code>reauthorized.dimensions</code> lists <code>scope</code>; without that listing, <code>trips:cancel</code> would fail it.<a href="#appendix-A.2-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-A.2-4.2">
+            <p id="appendix-A.2-4.2.1">Step 4 passes: the outer token's scope equals the newly recorded scope.<a href="#appendix-A.2-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-A.2-4.3">
+            <p id="appendix-A.2-4.3.1">Other dimensions compare as in <a href="#example-narrowing" class="auto internal xref">Appendix A.1</a>.<a href="#appendix-A.2-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="example-unlisted-expansion">
+<section id="appendix-A.3">
+        <h3 id="name-example-expansion-not-cover">
+<a href="#appendix-A.3" class="section-number selfRef">A.3. </a><a href="#name-example-expansion-not-cover" class="section-name selfRef">Example: Expansion Not Covered by Re-Authorization</a>
+        </h3>
+<p id="appendix-A.3-1">This variant of <a href="#example-reauthorization" class="auto internal xref">Appendix A.2</a> also records <code>authorization_details</code> on both receipts, and the travel-provider AS widens it without listing it in <code>reauthorized.dimensions</code>.  <code>actor_receipts[1].bounds</code> adds:<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-A.3-2">
+<pre>
+{
+  "authorization_details": [
+    {
+      "type": "trip_booking",
+      "actions": ["read", "book"],
+      "locations": ["https://api.travel-provider.example/bookings"]
+    }
+  ]
+}
+</pre><a href="#appendix-A.3-2" class="pilcrow">¶</a>
+</div>
+<p id="appendix-A.3-3"><code>actor_receipts[0].bounds</code> adds the following member, and the outer token carries it as a top-level claim:<a href="#appendix-A.3-3" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-A.3-4">
+<pre>
+{
+  "authorization_details": [
+    {
+      "type": "trip_booking",
+      "actions": ["book", "cancel"],
+      "locations": ["https://api.travel-provider.example/bookings"]
+    }
+  ]
+}
+</pre><a href="#appendix-A.3-4" class="pilcrow">¶</a>
+</div>
+<p id="appendix-A.3-5">Step 3 of <a href="#consumer-processing" class="auto internal xref">Section 9</a> fails for <code>authorization_details</code>: <code>reauthorized.dimensions</code> lists only <code>scope</code>, and the newer object adds the <code>cancel</code> action, so, whether or not the recipient has a refinement rule for <code>trip_booking</code>, it refines no older object (<a href="#rar-dimension" class="auto internal xref">Section 6.4</a>).  The recipient therefore rejects the token's bounds evidence, including the re-authorized <code>scope</code> bound.  The receipt chain remains valid under <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span>; whether the token is acceptable without bounds evidence is local policy, except where step 5 applies.<a href="#appendix-A.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>

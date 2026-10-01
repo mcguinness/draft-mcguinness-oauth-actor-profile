@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                       30 September 2026
-Expires: 3 April 2027
+Intended status: Standards Track                          1 October 2026
+Expires: 4 April 2027
 
 
                    OAuth Actor Chain Authority Bounds
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 3 April 2027.
+   This Internet-Draft will expire on 4 April 2027.
 
 Copyright Notice
 
@@ -123,6 +123,8 @@ Table of Contents
      17.2.  Informative References
    Appendix A.  Examples
      A.1.  Example: Two-Hop Chain with Narrowing Bounds
+     A.2.  Example: Re-Authorization at a Hop
+     A.3.  Example: Expansion Not Covered by Re-Authorization
    Document History
    Author's Address
 
@@ -421,9 +423,13 @@ Table of Contents
       because the effect of a member depends on the API's semantics
       ([RFC9396], Section 6.1).
 
-   For type-specific members the recipient cannot evaluate, the
-   recipient MUST reject verification of that dimension by default, or
-   skip the object's refinement under explicit local policy.  RAR type
+   The common-member rules above apply to objects of a type whose
+   members the recipient can evaluate, because it knows that the type
+   defines no other members, or because it has a refinement rule for
+   them.  For any other type, an object refines another object of the
+   same type only when the two are equal as whole JSON objects (the same
+   member names with equal values; member order is insignificant), and
+   any change requires a type-specific refinement rule.  RAR type
    specifications SHOULD define their own refinement rules; see
    Section 12.
 
@@ -476,10 +482,12 @@ Table of Contents
       issued at this hop was expanded relative to the inbound authority
       under an explicit re-authorization.  Members:
 
-      sub:  REQUIRED.  Identifier of the principal that re-authorized
-         the delegation.  It MUST equal the top-level sub of the token
-         issued at this hop, or an upstream subject identifier recorded
-         in the chain.
+      sub:  REQUIRED.  Identifier of the principal or authority that re-
+         authorized the delegation, such as the subject, an approver, or
+         the authority whose policy or agreement applies.  When the
+         subject itself re-authorized, it equals the top-level sub of
+         the token issued at this hop.  Recipients evaluate whether to
+         trust the re-authorization under Section 13.2.
 
       iss:  REQUIRED.  Identifier of the authorization server or other
          authority that captured the re-authorization.
@@ -541,15 +549,25 @@ Table of Contents
        Section 7.1.
 
    3.  For each monotonic dimension it enforces, MUST verify that the
-       issued value is within the effective inbound value, and, when the
-       inbound token's validated receipt[0] carries bounds for the
-       dimension, within that receipt's recorded bound.
+       issued value is within the inbound token's effective value for
+       that dimension, and, when the inbound token's validated
+       receipt[0] carries bounds for the dimension, within that
+       receipt's recorded bound.
 
-   4.  When step 3 fails and the deployment holds an authoritative re-
-       authorization for the expansion, MAY proceed by recording
+   4.  When the requested authority would fail step 3, MAY narrow the
+       issued scope to fit ([RFC6749], Section 3.3; a Token Exchange
+       response then reports the issued scope, [RFC8693],
+       Section 2.2.1), and, on a request other than Token Exchange, the
+       issued resource value ([RFC8707], Section 2.2); it does not drop
+       a requested audience, or a requested resource on a Token Exchange
+       request, and steps 1 to 3 then apply to the narrowed value.  When
+       the issuer has a re-authorization for the expansion, captured
+       under one of the methods of Section 7.2 by the issuer itself or
+       by an authority it trusts, it MAY instead proceed by recording
        reauthorized on the new receipt, listing each expanded dimension
-       in reauthorized.dimensions, per Section 7.2; otherwise MUST
-       reject the request under Section 11.
+       in reauthorized.dimensions.  An issuer that does neither, or
+       whose narrowing leaves nothing permitted, MUST reject the request
+       under Section 11.
 
 8.2.  Reissuance and Refresh Without a New Hop
 
@@ -566,10 +584,10 @@ Table of Contents
    *  when the issued value would exceed the recorded bound for a
       monotonic dimension, even because broader authority was authorized
       without a new hop (for example, a refresh grant following step-up
-      or an approver widening a governing authority object), MUST fail
-      the request or, where local policy and resource requirements
-      permit absent receipt coverage, drop the inherited actor_receipts
-      array and with it the bounds evidence.
+      or an approver widening the underlying grant), MUST narrow the
+      issued value to fit, fail the request, or, where local policy and
+      resource requirements permit absent receipt coverage, drop the
+      inherited actor_receipts array and with it the bounds evidence.
 
 8.3.  Domain Transitions
 
@@ -723,7 +741,11 @@ Table of Contents
    wherever receipts are returned; the introspection rules of
    [I-D.mcguinness-oauth-actor-receipts] apply unchanged, including all-
    or-nothing receipt disclosure and the requirement list for outer-
-   token members.
+   token members.  An introspection response whose receipt[0] carries
+   bounds MUST also include the token's scope, aud, and
+   authorization_details ([RFC9396], Section 9.2) members for each of
+   those dimensions that receipt[0].bounds records, so that step 4 of
+   Section 9 can be applied.
 
 10.  Discovery and Capability Signaling
 
@@ -785,19 +807,23 @@ Table of Contents
    profile's error mapping for actor information that fails validation.
 
    When requested authority exceeds the recorded bound without re-
-   authorization, the issuer SHOULD return:
+   authorization and the issuer does not narrow the issued value to fit,
+   or narrowing leaves nothing permitted (Section 8.1), the issuer
+   SHOULD return:
 
-   +=======================+===========================================+
-   | Dimension             | Error                                     |
-   +=======================+===========================================+
-   | scope                 | invalid_scope ([RFC6749], Section 5.2)    |
-   +-----------------------+-------------------------------------------+
-   | aud or resource       | invalid_target ([RFC8693],                |
-   |                       | Section 2.2.2)                            |
-   +-----------------------+-------------------------------------------+
-   | authorization_details | invalid_authorization_details             |
-   |                       | [RFC9396]                                 |
-   +-----------------------+-------------------------------------------+
+       +=======================+===================================+
+       | Dimension             | Error                             |
+       +=======================+===================================+
+       | scope                 | invalid_scope ([RFC6749],         |
+       |                       | Section 5.2)                      |
+       +-----------------------+-----------------------------------+
+       | aud or resource       | invalid_target ([RFC8693],        |
+       |                       | Section 2.2.2 for Token Exchange; |
+       |                       | [RFC8707], Section 2 otherwise)   |
+       +-----------------------+-----------------------------------+
+       | authorization_details | invalid_authorization_details     |
+       |                       | [RFC9396]                         |
+       +-----------------------+-----------------------------------+
 
                                   Table 1
 
@@ -1214,7 +1240,10 @@ Appendix A.  Examples
    token is exchanged at the travel-provider AS, which adds a booking
    tool as the outermost actor.  Because these receipts carry bounds,
    they are different byte strings from the receipts shown in that
-   document's examples and carry their own identifiers.
+   document's examples and carry their own identifiers.  The later
+   examples vary Appendix A.1 and show only the members that change; a
+   token or receipt that changes is a different byte string with its own
+   jti, and the origin_jti or prh that references it changes with it.
 
 A.1.  Example: Two-Hop Chain with Narrowing Bounds
 
@@ -1302,6 +1331,81 @@ A.1.  Example: Two-Hop Chain with Narrowing Bounds
 
    *  Audience changes are recorded without comparison under the default
       audience rules.
+
+A.2.  Example: Re-Authorization at a Hop
+
+   Here Alice completes step-up authentication at the travel-provider AS
+   before it adds the booking tool, so that the tool can also cancel
+   trips.  The outer token's scope is trips:book trips:cancel.
+   actor_receipts[1] is unchanged; actor_receipts[0] records the broader
+   scope in bounds and adds reauthorized:
+
+   {
+     "bounds": {
+       "scope": "trips:book trips:cancel",
+       "aud": ["https://api.travel-provider.example"],
+       "resource": ["https://api.travel-provider.example/bookings"]
+     },
+     "reauthorized": {
+       "sub": "https://idp.enterprise.example/users/alice",
+       "iss": "https://as.travel-provider.example",
+       "method": "step_up",
+       "iat": 1776745140,
+       "dimensions": ["scope"]
+     }
+   }
+
+   The example verifies as follows, for a recipient whose policy trusts
+   the travel-provider AS to record step_up re-authorization for Alice
+   (Section 13.2):
+
+   *  Step 3 of Section 9 skips the scope comparison between the
+      receipts because reauthorized.dimensions lists scope; without that
+      listing, trips:cancel would fail it.
+
+   *  Step 4 passes: the outer token's scope equals the newly recorded
+      scope.
+
+   *  Other dimensions compare as in Appendix A.1.
+
+A.3.  Example: Expansion Not Covered by Re-Authorization
+
+   This variant of Appendix A.2 also records authorization_details on
+   both receipts, and the travel-provider AS widens it without listing
+   it in reauthorized.dimensions.  actor_receipts[1].bounds adds:
+
+   {
+     "authorization_details": [
+       {
+         "type": "trip_booking",
+         "actions": ["read", "book"],
+         "locations": ["https://api.travel-provider.example/bookings"]
+       }
+     ]
+   }
+
+   actor_receipts[0].bounds adds the following member, and the outer
+   token carries it as a top-level claim:
+
+   {
+     "authorization_details": [
+       {
+         "type": "trip_booking",
+         "actions": ["book", "cancel"],
+         "locations": ["https://api.travel-provider.example/bookings"]
+       }
+     ]
+   }
+
+   Step 3 of Section 9 fails for authorization_details:
+   reauthorized.dimensions lists only scope, and the newer object adds
+   the cancel action, so, whether or not the recipient has a refinement
+   rule for trip_booking, it refines no older object (Section 6.4).  The
+   recipient therefore rejects the token's bounds evidence, including
+   the re-authorized scope bound.  The receipt chain remains valid under
+   [I-D.mcguinness-oauth-actor-receipts]; whether the token is
+   acceptable without bounds evidence is local policy, except where step
+   5 applies.
 
 Document History
 
