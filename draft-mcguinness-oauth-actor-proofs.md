@@ -599,10 +599,6 @@ The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT bes
 *  **Cross-subject graft with a compromised actor key.**  Mitigation: exact, namespace-aware subject matching across proofs or trusted subject mapping ({{subject-re-expression-across-hops}}).
 *  **Replay of an entire token plus its proofs.**  This profile does not define replay detection; proofs inherit the outer token's replay characteristics.
 
-### Trust Model Summary
-
-Trust is per-actor-key and per-deployment, and is not transitive: a proof chain fails validation if any proof's signing key cannot be resolved through an actor-key source the recipient trusts (step 5 of {{consumer-processing}}).  Proofs and receipts have independent trust anchors; validating both survives compromise of either the issuer side or the actor side, but not of both.
-
 ## Current Presenter Validation
 
 When the outer token carries a top-level `cnf` claim ({{RFC7800}}), the current request is always validated against it, using a mechanism such as DPoP {{RFC9449}} or mutual-TLS {{RFC8705}}.
@@ -613,6 +609,8 @@ An actor proof does not substitute for that validation:
 *  Recipients MUST distinguish proof JWTs (identified by the `typ` value `actor-proof+jwt`) from artifacts that carry current-request proof-of-possession semantics under {{RFC7800}}, {{RFC9449}}, or {{RFC8705}}.
 
 ## Actor Key Resolution and Trust {#actor-key-resolution}
+
+Trust is per-actor-key and per-deployment, and is not transitive: a proof chain fails validation if any proof's signing key cannot be resolved through an actor-key source the recipient trusts (step 5 of {{consumer-processing}}).  Proofs and receipts have independent trust anchors; validating both survives compromise of either the issuer side or the actor side, but not of both.
 
 Trust establishment requirements:
 
