@@ -590,7 +590,7 @@ The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT bes
 *  **Compromised downstream issuer fabricating prior-hop participation.**  Such an issuer cannot forge prior actors' proof signatures, and the `prh` chain prevents it from dropping or reordering inner proofs.
 *  **Token mutation in transit.**  Each proof is independently signed; modification invalidates the proof's signature and any newer proof's `prh`.
 *  **Partial-coverage misclaim.**  An issuer cannot drop an inner proof without breaking the `prh` chain, and it cannot claim `actor_proofs_complete: true` unless the proof count matches the visible actor-chain depth.  It can withhold coverage only at the innermost end, and only by beginning a new chain rather than trimming an inherited one.
-*  **Proof-chain substitution, when receipts with `proof_jti` are present.**  A harvested proof chain for the same visible hops fails the sibling check in step 10 of {{consumer-processing}}.
+*  **Proof-chain substitution, when receipts with `proof_jti` are present.**  Replacing a proof chain with one whose identifiers differ from the receipts' `proof_jti` values fails the sibling check in step 10 of {{consumer-processing}}.
 
 ### Adversaries Not Mitigated
 
