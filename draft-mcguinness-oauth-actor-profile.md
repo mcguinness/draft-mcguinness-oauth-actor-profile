@@ -674,7 +674,7 @@ JWT assertion grants are not suitable for use as `actor_token`, because their `s
 
 ## Input Processing {#token-exchange-input-processing}
 
-When a Token Exchange request ({{RFC8693}}) presents a `subject_token` or `actor_token` of a type defined in this section, the AS MUST apply the following steps, using the input type's row in the table below and the rules in its subsection.  Steps 1 through 4 apply to each input; steps 5 and 6 apply to the issued token.
+When a Token Exchange request ({{RFC8693}}) presents a `subject_token` or `actor_token` of a type defined in this section, the AS MUST apply the following steps, using the input type's row in the tables below and the rules in its subsection.  Steps 1 through 4 apply to each input; steps 5 and 6 apply to the issued token.
 
 1.  The AS MUST validate the input per the specification in its table row.  If validation fails, the AS MUST reject the request with `invalid_request` ({{Section 2.2.2 of RFC8693}}), unless the input's subsection or [Error Responses](#actor-profile-error-responses) specifies another error.
 
@@ -692,16 +692,23 @@ When a Token Exchange request ({{RFC8693}}) presents a `subject_token` or `actor
 
 6.  The AS MUST then apply the propagation rules in [JWT Access Token Output](#jwt-access-token-propagation) to determine the remaining claims in the issued token.
 
-| Input | Validated per | Issuer trust check | Establishes | Scope ceiling | Type-specific errors |
-|---|---|---|---|---|---|
-| JWT assertion grant | [Authorization Grant Processing](#jwt-assertion-grants-processing) | In validation | `sub`; `act`, `cnf` if present; continuity | See subsection | `invalid_request` replaces `invalid_grant` |
-| JWT access token | {{RFC9068}}, `aud` relaxed | Trusted for its delegation chain | `sub`; `act`, `cnf` if present; continuity | Its effective scope | None |
-| Transaction Token | {{I-D.ietf-oauth-transaction-tokens}} | Trusted issuer | `sub`; `act`, `cnf` if present; continuity | Not defined here | None |
-| ID Token | {{OpenID.Core}}, local policy | No separate check | `sub` only | None | None |
-| Refresh token | Token store or trusted back-channel | No separate check | `sub`, scope | Its authorized scope | None |
-| JWT client assertion (`actor_token`) | {{RFC7523}} | See subsection | Outermost actor | Not applicable | `invalid_client` if shared |
-| Workload identity credential (`actor_token`) | Its type specification | Trusted for the workload's identity | Outermost actor | Not applicable | Proof mechanism's error |
-| JWT access token (`actor_token`) | {{RFC9068}}, `aud` relaxed | Trusted for the acting party's identity | Outermost actor | Not applicable | None |
+For `subject_token` inputs:
+
+| Input | Validated per | Issuer trust check | Establishes | Scope ceiling |
+|---|---|---|---|---|
+| JWT assertion grant | [Authorization Grant Processing](#jwt-assertion-grants-processing) | In validation | `sub`; `act`, `cnf` if present; continuity | See subsection |
+| JWT access token | {{RFC9068}}, `aud` relaxed | Trusted for its delegation chain | `sub`; `act`, `cnf` if present; continuity | Its effective scope |
+| Transaction Token | Transaction Token specification ({{txn-token-as-subject-token}}) | Trusted issuer | `sub`; `act`, `cnf` if present; continuity | Not defined here |
+| ID Token | {{OpenID.Core}}, local policy | No separate check | `sub` only | None |
+| Refresh token | Token store or trusted back-channel | No separate check | `sub`, scope | Its authorized scope |
+
+For `actor_token` inputs, each of which establishes the outermost actor:
+
+| Input | Validated per | Issuer trust check |
+|---|---|---|
+| JWT client assertion | {{RFC7523}} | See subsection |
+| Workload identity credential | Its type specification | Trusted for the workload's identity |
+| JWT access token | {{RFC9068}}, `aud` relaxed | Trusted for the acting party's identity |
 
 ## Subject Tokens
 
