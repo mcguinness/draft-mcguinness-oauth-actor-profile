@@ -455,7 +455,7 @@ An issuer, resource server, or other recipient that relies on `actor_receipts` M
     *  verify that the JOSE header uses an asymmetric digital-signature `alg` value accepted for that receipt issuer, and reject receipts that use `alg: none` or a MAC-based symmetric algorithm;
     *  resolve the signing key from the receipt issuer's authorization server metadata `jwks_uri` {{RFC8414}} (where the receipt's `iss` claim identifies the receipt issuer, which can differ from the outer token's issuer) or from local configuration;
     *  validate the JWT signature;
-    *  reject a receipt whose `crit` header parameter lists an extension the consumer does not understand;
+    *  reject a receipt whose `crit` header parameter lists an extension header parameter the consumer does not understand;
     *  verify that all REQUIRED receipt claims are present and have the expected JSON types, including `iss`, `sub`, `act`, `iat`, `exp`, and `jti`;
     *  verify that OPTIONAL claims used by this profile have the expected JSON types when present, including `sub_iss`, `sub_profile`, `cnf`, `prh`, `prh_alg`, and `origin_jti`;
     *  verify that the receipt `act` object is single-hop, contains no nested `act`, and contains no `cnf`;
@@ -638,7 +638,7 @@ This document does not define new OAuth error codes.  The error handling above r
 
 # Extensibility {#extensibility}
 
-This profile composes with companion profiles that build on the OAuth Actor Profile for Delegation {{I-D.mcguinness-oauth-actor-profile}}.  Companion profiles have five standard extension surfaces:
+This profile is designed to compose with sibling companion profiles that build on the OAuth Actor Profile for Delegation {{I-D.mcguinness-oauth-actor-profile}}.  Companion profiles have five standard extension surfaces:
 
 *  **New claims inside a receipt JWT** for additional per-hop attributes (for example, historical scope, additional binding data, or extension-specific provenance).  Consumers ignore unrecognized claims under {{receipt-claims}} unless another specification or local agreement defines their meaning, so additive claims do not break the validation rules of this document.
 *  **New top-level claims on the outer token, parallel to `actor_receipts`**, for per-hop artifacts that need their own signature semantics (for example, actor-signed proofs whose threat model differs from AS-signed receipts, or recipient-signed acknowledgments).  The `<name>` plus `<name>_complete` claim-pair convention for such claims is described in {{discovery-capability-signaling}}.

@@ -109,7 +109,7 @@ Proof Chain:
 : The ordered `actor_proofs` array carried in a token or introspection response.
 
 Actor Signing Key:
-: An asymmetric key controlled by an actor and used to sign actor proofs.  How actor signing keys are established is outside the scope of this document; see [Actor Key Resolution and Trust](#actor-key-resolution).
+: An asymmetric key controlled by an actor and used to sign actor proofs.  This document does not standardize how actor signing keys are established; see [Actor Key Resolution and Trust](#actor-key-resolution).
 
 Actor-Key Source:
 : A mechanism, trusted by a recipient under explicit local policy, that resolves an actor identifier pair (`act.iss`, `act.sub`) to one or more actor verification keys.
@@ -191,7 +191,7 @@ This profile requires actors capable of signing, such as agents, workloads, and 
 
 Recipients need a trusted actor-key source for every actor whose proof they use ({{actor-key-resolution}}).  This can require more configuration than trusting the smaller set of receipt issuers.
 
-The anti-fabrication property of this profile is conditional on recipients requiring proofs.  An issuer that fabricates actor participation can omit proofs; recipients that accept delegated tokens without proofs receive no protection from this profile ({{downgrade-by-omission}}).
+The anti-fabrication property of this profile is conditional on recipients requiring proofs.  An issuer that fabricates actor participation simply omits proofs; recipients that accept delegated tokens without proofs receive no protection from this profile ({{downgrade-by-omission}}).
 
 # Actor Proofs Overview
 
@@ -242,7 +242,7 @@ Actors, issuers, and consumers MUST apply the JWT best practices in {{RFC8725}} 
 
 ## Proof Claims {#proof-claims}
 
-The JWT payload of an actor proof contains the claims defined below, grouped by purpose.
+The JWT payload of an actor proof uses the claims defined below, grouped by purpose.
 
 ### Identity Claims
 
@@ -605,7 +605,7 @@ The following parameters are defined for use in Protected Resource Metadata {{RF
   Unlike receipt issuance, proof creation involves the actor directly: an actor that can sign proofs MAY use this declaration, together with `actor_proofs_supported` in Authorization Server Metadata, to decide whether to include the `actor_proof` parameter in its token requests.  The declaration also serves deployment coordination and expresses the enforcement posture under which this profile's anti-fabrication property holds ({{downgrade-by-omission}}).
 
 `actor_proofs_complete_required`:
-: OPTIONAL.  A boolean.  When `true`, the resource server indicates that it requires complete proof coverage: the proof count equals the visible actor-chain depth and `actor_proofs_complete` is `true` in the outer token or the introspection response.  This parameter refines `actor_proofs_required`; a resource server SHOULD NOT set `actor_proofs_complete_required: true` without also setting `actor_proofs_required: true`.  When `false` or absent, partial proof coverage is acceptable to the resource server, subject to any further local policy.
+: OPTIONAL.  A boolean.  When `true`, the resource server indicates that it requires complete proof coverage: the proof count needs to equal the visible actor-chain depth and `actor_proofs_complete` needs to be `true` in the outer token or the introspection response.  This parameter refines `actor_proofs_required`; a resource server SHOULD NOT set `actor_proofs_complete_required: true` without also setting `actor_proofs_required: true`.  When `false` or absent, partial proof coverage is acceptable to the resource server, subject to any further local policy.
 
 ## Introspection Response Members {#introspection-response-members}
 

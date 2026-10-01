@@ -112,7 +112,7 @@ Examples in this document are illustrative and omit unrelated claims, signatures
 This profile uses two extension points in {{I-D.mcguinness-oauth-actor-receipts}}:
 
 *  Receipt extension claims: `bounds` and `reauthorized`, protected by the receipt signature.
-*  Cross-receipt verification: comparisons across receipts that tolerate sparse coverage by verifying a dimension only when every receipt records it.
+*  Cross-receipt verification: comparisons across receipts, tolerating sparse coverage by verifying a dimension only when every receipt records it.
 
 The receipt signing, linkage, byte-preservation, and coverage rules of that document continue to apply.  Receipts without `bounds` remain valid.  Bounds evidence requires a validated receipt chain.
 

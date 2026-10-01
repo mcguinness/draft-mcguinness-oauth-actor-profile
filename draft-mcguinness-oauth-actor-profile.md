@@ -374,7 +374,7 @@ For inner `act` objects preserved solely as prior-actor context without being us
 
 #### Enforce Depth Limit {#enforce-depth-limit}
 
-The AS computes the depth of the resulting chain, including any new outermost actor added by [Extend Chain with New Actor](#extend-chain-with-new-actor).  If that depth exceeds the locally configured maximum ([Delegation Chains](#delegation-chains)), the AS rejects the request under [Error Responses](#actor-profile-error-responses), distinguishing an excessive inbound chain from an extension that would exceed the limit.
+Compute the depth of the resulting chain, including any new outermost actor added by [Extend Chain with New Actor](#extend-chain-with-new-actor).  If that depth exceeds the locally configured maximum ([Delegation Chains](#delegation-chains)), reject under [Error Responses](#actor-profile-error-responses), distinguishing an excessive inbound chain from an extension that would exceed the limit.
 
 ### Construction Steps
 
@@ -539,7 +539,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 4.  The AS MUST evaluate whether the identified actor is authorized to exercise delegation on behalf of `sub`.  The required strength of that evaluation depends on how the outermost actor was introduced:
 
     *  **New actor**: When the request supplies an `actor_token` or self-issued assertion that introduces a new `act.sub` not carried by the inbound chain, the AS MUST confirm the delegation relationship under local policy (for example, a pre-registered grant, an explicit consent record, or a policy rule).
-    *  **Preserved chain**: When the request preserves an existing chain from a validated, trusted upstream issuer, the issuer trust established in step 2 provides the baseline assurance; the AS SHOULD additionally evaluate the delegation relationship under local policy but is not required to do so for baseline interoperability.
+    *  **Preserved chain**: When the request preserves an existing chain from a validated, trusted upstream issuer, the issuer trust established in step 2 provides the baseline assurance; the AS SHOULD additionally evaluate under local policy but is not required to do so for baseline interoperability.
 
     In either case:
 
@@ -574,7 +574,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
     *  The AS MAY use that client identity as an additional authorization input.
     *  The AS SHOULD NOT infer that the client is authorized to act on behalf of the subject solely because the client initiated the request.  Such inference is outside the interoperable behavior defined by this profile.
-    *  When local policy maps the client identity to an actor identifier expected to match `act.sub`, the AS SHOULD perform identifier reconciliation before issuing a token.  If reconciliation does not establish equivalence, the AS treats the identifiers as distinct and rejects the request when issuance requires them to identify the same entity, as defined for Identifier Reconciliation in [Conventions and Definitions](#conventions).
+    *  When local policy maps the client identity to an actor identifier expected to match `act.sub`, the AS SHOULD perform identifier reconciliation before issuing a token.  If reconciliation cannot be established, the AS treats the identifiers as distinct and rejects the request when issuance requires them to identify the same entity, as defined for Identifier Reconciliation in [Conventions and Definitions](#conventions).
 
 8.  If the AS accepts the assertion, it MUST propagate the actor information into the issued token according to the rules for the output token type.  For JWT access tokens, see [JWT Access Token Output](#jwt-access-token-propagation).  For Transaction Tokens, see [Transaction Token Output Rules](#transaction-token-output-rules).  When the output is another JWT assertion grant profile, the resulting assertion MUST preserve the validated actor information subject to local policy and the chain-depth limit in [Delegation Chains](#delegation-chains).
 
@@ -711,7 +711,7 @@ JWT assertion grants, JWT access tokens, and Transaction Tokens are token-state 
 
 When a Token Exchange request ({{RFC8693}}) presents a JWT assertion grant as the `subject_token`, the AS MUST apply the inbound validation rules of [Authorization Grant Processing](#jwt-assertion-grants-processing) to the grant.  Assertion-grant output construction from that section does not apply; the rules below and [JWT Access Token Output](#jwt-access-token-propagation) govern propagation and scope reduction.  On this Token Exchange path, a failure that section rejects with the `invalid_grant` error code is rejected with the `invalid_request` error code instead ({{Section 2.2.2 of RFC8693}}).
 
-The AS applies the continuation or rebind rules in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).  In presenter continuation, step 6 of [Authorization Grant Processing](#jwt-assertion-grants-processing) applies.  In presenter rebind, the new presenter's binding supersedes the grant's: the AS does not perform step 6's match of the request's proof against the grant's top-level `cnf`, and it treats the grant as having no enforced grant-level sender constraint, so the (`iss`, `jti`) single-use rule in step 1 of [Authorization Grant Processing](#jwt-assertion-grants-processing) applies.  The AS still validates any proof that the new presenter's credential profile or the deployment requires, as the rebind rules specify.
+Apply the continuation or rebind rules in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).  In presenter continuation, step 6 of [Authorization Grant Processing](#jwt-assertion-grants-processing) applies.  In presenter rebind, the new presenter's binding supersedes the grant's: the AS does not perform step 6's match of the request's proof against the grant's top-level `cnf`, and it treats the grant as having no enforced grant-level sender constraint, so the (`iss`, `jti`) single-use rule in step 1 of [Authorization Grant Processing](#jwt-assertion-grants-processing) applies.  The AS still validates any proof that the new presenter's credential profile or the deployment requires, as the rebind rules specify.
 
 The AS can reduce scope under local policy.  The effective scope of the issued token MUST NOT exceed the grant's effective scope ceiling: the grant's `scope` claim when present (such as the ID-JAG `scope` claim of {{I-D.ietf-oauth-identity-assertion-authz-grant}}), otherwise the scope the AS would authorize if the grant were redeemed directly under [Authorization Grant Processing](#jwt-assertion-grants-processing).  The AS MUST then apply [JWT Access Token Output](#jwt-access-token-propagation).
 
@@ -1607,9 +1607,9 @@ When extensions to this profile attach per-hop signed material to a delegated to
 
 ## Actor Identity Rotation {#actor-identity-rotation}
 
-The canonical actor identifier under this profile is the (`act.iss`, `act.sub`) pair.  Deployments SHOULD choose `act.sub` to be a durable, stable identifier independent of ephemeral key material.  In particular, deployments SHOULD NOT use a JWK thumbprint or other key-derived value as `act.sub`; doing so changes the actor identity on every key rotation, which can break delegation grants and policy bindings that reference the prior identifier.  Key rotation (replacing the DPoP key or mTLS certificate bound to an actor) does not require changing `act.sub` when the identifier is key-independent.
+The canonical actor identifier under this profile is the (`act.iss`, `act.sub`) pair.  Deployments SHOULD choose `act.sub` to be a durable, stable identifier independent of ephemeral key material.  In particular, deployments SHOULD NOT use a JWK thumbprint or other key-derived value as `act.sub`; doing so silently changes the actor identity on every key rotation, which can break delegation grants and policy bindings that reference the prior identifier.  Key rotation (replacing the DPoP key or mTLS certificate bound to an actor) does not require changing `act.sub` when the identifier is key-independent.
 
-When `act.sub` itself changes (for example, because an agent instance is replaced, a workload is renamed, or an actor identifier namespace migrates), existing delegation grants and issued tokens continue to reference the old identifier.  Deployments MUST explicitly re-establish delegation grants for the new identity; the old grants do not automatically transfer.  Outstanding tokens issued under the old identity remain valid until their `exp` time; short token lifetimes bound the exposure window during the transition.
+When `act.sub` itself must change (for example, because an agent instance is replaced, a workload is renamed, or an actor identifier namespace migrates), existing delegation grants and issued tokens continue to reference the old identifier.  Deployments MUST explicitly re-establish delegation grants for the new identity; the old grants do not automatically transfer.  Outstanding tokens issued under the old identity remain valid until their `exp` time; short token lifetimes bound the exposure window during the transition.
 
 ## Delegation Revocation {#delegation-revocation}
 
