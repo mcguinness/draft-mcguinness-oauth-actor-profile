@@ -1966,7 +1966,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 
 -01
 
-* Restructured and tightened the text: each rule has one home, dependencies are cited rather than restated, and tables cover claim roles, token types, and error mappings.
+* Restructured and tightened the text: each rule has one home, dependencies are cited rather than restated, tables cover claim roles, token types, and error mappings, Token Exchange inputs share one processing algorithm, and Security Considerations point to the rules they rely on.  Removed the Conformance section, which restated those rules.
 * Revised the Introduction to state what Token Exchange leaves open and the ID-JAG extension point this profile fills.
 * Added hop and visible-hop terminology; only an introspection server filters the visible `act` chain.
 * Required `client_id` in JWT access tokens, per {{RFC9068}}, and limited the JWT access token structure to JWT access token output.

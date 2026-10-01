@@ -1044,7 +1044,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 
 -01
 
-* Restructured and tightened the text: each rule has one home, dependencies are cited rather than restated, and a table covers the claim-pair convention.
+* Restructured and tightened the text: each rule has one home, dependencies are cited rather than restated, a table covers the claim-pair convention, scope and related work are in the Introduction, and Security Considerations point to the rules they rely on.
 * Added Receipt Instance Binding; strict mode rejects only issuer divergence, and a same-issuer chain whose `origin_jti` differs, as after refresh, is accepted without instance binding.
 * Named ID-JAG and other assertion-grant redemption without a new hop as different-issuer reissuance.
 * Defined one lifetime rule for extension, reissuance, and refresh (lower the token's `exp`, drop the array, or fail), added a floor for receipt `exp`, and made an expired older receipt invalid.

@@ -1000,7 +1000,7 @@ The `prh` claim is omitted because this is a single-element chain.  `actor_proof
 
 -01
 
-* Restructured and tightened the text: each rule has one home and dependencies are cited rather than restated.
+* Restructured and tightened the text: each rule has one home, dependencies are cited rather than restated, scope and related work are in the Introduction, and Security Considerations point to the rules they rely on.
 * Defined one lifetime rule for extension, reissuance, and refresh, and made an expired older proof invalid; retained proofs are validated against the issuer's state on refresh.
 * Clarified instance binding: a new `jti` diverges from a provisioned `origin_jti`, trusted-reissuer designation excuses only that divergence unless retargeting is permitted, and the binding options are described by the trust each relies on.
 * Tightened target binding: resource indicators match by simple string comparison, `target.resource` supplies the effective resources when a request names none, consent is audience-only when the token's resources are unknown, Token Exchange targets are not narrowed, and the issuer checks `origin_jti` and `receipt_jti`.
