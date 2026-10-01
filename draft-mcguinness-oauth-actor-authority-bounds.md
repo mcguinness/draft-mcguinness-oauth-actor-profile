@@ -197,7 +197,7 @@ The `authorization_details` dimension records the Rich Authorization Requests ar
 *  two objects refine only when they share the same `type`;
 *  for the common members defined by {{RFC9396, Section 2.2}}, refinement requires: `actions` a subset, `locations` a subset under the URI rules of {{resource-dimension}}, `datatypes` a subset, `privileges` a subset, and `identifier` equal; a common member present in the `ad_b` object but absent from the `ad_a` object is expansion and fails the comparison, and one absent from the `ad_b` object but present in the `ad_a` object also fails the comparison unless the refinement rules for that `type` establish that it preserves or narrows authority, because the effect of a member depends on the API's semantics ({{RFC9396, Section 6.1}}).
 
-For type-specific members the recipient cannot evaluate, the recipient MUST reject verification of that dimension by default, or skip the object's refinement under explicit local policy.  RAR type specifications SHOULD define their own refinement rules; see {{extensibility}}.
+The common-member rules above apply to objects of a `type` whose members the recipient can evaluate, because it knows that the `type` defines no other members, or because it has a refinement rule for them.  For any other `type`, an object refines another object of the same `type` only when the two are equal as whole JSON objects (the same member names with equal values; member order is insignificant), and any change requires a type-specific refinement rule.  RAR type specifications SHOULD define their own refinement rules; see {{extensibility}}.
 
 ## Dimensions Explicitly Not Governed
 
@@ -229,7 +229,7 @@ A receipt MAY omit `bounds` entirely, and a chain MAY mix receipts with and with
 : OPTIONAL.  A JSON object recording that the authority issued at this hop was expanded relative to the inbound authority under an explicit re-authorization.  Members:
 
   `sub`:
-  : REQUIRED.  Identifier of the principal that re-authorized the delegation.  It MUST equal the top-level `sub` of the token issued at this hop, or an upstream subject identifier recorded in the chain.
+  : REQUIRED.  Identifier of the principal or authority that re-authorized the delegation, such as the subject, an approver, or the authority whose policy or agreement applies.  When the subject itself re-authorized, it equals the top-level `sub` of the token issued at this hop.  Recipients evaluate whether to trust the re-authorization under {{reauthorization-abuse}}.
 
   `iss`:
   : REQUIRED.  Identifier of the authorization server or other authority that captured the re-authorization.
@@ -263,15 +263,15 @@ When an issuer adds a new outermost actor hop and creates the receipt for it, an
 
 1.  MUST determine the issued token's effective `scope`, `aud`, `resource`, and `authorization_details` under the underlying grant rules.
 2.  MUST include in the new receipt's `bounds` each dimension it attests, with each member equal to the effective issued value per {{bounds-claim}}.
-3.  For each monotonic dimension it enforces, MUST verify that the issued value is within the effective inbound value, and, when the inbound token's validated `receipt[0]` carries bounds for the dimension, within that receipt's recorded bound.
-4.  When step 3 fails and the deployment holds an authoritative re-authorization for the expansion, MAY proceed by recording `reauthorized` on the new receipt, listing each expanded dimension in `reauthorized.dimensions`, per {{reauthorized-claim}}; otherwise MUST reject the request under {{error-handling}}.
+3.  For each monotonic dimension it enforces, MUST verify that the issued value is within the inbound token's effective value for that dimension, and, when the inbound token's validated `receipt[0]` carries bounds for the dimension, within that receipt's recorded bound.
+4.  When the requested authority would fail step 3, MAY narrow the issued `scope` to fit ({{RFC6749, Section 3.3}}; a Token Exchange response then reports the issued scope, {{RFC8693, Section 2.2.1}}), and, on a request other than Token Exchange, the issued `resource` value ({{RFC8707, Section 2.2}}); it does not drop a requested audience, or a requested resource on a Token Exchange request, and steps 1 to 3 then apply to the narrowed value.  When the issuer has a re-authorization for the expansion, captured under one of the methods of {{reauthorized-claim}} by the issuer itself or by an authority it trusts, it MAY instead proceed by recording `reauthorized` on the new receipt, listing each expanded dimension in `reauthorized.dimensions`.  An issuer that does neither, or whose narrowing leaves nothing permitted, MUST reject the request under {{error-handling}}.
 
 ## Reissuance and Refresh Without a New Hop {#reissuance-and-refresh}
 
 Reissuance without a new actor hop creates no receipt, so recorded bounds cannot change through the receipt chain.  This document does not define recording re-authorization between hops; {{extensibility}} lets another specification define it.  An issuer that reissues or refreshes while carrying a bounds-bearing receipt chain forward:
 
 *  MUST NOT issue an outer token whose value for any monotonic dimension exceeds `receipt[0]`'s recorded bound; narrowing further is always permitted;
-*  when the issued value would exceed the recorded bound for a monotonic dimension, even because broader authority was authorized without a new hop (for example, a refresh grant following step-up or an approver widening a governing authority object), MUST fail the request or, where local policy and resource requirements permit absent receipt coverage, drop the inherited `actor_receipts` array and with it the bounds evidence.
+*  when the issued value would exceed the recorded bound for a monotonic dimension, even because broader authority was authorized without a new hop (for example, a refresh grant following step-up or an approver widening the underlying grant), MUST narrow the issued value to fit, fail the request, or, where local policy and resource requirements permit absent receipt coverage, drop the inherited `actor_receipts` array and with it the bounds evidence.
 
 ## Domain Transitions {#domain-transitions}
 
@@ -335,7 +335,7 @@ Bounds evidence records non-expansion across covered hops, with explicit re-auth
 
 ## Introspection {#consumer-introspection}
 
-Receipt-attested bounds travel inside receipts and are returned wherever receipts are returned; the introspection rules of {{I-D.mcguinness-oauth-actor-receipts}} apply unchanged, including all-or-nothing receipt disclosure and the requirement list for outer-token members.
+Receipt-attested bounds travel inside receipts and are returned wherever receipts are returned; the introspection rules of {{I-D.mcguinness-oauth-actor-receipts}} apply unchanged, including all-or-nothing receipt disclosure and the requirement list for outer-token members.  An introspection response whose `receipt[0]` carries `bounds` MUST also include the token's `scope`, `aud`, and `authorization_details` ({{RFC9396, Section 9.2}}) members for each of those dimensions that `receipt[0].bounds` records, so that step 4 of {{consumer-processing}} can be applied.
 
 # Discovery and Capability Signaling {#discovery-capability-signaling}
 
@@ -365,12 +365,12 @@ Bounds validation extends the underlying OAuth or Transaction Token validation. 
 
 When an authorization server or Transaction Token Service rejects a token request because inbound bounds evidence fails validation under {{consumer-processing}} (for example, a monotonicity failure in the inbound chain), it returns an error response per {{RFC6749, Section 5.2}}: `invalid_request` for a Token Exchange request, as {{RFC8693, Section 2.2.2}} requires, or `invalid_grant` for a JWT bearer grant request ({{RFC7523, Section 3.1}}), consistent with the core actor profile's error mapping for actor information that fails validation.
 
-When requested authority exceeds the recorded bound without re-authorization, the issuer SHOULD return:
+When requested authority exceeds the recorded bound without re-authorization and the issuer does not narrow the issued value to fit, or narrowing leaves nothing permitted ({{recording-bounds}}), the issuer SHOULD return:
 
 | Dimension | Error |
 |-----------|-------|
 | `scope` | `invalid_scope` ({{RFC6749, Section 5.2}}) |
-| `aud` or `resource` | `invalid_target` ({{RFC8693, Section 2.2.2}}) |
+| `aud` or `resource` | `invalid_target` ({{RFC8693, Section 2.2.2}} for Token Exchange; {{RFC8707, Section 2}} otherwise) |
 | `authorization_details` | `invalid_authorization_details` {{RFC9396}} |
 
 The issuer uses `actor_unauthorized` as defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}} when the failure reflects an actor-authorization decision.  An absent required artifact is an input-validation failure: `invalid_request` on a Token Exchange request, `invalid_grant` on a JWT bearer grant or refresh request.
@@ -500,9 +500,9 @@ Contributors and reviewers will be acknowledged in future revisions.
 
 # Examples
 
-The examples in this appendix show decoded contents; real receipts are compact-signed JWT strings.  Timestamps are illustrative.  The scenario continues the two-hop travel example of {{I-D.mcguinness-oauth-actor-receipts}}: Alice delegates to an AI travel-assistant agent through the enterprise AS, and the agent's token is exchanged at the travel-provider AS, which adds a booking tool as the outermost actor.  Because these receipts carry `bounds`, they are different byte strings from the receipts shown in that document's examples and carry their own identifiers.
+The examples in this appendix show decoded contents; real receipts are compact-signed JWT strings.  Timestamps are illustrative.  The scenario continues the two-hop travel example of {{I-D.mcguinness-oauth-actor-receipts}}: Alice delegates to an AI travel-assistant agent through the enterprise AS, and the agent's token is exchanged at the travel-provider AS, which adds a booking tool as the outermost actor.  Because these receipts carry `bounds`, they are different byte strings from the receipts shown in that document's examples and carry their own identifiers.  The later examples vary {{example-narrowing}} and show only the members that change; a token or receipt that changes is a different byte string with its own `jti`, and the `origin_jti` or `prh` that references it changes with it.
 
-## Example: Two-Hop Chain with Narrowing Bounds
+## Example: Two-Hop Chain with Narrowing Bounds {#example-narrowing}
 
 The outer token:
 
@@ -586,6 +586,65 @@ The example verifies as follows:
 *  Resources narrow to the bookings endpoint, so the chain also verifies where `resource` is required.  URI prefixes do not imply containment.
 *  The outer token's scope equals the newest recorded scope.
 *  Audience changes are recorded without comparison under the default audience rules.
+
+## Example: Re-Authorization at a Hop {#example-reauthorization}
+
+Here Alice completes step-up authentication at the travel-provider AS before it adds the booking tool, so that the tool can also cancel trips.  The outer token's `scope` is `trips:book trips:cancel`.  `actor_receipts[1]` is unchanged; `actor_receipts[0]` records the broader scope in `bounds` and adds `reauthorized`:
+
+~~~json
+{
+  "bounds": {
+    "scope": "trips:book trips:cancel",
+    "aud": ["https://api.travel-provider.example"],
+    "resource": ["https://api.travel-provider.example/bookings"]
+  },
+  "reauthorized": {
+    "sub": "https://idp.enterprise.example/users/alice",
+    "iss": "https://as.travel-provider.example",
+    "method": "step_up",
+    "iat": 1776745140,
+    "dimensions": ["scope"]
+  }
+}
+~~~
+
+The example verifies as follows, for a recipient whose policy trusts the travel-provider AS to record `step_up` re-authorization for Alice ({{reauthorization-abuse}}):
+
+*  Step 3 of {{consumer-processing}} skips the `scope` comparison between the receipts because `reauthorized.dimensions` lists `scope`; without that listing, `trips:cancel` would fail it.
+*  Step 4 passes: the outer token's scope equals the newly recorded scope.
+*  Other dimensions compare as in {{example-narrowing}}.
+
+## Example: Expansion Not Covered by Re-Authorization {#example-unlisted-expansion}
+
+This variant of {{example-reauthorization}} also records `authorization_details` on both receipts, and the travel-provider AS widens it without listing it in `reauthorized.dimensions`.  `actor_receipts[1].bounds` adds:
+
+~~~json
+{
+  "authorization_details": [
+    {
+      "type": "trip_booking",
+      "actions": ["read", "book"],
+      "locations": ["https://api.travel-provider.example/bookings"]
+    }
+  ]
+}
+~~~
+
+`actor_receipts[0].bounds` adds the following member, and the outer token carries it as a top-level claim:
+
+~~~json
+{
+  "authorization_details": [
+    {
+      "type": "trip_booking",
+      "actions": ["book", "cancel"],
+      "locations": ["https://api.travel-provider.example/bookings"]
+    }
+  ]
+}
+~~~
+
+Step 3 of {{consumer-processing}} fails for `authorization_details`: `reauthorized.dimensions` lists only `scope`, and the newer object adds the `cancel` action, so, whether or not the recipient has a refinement rule for `trip_booking`, it refines no older object ({{rar-dimension}}).  The recipient therefore rejects the token's bounds evidence, including the re-authorized `scope` bound.  The receipt chain remains valid under {{I-D.mcguinness-oauth-actor-receipts}}; whether the token is acceptable without bounds evidence is local policy, except where step 5 applies.
 
 # Document History
 {:numbered="false"}
