@@ -1203,8 +1203,8 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * Named ID-JAG and other assertion-grant redemption without a new hop as different-issuer reissuance.
 * Defined one lifetime rule for extension, reissuance, and refresh (lower the token's `exp`, drop the array, or fail), added a floor for receipt `exp`, and made an expired older receipt invalid.
 * Refresh no longer starts a new chain, and retained receipts are validated against the issuer's state rather than the previous access token.
-* An extending issuer takes the inbound receipts from the token carrying the delegation chain, and a reissuer validates a chain before carrying it forward.
-* A failed receipt chain removes only receipt-based provenance unless policy or metadata requires receipts, and a failed companion rule removes only that companion's evidence.
+* An extending issuer takes the inbound receipts from the token carrying the delegation chain, a new receipt's `iss` equals the issued token's `iss`, and a reissuer validates a chain before carrying it forward.
+* A failed receipt chain removes only receipt-based provenance unless policy or metadata requires receipts, and a failed companion rule removes only that companion's evidence unless the companion specifies otherwise.
 * Prohibited `aud` in receipts.
 * Aligned error codes with {{RFC8693}} and {{RFC7523}}: `invalid_request` on Token Exchange, `invalid_grant` on JWT bearer grants and refresh, and `actor_unauthorized` for actor-authorization failures.
 * Clarified completeness: an extending issuer sets `actor_receipts_complete: true` when the receipt count matches, an introspection `false` makes no completeness attestation, and filtering is limited to introspection servers.
