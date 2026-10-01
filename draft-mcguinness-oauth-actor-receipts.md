@@ -91,7 +91,13 @@ This document defines OAuth Actor Receipts, an optional companion profile that a
 
 Deployments can enable receipts per resource or trust domain without changing client request flows, and resource servers that do not consume receipts need no change.  A token that carries receipts follows the core actor profile's rules for companion profiles: its top-level `cnf` identifies only the current token presenter, and its nested `act` objects carry no independently trusted prior-hop key history.
 
-Receipts do not replace the outer token's signature or issuer trust model.  They do not change the request semantics of {{RFC8693}} or of Transaction Tokens, audience and scope evaluation, AS-to-RS trust establishment, or sender-constrained token validation for the current presenter; these follow OAuth {{RFC6749}} and the core actor profile.  Receipts do not prove which scope, audience, or token lifetime was in force when a receipt was created, do not reconcile subject identifiers that differ across receipts ({{subject-re-expression-across-hops}}), and do not define a cross-token correlation identifier, transparency logs, or non-repudiation.
+Receipts do not:
+
+*  replace the outer token's signature or issuer trust model;
+*  change the request semantics of {{RFC8693}} or of Transaction Tokens, audience and scope evaluation, AS-to-RS trust establishment, or sender-constrained token validation for the current presenter, which follow OAuth {{RFC6749}} and the core actor profile;
+*  prove which scope, audience, or token lifetime was in force when a receipt was created;
+*  reconcile subject identifiers that differ across receipts ({{subject-re-expression-across-hops}}); or
+*  define a cross-token correlation identifier, transparency logs, or non-repudiation.
 
 Receipts are most useful when several issuers contribute hops: recipients can verify each attestation independently of the current outer token issuer.  In a single-issuer deployment, the outer token's signature already supplies that issuer's attestation, so deployments SHOULD weigh receipt overhead against that limited benefit.  Recipients must configure trust for every receipt issuer ({{trust-in-receipt-issuers}}), so large deployments need a trust-distribution mechanism, such as federation, which this document does not define.
 
@@ -589,7 +595,11 @@ When the outer token carries a top-level `cnf` claim ({{RFC7800}}), the current 
 
 ## Trust in Receipt Issuers {#trust-in-receipt-issuers}
 
-A syntactically valid signed receipt is not by itself grounds to trust its issuer.  A recipient needs to establish which issuers it trusts for receipt validation before relying on `actor_receipts`.  Trust MUST be established through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.  Authorization servers that support this document SHOULD advertise `actor_receipts_supported: true` in their AS metadata {{RFC8414}}.  Consumers SHOULD use that metadata signal as one input to trust establishment, but metadata advertisement alone is not sufficient grounds to trust a receipt issuer; the issuer must also be within the recipient's configured trust boundary.  To avoid attacker-controlled key resolution, step 5 of {{consumer-processing}} checks the trusted-issuer set before any network retrieval for an issuer's metadata or keys.
+A syntactically valid signed receipt is not by itself grounds to trust its issuer.  A recipient needs to establish which issuers it trusts for receipt validation before relying on `actor_receipts`.  Trust MUST be established through explicit pre-configuration, bilateral agreement, federation policy, or another explicit trust framework.
+
+Authorization servers that support this document SHOULD advertise `actor_receipts_supported: true` in their AS metadata {{RFC8414}}.  Consumers SHOULD use that metadata signal as one input to trust establishment, but metadata advertisement alone is not sufficient grounds to trust a receipt issuer; the issuer must also be within the recipient's configured trust boundary.
+
+To avoid attacker-controlled key resolution, step 5 of {{consumer-processing}} checks the trusted-issuer set before any network retrieval for an issuer's metadata or keys.
 
 Trust is per-issuer and not transitive: each receipt is validated against the recipient's own trusted-issuer set, independent of the outer token's issuer or neighboring receipts.  If any receipt in the presented `actor_receipts` array is signed by an issuer that is not trusted for receipt validation, the recipient MUST reject the receipt chain for the purposes of this profile.  This document does not define trusted-prefix validation across an untrusted inner receipt, so deployments need to establish trust with every receipt issuer that can appear in tokens they accept.
 
