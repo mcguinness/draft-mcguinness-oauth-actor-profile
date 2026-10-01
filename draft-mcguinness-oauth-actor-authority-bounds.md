@@ -160,7 +160,7 @@ This section defines the four governed dimensions and the comparison rule for ea
 
 ## `scope` {#scope-dimension}
 
-The `scope` dimension records the space-separated scope string of {{RFC6749}} Section 3.3.  Comparison:
+The `scope` dimension records the space-separated scope string of {{Section 3.3. of RFC6749}}  Comparison:
 
 *  parse both values into sets of distinct scope tokens (separator: ASCII space, U+0020);
 *  `scope_a` is within `scope_b` if and only if every token in `scope_a` is also in `scope_b`;
@@ -170,7 +170,7 @@ Comparison does not interpret scope semantics: `read:user/*` does not automatica
 
 ## `aud` and Audience Governance {#audience-governance}
 
-The `aud` dimension records the audience of the token issued at the hop, as a string or array of strings with the value space of {{RFC7519}} Section 4.1.3.  Comparison treats a single string as a one-element set; `aud_a` is within `aud_b` if and only if every value in `aud_a` is in `aud_b`.
+The `aud` dimension records the audience of the token issued at the hop, as a string or array of strings with the value space of {{Section 4.1.3. of RFC7519}}  Comparison treats a single string as a one-element set; `aud_a` is within `aud_b` if and only if every value in `aud_a` is in `aud_b`.
 
 Audience is recorded without monotonicity enforcement by default because token exchange commonly retargets tokens.  Recorded audiences remain useful for audit and comparison with actor-consented targets ({{composition-with-proofs}}).
 
@@ -182,12 +182,12 @@ A deployment whose chains do not retarget, or that treats retargeting as a polic
 
 Comparison:
 
-*  compare URIs by simple string comparison ({{RFC3986, Section 6.2.1}}); issuers need to record each resource indicator in the same form at every hop;
+*  compare URIs by simple string comparison ({{Section 6.2.1 of RFC3986}}); issuers need to record each resource indicator in the same form at every hop;
 *  `resource_a` is within `resource_b` if and only if every URI in `resource_a` is also in `resource_b`;
 
 URI prefix subsumption (for example, treating `https://api.travel-provider.example/v1/` as covering `https://api.travel-provider.example/v1/users`) is NOT applied.  Issuers wishing to express prefix relationships MUST emit explicit URIs at each hop.
 
-`resource` is recorded without monotonicity enforcement by default because Token Exchange uses `resource` to retarget tokens ({{RFC8693, Section 2.1}}).  A deployment MAY require monotonicity for `resource` through the same metadata or local policy as audience governance ({{audience-governance}}).  It then applies the same monotonicity rules to `resource`; retargeting MUST be covered by re-authorization or verification fails.
+`resource` is recorded without monotonicity enforcement by default because Token Exchange uses `resource` to retarget tokens ({{Section 2.1 of RFC8693}}).  A deployment MAY require monotonicity for `resource` through the same metadata or local policy as audience governance ({{audience-governance}}).  It then applies the same monotonicity rules to `resource`; retargeting MUST be covered by re-authorization or verification fails.
 
 ## `authorization_details` {#rar-dimension}
 
@@ -195,7 +195,7 @@ The `authorization_details` dimension records the Rich Authorization Requests ar
 
 *  an array `ad_a` refines `ad_b` if and only if every object in `ad_a` refines some object in `ad_b`; objects present in `ad_b` but absent from `ad_a` represent narrowing and are permitted; objects in `ad_a` that refine no object in `ad_b` represent expansion and fail the comparison;
 *  two objects refine only when they share the same `type`;
-*  for the common members defined by {{RFC9396, Section 2.2}}, refinement requires: `actions` a subset, `locations` a subset under the URI rules of {{resource-dimension}}, `datatypes` a subset, `privileges` a subset, and `identifier` equal; a common member present in the `ad_b` object but absent from the `ad_a` object is expansion and fails the comparison, and one absent from the `ad_b` object but present in the `ad_a` object also fails the comparison unless the refinement rules for that `type` establish that it preserves or narrows authority, because the effect of a member depends on the API's semantics ({{RFC9396, Section 6.1}}).
+*  for the common members defined by {{Section 2.2 of RFC9396}}, refinement requires: `actions` a subset, `locations` a subset under the URI rules of {{resource-dimension}}, `datatypes` a subset, `privileges` a subset, and `identifier` equal; a common member present in the `ad_b` object but absent from the `ad_a` object is expansion and fails the comparison, and one absent from the `ad_b` object but present in the `ad_a` object also fails the comparison unless the refinement rules for that `type` establish that it preserves or narrows authority, because the effect of a member depends on the API's semantics ({{Section 6.1 of RFC9396}}).
 
 The common-member rules above apply to objects of a `type` whose members the recipient can evaluate, because it knows that the `type` defines no other members, or because it has a refinement rule for them.  For any other `type`, an object refines another object of the same `type` only when the two are equal as whole JSON objects (the same member names with equal values; member order is insignificant), and any change requires a type-specific refinement rule.  RAR type specifications SHOULD define their own refinement rules; see {{extensibility}}.
 
@@ -264,7 +264,7 @@ When an issuer adds a new outermost actor hop and creates the receipt for it, an
 1.  MUST determine the issued token's effective `scope`, `aud`, `resource`, and `authorization_details` under the underlying grant rules.
 2.  MUST include in the new receipt's `bounds` each dimension it attests, with each member equal to the effective issued value per {{bounds-claim}}.
 3.  For each monotonic dimension it enforces, MUST verify that the issued value is within the inbound token's effective value for that dimension, and, when the inbound token's validated `receipt[0]` carries bounds for the dimension, within that receipt's recorded bound.
-4.  When the requested authority would fail step 3, MAY narrow the issued `scope` to fit ({{RFC6749, Section 3.3}}; a Token Exchange response then reports the issued scope, {{RFC8693, Section 2.2.1}}), and, on a request other than Token Exchange, the issued `resource` value ({{RFC8707, Section 2.2}}); it does not drop a requested audience, or a requested resource on a Token Exchange request, and steps 1 to 3 then apply to the narrowed value.  When the issuer has a re-authorization for the expansion, captured under one of the methods of {{reauthorized-claim}} by the issuer itself or by an authority it trusts, it MAY instead proceed by recording `reauthorized` on the new receipt, listing each expanded dimension in `reauthorized.dimensions`.  An issuer that does neither, or whose narrowing leaves nothing permitted, MUST reject the request under {{error-handling}}.
+4.  When the requested authority would fail step 3, MAY narrow the issued `scope` to fit ({{Section 3.3 of RFC6749}}; a Token Exchange response then reports the issued scope, {{Section 2.2.1 of RFC8693}}), and, on a request other than Token Exchange, the issued `resource` value ({{Section 2.2 of RFC8707}}); it does not drop a requested audience, or a requested resource on a Token Exchange request, and steps 1 to 3 then apply to the narrowed value.  When the issuer has a re-authorization for the expansion, captured under one of the methods of {{reauthorized-claim}} by the issuer itself or by an authority it trusts, it MAY instead proceed by recording `reauthorized` on the new receipt, listing each expanded dimension in `reauthorized.dimensions`.  An issuer that does neither, or whose narrowing leaves nothing permitted, MUST reject the request under {{error-handling}}.
 
 ## Reissuance and Refresh Without a New Hop {#reissuance-and-refresh}
 
@@ -335,7 +335,7 @@ Bounds evidence records non-expansion across covered hops, with explicit re-auth
 
 ## Introspection {#consumer-introspection}
 
-Receipt-attested bounds travel inside receipts and are returned wherever receipts are returned; the introspection rules of {{I-D.mcguinness-oauth-actor-receipts}} apply unchanged, including all-or-nothing receipt disclosure and the requirement list for outer-token members.  An introspection response whose `receipt[0]` carries `bounds` MUST also include the token's `scope`, `aud`, and `authorization_details` ({{RFC9396, Section 9.2}}) members for each of those dimensions that `receipt[0].bounds` records, so that step 4 of {{consumer-processing}} can be applied.
+Receipt-attested bounds travel inside receipts and are returned wherever receipts are returned; the introspection rules of {{I-D.mcguinness-oauth-actor-receipts}} apply unchanged, including all-or-nothing receipt disclosure and the requirement list for outer-token members.  An introspection response whose `receipt[0]` carries `bounds` MUST also include the token's `scope`, `aud`, and `authorization_details` ({{Section 9.2 of RFC9396}}) members for each of those dimensions that `receipt[0].bounds` records, so that step 4 of {{consumer-processing}} can be applied.
 
 # Discovery and Capability Signaling {#discovery-capability-signaling}
 
@@ -363,19 +363,19 @@ A resource server that needs full-chain rather than covered-prefix enforcement S
 
 Bounds validation extends the underlying OAuth or Transaction Token validation.  Failures are reported through the error mechanism applicable to the stage at which they occur.
 
-When an authorization server or Transaction Token Service rejects a token request because inbound bounds evidence fails validation under {{consumer-processing}} (for example, a monotonicity failure in the inbound chain), it returns an error response per {{RFC6749, Section 5.2}}: `invalid_request` for a Token Exchange request, as {{RFC8693, Section 2.2.2}} requires, or `invalid_grant` for a JWT bearer grant request ({{RFC7523, Section 3.1}}), consistent with the core actor profile's error mapping for actor information that fails validation.
+When an authorization server or Transaction Token Service rejects a token request because inbound bounds evidence fails validation under {{consumer-processing}} (for example, a monotonicity failure in the inbound chain), it returns an error response per {{Section 5.2 of RFC6749}}: `invalid_request` for a Token Exchange request, as {{Section 2.2.2 of RFC8693}} requires, or `invalid_grant` for a JWT bearer grant request ({{Section 3.1 of RFC7523}}), consistent with the core actor profile's error mapping for actor information that fails validation.
 
 When requested authority exceeds the recorded bound without re-authorization and the issuer does not narrow the issued value to fit, or narrowing leaves nothing permitted ({{recording-bounds}}), the issuer SHOULD return:
 
 | Dimension | Error |
 |-----------|-------|
-| `scope` | `invalid_scope` ({{RFC6749, Section 5.2}}) |
-| `aud` or `resource` | `invalid_target` ({{RFC8693, Section 2.2.2}} for Token Exchange; {{RFC8707, Section 2}} otherwise) |
+| `scope` | `invalid_scope` ({{Section 5.2 of RFC6749}}) |
+| `aud` or `resource` | `invalid_target` ({{Section 2.2.2 of RFC8693}} for Token Exchange; {{Section 2 of RFC8707}} otherwise) |
 | `authorization_details` | `invalid_authorization_details` {{RFC9396}} |
 
 The issuer uses `actor_unauthorized` as defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}} when the failure reflects an actor-authorization decision.  An absent required artifact is an input-validation failure: `invalid_request` on a Token Exchange request, `invalid_grant` on a JWT bearer grant or refresh request.
 
-When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it SHOULD return `invalid_token` per {{RFC6750}} Section 3.1, and SHOULD include an `error_description` identifying bounds-verification failure so operators can distinguish it from generic token validation.  For a Transaction Token, the resource server rejects it through the deployment's Txn-Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
+When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it SHOULD return `invalid_token` per {{Section 3.1 of RFC6750}}, and SHOULD include an `error_description` identifying bounds-verification failure so operators can distinguish it from generic token validation.  For a Transaction Token, the resource server rejects it through the deployment's Txn-Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
 
 An introspection server does not return an OAuth error for missing bounds artifacts; their presence is a property of the response.  This document defines no new OAuth error codes.
 
