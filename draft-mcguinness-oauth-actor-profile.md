@@ -698,7 +698,7 @@ For `subject_token` inputs:
 |---|---|---|---|---|
 | JWT assertion grant | [Authorization Grant Processing](#jwt-assertion-grants-processing) | In validation | `sub`; `act`, `cnf` if present; continuity | See subsection |
 | JWT access token | {{RFC9068}}, `aud` relaxed | Trusted for its delegation chain | `sub`; `act`, `cnf` if present; continuity | Its effective scope |
-| Transaction Token | Transaction Token specification ({{txn-token-as-subject-token}}) | Trusted issuer | `sub`; `act`, `cnf` if present; continuity | Not defined here |
+| Transaction Token | [Transaction Token specification](#txn-token-as-subject-token) | Trusted issuer | `sub`; `act`, `cnf` if present; continuity | Not defined here |
 | ID Token | {{OpenID.Core}}, local policy | No separate check | `sub`; no `act`, `cnf`, or continuity | None |
 | Refresh token | Token store or trusted back-channel | No separate check | `sub`, scope | Its authorized scope |
 

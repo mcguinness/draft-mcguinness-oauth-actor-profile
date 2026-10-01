@@ -637,7 +637,7 @@ Deployments SHOULD verify that the outer token plus its `actor_receipts` array f
 
 ## Historical `cnf` Disclosure {#historical-cnf-disclosure}
 
-Receipt `cnf` values reveal stable prior-hop public-key identifiers or certificate thumbprints to any party that receives the token or introspection response, enabling cross-request and cross-service correlation of actors and services over time.  Issuers SHOULD NOT include `cnf` in receipts unless the recipients that will receive the token have been evaluated for that disclosure risk and the risk is acceptable.
+Receipt `cnf` values reveal stable prior-hop public key identifiers or certificate thumbprints to any party that receives the token or introspection response, enabling cross-request and cross-service correlation of actors and services over time.  Issuers SHOULD NOT include `cnf` in receipts unless the recipients that will receive the token have been evaluated for that disclosure risk and the risk is acceptable.
 
 # Privacy Considerations
 
