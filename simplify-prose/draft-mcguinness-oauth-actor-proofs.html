@@ -2413,7 +2413,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-11.1.1-1.5.1"><strong>Partial-coverage misclaim.</strong>  An issuer cannot drop an inner proof without breaking the <code>prh</code> chain, and it cannot claim <code>actor_proofs_complete: true</code> unless the proof count matches the visible actor-chain depth.  It can withhold coverage only at the innermost end, and only by beginning a new chain rather than trimming an inherited one.<a href="#section-11.1.1-1.5.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-11.1.1-1.6">
-              <p id="section-11.1.1-1.6.1"><strong>Proof-chain substitution, when receipts with <code>proof_jti</code> are present.</strong>  A harvested proof chain for the same visible hops fails the sibling check in step 10 of <a href="#consumer-processing" class="auto internal xref">Section 7</a>.<a href="#section-11.1.1-1.6.1" class="pilcrow">¶</a></p>
+              <p id="section-11.1.1-1.6.1"><strong>Proof-chain substitution, when receipts with <code>proof_jti</code> are present.</strong>  Replacing a proof chain with one whose identifiers differ from the receipts' <code>proof_jti</code> values fails the sibling check in step 10 of <a href="#consumer-processing" class="auto internal xref">Section 7</a>.<a href="#section-11.1.1-1.6.1" class="pilcrow">¶</a></p>
 </li>
           </ul>
 </section>

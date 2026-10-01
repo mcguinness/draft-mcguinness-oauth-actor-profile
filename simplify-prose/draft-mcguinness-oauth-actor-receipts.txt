@@ -182,16 +182,24 @@ Table of Contents
    nested act objects carry no independently trusted prior-hop key
    history.
 
-   Receipts do not replace the outer token's signature or issuer trust
-   model.  They do not change the request semantics of [RFC8693] or of
-   Transaction Tokens, audience and scope evaluation, AS-to-RS trust
-   establishment, or sender-constrained token validation for the current
-   presenter; these follow OAuth [RFC6749] and the core actor profile.
-   Receipts do not prove which scope, audience, or token lifetime was in
-   force when a receipt was created, do not reconcile subject
-   identifiers that differ across receipts (Section 7.2), and do not
-   define a cross-token correlation identifier, transparency logs, or
-   non-repudiation.
+   Receipts do not:
+
+   *  replace the outer token's signature or issuer trust model;
+
+   *  change the request semantics of [RFC8693] or of Transaction
+      Tokens, audience and scope evaluation, AS-to-RS trust
+      establishment, or sender-constrained token validation for the
+      current presenter, which follow OAuth [RFC6749] and the core actor
+      profile;
+
+   *  prove which scope, audience, or token lifetime was in force when a
+      receipt was created;
+
+   *  reconcile subject identifiers that differ across receipts
+      (Section 7.2); or
+
+   *  define a cross-token correlation identifier, transparency logs, or
+      non-repudiation.
 
    Receipts are most useful when several issuers contribute hops:
    recipients can verify each attestation independently of the current
@@ -1435,15 +1443,18 @@ Table of Contents
    trusts for receipt validation before relying on actor_receipts.
    Trust MUST be established through explicit pre-configuration,
    bilateral agreement, federation policy, or another explicit trust
-   framework.  Authorization servers that support this document SHOULD
-   advertise actor_receipts_supported: true in their AS metadata
-   [RFC8414].  Consumers SHOULD use that metadata signal as one input to
-   trust establishment, but metadata advertisement alone is not
-   sufficient grounds to trust a receipt issuer; the issuer must also be
-   within the recipient's configured trust boundary.  To avoid attacker-
-   controlled key resolution, step 5 of Section 7 checks the trusted-
-   issuer set before any network retrieval for an issuer's metadata or
-   keys.
+   framework.
+
+   Authorization servers that support this document SHOULD advertise
+   actor_receipts_supported: true in their AS metadata [RFC8414].
+   Consumers SHOULD use that metadata signal as one input to trust
+   establishment, but metadata advertisement alone is not sufficient
+   grounds to trust a receipt issuer; the issuer must also be within the
+   recipient's configured trust boundary.
+
+   To avoid attacker-controlled key resolution, step 5 of Section 7
+   checks the trusted-issuer set before any network retrieval for an
+   issuer's metadata or keys.
 
    Trust is per-issuer and not transitive: each receipt is validated
    against the recipient's own trusted-issuer set, independent of the

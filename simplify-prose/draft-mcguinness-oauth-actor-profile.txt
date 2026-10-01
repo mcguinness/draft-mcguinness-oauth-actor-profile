@@ -1418,38 +1418,31 @@ Table of Contents
 
    For subject_token inputs:
 
-   +=============+================+==========+=============+==========+
-   | Input       | Validated per  |Issuer    | Establishes |Scope     |
-   |             |                |trust     |             |ceiling   |
-   |             |                |check     |             |          |
-   +=============+================+==========+=============+==========+
-   | JWT         | Authorization  |In        | sub; act,   |See       |
-   | assertion   | Grant          |validation| cnf if      |subsection|
-   | grant       | Processing     |          | present;    |          |
-   |             | (Section 4.2)  |          | continuity  |          |
-   +-------------+----------------+----------+-------------+----------+
-   | JWT access  | [RFC9068], aud |Trusted   | sub; act,   |Its       |
-   | token       | relaxed        |for its   | cnf if      |effective |
-   |             |                |delegation| present;    |scope     |
-   |             |                |chain     | continuity  |          |
-   +-------------+----------------+----------+-------------+----------+
-   | Transaction | Transaction    |Trusted   | sub; act,   |Not       |
-   | Token       | Token          |issuer    | cnf if      |defined   |
-   |             | specification  |          | present;    |here      |
-   |             | (Section       |          | continuity  |          |
-   |             | 6.3.1.3)       |          |             |          |
-   +-------------+----------------+----------+-------------+----------+
-   | ID Token    | [OpenID.Core], |No        | sub; no     |None      |
-   |             | local policy   |separate  | act, cnf,   |          |
-   |             |                |check     | or          |          |
-   |             |                |          | continuity  |          |
-   +-------------+----------------+----------+-------------+----------+
-   | Refresh     | Token store or |No        | sub, scope  |Its       |
-   | token       | trusted back-  |separate  |             |authorized|
-   |             | channel        |check     |             |scope     |
-   +-------------+----------------+----------+-------------+----------+
+    +===============+===================+================+============+
+    | Input         | Validated per     | Issuer trust   | Scope      |
+    |               |                   | check          | ceiling    |
+    +===============+===================+================+============+
+    | JWT assertion | Authorization     | In validation  | See        |
+    | grant         | Grant Processing  |                | subsection |
+    |               | (Section 4.2)     |                |            |
+    +---------------+-------------------+----------------+------------+
+    | JWT access    | [RFC9068], aud    | Trusted for    | Its        |
+    | token         | relaxed           | its delegation | effective  |
+    |               |                   | chain          | scope      |
+    +---------------+-------------------+----------------+------------+
+    | Transaction   | Transaction Token | Trusted issuer | Not        |
+    | Token         | specification     |                | defined    |
+    |               | (Section 6.3.1.3) |                | here       |
+    +---------------+-------------------+----------------+------------+
+    | ID Token      | [OpenID.Core],    | No separate    | None       |
+    |               | local policy      | check          |            |
+    +---------------+-------------------+----------------+------------+
+    | Refresh token | Token store or    | No separate    | Its        |
+    |               | trusted back-     | check          | authorized |
+    |               | channel           |                | scope      |
+    +---------------+-------------------+----------------+------------+
 
-                                 Table 3
+                                  Table 3
 
    For actor_token inputs, each of which establishes the outermost
    actor:

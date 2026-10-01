@@ -2533,7 +2533,6 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
               <th class="text-left" rowspan="1" colspan="1">Input</th>
               <th class="text-left" rowspan="1" colspan="1">Validated per</th>
               <th class="text-left" rowspan="1" colspan="1">Issuer trust check</th>
-              <th class="text-left" rowspan="1" colspan="1">Establishes</th>
               <th class="text-left" rowspan="1" colspan="1">Scope ceiling</th>
             </tr>
           </thead>
@@ -2544,8 +2543,6 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
                 <span><a href="#jwt-assertion-grants-processing" class="internal xref">Authorization Grant Processing</a> (<a href="#jwt-assertion-grants-processing" class="auto internal xref">Section 4.2</a>)</span>
 </td>
               <td class="text-left" rowspan="1" colspan="1">In validation</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>sub</code>; <code>act</code>, <code>cnf</code> if present; continuity</td>
               <td class="text-left" rowspan="1" colspan="1">See subsection</td>
             </tr>
             <tr>
@@ -2553,8 +2550,6 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
               <td class="text-left" rowspan="1" colspan="1">
                 <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>, <code>aud</code> relaxed</td>
               <td class="text-left" rowspan="1" colspan="1">Trusted for its delegation chain</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>sub</code>; <code>act</code>, <code>cnf</code> if present; continuity</td>
               <td class="text-left" rowspan="1" colspan="1">Its effective scope</td>
             </tr>
             <tr>
@@ -2563,8 +2558,6 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
                 <span><a href="#txn-token-as-subject-token" class="internal xref">Transaction Token specification</a> (<a href="#txn-token-as-subject-token" class="auto internal xref">Section 6.3.1.3</a>)</span>
 </td>
               <td class="text-left" rowspan="1" colspan="1">Trusted issuer</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>sub</code>; <code>act</code>, <code>cnf</code> if present; continuity</td>
               <td class="text-left" rowspan="1" colspan="1">Not defined here</td>
             </tr>
             <tr>
@@ -2572,16 +2565,12 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
               <td class="text-left" rowspan="1" colspan="1">
                 <span>[<a href="#OpenID.Core" class="cite xref">OpenID.Core</a>]</span>, local policy</td>
               <td class="text-left" rowspan="1" colspan="1">No separate check</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>sub</code>; no <code>act</code>, <code>cnf</code>, or continuity</td>
               <td class="text-left" rowspan="1" colspan="1">None</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">Refresh token</td>
               <td class="text-left" rowspan="1" colspan="1">Token store or trusted back-channel</td>
               <td class="text-left" rowspan="1" colspan="1">No separate check</td>
-              <td class="text-left" rowspan="1" colspan="1">
-                <code>sub</code>, scope</td>
               <td class="text-left" rowspan="1" colspan="1">Its authorized scope</td>
             </tr>
           </tbody>

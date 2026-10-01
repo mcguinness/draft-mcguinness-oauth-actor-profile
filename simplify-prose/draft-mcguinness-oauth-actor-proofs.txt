@@ -1388,8 +1388,9 @@ Table of Contents
       trimming an inherited one.
 
    *  *Proof-chain substitution, when receipts with proof_jti are
-      present.* A harvested proof chain for the same visible hops fails
-      the sibling check in step 10 of Section 7.
+      present.* Replacing a proof chain with one whose identifiers
+      differ from the receipts' proof_jti values fails the sibling check
+      in step 10 of Section 7.
 
 11.1.2.  Adversaries Not Mitigated
 
