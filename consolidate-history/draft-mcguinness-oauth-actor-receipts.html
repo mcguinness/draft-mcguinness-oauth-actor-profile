@@ -3576,10 +3576,10 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="appendix-B-3.5.1">Refresh no longer starts a new chain, and retained receipts are validated against the issuer's state rather than the previous access token.<a href="#appendix-B-3.5.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.6">
-          <p id="appendix-B-3.6.1">An extending issuer takes the inbound receipts from the token carrying the delegation chain, and a reissuer validates a chain before carrying it forward.<a href="#appendix-B-3.6.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.6.1">An extending issuer takes the inbound receipts from the token carrying the delegation chain, a new receipt's <code>iss</code> equals the issued token's <code>iss</code>, and a reissuer validates a chain before carrying it forward.<a href="#appendix-B-3.6.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.7">
-          <p id="appendix-B-3.7.1">A failed receipt chain removes only receipt-based provenance unless policy or metadata requires receipts, and a failed companion rule removes only that companion's evidence.<a href="#appendix-B-3.7.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.7.1">A failed receipt chain removes only receipt-based provenance unless policy or metadata requires receipts, and a failed companion rule removes only that companion's evidence unless the companion specifies otherwise.<a href="#appendix-B-3.7.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.8">
           <p id="appendix-B-3.8.1">Prohibited <code>aud</code> in receipts.<a href="#appendix-B-3.8.1" class="pilcrow">¶</a></p>

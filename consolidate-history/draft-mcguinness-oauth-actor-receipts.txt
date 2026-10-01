@@ -2649,12 +2649,14 @@ Document History
       access token.
 
    *  An extending issuer takes the inbound receipts from the token
-      carrying the delegation chain, and a reissuer validates a chain
-      before carrying it forward.
+      carrying the delegation chain, a new receipt's iss equals the
+      issued token's iss, and a reissuer validates a chain before
+      carrying it forward.
 
    *  A failed receipt chain removes only receipt-based provenance
       unless policy or metadata requires receipts, and a failed
-      companion rule removes only that companion's evidence.
+      companion rule removes only that companion's evidence unless the
+      companion specifies otherwise.
 
    *  Prohibited aud in receipts.
 
