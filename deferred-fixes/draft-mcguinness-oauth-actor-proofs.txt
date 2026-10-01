@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                       30 September 2026
-Expires: 3 April 2027
+Intended status: Standards Track                          1 October 2026
+Expires: 4 April 2027
 
 
                      OAuth Actor-Signed Hop Proofs
@@ -54,7 +54,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 3 April 2027.
+   This Internet-Draft will expire on 4 April 2027.
 
 Copyright Notice
 
@@ -915,9 +915,11 @@ Table of Contents
    that a Resource Authorization Server redeems
    ([I-D.mcguinness-oauth-actor-profile]), can include the known
    downstream audiences in target.aud, subject to its consent policy.
-   This addresses audience divergence only: a new jti that diverges from
-   a present origin_jti, a changed subject, or the proof's expiry still
-   ends the proof's use for the redeemed token.
+   This addresses audience divergence only.  A new jti that diverges
+   from a present origin_jti still ends instance binding, although
+   trusted-reissuer policy can still accept the proofs as historical
+   evidence (Section 14.4.1); a changed subject or the proof's expiry
+   still ends the proof's use for the redeemed token.
 
    If proofs are dropped while receipts remain, inherited proof_jti
    references become informational.  Recipients requiring bound siblings
@@ -2288,6 +2290,13 @@ Table of Contents
               <https://datatracker.ietf.org/doc/html/draft-mcguinness-
               oauth-actor-receipts-00>.
 
+   [I-D.mora-oauth-entity-profiles]
+              Mora, S. C., Dingle, P., and K. McGuinness, "OAuth Entity
+              Profiles", Work in Progress, Internet-Draft, draft-mora-
+              oauth-entity-profiles-01, 17 April 2026,
+              <https://www.ietf.org/archive/id/draft-mora-oauth-entity-
+              profiles-01.txt>.
+
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
@@ -2342,13 +2351,6 @@ Table of Contents
               ietf-oauth-spiffe-client-auth-02, 15 June 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-
               spiffe-client-auth-02>.
-
-   [I-D.mora-oauth-entity-profiles]
-              Mora, S. C., Dingle, P., and K. McGuinness, "OAuth Entity
-              Profiles", Work in Progress, Internet-Draft, draft-mora-
-              oauth-entity-profiles-01, 17 April 2026,
-              <https://www.ietf.org/archive/id/draft-mora-oauth-entity-
-              profiles-01.txt>.
 
 Appendix A.  Examples
 

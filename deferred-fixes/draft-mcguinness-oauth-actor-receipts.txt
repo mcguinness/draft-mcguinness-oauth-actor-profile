@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                       30 September 2026
-Expires: 3 April 2027
+Intended status: Standards Track                          1 October 2026
+Expires: 4 April 2027
 
 
              OAuth Actor Receipts for Delegation Provenance
@@ -54,7 +54,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 3 April 2027.
+   This Internet-Draft will expire on 4 April 2027.
 
 Copyright Notice
 
@@ -2300,6 +2300,13 @@ Table of Contents
               <https://datatracker.ietf.org/doc/html/draft-mcguinness-
               oauth-actor-profile-00>.
 
+   [I-D.mora-oauth-entity-profiles]
+              Mora, S. C., Dingle, P., and K. McGuinness, "OAuth Entity
+              Profiles", Work in Progress, Internet-Draft, draft-mora-
+              oauth-entity-profiles-01, 17 April 2026,
+              <https://www.ietf.org/archive/id/draft-mora-oauth-entity-
+              profiles-01.txt>.
+
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
@@ -2343,13 +2350,6 @@ Table of Contents
               liu-oauth-authorization-evidence-01, 22 June 2026,
               <https://datatracker.ietf.org/doc/html/draft-liu-oauth-
               authorization-evidence-01>.
-
-   [I-D.mora-oauth-entity-profiles]
-              Mora, S. C., Dingle, P., and K. McGuinness, "OAuth Entity
-              Profiles", Work in Progress, Internet-Draft, draft-mora-
-              oauth-entity-profiles-01, 17 April 2026,
-              <https://www.ietf.org/archive/id/draft-mora-oauth-entity-
-              profiles-01.txt>.
 
 Appendix A.  Examples
 
