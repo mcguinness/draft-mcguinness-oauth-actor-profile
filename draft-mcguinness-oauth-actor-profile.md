@@ -1462,7 +1462,7 @@ This example illustrates the mismatch case covered by [Client Identity and Deleg
 *  pre-registration entries that explicitly authorize the token issuer to assert a specific (`act.iss`, `act.sub`) pair or identifiers of that form; and
 *  bilateral or deployment-local policy rules that authorize the token issuer to carry the specific class of actor identifier used in `act.sub`.
 
-For HTTPS identifiers, one possible local rule is URL namespace containment: an explicitly configured rule that compares scheme, host, port, and path boundaries.  Scheme and host comparisons follow {{Section 3.2.2 of RFC3986}}; paths are generally case-sensitive.  Subdomain relationships alone are often insufficient to establish trust without explicit configuration.
+For HTTPS identifiers, one possible local rule is URL namespace containment: an explicitly configured rule that compares scheme, host, port, and path boundaries.  Scheme and host comparisons follow {{Section 3.1 of RFC3986}} and {{Section 3.2.2 of RFC3986}}; paths are generally case-sensitive.  Subdomain relationships alone are often insufficient to establish trust without explicit configuration.
 
 For example:
 
@@ -1694,9 +1694,9 @@ This document requests IANA to register the following value in the "OAuth Token 
 This document does not request independent entries in the "JSON Web Token Claims" registry for the `act` object sub-claims (`iss`, `sub_profile`, and any extension claims) it defines or profiles.  These claims appear only within the JSON object value of the `act` claim, which {{RFC8693}} already registers in the "JSON Web Token Claims" registry.  Sub-object keys within a registered claim are scoped to that claim's JSON object and do not require separate top-level registry entries.
 
 
-## OAuth Token Type Registry {#iana-token-types}
+## Transaction Token Type URI {#iana-token-types}
 
-This document makes no independent requests to the "OAuth Token Type" registry for `urn:ietf:params:oauth:token-type:txn_token`.  That URI is defined and registered by {{I-D.ietf-oauth-transaction-tokens}}.  Its inclusion as a defined value for `actor_profile_token_exchange.requested_token_types_supported` in [Authorization Server Metadata](#authorization-server-metadata) is contingent on the progression of {{I-D.ietf-oauth-transaction-tokens}}.
+This document makes no independent requests to the "OAuth URI" registry for `urn:ietf:params:oauth:token-type:txn_token`.  That URI is defined and registered by {{I-D.ietf-oauth-transaction-tokens}}.  Its inclusion as a defined value for `actor_profile_token_exchange.requested_token_types_supported` in [Authorization Server Metadata](#authorization-server-metadata) is contingent on the progression of {{I-D.ietf-oauth-transaction-tokens}}.
 
 
 ## OAuth Entity Profiles Registry {#iana-entity-profiles}
