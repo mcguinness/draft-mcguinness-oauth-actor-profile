@@ -50,13 +50,6 @@ normative:
   I-D.mcguinness-oauth-actor-profile:
   I-D.mcguinness-oauth-actor-receipts:
 
-informative:
-  RFC9700:
-  I-D.mw-oauth-actor-chain:
-  I-D.liu-oauth-chain-delegation:
-  I-D.jiang-oauth-intent-admission:
-  I-D.ietf-oauth-attestation-based-client-auth:
-  I-D.ietf-oauth-spiffe-client-auth:
   I-D.mora-oauth-entity-profiles:
     title: "OAuth Entity Profiles"
     author:
@@ -73,6 +66,13 @@ informative:
     seriesinfo:
       Internet-Draft: draft-mora-oauth-entity-profiles-01
     target: https://www.ietf.org/archive/id/draft-mora-oauth-entity-profiles-01.txt
+informative:
+  RFC9700:
+  I-D.mw-oauth-actor-chain:
+  I-D.liu-oauth-chain-delegation:
+  I-D.jiang-oauth-intent-admission:
+  I-D.ietf-oauth-attestation-based-client-auth:
+  I-D.ietf-oauth-spiffe-client-auth:
 
 ...
 

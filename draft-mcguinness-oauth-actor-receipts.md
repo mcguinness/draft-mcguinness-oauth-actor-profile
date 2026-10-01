@@ -48,12 +48,6 @@ normative:
   I-D.ietf-oauth-transaction-tokens:
   I-D.mcguinness-oauth-actor-profile:
 
-informative:
-  RFC9493:
-  RFC9700:
-  I-D.mw-oauth-actor-chain:
-  I-D.liu-oauth-chain-delegation:
-  I-D.liu-oauth-authorization-evidence:
   I-D.mora-oauth-entity-profiles:
     title: "OAuth Entity Profiles"
     author:
@@ -70,6 +64,12 @@ informative:
     seriesinfo:
       Internet-Draft: draft-mora-oauth-entity-profiles-01
     target: https://www.ietf.org/archive/id/draft-mora-oauth-entity-profiles-01.txt
+informative:
+  RFC9493:
+  RFC9700:
+  I-D.mw-oauth-actor-chain:
+  I-D.liu-oauth-chain-delegation:
+  I-D.liu-oauth-authorization-evidence:
 
 ...
 
