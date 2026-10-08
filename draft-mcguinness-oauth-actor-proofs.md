@@ -256,7 +256,7 @@ This profile defines no subject `sub_profile` claim for proofs; subject classifi
 
   The `exp` value needs to cover the lifetime of any token that will carry or inherit this proof ({{issuer-processing}}).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse ({{proof-to-token-binding-limits}}).
 
-  With instance binding through receipts in strict mode or a provisioned `origin_jti` ({{proof-to-token-binding-limits}}), `exp` MAY cover the delegated session only while the outer token stays instance-bound.  Refresh or reissuance ends instance binding, so issuers that refresh tokens carrying proofs SHOULD keep proof `exp` short.  Without instance binding, `exp` SHOULD be short to limit proof reuse.
+  With instance binding through receipts in strict mode or a provisioned `origin_jti` ({{proof-to-token-binding-limits}}), `exp` MAY cover the delegated session only while the outer token stays instance-bound.  Refresh or reissuance ends instance binding, so actors SHOULD keep proof `exp` short when the token can be refreshed or reissued.  Without instance binding, `exp` SHOULD be short to limit proof reuse.
 
 `jti`:
 : REQUIRED.  A unique identifier for the proof, as defined in {{RFC7519}}.
