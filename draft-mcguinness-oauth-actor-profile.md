@@ -716,7 +716,7 @@ The grant's scope ceiling is its `scope` claim when present (such as the ID-JAG 
 
 #### JWT Access Token {#jwt-access-token-as-subject-token}
 
-A JWT access token presented as `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:access_token`) establishes `sub` and, when present, `sub_profile`, inbound `act` chain state, and top-level `cnf`, and is processed under [Input Processing](#token-exchange-input-processing) with the following rules.  Validation per {{RFC9068}} covers its signature and its `iss`, `sub`, `exp`, `nbf`, and `jti` claims.  Because a JWT access token used as `subject_token` was issued for a resource server, its `aud` does not ordinarily include the Token Exchange AS's token endpoint; the AS MUST NOT reject the inbound token solely because its `aud` does not include the AS's token endpoint URI.
+A JWT access token presented as `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:access_token`) establishes `sub` and, when present, `sub_profile`, inbound `act` chain state, and top-level `cnf`, and is processed under [Input Processing](#token-exchange-input-processing) with the following rules.  Validation per {{RFC9068}} covers its `typ` header, its signature, and its `iss`, `sub`, `exp`, `nbf`, and `jti` claims.  Because a JWT access token used as `subject_token` was issued for a resource server, its `aud` does not ordinarily include the Token Exchange AS's token endpoint; the AS MUST NOT reject the inbound token solely because its `aud` does not include the AS's token endpoint URI.
 
 #### Transaction Token {#txn-token-as-subject-token}
 
