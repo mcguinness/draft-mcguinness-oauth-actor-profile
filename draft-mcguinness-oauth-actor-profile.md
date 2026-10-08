@@ -1956,7 +1956,8 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Revised the Introduction to state what Token Exchange leaves open and the ID-JAG extension point this profile fills.
 * Added hop and visible-hop terminology; only an introspection server filters the visible `act` chain.
 * Required `client_id` in JWT access tokens, per {{RFC9068}}, and limited the JWT access token structure to JWT access token output.
-* Reworked presenter transitions: bearer continuation by the authenticated outermost actor, rebind by a direct presenter credential or the `may_act` client, rejection of requests that fit neither mode, and new-presenter proof only for sender-constrained output.
+* Reworked presenter transitions: bearer continuation by the authenticated outermost actor, rebind by a direct presenter credential or the `may_act` client, rejection of delegated requests that fit neither mode, issuance without `act` for requests that are not delegated, and new-presenter proof only for sender-constrained output.
+* Kept nested `act` informational for access control, per {{Section 4.1 of RFC8693}}: inner actors are prior-actor context only.
 * Rebind now supersedes a sender-constrained assertion grant's binding and makes the grant single-use; grant replay protection depends on an enforced grant-level sender constraint and the (`iss`, `jti`) pair.
 * Aligned error codes with {{Section 2.2.2 of RFC8693}} and {{Section 3.1 of RFC7523}}: `invalid_request` on Token Exchange, `invalid_grant` on JWT bearer grants, and `actor_unauthorized` for actor-policy denials, with explicit error precedence.
 * Set an ID-JAG's `aud` to the Resource Authorization Server's issuer identifier, and capped the scope issued from an assertion-grant `subject_token`.

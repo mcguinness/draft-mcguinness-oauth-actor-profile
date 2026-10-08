@@ -1008,7 +1008,7 @@ The `prh` claim is omitted because this is a single-element chain.  `actor_proof
 * Tightened target binding: resource indicators match by simple string comparison, `target.resource` supplies the effective resources when a request names none, consent is audience-only when the token's resources are unknown, Token Exchange targets are not narrowed, and the issuer checks `origin_jti` and `receipt_jti`.
 * Added guidance for proofs that need to survive assertion-grant redemption.
 * An issuer adding a hop without a valid new proof drops the inbound proofs, a request that adds no hop but carries `actor_proof` is rejected, and a reissuer validates proofs before carrying them forward.
-* A failed proof check removes only actor-signed evidence unless policy or metadata requires proofs.
+* A failed proof check removes only actor-signed evidence unless policy or metadata requires proofs.  Authorization based on proofs rests on the validated `actor_proofs` claim, with or without receipts, and nested `act` stays informational, per {{Section 4.1 of RFC8693}}.
 * Prohibited `aud` in proofs.
 * Removed receipt-attested presenter keys as an actor-key source, and rejected a chain with any untrusted signing key.
 * Aligned error codes with {{RFC8693}} and {{RFC7523}}, and required `actor_unauthorized` for actor-authorization failures.
