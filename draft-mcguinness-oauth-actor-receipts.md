@@ -447,7 +447,9 @@ With `actor_receipts_complete_required: true`, the token or introspection respon
 
 ## Use by Resource Servers
 
-Resource servers can use validated receipts as provenance input for authorization, diagnostics, and audit, subject to the limits in {{threat-model}}.  A valid receipt chain proves only that trusted issuers attested specific visible actor hops.  It conveys no authority, does not replace authorization of the current token, does not imply that the represented delegation remains active, and does not prove that the current token's audience, scope, or expiration were in force when older receipts were created.
+Resource servers can use validated receipts as provenance input for authorization, diagnostics, and audit, subject to the limits in {{threat-model}}.  Such use rests on the validated top-level `actor_receipts` claim: nested `act` objects remain informational for access control ({{Section 4.1 of RFC8693}}), and, under this profile, a prior actor is an authorization input only as a hop covered by a receipt validated under {{consumer-processing}}.
+
+A valid receipt chain proves only that trusted issuers attested specific visible actor hops.  It conveys no authority, does not replace authorization of the current token, does not imply that the represented delegation remains active, and does not prove that the current token's audience, scope, or expiration were in force when older receipts were created.
 
 ## Introspection {#consumer-introspection}
 
@@ -1060,7 +1062,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * Defined one lifetime rule for extension, reissuance, and refresh (lower the token's `exp`, drop the array, or fail), added a floor for receipt `exp`, and made an expired older receipt invalid.
 * Refresh no longer starts a new chain, and retained receipts are validated against the issuer's state rather than the previous access token.
 * An extending issuer takes the inbound receipts from the token carrying the delegation chain, a new receipt's `iss` equals the issued token's `iss`, and a reissuer validates a chain before carrying it forward.
-* A failed receipt chain removes only receipt-based provenance unless policy or metadata requires receipts, and a failed companion rule removes only that companion's evidence unless the companion specifies otherwise.
+* A failed receipt chain removes only receipt-based provenance unless policy or metadata requires receipts, and a failed companion rule removes only that companion's evidence unless the companion specifies otherwise.  Authorization based on receipts rests on the validated `actor_receipts` claim, and nested `act` stays informational, per {{Section 4.1 of RFC8693}}.
 * Prohibited `aud` in receipts.
 * Aligned error codes with {{RFC8693}} and {{RFC7523}}: `invalid_request` on Token Exchange, `invalid_grant` on JWT bearer grants and refresh, and `actor_unauthorized` for actor-authorization failures.
 * Clarified completeness: an extending issuer sets `actor_receipts_complete: true` when the receipt count matches, an introspection `false` makes no completeness attestation, and filtering is limited to introspection servers.

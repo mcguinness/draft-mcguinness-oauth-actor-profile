@@ -256,7 +256,7 @@ This profile defines no subject `sub_profile` claim for proofs; subject classifi
 
   The `exp` value needs to cover the lifetime of any token that will carry or inherit this proof ({{issuer-processing}}).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse ({{proof-to-token-binding-limits}}).
 
-  With instance binding through receipts in strict mode or a provisioned `origin_jti` ({{proof-to-token-binding-limits}}), `exp` MAY cover the delegated session only while the outer token stays instance-bound.  Refresh or reissuance ends instance binding, so issuers that refresh tokens carrying proofs SHOULD keep proof `exp` short.  Without instance binding, `exp` SHOULD be short to limit proof reuse.
+  With instance binding through receipts in strict mode or a provisioned `origin_jti` ({{proof-to-token-binding-limits}}), `exp` MAY cover the delegated session only while the outer token stays instance-bound.  Refresh or reissuance ends instance binding, so actors SHOULD keep proof `exp` short unless they know the token will not be refreshed or reissued.  Without instance binding, `exp` SHOULD be short to limit proof reuse.
 
 `jti`:
 : REQUIRED.  A unique identifier for the proof, as defined in {{RFC7519}}.
@@ -371,7 +371,7 @@ An AS that supports refresh tokens for delegated access tokens carrying proofs:
 
 *  needs to retain the `actor_proofs` array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so that each refreshed access token can carry the proofs forward unchanged.
 *  takes the array from that retained state rather than from the previous access token: it validates the refresh request per {{Section 6 of RFC6749}}, checks the retained proofs against its issuance state, and neither requires the previous access token to remain unexpired nor re-runs {{consumer-processing}} against it.
-*  applies the lifetime rule in {{issuer-processing}} to each refreshed access token.  Refresh ends instance binding, so proof `exp` sizing for refreshed tokens follows the short-`exp` guidance in {{proof-claims}}.
+*  applies the lifetime rule in {{issuer-processing}} to each refreshed access token.  Refresh ends instance binding, which is why {{proof-claims}} asks actors to keep proof `exp` short.
 *  after dropping `actor_proofs` under that rule, restores actor-signed evidence only through a new delegated issuance that adds a hop with a fresh proof, because refresh adds no actor hop.
 
 ## Partial Coverage and Full Coverage {#partial-coverage-and-full-coverage}
@@ -471,7 +471,7 @@ When Protected Resource Metadata sets `actor_proofs_complete_required: true`, th
 
 ## Use by Resource Servers
 
-Resource servers can use validated proofs as evidence for authorization, diagnostics, and audit, subject to the limits in {{threat-model}}.  However, a valid proof chain:
+Resource servers can use validated proofs as evidence for authorization, diagnostics, and audit, subject to the limits in {{threat-model}}, with or without receipts.  Such use rests on the validated top-level `actor_proofs` claim: nested `act` objects remain informational for access control ({{Section 4.1 of RFC8693}}), and, under this profile, a prior actor is an authorization input only as a hop covered by a proof validated under {{consumer-processing}}.  However, a valid proof chain:
 
 *  proves only that the covered actors signed their participation and hop-time target bindings;
 *  does not prove that the represented delegation remains active, authorized, or acceptable under current policy;
@@ -1008,7 +1008,7 @@ The `prh` claim is omitted because this is a single-element chain.  `actor_proof
 * Tightened target binding: resource indicators match by simple string comparison, `target.resource` supplies the effective resources when a request names none, consent is audience-only when the token's resources are unknown, Token Exchange targets are not narrowed, and the issuer checks `origin_jti` and `receipt_jti`.
 * Added guidance for proofs that need to survive assertion-grant redemption.
 * An issuer adding a hop without a valid new proof drops the inbound proofs, a request that adds no hop but carries `actor_proof` is rejected, and a reissuer validates proofs before carrying them forward.
-* A failed proof check removes only actor-signed evidence unless policy or metadata requires proofs.
+* A failed proof check removes only actor-signed evidence unless policy or metadata requires proofs.  Authorization based on proofs rests on the validated `actor_proofs` claim, with or without receipts, and nested `act` stays informational, per {{Section 4.1 of RFC8693}}.
 * Prohibited `aud` in proofs.
 * Removed receipt-attested presenter keys as an actor-key source, and rejected a chain with any untrusted signing key.
 * Aligned error codes with {{RFC8693}} and {{RFC7523}}, and required `actor_unauthorized` for actor-authorization failures.
