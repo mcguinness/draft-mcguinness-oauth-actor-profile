@@ -256,7 +256,7 @@ This profile defines no subject `sub_profile` claim for proofs; subject classifi
 
   The `exp` value needs to cover the lifetime of any token that will carry or inherit this proof ({{issuer-processing}}).  Longer validity supports delegated sessions but also extends exposure to key compromise and proof reuse ({{proof-to-token-binding-limits}}).
 
-  With instance binding through receipts in strict mode or a provisioned `origin_jti` ({{proof-to-token-binding-limits}}), `exp` MAY cover the delegated session only while the outer token stays instance-bound.  Refresh or reissuance ends instance binding, so actors SHOULD keep proof `exp` short when the token can be refreshed or reissued.  Without instance binding, `exp` SHOULD be short to limit proof reuse.
+  With instance binding through receipts in strict mode or a provisioned `origin_jti` ({{proof-to-token-binding-limits}}), `exp` MAY cover the delegated session only while the outer token stays instance-bound.  Refresh or reissuance ends instance binding, so actors SHOULD keep proof `exp` short unless they know the token will not be refreshed or reissued.  Without instance binding, `exp` SHOULD be short to limit proof reuse.
 
 `jti`:
 : REQUIRED.  A unique identifier for the proof, as defined in {{RFC7519}}.
@@ -371,7 +371,7 @@ An AS that supports refresh tokens for delegated access tokens carrying proofs:
 
 *  needs to retain the `actor_proofs` array in issuer-controlled state across refresh, either in durable storage (for example, a token-state database or refresh-token state) or embedded in a self-contained refresh token, so that each refreshed access token can carry the proofs forward unchanged.
 *  takes the array from that retained state rather than from the previous access token: it validates the refresh request per {{Section 6 of RFC6749}}, checks the retained proofs against its issuance state, and neither requires the previous access token to remain unexpired nor re-runs {{consumer-processing}} against it.
-*  applies the lifetime rule in {{issuer-processing}} to each refreshed access token.  Refresh ends instance binding, so proof `exp` sizing for refreshed tokens follows the short-`exp` guidance in {{proof-claims}}.
+*  applies the lifetime rule in {{issuer-processing}} to each refreshed access token.  Refresh ends instance binding, which is why {{proof-claims}} asks actors to keep proof `exp` short.
 *  after dropping `actor_proofs` under that rule, restores actor-signed evidence only through a new delegated issuance that adds a hop with a fresh proof, because refresh adds no actor hop.
 
 ## Partial Coverage and Full Coverage {#partial-coverage-and-full-coverage}
