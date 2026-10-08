@@ -1535,7 +1535,7 @@ This document requests IANA to register the following value in the "OAuth Extens
 
 ## OAuth Token Introspection Response Registry
 
-This document requests IANA to register the following value in the "OAuth Token Introspection Response" registry ({{Section 3.3 of RFC7662}}):
+This document requests IANA to register the following value in the "OAuth Token Introspection Response" registry ({{Section 3.1 of RFC7662}}):
 
 *  Name: `chain_complete`
 *  Description: Boolean indicating whether the `act` delegation chain in the introspection response is complete.  When `false`, one or more inner `act` chain entries have been omitted from the response for privacy reasons.  When absent, the chain SHOULD be treated as complete unless local policy or deployment context indicates otherwise.
