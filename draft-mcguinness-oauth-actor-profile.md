@@ -177,7 +177,7 @@ Delegation Chain:
 : The sequence of actors representing how authorization has passed from the subject principal (`sub`) to the first actor (innermost `act`) and through any intermediate parties to the immediate actor (outermost `act.sub`).  The chain is conveyed by the nested structure of the `act` claim.
 
 Outermost Actor:
-: The `act` object at the top level of the delegation chain (the one not nested inside any other `act` object).  When a delegation chain of depth greater than one is present, the outermost actor identifies the current presenter of the token.
+: The `act` object at the top level of the delegation chain (the one not nested inside any other `act` object).  The outermost actor identifies the current presenter of the token.
 
 Local Policy:
 : Rules or decisions, not defined by this document, that an AS, RS, or organization applies, such as delegation approval, scope reduction, identifier mapping, and entity-profile acceptance.
