@@ -330,10 +330,7 @@ When a token represents delegation, the `act` claim MUST be present and MUST con
 
 An AS MUST apply this algorithm on paths that require or claim actor-profile conformance.  The invoking grant, Token Exchange, or TTS rules supply token-specific preconditions and delegation-authorization requirements.  Nonconforming actor objects, including those missing `iss`, MUST NOT enter this algorithm; [Migration and Adoption](#migration-and-adoption) defines their handling.
 
-### Terminology
-
-*  **Security-relevant entry**: an inner actor used by local policy for authorization, scope determination, or identity mapping during issuance.
-*  **Prior-actor context**: an inner actor preserved for audit or downstream use without affecting the current issuance decision.
+Interoperable processing under this profile is defined around `sub` and the outermost `act.sub`.  Inner actors are **prior-actor context**: preserved for audit and downstream use, and not inputs to access-control, scope, or other issuance decisions, because prior actors identified by nested `act` objects are informational only ({{Section 4.1 of RFC8693}}).
 
 ### Validation Steps
 
@@ -341,9 +338,8 @@ The AS applies the validation steps in the following order:
 
 1.  Validate the carrier token using [Validate Carrier Token](#validate-carrier-token).
 2.  Validate the outermost actor using [Validate Outermost Actor](#validate-outermost-actor).
-3.  If inner actors are used as inputs to issuance decisions, validate those entries using [Validate Inner Actors Used for Decisions](#validate-inner-actors-used-for-decisions).
-4.  For inner actors preserved only as prior-actor context, apply [Carry Prior-Actor Context](#carry-prior-actor-context).
-5.  Enforce the configured maximum chain depth using [Enforce Depth Limit](#enforce-depth-limit).
+3.  Treat inner actors as prior-actor context using [Carry Prior-Actor Context](#carry-prior-actor-context).
+4.  Enforce the configured maximum chain depth using [Enforce Depth Limit](#enforce-depth-limit).
 
 #### Validate Carrier Token {#validate-carrier-token}
 
@@ -363,13 +359,9 @@ For the outermost `act` object, the AS MUST:
 
 [Authorization Grant Processing](#jwt-assertion-grants-processing) adds requirements for JWT assertion grants.
 
-#### Validate Inner Actors Used for Decisions {#validate-inner-actors-used-for-decisions}
-
-Interoperable processing under this profile is defined around `sub` and the outermost `act.sub`.  If local policy additionally uses an inner `act` object as an input to issuance decisions, the AS MUST validate that entry's `act.sub` and `act.iss` pair and MUST evaluate its delegation relationship, as in [Validate Outermost Actor](#validate-outermost-actor), before using it as a security input.  Failures use that step's errors under [Error Responses](#actor-profile-error-responses).  Such use of inner actors is deployment-specific.
-
 #### Carry Prior-Actor Context {#carry-prior-actor-context}
 
-For inner `act` objects preserved solely as prior-actor context without being used for any issuance decision, the AS MAY rely on trust in the outer token issuer established by [Validate Carrier Token](#validate-carrier-token) rather than independently validating each hop.  The AS MUST NOT treat preserved prior-actor context as independently authenticated; an inner `act` entry carried in a token is endorsed only by the outer token issuer's signature, not by independent verification at each prior hop.
+For inner `act` objects, which are prior-actor context, the AS MAY rely on trust in the outer token issuer established by [Validate Carrier Token](#validate-carrier-token) rather than independently validating each hop.  The AS MUST NOT treat preserved prior-actor context as independently authenticated; an inner `act` entry carried in a token is endorsed only by the outer token issuer's signature, not by independent verification at each prior hop.
 
 #### Enforce Depth Limit {#enforce-depth-limit}
 
@@ -540,9 +532,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
     *  **Propagation decision**: The AS SHOULD propagate the inner chain by preserving its nested structure, provided the resulting chain depth does not exceed the limit in [Delegation Chains](#delegation-chains).  If the AS does not accept pre-chained assertions, it MUST reject the request.
 
-    *  **Entries used by the AS for issuance decisions**: If local policy additionally uses an inner `act` object for authorization, scope determination, or another issuance decision, [Validate Inner Actors Used for Decisions](#validate-inner-actors-used-for-decisions) applies before the AS uses that entry as a security input.
-
-    *  **Preserved prior-actor context**: For inner `act` objects that the AS preserves only as prior-actor context, [Carry Prior-Actor Context](#carry-prior-actor-context) applies.
+    *  **Prior-actor context**: For inner `act` objects, [Carry Prior-Actor Context](#carry-prior-actor-context) applies.
 
 6.  The AS MUST verify proof of possession according to the token-endpoint mechanism in use and the top-level `cnf` semantics in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).
 
@@ -1000,10 +990,7 @@ When a TTS receives a Token Exchange request to issue or refresh a Transaction T
 
 4.  The TTS validates the inbound token and establishes issuer trust ([Validate Carrier Token](#validate-carrier-token)) before preserving or extending any `act` chain.  For the outermost `act` object in the inbound chain, the TTS applies [Validate Outermost Actor](#validate-outermost-actor), treating presenter rebind as extending the chain and presenter continuation as preserving it.
 
-    For inner `act` objects in the inbound chain:
-
-    *  **Security-relevant use**: If local policy uses an inner `act` object as an input to issuance decisions, such as access control or scope decisions, [Validate Inner Actors Used for Decisions](#validate-inner-actors-used-for-decisions) applies, including its error mapping.
-    *  **Prior-actor context only**: If an inner `act` object is preserved solely for audit purposes and is not an input to any security decision, [Carry Prior-Actor Context](#carry-prior-actor-context) applies.
+    For inner `act` objects in the inbound chain, [Carry Prior-Actor Context](#carry-prior-actor-context) applies.
 
 5.  The TTS MUST determine whether the request is presenter continuation or presenter rebind:
 
@@ -1072,7 +1059,7 @@ When the resource server evaluates a JWT access token as a delegated token under
 
 5.  Apply actor authorization per [Actor Authorization](#actor-authorization) when required by local policy or when the token is accepted as satisfying a delegated-access requirement for the request path.
 
-6.  The RS MAY traverse inner `act` objects for audit, policy refinement, or trust decisions; such use is deployment-specific.
+6.  The RS MAY traverse inner `act` objects for audit.  They are not inputs to access-control decisions ({{Section 4.1 of RFC8693}}).
 
 7.  If any of the above steps fail, return an appropriate error response.  The HTTP authentication scheme used in the `WWW-Authenticate` challenge follows the token's binding mechanism: `Bearer` per {{Section 3.1 of RFC6750}} for bearer or mTLS-bound ({{RFC8705}}) tokens, or `DPoP` per {{Section 7.1 of RFC9449}} for DPoP-bound tokens.
 
@@ -1100,7 +1087,7 @@ When the resource server evaluates a Transaction Token as a delegated token unde
 
 4.  Apply actor authorization per [Actor Authorization](#actor-authorization) when required by local policy or when the token is accepted as satisfying a delegated-access requirement for the request path.
 
-5.  Optionally traverse inner `act` objects to audit the full delegation chain.  If the RS relies on inner `act` objects for audit, policy refinement, or trust decisions, it MUST do so only under the prior-actor context rules in [Carry Prior-Actor Context](#carry-prior-actor-context).
+5.  Optionally traverse inner `act` objects to audit the full delegation chain.  They are not inputs to access-control decisions ({{Section 4.1 of RFC8693}}) and have the trust properties in [Carry Prior-Actor Context](#carry-prior-actor-context).
 
 6.  If any of the above steps fail, the RS MUST reject the request through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.  Validation or presenter-proof failures are token-validation failures; failures of actor authorization required by local policy are authorization failures.  The RS MUST NOT include actor-specific rejection details in error responses exposed outside the trust domain.
 
@@ -1118,12 +1105,9 @@ When token introspection ({{RFC7662}}) is used for delegated tokens, an AS MUST 
 
 The AS MUST return actor claims from the token's authorization context, including the complete nested chain, except for the following privacy-filtering allowance.
 
-If local privacy policy requires omitting inner actors, the AS MAY filter them but MUST include `"chain_complete": false`.  When the AS knows the RS uses inner actors for security decisions, it SHOULD NOT filter the chain and SHOULD instead return it in full or reject introspection.
+If local privacy policy requires omitting inner actors, the AS MAY filter them but MUST include `"chain_complete": false`.
 
-When `chain_complete` is `false`:
-
-*  An RS using any inner actor for authorization, scope determination, or another security decision MUST reject the request.
-*  An RS using inner actors only for audit or informational purposes MAY accept the response if it records the incompleteness.  The subject and the outermost actor remain available for authorization.
+When `chain_complete` is `false`, the RS MAY accept the response if it records the incompleteness.  The subject and the outermost actor remain available for authorization.
 
 The RS MUST NOT treat a partial chain as complete delegation history.  Companion profiles with data aligned to `act` define their filtering behavior as required by [Companion Profiles and Extension Points](#companion-profile-extensibility).
 
@@ -1135,7 +1119,7 @@ If policy or token context indicates delegation, a missing `act` member is an in
 
 Introspection endpoints for delegated tokens SHOULD be advertised using the `introspection_endpoint` parameter in AS metadata ({{RFC8414}}).  When revocation is integrated, the introspection response for a revoked delegated token returns `"active": false` per {{Section 2.2 of RFC7662}} and MUST NOT include the `act` or `sub_profile` members.
 
-Resource servers that cache introspection responses for delegated tokens should use short cache lifetimes consistent with revocation requirements.  An RS using inner actors for security decisions SHOULD NOT cache a response with `"chain_complete": false`.
+Resource servers that cache introspection responses for delegated tokens should use short cache lifetimes consistent with revocation requirements.
 
 # Error Responses {#actor-profile-error-responses}
 
@@ -1306,6 +1290,8 @@ A companion profile that builds on this profile:
 *  SHOULD define any supplementary provenance, receipt, or chain-wide state in separate top-level claims or equivalent companion mechanisms rather than by overloading members inside inherited `act` objects;
 *  if it defines data that aligns to the visible `act` chain, MUST specify the alignment rules, the behavior when coverage is partial, and the behavior when introspection or privacy filtering suppresses part of the visible chain.
 
+A companion profile can define authorization based on independently verifiable per-hop evidence that it carries in its own top-level claims.  Nested `act` objects remain informational for access control ({{Section 4.1 of RFC8693}}).
+
 An implementation that conforms only to this core profile MUST ignore unrecognized companion-profile claims, metadata parameters, and introspection response members unless another specification or local policy defines their meaning.  A deployment that requires support for a companion profile expresses that requirement through the companion profile's own metadata, through out-of-band agreement, or through another explicit local-policy mechanism.
 
 # Deployment Considerations
@@ -1402,7 +1388,7 @@ An attacker who can inject or forge `act` claims can impersonate an arbitrary ac
 
 Because inner `act` objects are set by upstream ASes and not re-signed at each hop, the integrity of the entire delegation chain depends on the signature of the token that carries it.  Implementations SHOULD use short token lifetimes, and an expired token is rejected per {{Section 4.1.4 of RFC7519}} regardless of chain depth.
 
-Security policies that rely on inner actor identities ([Carry Prior-Actor Context](#carry-prior-actor-context)) for access control are deployment-specific and generally lower-assurance than policies based on `sub` and the outermost `act.sub`.
+Inner actor identities are not inputs to access-control decisions ({{Section 4.1 of RFC8693}}): they are endorsed only by the outer token issuer's signature ([Carry Prior-Actor Context](#carry-prior-actor-context)).  [Companion Profiles and Extension Points](#companion-profile-extensibility) describes how independently verifiable per-hop evidence can support authorization.
 
 ASes performing Token Exchange MUST evaluate cross-domain delegation grants explicitly and SHOULD NOT grant cross-domain actors the same rights as same-domain actors absent an explicit trust decision that makes them equivalent.
 
