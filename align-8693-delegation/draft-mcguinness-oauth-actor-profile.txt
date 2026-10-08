@@ -1325,11 +1325,14 @@ Table of Contents
    invalid_request.  A request that supplies an actor_token, or whose
    subject_token carries act, is processed as delegated; if that
    processing fails, the AS rejects the request and MUST NOT instead
-   issue a token without act.  The AS processes a request that is not
-   delegated under [RFC8693] and local policy, and a token issued for it
-   omits act.  When that request's subject_token carries a top-level cnf
-   claim, the requester MUST prove possession of that binding, as in
-   Token Exchange Continuation (Section 3.7.2).
+   issue a token without act.
+
+   The AS processes a request that is not delegated under [RFC8693] and
+   local policy, and a token issued for it omits act.
+
+   When a request that is not delegated presents a subject_token
+   carrying a top-level cnf claim, the requester MUST prove possession
+   of that binding, as in Token Exchange Continuation (Section 3.7.2).
 
    Outside the may_act (Section 6.5) path without actor_token, presenter
    rebind requires a *direct presenter credential*: an actor_token whose
@@ -1810,8 +1813,8 @@ Table of Contents
 
    *  Sign the assertion, per Section 3 of [RFC7523].
 
-   Issuing such a grant is subject to AS configuration and to Validate
-   Outermost Actor (Section 3.6.1.2).
+   Issuing such a grant is subject to AS configuration and, when the
+   grant carries act, to Validate Outermost Actor (Section 3.6.1.2).
 
 6.6.2.  JWT Access Token Output
 
@@ -1820,10 +1823,14 @@ Table of Contents
    grant, subject-token, actor-token, or TTS input processing, the AS
    MUST apply the rules below.
 
-   For a sender-constrained output, the AS MUST set the top-level cnf
-   claim according to Presenter Transition Model (Section 6.1): retain
-   the presenter's binding in continuation mode, or bind to the new
-   presenter in rebind mode.
+   For a sender-constrained output of a delegated Token Exchange
+   request, the AS MUST set the top-level cnf claim according to
+   Presenter Transition Model (Section 6.1): retain the presenter's
+   binding in continuation mode, or bind to the new presenter in rebind
+   mode.  For any other request, the applicable grant or token
+   specification and its proof mechanism govern that binding, such as
+   Section 9.8.1.1 of [I-D.ietf-oauth-identity-assertion-authz-grant]
+   for an ID-JAG.
 
    If a Token Exchange request explicitly seeks a delegated output, for
    example by supplying an actor_token or by presenting a subject_token

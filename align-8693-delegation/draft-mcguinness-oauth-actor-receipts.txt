@@ -1047,12 +1047,14 @@ Table of Contents
    actor_receipts claim: nested act objects remain informational for
    access control (Section 4.1 of [RFC8693]), and, under this profile, a
    prior actor is an authorization input only as a hop covered by a
-   receipt validated under Section 7.  A valid receipt chain proves only
-   that trusted issuers attested specific visible actor hops.  It
-   conveys no authority, does not replace authorization of the current
-   token, does not imply that the represented delegation remains active,
-   and does not prove that the current token's audience, scope, or
-   expiration were in force when older receipts were created.
+   receipt validated under Section 7.
+
+   A valid receipt chain proves only that trusted issuers attested
+   specific visible actor hops.  It conveys no authority, does not
+   replace authorization of the current token, does not imply that the
+   represented delegation remains active, and does not prove that the
+   current token's audience, scope, or expiration were in force when
+   older receipts were created.
 
 7.5.  Introspection
 
