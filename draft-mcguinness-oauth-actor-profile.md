@@ -649,12 +649,12 @@ Identity-only inputs (ID Tokens and refresh tokens) establish `sub` and MAY esta
 
 Token-state inputs (JWT assertion grants, JWT access tokens, and Transaction Tokens) establish `sub` and MAY establish `sub_profile`, inbound `act` chain state, and current-presenter binding through top-level `cnf`.  They are the only `subject_token` inputs from which this document defines interoperable delegation-chain preservation and presenter continuation.
 
-Under this profile, a Token Exchange operates in exactly one of two presenter-transition modes:
+A Token Exchange is delegated when a condition in [Delegation Chains](#delegation-chains) holds for the token it issues.  A delegated Token Exchange operates in exactly one of two presenter-transition modes:
 
 *  **Presenter continuation**: neither a validated `actor_token` nor the [`may_act`](#may-act) path without `actor_token` establishes a new presenter.  The issued token retains the presenter of a token-state `subject_token`: the holder of its top-level `cnf` binding or, for a bearer `subject_token`, its authenticated outermost actor or subject, as [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation) requires.
 *  **Presenter rebind**: a validated `actor_token`, or the authenticated client on the [`may_act`](#may-act) path without `actor_token`, establishes a new presenter for the issued token.  When the output token is sender-constrained, its top-level `cnf` is bound to that new presenter.
 
-A request that satisfies neither mode MUST be rejected with `invalid_request`.
+A delegated request that satisfies neither mode MUST be rejected with `invalid_request`.  A request that supplies an `actor_token`, or whose `subject_token` carries `act`, is processed as delegated; if that processing fails, the AS rejects the request and MUST NOT instead issue a token without `act`.  The AS processes a request that is not delegated under {{RFC8693}} and local policy, and a token issued for it omits `act`.  When that request's `subject_token` carries a top-level `cnf` claim, the requester MUST prove possession of that binding, as in [Token Exchange Continuation](#token-exchange-continuation).
 
 Outside the [`may_act`](#may-act) path without `actor_token`, presenter rebind requires a **direct presenter credential**: an `actor_token` whose top-level `sub` names the new presenter.  Other means of establishing a presenter are deployment-specific.
 
@@ -670,7 +670,7 @@ When a Token Exchange request ({{RFC8693}}) presents a `subject_token` or `actor
 
 2.  Where the table row gives an issuer-trust check, the AS MUST verify that the input's issuer is trusted under local policy as that row states.  If not, the AS MUST reject the request with `invalid_request`.
 
-3.  The AS MUST apply the continuation or rebind rules in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation), including any type-specific proof rule in the input's subsection.  A token-state `subject_token` without a top-level presenter binding can still be used for presenter rebind.
+3.  The AS MUST apply [Presenter Transition Model](#token-exchange-presenter-model): for a delegated request, the continuation or rebind rules in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation), including any type-specific proof rule in the input's subsection.  A token-state `subject_token` without a top-level presenter binding can still be used for presenter rebind.
 
 4.  The AS establishes inbound state as follows:
 
@@ -953,7 +953,7 @@ The booking tool is the current presenter, identified by `req_wl` and the outerm
 
 ## Presenter Authentication and Transition
 
-The TTS applies the same two presenter-transition modes defined in [Presenter Transition Model](#token-exchange-presenter-model), but only for token-state `subject_token` inputs:
+For a delegated request, the TTS applies the same two presenter-transition modes defined in [Presenter Transition Model](#token-exchange-presenter-model), but only for token-state `subject_token` inputs; that section also governs a request that is not delegated:
 
 *  **Presenter continuation**: the authenticated requester is the same current presenter as the inbound token.  When the inbound token carries a top-level presenter binding, the TTS validates proof for that binding under the applicable deployment profile, because {{I-D.ietf-oauth-transaction-tokens}} defines no presenter-proof mechanism; a bearer inbound token yields a bearer Transaction Token, as in [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation).  In this mode, the TTS preserves the inbound `act` chain unchanged and MUST NOT add a new outermost `act`.
 *  **Presenter rebind**: a validated `actor_token` that is a direct presenter credential establishes the current presenter for the issued Transaction Token.  In this mode, the TTS creates a new outermost `act` for that presenter and nests any inbound `act` chain beneath it.
@@ -978,7 +978,7 @@ The resulting state (subject, classification, chain, and binding) is input to [T
 
 The TTS applies [Delegation Chain Validation and Construction](#delegation-chain-algorithm) and [JWT Access Token Output](#jwt-access-token-propagation), with the Transaction Token adaptations below.
 
-When a TTS receives a Token Exchange request to issue or refresh a Transaction Token from an inbound JWT assertion grant, JWT access token, or Transaction Token that carries actor-profile claims, it MUST apply the following rules:
+When a TTS receives a Token Exchange request to issue or refresh a Transaction Token from an inbound JWT assertion grant, JWT access token, or Transaction Token, it MUST apply the following rules; steps 3 through 7 apply only when the request is delegated ([Presenter Transition Model](#token-exchange-presenter-model)), including when an `actor_token` establishes delegation for an inbound token without `act`:
 
 1.  The TTS preserves `sub` from the inbound token, as step 2 of [JWT Access Token Output](#jwt-access-token-propagation) requires.
 
