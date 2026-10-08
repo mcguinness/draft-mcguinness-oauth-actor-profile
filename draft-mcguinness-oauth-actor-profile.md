@@ -330,7 +330,7 @@ When a token represents delegation, the `act` claim MUST be present and MUST con
 
 An AS MUST apply this algorithm on paths that require or claim actor-profile conformance.  The invoking grant, Token Exchange, or TTS rules supply token-specific preconditions and delegation-authorization requirements.  Nonconforming actor objects, including those missing `iss`, MUST NOT enter this algorithm; [Migration and Adoption](#migration-and-adoption) defines their handling.
 
-Interoperable processing under this profile is defined around `sub` and the outermost `act.sub`.  Inner actors are **prior-actor context**: preserved for audit and downstream use, and not inputs to access-control, scope, or other issuance decisions, because prior actors identified by nested `act` objects are informational only ({{Section 4.1 of RFC8693}}).
+Interoperable processing under this profile is defined around `sub` and the outermost `act.sub`.  Inner actors are **prior-actor context**: preserved for audit and downstream use, and not inputs to access-control decisions, including scope determination, because prior actors identified by nested `act` objects are informational only ({{Section 4.1 of RFC8693}}).  Structural rules, such as the depth limit and the actor object requirements, still apply to every actor object.
 
 ### Validation Steps
 
@@ -1038,7 +1038,7 @@ Under this profile, actor authorization is conditional.  When an RS accepts a to
 
 5.  If the RS requires actor authorization but cannot complete it, it MUST reject the request.
 
-Use of nested actors in authorization, including ordering and failure handling, is deployment-specific.  Clients cannot assume such use without a deployment agreement.
+Nested actors are not inputs to actor authorization ({{Section 4.1 of RFC8693}}).
 
 ## JWT Access Token Processing {#jwt-access-token-rs-processing}
 
@@ -1107,7 +1107,7 @@ The AS MUST return actor claims from the token's authorization context, includin
 
 If local privacy policy requires omitting inner actors, the AS MAY filter them but MUST include `"chain_complete": false`.
 
-When `chain_complete` is `false`, the RS MAY accept the response if it records the incompleteness.  The subject and the outermost actor remain available for authorization.
+When `chain_complete` is `false`, the subject and the outermost actor remain available for authorization, and the RS records the incompleteness in any audit of the chain.
 
 The RS MUST NOT treat a partial chain as complete delegation history.  Companion profiles with data aligned to `act` define their filtering behavior as required by [Companion Profiles and Extension Points](#companion-profile-extensibility).
 
@@ -1469,7 +1469,7 @@ When `act.sub` itself must change (for example, because an agent instance is rep
 
 Token revocation ({{RFC7009}}) does not by itself revoke a delegation relationship or propagate revocation to downstream tokens.  Without an additional revocation mechanism, those tokens can remain usable until expiration; see [Token Lifetime for Delegation Chains](#delegation-chain-token-lifetime).
 
-An AS with authoritative knowledge that a delegation has been revoked SHOULD refuse new tokens for that (subject, actor) pair.  Implementations MUST NOT skip revocation checks because of chain depth.
+An AS with authoritative knowledge that a delegation has been revoked SHOULD refuse new tokens for that (subject, actor) pair.  Revocation of a prior hop is enforced through the AS's own issuance records or independently verifiable evidence, not through nested `act` objects.  Implementations MUST NOT skip revocation checks because of chain depth.
 
 Long-lived refresh behavior can delay revalidation of upstream delegation; refresh-token policy, delegation-state storage, and cross-hop revocation remain deployment-specific.
 
@@ -1481,7 +1481,7 @@ Cross-domain deployments SHOULD prefer stable but non-reassigned identifiers and
 
 When the same logical entity can appear in different identifier namespaces, such as `azp`, `req_wl`, and `act.sub`, issuers and relying parties SHOULD use explicit issuer scoping and locally trusted mapping rules rather than string equality alone to determine whether those identifiers refer to the same entity.
 
-Issuers SHOULD minimize disclosure of prior actors through audience and token-design decisions made before issuance.  Once an issuer preserves a delegation chain, [Preserve Inbound Chain](#preserve-inbound-chain) requires copying it intact.  If local privacy requirements would require omitting a chain element that would otherwise be security-relevant to the recipient's evaluation, the issuer rejects the request rather than truncating the chain.
+Issuers SHOULD minimize disclosure of prior actors through audience and token-design decisions made before issuance.  Once an issuer preserves a delegation chain, [Preserve Inbound Chain](#preserve-inbound-chain) requires copying it intact.  If local privacy requirements would require omitting a chain element, the issuer rejects the request rather than truncating the chain.
 
 A Transaction Token's `txn` value links service calls in the same transaction and can enable correlation across organizations.  Deployments SHOULD follow the privacy guidance in {{I-D.ietf-oauth-transaction-tokens}} when propagating it across trust domains.
 
@@ -1919,7 +1919,7 @@ Workload-Identity-Token: <booking-tool-wit>
 Workload-Proof-Token: <tool-wpt-with-wth-and-tth>
 ~~~
 
-The Inventory Service validates the WIT and WPT and then authorizes Alice and the Booking Tool as the subject and the immediate actor, respectively.  It uses `req_wl` as supporting workload context.  The Travel Assistant remains prior-actor context and is not used for access control at this tier.
+The Inventory Service validates the WIT and WPT and then authorizes Alice and the Booking Tool as the subject and the immediate actor, respectively.  It uses `req_wl` as supporting workload context.  The Travel Assistant remains prior-actor context and is not used for access control.
 
 
 ## Summary of Token Transformations

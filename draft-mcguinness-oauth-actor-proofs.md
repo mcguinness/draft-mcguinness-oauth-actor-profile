@@ -471,7 +471,7 @@ When Protected Resource Metadata sets `actor_proofs_complete_required: true`, th
 
 ## Use by Resource Servers
 
-Resource servers can use validated proofs as evidence for authorization, diagnostics, and audit, subject to the limits in {{threat-model}}, with or without receipts.  Such use rests on the validated top-level `actor_proofs` claim: nested `act` objects remain informational for access control ({{Section 4.1 of RFC8693}}), and a prior actor is an authorization input only as a hop covered by a proof validated under {{consumer-processing}}.  However, a valid proof chain:
+Resource servers can use validated proofs as evidence for authorization, diagnostics, and audit, subject to the limits in {{threat-model}}, with or without receipts.  Such use rests on the validated top-level `actor_proofs` claim: nested `act` objects remain informational for access control ({{Section 4.1 of RFC8693}}), and, under this profile, a prior actor is an authorization input only as a hop covered by a proof validated under {{consumer-processing}}.  However, a valid proof chain:
 
 *  proves only that the covered actors signed their participation and hop-time target bindings;
 *  does not prove that the represented delegation remains active, authorized, or acceptable under current policy;
