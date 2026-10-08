@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                          1 October 2026
-Expires: 4 April 2027
+Intended status: Standards Track                          8 October 2026
+Expires: 11 April 2027
 
 
                    OAuth Actor Chain Authority Bounds
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 4 April 2027.
+   This Internet-Draft will expire on 11 April 2027.
 
 Copyright Notice
 
@@ -646,7 +646,12 @@ Table of Contents
 7.2.  Use by Resource Servers
 
    An RS MUST still evaluate the current token under current policy;
-   verified history alone does not authorize access.
+   verified history alone does not authorize access.  Bounds
+   verification compares values recorded in validated receipts, which
+   the outer token carries as a top-level claim, with the current
+   token's own claims and, when present, validated proofs; it does not
+   make nested act objects inputs to access-control decisions
+   (Section 4.1 of [RFC8693]).
 
 7.3.  Introspection
 
