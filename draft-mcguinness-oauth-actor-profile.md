@@ -855,13 +855,13 @@ The AS MUST:
 *  Set `aud` from the request or deployment configuration: for an ID-JAG, to the Resource Authorization Server's issuer identifier ({{Section 3.1 of I-D.ietf-oauth-identity-assertion-authz-grant}}); otherwise, to a value identifying the downstream authorization server that {{Section 3 of RFC7523}} permits, such as its token endpoint URL.
 *  Sign the assertion, per {{Section 3 of RFC7523}}.
 
-Issuing such a grant is subject to AS configuration and to [Validate Outermost Actor](#validate-outermost-actor).
+Issuing such a grant is subject to AS configuration and, when the grant carries `act`, to [Validate Outermost Actor](#validate-outermost-actor).
 
 ### JWT Access Token Output {#jwt-access-token-propagation}
 
 When the output is a JWT access token, the issued token MUST satisfy [JWT Access Token Structure](#jwt-access-tokens-structure).  After the applicable grant, subject-token, actor-token, or TTS input processing, the AS MUST apply the rules below.
 
-For a sender-constrained output, the AS MUST set the top-level `cnf` claim according to [Presenter Transition Model](#token-exchange-presenter-model): retain the presenter's binding in continuation mode, or bind to the new presenter in rebind mode.
+For a sender-constrained output of a delegated Token Exchange request, the AS MUST set the top-level `cnf` claim according to [Presenter Transition Model](#token-exchange-presenter-model): retain the presenter's binding in continuation mode, or bind to the new presenter in rebind mode.  For any other request, the applicable grant or token specification and its proof mechanism govern that binding, such as {{Section 9.8.1.1 of I-D.ietf-oauth-identity-assertion-authz-grant}} for an ID-JAG.
 
 If a Token Exchange request explicitly seeks a delegated output, for example by supplying an `actor_token` or by presenting a `subject_token` that already carries `act`, and the AS cannot validate the actor information, it MUST reject the request with `invalid_request`.  If the AS can validate the actor information but cannot establish or confirm the required delegation basis, or if local policy prohibits the relationship, it MUST reject the request with `actor_unauthorized`.  The AS MUST NOT issue a non-delegated token in place of the requested delegated output.
 
