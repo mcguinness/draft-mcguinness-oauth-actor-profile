@@ -447,7 +447,9 @@ With `actor_receipts_complete_required: true`, the token or introspection respon
 
 ## Use by Resource Servers
 
-Resource servers can use validated receipts as provenance input for authorization, diagnostics, and audit, subject to the limits in {{threat-model}}.  Such use rests on the validated top-level `actor_receipts` claim: nested `act` objects remain informational for access control ({{Section 4.1 of RFC8693}}), and, under this profile, a prior actor is an authorization input only as a hop covered by a receipt validated under {{consumer-processing}}.  A valid receipt chain proves only that trusted issuers attested specific visible actor hops.  It conveys no authority, does not replace authorization of the current token, does not imply that the represented delegation remains active, and does not prove that the current token's audience, scope, or expiration were in force when older receipts were created.
+Resource servers can use validated receipts as provenance input for authorization, diagnostics, and audit, subject to the limits in {{threat-model}}.  Such use rests on the validated top-level `actor_receipts` claim: nested `act` objects remain informational for access control ({{Section 4.1 of RFC8693}}), and, under this profile, a prior actor is an authorization input only as a hop covered by a receipt validated under {{consumer-processing}}.
+
+A valid receipt chain proves only that trusted issuers attested specific visible actor hops.  It conveys no authority, does not replace authorization of the current token, does not imply that the represented delegation remains active, and does not prove that the current token's audience, scope, or expiration were in force when older receipts were created.
 
 ## Introspection {#consumer-introspection}
 

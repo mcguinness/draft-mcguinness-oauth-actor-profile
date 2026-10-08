@@ -654,7 +654,11 @@ A Token Exchange is delegated when a condition in [Delegation Chains](#delegatio
 *  **Presenter continuation**: neither a validated `actor_token` nor the [`may_act`](#may-act) path without `actor_token` establishes a new presenter.  The issued token retains the presenter of a token-state `subject_token`: the holder of its top-level `cnf` binding or, for a bearer `subject_token`, its authenticated outermost actor or subject, as [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation) requires.
 *  **Presenter rebind**: a validated `actor_token`, or the authenticated client on the [`may_act`](#may-act) path without `actor_token`, establishes a new presenter for the issued token.  When the output token is sender-constrained, its top-level `cnf` is bound to that new presenter.
 
-A delegated request that satisfies neither mode MUST be rejected with `invalid_request`.  A request that supplies an `actor_token`, or whose `subject_token` carries `act`, is processed as delegated; if that processing fails, the AS rejects the request and MUST NOT instead issue a token without `act`.  The AS processes a request that is not delegated under {{RFC8693}} and local policy, and a token issued for it omits `act`.  When that request's `subject_token` carries a top-level `cnf` claim, the requester MUST prove possession of that binding, as in [Token Exchange Continuation](#token-exchange-continuation).
+A delegated request that satisfies neither mode MUST be rejected with `invalid_request`.  A request that supplies an `actor_token`, or whose `subject_token` carries `act`, is processed as delegated; if that processing fails, the AS rejects the request and MUST NOT instead issue a token without `act`.
+
+The AS processes a request that is not delegated under {{RFC8693}} and local policy, and a token issued for it omits `act`.
+
+When a request that is not delegated presents a `subject_token` carrying a top-level `cnf` claim, the requester MUST prove possession of that binding, as in [Token Exchange Continuation](#token-exchange-continuation).
 
 Outside the [`may_act`](#may-act) path without `actor_token`, presenter rebind requires a **direct presenter credential**: an `actor_token` whose top-level `sub` names the new presenter.  Other means of establishing a presenter are deployment-specific.
 
