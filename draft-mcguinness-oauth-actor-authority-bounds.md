@@ -297,7 +297,7 @@ This document defines one extension member for the proof `target` object, under 
 
 ## Use by Resource Servers
 
-An RS MUST still evaluate the current token under current policy; verified history alone does not authorize access.
+An RS MUST still evaluate the current token under current policy; verified history alone does not authorize access.  Bounds verification compares values recorded in validated receipts, which the outer token carries as a top-level claim, with the current token's own claims; it does not make nested `act` objects inputs to access-control decisions ({{Section 4.1 of RFC8693}}).
 
 ## Introspection {#consumer-introspection}
 
