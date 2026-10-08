@@ -1754,7 +1754,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-use-by-resource-servers">
 <a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-use-by-resource-servers" class="section-name selfRef">Use by Resource Servers</a>
         </h3>
-<p id="section-7.2-1">An RS <span class="bcp14">MUST</span> still evaluate the current token under current policy; verified history alone does not authorize access.  Bounds verification compares values recorded in validated receipts, which the outer token carries as a top-level claim, with the current token's own claims; it does not make nested <code>act</code> objects inputs to access-control decisions (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>).<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+<p id="section-7.2-1">An RS <span class="bcp14">MUST</span> still evaluate the current token under current policy; verified history alone does not authorize access.  Bounds verification compares values recorded in validated receipts, which the outer token carries as a top-level claim, with the current token's own claims and, when present, validated proofs; it does not make nested <code>act</code> objects inputs to access-control decisions (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>).<a href="#section-7.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="consumer-introspection">

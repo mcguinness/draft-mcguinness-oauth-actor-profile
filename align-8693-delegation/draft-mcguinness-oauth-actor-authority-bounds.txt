@@ -649,8 +649,9 @@ Table of Contents
    verified history alone does not authorize access.  Bounds
    verification compares values recorded in validated receipts, which
    the outer token carries as a top-level claim, with the current
-   token's own claims; it does not make nested act objects inputs to
-   access-control decisions (Section 4.1 of [RFC8693]).
+   token's own claims and, when present, validated proofs; it does not
+   make nested act objects inputs to access-control decisions
+   (Section 4.1 of [RFC8693]).
 
 7.3.  Introspection
 
