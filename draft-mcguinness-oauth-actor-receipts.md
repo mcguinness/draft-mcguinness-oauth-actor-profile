@@ -337,7 +337,7 @@ Reissuance MAY change `aud`, `scope`, `cnf`, and other current-request claims wi
 
 Reissuance can make `receipt[0]` diverge from the current outer-token instance in two ways:
 
-*  **Different-issuer reissuance**: `receipt[0].iss` differs from the outer token's `iss`, for example when an introspection endpoint operated as a separate trust principal re-emits the token, or a token translator at a domain boundary reissues it.  A common case is a Resource Authorization Server that redeems an Identity Assertion JWT Authorization Grant (ID-JAG) or other JWT assertion grant ({{I-D.mcguinness-oauth-actor-profile}}) without adding a hop; the actor alignment and subject alignment of steps 7 and 8 of {{consumer-processing}} still apply.
+*  **Different-issuer reissuance**: `receipt[0].iss` differs from the outer token's `iss`, for example when an introspection endpoint operated as a separate trust principal re-emits the token, a token translator at a domain boundary reissues it, or a TTS issues a Transaction Token by presenter continuation from a token whose newest receipt another issuer created.  A common case is a Resource Authorization Server that redeems an Identity Assertion JWT Authorization Grant (ID-JAG) or other JWT assertion grant ({{I-D.mcguinness-oauth-actor-profile}}) without adding a hop; the actor alignment and subject alignment of steps 7 and 8 of {{consumer-processing}} still apply.
 *  **Same-issuer reissuance**: `receipt[0].iss` matches the outer token's `iss`, but a present `receipt[0].origin_jti` differs from the outer token's `jti`, for example when an AS refreshes its own access token.
 
 In either case, `origin_jti` remains historical and no longer binds the chain to the current instance.  Recipients accept different-issuer reissuance only under the reissuing-issuer policy in {{receipt-to-token-binding-limits}} (case 4 of {{receipt-instance-binding}}), and same-issuer reissuance only as provenance without instance binding (case 3 of {{receipt-instance-binding}}).
@@ -374,7 +374,7 @@ A TTS that adds a presenter as the new outermost actor follows {{extending-an-ex
 
 An issuer, resource server, or other recipient that relies on `actor_receipts` MUST perform the following steps.
 
-1.  Validate the outer token according to its token type and the core actor profile.
+1.  Validate the outer token according to its token type and the core actor profile, including any presenter proof the core actor profile requires of the recipient.  At a resource server, actor authorization under the core actor profile follows this processing, so it can use validated receipts ({{use-by-resource-servers}}).
 2.  If `actor_receipts` is absent, treat the token as lacking receipt-based provenance.  Local policy or Protected Resource Metadata parameters (such as `actor_receipts_required` and `actor_receipts_complete_required`, defined in {{discovery-capability-signaling}}) determine whether that is acceptable.  If `actor_receipts_complete` is present with the value `true` while `actor_receipts` is absent, the combination is malformed; the recipient MUST treat this as a failed required check and apply the rejection rule following step 11.
 3.  Verify that `actor_receipts`, if present, is a non-empty JSON array of strings.  Verify that `actor_receipts_complete`, if present, is a JSON boolean.
 4.  Verify that the number of receipts does not exceed the visible actor-chain depth of the outer token.  If the outer token carries `actor_receipts_complete: true`, verify that the receipt count exactly equals the visible actor-chain depth; if it does not, the check fails.
@@ -538,7 +538,7 @@ When the failure reflects an actor-authorization decision rather than a structur
 
 ## Resource Server Errors
 
-When a resource server rejects a request because `actor_receipts` validation fails under {{consumer-processing}}, it SHOULD return the `invalid_token` error code per the bearer-token error model in {{Section 3.1 of RFC6750}}.  For a Transaction Token, the recipient instead rejects the request through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
+When a resource server rejects a request because `actor_receipts` validation fails under {{consumer-processing}}, it SHOULD return the `invalid_token` error code ({{Section 3.1 of RFC6750}}) in a challenge that uses the authentication scheme the core actor profile's resource server processing selects, such as `DPoP` for a DPoP-bound token.  For a Transaction Token, the recipient instead rejects the request through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
 
 When the failure is specifically that required receipts are absent or coverage is incomplete (per `actor_receipts_required` or `actor_receipts_complete_required`), the resource server SHOULD include an `error_description` value identifying a receipt-coverage failure so that clients and operators can distinguish it from generic token-validation failures.
 
@@ -896,7 +896,7 @@ This example shows the key provenance property of this profile: the current toke
 
 ## Example: Transaction Token Service Rebinding
 
-Suppose the booking tool exchanges the access token above at a TTS, and the TTS rebinds the issued Transaction Token to an internal workload identified as `https://wimse.travel-provider.example/payments`.
+Suppose an internal workload identified as `https://wimse.travel-provider.example/payments` exchanges the access token above at a TTS, presenting its own workload credential, issued by `https://tts.travel-provider.example`, as `actor_token`, and the TTS rebinds the issued Transaction Token to it.
 
 The resulting Transaction Token can carry:
 
@@ -1058,7 +1058,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 
 * Restructured and tightened the text: each rule has one home, dependencies are cited rather than restated, a table covers the claim-pair convention, scope and related work are in the Introduction, and Security Considerations point to the rules they rely on.
 * Added Receipt Instance Binding; strict mode rejects only issuer divergence, and a same-issuer chain whose `origin_jti` differs, as after refresh, is accepted without instance binding.
-* Named ID-JAG and other assertion-grant redemption without a new hop as different-issuer reissuance.
+* Named ID-JAG and other assertion-grant redemption without a new hop, and TTS presenter continuation, as different-issuer reissuance.
 * Defined one lifetime rule for extension, reissuance, and refresh (lower the token's `exp`, drop the array, or fail), added a floor for receipt `exp`, and made an expired older receipt invalid.
 * Refresh no longer starts a new chain, and retained receipts are validated against the issuer's state rather than the previous access token.
 * An extending issuer takes the inbound receipts from the token carrying the delegation chain, a new receipt's `iss` equals the issued token's `iss`, and a reissuer validates a chain before carrying it forward.
@@ -1068,7 +1068,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * Clarified completeness: an extending issuer sets `actor_receipts_complete: true` when the receipt count matches, an introspection `false` makes no completeness attestation, and filtering is limited to introspection servers.
 * Compared `sub_profile` values as sets.
 * Allowed a TTS to include `jti` for instance binding, and deferred Transaction Token rejection at the resource server to the deployment.
-* Checked `typ` and `alg` before key resolution, and rejected a chain with any untrusted receipt issuer.
+* Checked `typ` and `alg` before key resolution, rejected a chain with any untrusted receipt issuer, and placed resource-server actor authorization after receipt processing.
 * Narrowed the threat-model claims about actor-signed proofs.
 * Removed BCP 14 keywords from guidance no other party can observe, named the IETF as change controller, and aligned the examples with the base profile.
 

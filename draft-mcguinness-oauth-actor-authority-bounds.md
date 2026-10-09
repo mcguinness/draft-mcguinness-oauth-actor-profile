@@ -79,7 +79,7 @@ This profile adds bounds claims and discovery metadata; deployments opt in per r
 
 Recipients walk the validated receipt chain from oldest to newest and verify offline that each monotonic dimension narrows or stays the same, except where a re-authorization recorded at a hop establishes a new basis for the dimensions it lists, and that the current outer token does not exceed the newest recorded bounds ({{consumer-processing}}).  Verifying a dimension requires every receipt to record it; deployments that need that guarantee enforce dense coverage through {{discovery-capability-signaling}}.
 
-This profile does not interpret scope grammars ({{scope-dimension}}), constrain the origin issuer's initial choice of authority, or define cross-domain equivalence of authority vocabularies.  A trust-domain boundary is an explicit basis reset ({{domain-transitions}}), so deployments whose chains cross domains at every hop gain recording and audit value but little enforcement value.  Recording re-authorization between hops (a refresh or step-up without a new hop) is left to a later extension ({{extensibility}}).
+This profile does not interpret scope grammars ({{scope-dimension}}), constrain the origin issuer's initial choice of authority, or define cross-domain equivalence of authority vocabularies.  A change of authority vocabulary, as at a trust-domain boundary, is an explicit basis reset ({{domain-transitions}}), so deployments whose chains change vocabulary at every hop gain recording and audit value but little enforcement value.  Recording re-authorization between hops (a refresh or step-up without a new hop) is left to a later extension ({{extensibility}}).
 
 Attenuating Authorization Tokens {{I-D.niyikiza-oauth-attenuating-agent-tokens}} address a related problem with a different model: a token holder derives a token with equal or narrower tool-level authority offline, and any enforcement point holding the root issuer's trust anchor verifies the derivation chain.  This profile instead adds evidence to issuance by authorization servers and Transaction Token Services, recording the authority each issuer applied in its signed receipt and permitting expansion only under a signed re-authorization.
 
@@ -206,7 +206,7 @@ A receipt MAY omit `bounds` entirely, and a chain MAY mix receipts with and with
     *  `interactive_consent`: re-authorization by the principal through an interactive prompt;
     *  `step_up`: re-authorization through step-up authentication;
     *  `policy_grant`: programmatic re-authorization under a deployment policy artifact;
-    *  `domain_transition`: the hop crosses a trust-domain boundary at which authority vocabularies change ({{domain-transitions}}).
+    *  `domain_transition`: the hop changes the authority vocabulary of one or more dimensions, as at a trust-domain boundary or when a TTS issues Transaction Token scope ({{domain-transitions}}).
 
   `iat`:
   : REQUIRED.  Time of the re-authorization.
@@ -241,15 +241,17 @@ Reissuance without a new actor hop creates no receipt, so recorded bounds cannot
 
 ## Domain Transitions {#domain-transitions}
 
-A domain boundary can change the authority vocabulary, making syntactic comparison unsuitable.
+A trust-domain boundary, or a TTS issuing Transaction Token scope ({{Section 9.2 of I-D.ietf-oauth-transaction-tokens}}), can change the authority vocabulary of a dimension, making syntactic comparison unsuitable.
 
-An issuer that adds a hop whose authority vocabulary differs from the inbound token's:
+An issuer that adds a hop at which the authority vocabulary of a dimension the new receipt records in `bounds` differs from the inbound token's:
 
-*  MUST record `reauthorized` on the new receipt with `method: domain_transition` and with `dimensions` listing every governed dimension, establishing a new monotonicity basis at the boundary;
-*  MUST record the new domain's authority values in the new receipt's `bounds`;
-*  SHOULD reference, via `reauthorized.artifact`, the policy or agreement under which the cross-domain translation is authorized.
+*  MUST record `reauthorized` on the new receipt with `method: domain_transition` and with `dimensions` listing each such dimension, establishing a new monotonicity basis for those dimensions;
+*  MUST record the new authority values for those dimensions in the new receipt's `bounds`;
+*  SHOULD reference, via `reauthorized.artifact`, the policy or agreement under which the translation is authorized.
 
-Comparison applies within each domain segment.  A recipient requiring end-to-end monotonicity MUST reject chains containing `domain_transition` bases unless explicit trusted mappings establish cross-domain equivalence.
+Comparison applies within each segment between vocabulary changes.  A recipient requiring end-to-end monotonicity MUST reject chains containing `domain_transition` bases unless explicit trusted mappings establish equivalence across the change.
+
+A TTS that changes the authority vocabulary in presenter continuation adds no hop and therefore cannot record a new basis.  For a monotonic dimension whose vocabulary changes, it fails the request or, where local policy and resource requirements permit absent receipt coverage, drops the inherited `actor_receipts` array ({{reissuance-and-refresh}}).
 
 ## Partial and Sparse Coverage
 
@@ -259,7 +261,7 @@ A partial receipt chain can carry bounds on any subset of its receipts.  Deploym
 
 An issuer, resource server, or other recipient relying on this profile MUST perform the following steps:
 
-1.  Validate the outer token and receipt chain under {{I-D.mcguinness-oauth-actor-receipts}}.  Bounds in receipts that fail that validation MUST NOT be used.
+1.  Validate the outer token and receipt chain under steps 1 to 10 of the consumer processing of {{I-D.mcguinness-oauth-actor-receipts}} and, when the token carries `actor_proofs`, the consumer processing of {{I-D.mcguinness-oauth-actor-proofs}} through its sibling-reference check.  Bounds in receipts that fail that validation MUST NOT be used.
 
 2.  Check claim types:
     *  `bounds` is an object whose recognized members have the types defined in {{governed-dimensions}}.
@@ -270,13 +272,13 @@ An issuer, resource server, or other recipient relying on this profile MUST perf
     *  Skip comparison for D when the newer receipt carries `reauthorized` listing D in `dimensions`, establishing a new basis for D.
     *  Otherwise, the newer receipt's `bounds[D]` must be within the older receipt's `bounds[D]` under {{governed-dimensions}}.  Failure MUST reject bounds evidence.
 
-4.  Compare the current token with `receipt[0]` for each monotonic D that `receipt[0]` carries in `bounds` and whose effective token value is available from claims, introspection, or trusted context.  The token's value MUST be within `receipt[0].bounds[D]`.  Skip `resource` comparison when its effective value cannot be determined.
+4.  Compare the current token with `receipt[0]` for each monotonic D that `receipt[0]` carries in `bounds` and whose effective token value is available from claims, introspection, or trusted context.  The token's value MUST be within `receipt[0].bounds[D]`.  An effective `resource` value available from claims, introspection, or trusted context takes precedence.  Only when none is available, a resource server MAY use the resource identifier of the protected resource receiving the request; that comparison shows only that the receiving resource is within the recorded bound, not that the token's whole resource set is.  When neither is available, skip `resource` comparison.
 
 5.  Enforce dimensions required by `authority_bounds_required` or local policy.  Each required D must be recorded on every receipt and pass steps 3 and 4; a step-4 comparison that cannot be made because the token's effective value for D cannot be determined fails D.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt coverage ({{protected-resource-metadata}}).
 
 6.  Apply any additional rules defined by companion profiles whose claims appear in the artifacts ({{extensibility}}).
 
-If any required check fails, the recipient MUST reject the token's bounds-based evidence and MUST apply the underlying protocol's error handling for the stage at which the failure occurred.  Rejection of bounds-based evidence does not by itself invalidate the receipt chain under {{I-D.mcguinness-oauth-actor-receipts}}; whether the token remains acceptable without bounds evidence is local policy, except where step 5 applies.
+If any required check fails, the recipient MUST reject the token's bounds-based evidence.  It rejects the token only when step 5 or local policy requires bounds evidence, using the underlying protocol's error handling for the stage at which the failure occurred.  Rejection of bounds-based evidence does not by itself invalidate the receipt chain under {{I-D.mcguinness-oauth-actor-receipts}}; whether the token remains acceptable without bounds evidence is local policy, except where step 5 applies.
 
 ## Composition with Actor-Signed Hop Proofs {#composition-with-proofs}
 
@@ -286,7 +288,7 @@ When the token also carries `actor_proofs` validated under {{I-D.mcguinness-oaut
 *  when both `receipt[i].bounds.resource` and `actor_proofs[i].target.resource` are present, the recorded set MUST be within the consented set;
 *  when both `receipt[i].bounds.scope` and `actor_proofs[i].target.scope` (defined below) are present, the recorded scope set MUST be within the consented scope set.
 
-A failed comparison means the issuer recorded authority broader than the actor consented to at that hop; recipients validating both companions MUST treat it as a failed required check for both artifacts' evidence.
+A failed comparison means the issuer recorded authority broader than the actor consented to at that hop; recipients validating the receipts and proofs companions MUST reject both the bounds-based evidence and the proof-based evidence for the token; the receipt chain's hop provenance is unaffected.
 
 An issuer that supports this profile and accepts a proof carrying `target.scope` MUST NOT embed that proof in a token whose scope exceeds `target.scope`.  A recipient that supports this profile and relies on the proof chain MUST verify, independently of receipt coverage, that the current token's effective scope is within `actor_proofs[0].target.scope` when that member is present, under {{scope-dimension}}; a token whose scope exceeds it has diverged from the proof chain, and the target-binding strict mode of {{I-D.mcguinness-oauth-actor-proofs}} decides whether the recipient rejects the chain.  A recipient that cannot determine the token's effective scope MUST NOT infer scope-level consent from the proof.
 
@@ -339,7 +341,7 @@ When requested authority exceeds the recorded bound without re-authorization and
 
 When the failure reflects an actor-authorization decision, the issuer uses the `actor_unauthorized` error code defined in the core actor profile {{I-D.mcguinness-oauth-actor-profile}}.  An absent required artifact is an input-validation failure: the `invalid_request` error code for a Token Exchange request and the `invalid_grant` error code for a JWT bearer grant or refresh request.
 
-When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it SHOULD return `invalid_token` per {{Section 3.1 of RFC6750}}, and SHOULD include an `error_description` identifying bounds-verification failure so operators can distinguish it from generic token validation.  For a Transaction Token, the resource server rejects it through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
+When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it SHOULD return `invalid_token` ({{Section 3.1 of RFC6750}}) in a challenge that uses the authentication scheme the core actor profile's resource server processing selects, and SHOULD include an `error_description` identifying bounds-verification failure so operators can distinguish it from generic token validation.  For a Transaction Token, the resource server rejects it through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
 
 An introspection server does not return an OAuth error for missing bounds artifacts; their presence is a property of the response.  This document defines no new OAuth error codes.
 
@@ -374,7 +376,7 @@ Bounds inherit the receipts companion's per-issuer, non-transitive trust model; 
 *  **Fabricated re-authorization by a trusted issuer.**  See {{reauthorization-abuse}}.
 *  **Full-chain collusion.**  Colluding issuers can fabricate a monotonic chain at any level; this matches the receipts companion's trust boundary.
 *  **Semantic expansion within syntactic subsets.**  See {{scope-subsumption-gaps}}.
-*  **Cross-domain expansion.**  A `domain_transition` basis reset is an unverified re-expression of authority ({{domain-transitions}}).
+*  **Expansion at a vocabulary change.**  A `domain_transition` basis reset is an unverified re-expression of authority ({{domain-transitions}}).
 *  **Compromised current outer-token issuer.**  As in the receipts companion, a compromised outer issuer can omit this profile's claims entirely; recipients detect that downgrade only by requiring the evidence ({{discovery-capability-signaling}}).
 
 ## Re-Authorization Abuse {#reauthorization-abuse}
@@ -383,7 +385,7 @@ If an issuer trusted to record re-authorization is compromised or over-trusted, 
 
 *  Recipients MUST evaluate re-authorization trust separately from receipt trust: which issuers are trusted to capture re-authorization, for which subjects, and by which methods, is explicit local policy.  A recipient MAY accept an issuer's receipts while rejecting its re-authorization records; a rejected re-authorization is a failed basis reset, and the chain is then evaluated without it, which typically fails monotonicity and rejects the token's bounds evidence.
 *  Deployments needing strong re-authorization integrity SHOULD require `reauthorized.artifact` and SHOULD validate the referenced artifact against the authority that captured the event (for example, verifying a consent receipt's signature), rather than accepting the recording issuer's bare assertion.
-*  A `domain_transition` basis makes values non-comparable, so an attacker who can insert one can present any expansion as authorized.  Recipients SHOULD restrict which issuers may record domain transitions to the deployment's known boundary issuers.
+*  A `domain_transition` basis makes values non-comparable, so an attacker who can insert one can present any expansion as authorized.  Recipients SHOULD restrict which issuers may record domain transitions to the deployment's known boundary issuers and TTSs.
 
 ## Scope Subsumption Gaps {#scope-subsumption-gaps}
 
@@ -541,7 +543,7 @@ The following example shows the outer token:
 A recipient verifies this chain as follows:
 
 *  Scope narrows to `trips:book`.
-*  The resource set narrows to the bookings endpoint, so the chain also passes verification where `resource` is required.  URI prefixes do not imply containment.
+*  The resource set narrows to the bookings endpoint, so the chain also passes verification where `resource` is required, when the resource server uses the identifier of the protected resource receiving the request as the token's effective value (step 4).  URI prefixes do not imply containment.
 *  The outer token's scope equals the newest recorded scope.
 *  Audience changes are recorded without comparison under the default audience rules.
 
