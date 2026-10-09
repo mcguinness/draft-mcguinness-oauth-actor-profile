@@ -1058,7 +1058,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 
 * Restructured and tightened the text: each rule has one home, dependencies are cited rather than restated, a table covers the claim-pair convention, scope and related work are in the Introduction, and Security Considerations point to the rules they rely on.
 * Added Receipt Instance Binding; strict mode rejects only issuer divergence, and a same-issuer chain whose `origin_jti` differs, as after refresh, is accepted without instance binding.
-* Named ID-JAG and other assertion-grant redemption without a new hop as different-issuer reissuance.
+* Named ID-JAG and other assertion-grant redemption without a new hop, and TTS presenter continuation, as different-issuer reissuance.
 * Defined one lifetime rule for extension, reissuance, and refresh (lower the token's `exp`, drop the array, or fail), added a floor for receipt `exp`, and made an expired older receipt invalid.
 * Refresh no longer starts a new chain, and retained receipts are validated against the issuer's state rather than the previous access token.
 * An extending issuer takes the inbound receipts from the token carrying the delegation chain, a new receipt's `iss` equals the issued token's `iss`, and a reissuer validates a chain before carrying it forward.
@@ -1068,7 +1068,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * Clarified completeness: an extending issuer sets `actor_receipts_complete: true` when the receipt count matches, an introspection `false` makes no completeness attestation, and filtering is limited to introspection servers.
 * Compared `sub_profile` values as sets.
 * Allowed a TTS to include `jti` for instance binding, and deferred Transaction Token rejection at the resource server to the deployment.
-* Checked `typ` and `alg` before key resolution, and rejected a chain with any untrusted receipt issuer.
+* Checked `typ` and `alg` before key resolution, rejected a chain with any untrusted receipt issuer, and placed resource-server actor authorization after receipt processing.
 * Narrowed the threat-model claims about actor-signed proofs.
 * Removed BCP 14 keywords from guidance no other party can observe, named the IETF as change controller, and aligned the examples with the base profile.
 
