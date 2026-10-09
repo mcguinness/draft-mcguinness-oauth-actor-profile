@@ -261,7 +261,7 @@ A partial receipt chain can carry bounds on any subset of its receipts.  Deploym
 
 An issuer, resource server, or other recipient relying on this profile MUST perform the following steps:
 
-1.  Validate the outer token and receipt chain under {{I-D.mcguinness-oauth-actor-receipts}}.  Bounds in receipts that fail that validation MUST NOT be used.
+1.  Validate the outer token and receipt chain under steps 1 to 10 of the consumer processing of {{I-D.mcguinness-oauth-actor-receipts}} and, when the token carries `actor_proofs`, the sibling-reference check of {{I-D.mcguinness-oauth-actor-proofs}}.  Bounds in receipts that fail that validation MUST NOT be used.
 
 2.  Check claim types:
     *  `bounds` is an object whose recognized members have the types defined in {{governed-dimensions}}.
@@ -288,7 +288,7 @@ When the token also carries `actor_proofs` validated under {{I-D.mcguinness-oaut
 *  when both `receipt[i].bounds.resource` and `actor_proofs[i].target.resource` are present, the recorded set MUST be within the consented set;
 *  when both `receipt[i].bounds.scope` and `actor_proofs[i].target.scope` (defined below) are present, the recorded scope set MUST be within the consented scope set.
 
-A failed comparison means the issuer recorded authority broader than the actor consented to at that hop; recipients validating both companions MUST treat it as a failed required check for both artifacts' evidence.
+A failed comparison means the issuer recorded authority broader than the actor consented to at that hop; recipients validating both companions MUST reject both the bounds-based evidence and the proof-based evidence for the token; the receipt chain's hop provenance is unaffected.
 
 An issuer that supports this profile and accepts a proof carrying `target.scope` MUST NOT embed that proof in a token whose scope exceeds `target.scope`.  A recipient that supports this profile and relies on the proof chain MUST verify, independently of receipt coverage, that the current token's effective scope is within `actor_proofs[0].target.scope` when that member is present, under {{scope-dimension}}; a token whose scope exceeds it has diverged from the proof chain, and the target-binding strict mode of {{I-D.mcguinness-oauth-actor-proofs}} decides whether the recipient rejects the chain.  A recipient that cannot determine the token's effective scope MUST NOT infer scope-level consent from the proof.
 
