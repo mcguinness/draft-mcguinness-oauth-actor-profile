@@ -243,11 +243,11 @@ Reissuance without a new actor hop creates no receipt, so recorded bounds cannot
 
 A trust-domain boundary, or a TTS issuing Transaction Token scope ({{Section 9.2 of I-D.ietf-oauth-transaction-tokens}}), can change the authority vocabulary of a dimension, making syntactic comparison unsuitable.
 
-An issuer that adds a hop at which a dimension's authority vocabulary differs from the inbound token's:
+An issuer that adds a hop at which the authority vocabulary of a dimension the new receipt records in `bounds` differs from the inbound token's:
 
-*  MUST record `reauthorized` on the new receipt with `method: domain_transition` and with `dimensions` listing each governed dimension whose vocabulary changes and that the new receipt records in `bounds`, establishing a new monotonicity basis for those dimensions;
+*  MUST record `reauthorized` on the new receipt with `method: domain_transition` and with `dimensions` listing each such dimension, establishing a new monotonicity basis for those dimensions;
 *  MUST record the new authority values for those dimensions in the new receipt's `bounds`;
-*  SHOULD reference, via `reauthorized.artifact`, the policy or agreement under which the cross-domain translation is authorized.
+*  SHOULD reference, via `reauthorized.artifact`, the policy or agreement under which the translation is authorized.
 
 Comparison applies within each segment between vocabulary changes.  A recipient requiring end-to-end monotonicity MUST reject chains containing `domain_transition` bases unless explicit trusted mappings establish equivalence across the change.
 
@@ -376,7 +376,7 @@ Bounds inherit the receipts companion's per-issuer, non-transitive trust model; 
 *  **Fabricated re-authorization by a trusted issuer.**  See {{reauthorization-abuse}}.
 *  **Full-chain collusion.**  Colluding issuers can fabricate a monotonic chain at any level; this matches the receipts companion's trust boundary.
 *  **Semantic expansion within syntactic subsets.**  See {{scope-subsumption-gaps}}.
-*  **Cross-domain expansion.**  A `domain_transition` basis reset is an unverified re-expression of authority ({{domain-transitions}}).
+*  **Expansion at a vocabulary change.**  A `domain_transition` basis reset is an unverified re-expression of authority ({{domain-transitions}}).
 *  **Compromised current outer-token issuer.**  As in the receipts companion, a compromised outer issuer can omit this profile's claims entirely; recipients detect that downgrade only by requiring the evidence ({{discovery-capability-signaling}}).
 
 ## Re-Authorization Abuse {#reauthorization-abuse}
