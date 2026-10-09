@@ -832,7 +832,7 @@ A non-delegated JWT access token presented as `actor_token` establishes a servic
 
 #### Processing
 
-Validation per {{RFC9068}} applies the `aud` relaxation in [JWT Access Token as subject_token](#jwt-access-token-as-subject-token).  A JWT access token without top-level `cnf` is accepted as `actor_token` only when its `sub` or `client_id` corresponds to the authenticated client under Identifier Reconciliation ([Conventions and Definitions](#conventions)); otherwise, the AS MUST reject the request with `invalid_request`.  When the credential carries top-level `cnf`, the AS MUST validate proof for that binding per [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation), whether or not the output token is sender-constrained.
+Validation per {{RFC9068}} applies the `aud` relaxation in [JWT Access Token as subject_token](#jwt-access-token-as-subject-token).  A JWT access token without top-level `cnf` is accepted as `actor_token` only when its `sub` corresponds to the authenticated client under Identifier Reconciliation ([Conventions and Definitions](#conventions)); otherwise, the AS MUST reject the request with `invalid_request`.  When the credential carries top-level `cnf`, the AS MUST validate proof for that binding per [Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation), whether or not the output token is sender-constrained.
 
 ## `may_act` {#may-act}
 
