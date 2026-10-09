@@ -337,7 +337,7 @@ Reissuance MAY change `aud`, `scope`, `cnf`, and other current-request claims wi
 
 Reissuance can make `receipt[0]` diverge from the current outer-token instance in two ways:
 
-*  **Different-issuer reissuance**: `receipt[0].iss` differs from the outer token's `iss`, for example when an introspection endpoint operated as a separate trust principal re-emits the token, a token translator at a domain boundary reissues it, or a TTS issues a Transaction Token by presenter continuation.  A common case is a Resource Authorization Server that redeems an Identity Assertion JWT Authorization Grant (ID-JAG) or other JWT assertion grant ({{I-D.mcguinness-oauth-actor-profile}}) without adding a hop; the actor alignment and subject alignment of steps 7 and 8 of {{consumer-processing}} still apply.
+*  **Different-issuer reissuance**: `receipt[0].iss` differs from the outer token's `iss`, for example when an introspection endpoint operated as a separate trust principal re-emits the token, a token translator at a domain boundary reissues it, or a TTS issues a Transaction Token by presenter continuation from a token whose newest receipt another issuer created.  A common case is a Resource Authorization Server that redeems an Identity Assertion JWT Authorization Grant (ID-JAG) or other JWT assertion grant ({{I-D.mcguinness-oauth-actor-profile}}) without adding a hop; the actor alignment and subject alignment of steps 7 and 8 of {{consumer-processing}} still apply.
 *  **Same-issuer reissuance**: `receipt[0].iss` matches the outer token's `iss`, but a present `receipt[0].origin_jti` differs from the outer token's `jti`, for example when an AS refreshes its own access token.
 
 In either case, `origin_jti` remains historical and no longer binds the chain to the current instance.  Recipients accept different-issuer reissuance only under the reissuing-issuer policy in {{receipt-to-token-binding-limits}} (case 4 of {{receipt-instance-binding}}), and same-issuer reissuance only as provenance without instance binding (case 3 of {{receipt-instance-binding}}).
@@ -896,7 +896,7 @@ This example shows the key provenance property of this profile: the current toke
 
 ## Example: Transaction Token Service Rebinding
 
-Suppose an internal workload identified as `https://wimse.travel-provider.example/payments` exchanges the access token above at a TTS, presenting its own workload credential as `actor_token`, and the TTS rebinds the issued Transaction Token to it.
+Suppose an internal workload identified as `https://wimse.travel-provider.example/payments` exchanges the access token above at a TTS, presenting its own workload credential, issued by `https://tts.travel-provider.example`, as `actor_token`, and the TTS rebinds the issued Transaction Token to it.
 
 The resulting Transaction Token can carry:
 
