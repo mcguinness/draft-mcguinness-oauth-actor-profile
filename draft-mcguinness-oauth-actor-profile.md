@@ -461,6 +461,9 @@ The following claims are defined for a JWT assertion grant that carries actor-pr
 `sub` (REQUIRED):
 : Identifies the principal on whose behalf the grant is made.
 
+`jti` (REQUIRED):
+: Identifies the assertion for replay prevention ([Authorization Grant Processing](#jwt-assertion-grants-processing)).
+
 `sub_profile` (RECOMMENDED):
 : Classifies the entity type of `sub`.  MUST conform to the values defined in [Actor Profile for Delegation](#actor-profile).
 
@@ -511,7 +514,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
 1.  The AS MUST validate the assertion per {{RFC7523}}, including its signature and its `iss`, `sub`, `aud`, `exp`, and `jti` claims.
 
-    *  **Grants without an enforced grant-level sender constraint**: The AS MUST reject with `invalid_grant` an assertion whose validated (`iss`, `jti`) pair it has already accepted, for as long as the assertion remains acceptable, including any allowed clock skew.  A proof used only for client authentication or to bind the issued token is not a grant-level sender constraint, and neither is a top-level `cnf` that presenter rebind supersedes ([JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token)).
+    *  **Grants without an enforced grant-level sender constraint**: The AS MUST reject with `invalid_grant` an assertion whose validated (`iss`, `jti`) pair it has already accepted, for as long as the assertion remains acceptable, including any allowed clock skew.  Such a grant is therefore single-use under this profile, including an ID-JAG that {{Section 4.4.3 of I-D.ietf-oauth-identity-assertion-authz-grant}} would let a client re-submit.  A proof used only for client authentication or to bind the issued token is not a grant-level sender constraint, and neither is a top-level `cnf` that presenter rebind supersedes ([JWT Assertion Grant as subject_token](#jwt-assertion-grant-as-subject-token)).
     *  **Sender-constrained grants**: When the AS validates the request's proof of possession against the assertion's top-level `cnf` claim as specified in step 6, the AS SHOULD additionally apply replay prevention to the validated (`iss`, `jti`) pair as defense in depth.  Any permitted reuse requires validation of that binding on each redemption and remains subject to the single-use requirements in [Self-Issued Authorization Grants](#security-self-issued-grants) or the applicable grant profile.
 
 2.  The AS MUST verify that the assertion's `iss` is trusted under local policy to assert delegation on behalf of the actor identified by `act.sub`.
