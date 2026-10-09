@@ -2453,7 +2453,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-current-presenter-validatio">
 <a href="#section-11.2" class="section-number selfRef">11.2. </a><a href="#name-current-presenter-validatio" class="section-name selfRef">Current Presenter Validation</a>
         </h3>
-<p id="section-11.2-1">When the outer token carries a top-level <code>cnf</code> claim (<span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>), the current request is always validated against it, using a mechanism such as DPoP <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> or mutual-TLS <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>.<a href="#section-11.2-1" class="pilcrow">¶</a></p>
+<p id="section-11.2-1">When the outer token carries a top-level <code>cnf</code> claim (<span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>), the current request is validated against it whenever the core actor profile requires the recipient to verify that binding (a resource server always; an AS in presenter rebind does not verify the previous presenter's binding), using a mechanism such as DPoP <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> or mutual-TLS <span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>.  Proof signatures never satisfy current-request proof of possession.<a href="#section-11.2-1" class="pilcrow">¶</a></p>
 <p id="section-11.2-2">An actor proof does not substitute for that validation:<a href="#section-11.2-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-11.2-3.1">

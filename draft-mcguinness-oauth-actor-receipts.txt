@@ -1380,8 +1380,8 @@ Table of Contents
 
    *  *Compromised downstream issuer fabricating prior-hop provenance.*
       Such an issuer cannot forge prior issuers' receipt signatures, and
-      the prh chain prevents it from dropping or reordering inner
-      receipts.
+      the prh chain prevents it from reordering retained receipts or
+      removing one from between receipts it retains.
 
    *  *Token mutation in transit.* Each receipt is independently signed;
       modification invalidates the receipt's signature and any newer
@@ -1401,6 +1401,10 @@ Table of Contents
       the receipt count matches the visible actor-chain depth.
 
 11.1.2.  Adversaries Not Mitigated
+
+   *  *Omission at a compromised signing hop.* A compromised issuer can
+      drop the newest receipts it received by linking its own receipt to
+      an older suffix of the chain (Section 11.4).
 
    *  *Compromised current outer token issuer.* Such an issuer can wrap
       previously harvested valid receipts in a new outer token
@@ -1439,14 +1443,16 @@ Table of Contents
 11.2.  Current Presenter Validation
 
    When the outer token carries a top-level cnf claim ([RFC7800]), the
-   current request is always validated against it, using the proof
-   mechanism appropriate to the token type and deployment, such as DPoP
-   [RFC9449] or mutual-TLS [RFC8705] (steps 9 and 10 of Section 7).
-   Recipients MUST distinguish receipt JWTs (identified by typ value
-   actor-receipt+jwt) from outer tokens that carry cnf for current-
-   request proof-of-possession; receipt cnf records historical binding
-   and never satisfies a current-request PoP requirement under
-   [RFC7800], [RFC9449], or [RFC8705].
+   current request is validated against it whenever the core actor
+   profile requires the recipient to verify that binding (a resource
+   server always; an AS in presenter rebind does not verify the previous
+   presenter's binding), using the proof mechanism appropriate to the
+   token type and deployment, such as DPoP [RFC9449] or mutual-TLS
+   [RFC8705] (steps 9 and 10 of Section 7).  Recipients MUST distinguish
+   receipt JWTs (identified by typ value actor-receipt+jwt) from outer
+   tokens that carry cnf for current-request proof-of-possession;
+   receipt cnf records historical binding and never satisfies a current-
+   request PoP requirement under [RFC7800], [RFC9449], or [RFC8705].
 
 11.3.  Trust in Receipt Issuers
 
@@ -1495,10 +1501,15 @@ Table of Contents
    the chain supplies issuer-signed hop provenance only; inner
    origin_jti values are historical.
 
-   A compromised issuer can omit some or all of its own receipts and any
-   outermost receipts from issuers it controls, but it cannot fabricate,
-   reorder, or selectively drop receipts signed by other trusted
-   issuers.
+   A compromised issuer can omit some or all of its own receipts and, at
+   its own hop, the newest receipts it received: it can link its receipt
+   to an older suffix of the inbound chain, and a later honest issuer
+   then extends that shortened chain.  It cannot fabricate receipts
+   signed by other trusted issuers, reorder retained receipts, or remove
+   one from between receipts it retains, because their signatures and
+   prh links commit to that history.  Receipts prove that each retained
+   hop was attested, not that every intermediate issuer preserved what
+   it received.
 
    Divergence in issuer or token identifier removes current-instance
    binding (Section 7.1).  This profile provides no in-band means to
@@ -2379,7 +2390,9 @@ Document History
       any untrusted receipt issuer, and placed resource-server actor
       authorization after receipt processing.
 
-   *  Narrowed the threat-model claims about actor-signed proofs.
+   *  Narrowed the threat-model claims about actor-signed proofs, and
+      stated that a compromised issuer can drop the newest receipts it
+      received.
 
    *  Removed BCP 14 keywords from guidance no other party can observe,
       named the IETF as change controller, and aligned the examples with

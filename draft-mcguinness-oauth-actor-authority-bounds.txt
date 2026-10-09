@@ -446,8 +446,11 @@ Table of Contents
          MAY resolve and validate the artifact under local policy;
          Section 11.2 covers when deployments require it.
 
-   When reauthorized is present on a receipt, that hop is a new
-   monotonicity basis only for the dimensions listed in
+   Recording reauthorized resets comparison under this profile only; it
+   does not let an issuer exceed a limit that the underlying grant or
+   the core actor profile imposes, such as the Token Exchange scope
+   ceiling.  When reauthorized is present on a receipt, that hop is a
+   new monotonicity basis only for the dimensions listed in
    reauthorized.dimensions: the hop's bounds for a listed dimension are
    not compared against older bounds, and newer artifacts are compared
    against the post-re-authorization bounds (Section 7).  A receipt
@@ -489,9 +492,10 @@ Table of Contents
        captured under one of the methods of Section 5.2 by the issuer
        itself or by an authority it trusts, it MAY instead proceed by
        recording reauthorized on the new receipt, listing each expanded
-       dimension in reauthorized.dimensions.  An issuer that does
-       neither, or whose narrowing leaves nothing permitted, MUST reject
-       the request under Section 9.
+       dimension in reauthorized.dimensions, provided the underlying
+       grant rules and the core actor profile permit the expanded value.
+       An issuer that does neither, or whose narrowing leaves nothing
+       permitted, MUST reject the request under Section 9.
 
 6.2.  Reissuance and Refresh Without a New Hop
 
@@ -1250,35 +1254,41 @@ A.2.  Example: Re-Authorization at a Hop
 
    In this example, Alice completes step-up authentication at the
    travel-provider AS before that AS adds the booking tool, so that the
-   tool can also cancel trips.  The outer token's scope is trips:book
-   trips:cancel.  actor_receipts[1] is unchanged; actor_receipts[0]
-   records the broader scope in bounds and adds reauthorized:
+   tool can also reach the payments resource.  Token Exchange lets the
+   AS issue for that additional requested resource, while the scope
+   stays within the inbound token's.  actor_receipts[1] is unchanged;
+   actor_receipts[0] records the broader resource set in bounds and adds
+   reauthorized:
 
    {
      "bounds": {
-       "scope": "trips:book trips:cancel",
+       "scope": "trips:book",
        "aud": ["https://api.travel-provider.example"],
-       "resource": ["https://api.travel-provider.example/bookings"]
+       "resource": [
+         "https://api.travel-provider.example/bookings",
+         "https://api.travel-provider.example/payments"
+       ]
      },
      "reauthorized": {
        "sub": "https://idp.enterprise.example/users/alice",
        "iss": "https://as.travel-provider.example",
        "method": "step_up",
        "iat": 1776745140,
-       "dimensions": ["scope"]
+       "dimensions": ["resource"]
      }
    }
 
-   A recipient whose policy trusts the travel-provider AS to record
-   step_up re-authorization for Alice (Section 11.2) verifies this chain
-   as follows:
+   A recipient that requires resource monotonicity (Section 8.2) and
+   whose policy trusts the travel-provider AS to record step_up re-
+   authorization for Alice (Section 11.2) verifies this chain as
+   follows:
 
-   *  Step 3 of Section 7 skips the scope comparison between the
-      receipts because reauthorized.dimensions lists scope; without that
-      listing, trips:cancel would fail it.
+   *  Step 3 of Section 7 skips the resource comparison between the
+      receipts because reauthorized.dimensions lists resource; without
+      that listing, the payments resource would fail it.
 
-   *  Step 4 passes: the outer token's scope equals the newly recorded
-      scope.
+   *  Step 4 passes when the token's effective resource is within the
+      newly recorded set.
 
    *  Other dimensions compare as in Appendix A.1.
 
@@ -1313,11 +1323,11 @@ A.3.  Example: Expansion Not Covered by Re-Authorization
    }
 
    Step 3 of Section 7 fails for authorization_details:
-   reauthorized.dimensions lists only scope, and the newer object adds
-   the cancel action, so it refines no older object, whether or not the
-   recipient has a refinement rule for trip_booking (Section 4.4).  The
-   recipient therefore rejects the token's bounds evidence, including
-   the re-authorized scope bound.
+   reauthorized.dimensions lists only resource, and the newer object
+   adds the cancel action, so it refines no older object, whether or not
+   the recipient has a refinement rule for trip_booking (Section 4.4).
+   The recipient therefore rejects the token's bounds evidence,
+   including the re-authorized resource bound.
 
 Document History
 
