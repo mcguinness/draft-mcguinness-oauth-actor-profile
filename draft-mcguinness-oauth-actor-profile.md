@@ -465,7 +465,7 @@ The following claims are defined for a JWT assertion grant that carries actor-pr
 : Identifies the assertion for replay prevention ([Authorization Grant Processing](#jwt-assertion-grants-processing)).
 
 `sub_profile` (RECOMMENDED):
-: Classifies the entity type of `sub`.  MUST conform to the values defined in [Actor Profile for Delegation](#actor-profile).
+: Classifies the entity type of `sub`.  MUST conform to {{Section 4.2 of I-D.mora-oauth-entity-profiles}}.
 
 `act` (REQUIRED when delegation is asserted):
 : The actor object identifying the entity exercising the subject's delegated rights.  MUST conform to the actor object structure defined in [Actor Profile for Delegation](#actor-profile).
@@ -579,7 +579,7 @@ The following claims are defined for a JWT access token that carries actor-profi
 : Identifies the principal on whose behalf the access token is issued.
 
 `sub_profile` (RECOMMENDED):
-: Classifies the entity type of `sub`.  MUST conform to the values defined in [Actor Profile for Delegation](#actor-profile).
+: Classifies the entity type of `sub`.  MUST conform to {{Section 4.2 of I-D.mora-oauth-entity-profiles}}.
 
 `act` (REQUIRED when the token represents delegation per [Delegation Chains](#delegation-chains)):
 : The actor object identifying the entity exercising the subject's delegated rights.  MUST conform to the actor object structure defined in [Actor Profile for Delegation](#actor-profile).
@@ -727,13 +727,13 @@ The grant's scope ceiling is its `scope` claim when present (such as the ID-JAG 
 
 #### JWT Access Token {#jwt-access-token-as-subject-token}
 
-A JWT access token presented as `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:access_token`) establishes `sub` and, when present, `sub_profile`, inbound `act` chain state, and top-level `cnf`, and is processed under [Input Processing](#token-exchange-input-processing) with the following rules.  Validation per {{RFC9068}} covers its `typ` header, its signature, and its `iss`, `sub`, `exp`, `nbf`, and `jti` claims.  Because a JWT access token used as `subject_token` was issued for a resource server, its `aud` does not ordinarily include the Token Exchange AS's token endpoint; the AS MUST NOT reject the inbound token solely because its `aud` does not include the AS's token endpoint URI.
+A JWT access token presented as `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:access_token`) establishes `sub` and, when present, `sub_profile`, inbound `act` chain state, and top-level `cnf`, and is processed under [Input Processing](#token-exchange-input-processing) with the following rules.  Validation follows {{Section 4 of RFC9068}} for its `typ` header, signature, `iss`, and `exp`, and {{RFC7519}} for `nbf` when present; the token carries the `sub` and `jti` claims that {{Section 2.2 of RFC9068}} requires.  Because a JWT access token used as `subject_token` was issued for a resource server, its `aud` does not ordinarily include the Token Exchange AS's token endpoint; the AS MUST NOT reject the inbound token solely because its `aud` does not include the AS's token endpoint URI.
 
 #### Transaction Token {#txn-token-as-subject-token}
 
 A Transaction Token presented as `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:txn_token`) establishes `sub` and, when present, `sub_profile`, inbound `act` chain state, and a top-level presenter binding.  The AS or TTS receiving it MUST apply steps 1 through 4 of [Input Processing](#token-exchange-input-processing) with the following rules; steps 5 and 6 apply only when the output is a JWT access token, and for a Transaction Token output, [Transaction Token Output Rules](#transaction-token-output-rules) apply instead.
 
-Validation per {{I-D.ietf-oauth-transaction-tokens}} covers the signature, `aud`, `exp`, `iat`, and issuer identity:
+Validation per {{I-D.ietf-oauth-transaction-tokens}} covers the signature, `aud`, `exp`, and issuer identity:
 
 *  When the Transaction Token carries `act`, a top-level `iss` claim MUST be present, and the AS MUST validate it as the token issuer.  If `iss` is missing, the AS MUST reject the request with `invalid_request`.
 *  When the Transaction Token carries neither `act` nor `iss`, the AS MUST determine the issuer through the Transaction Token trust-domain rules and local configuration.
