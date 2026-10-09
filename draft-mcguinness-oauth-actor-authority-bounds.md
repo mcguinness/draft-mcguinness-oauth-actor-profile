@@ -278,7 +278,7 @@ An issuer, resource server, or other recipient relying on this profile MUST perf
 
 6.  Apply any additional rules defined by companion profiles whose claims appear in the artifacts ({{extensibility}}).
 
-If any required check fails, the recipient MUST reject the token's bounds-based evidence and MUST apply the underlying protocol's error handling for the stage at which the failure occurred.  Rejection of bounds-based evidence does not by itself invalidate the receipt chain under {{I-D.mcguinness-oauth-actor-receipts}}; whether the token remains acceptable without bounds evidence is local policy, except where step 5 applies.
+If any required check fails, the recipient MUST reject the token's bounds-based evidence.  It rejects the token only when step 5 or local policy requires bounds evidence, using the underlying protocol's error handling for the stage at which the failure occurred.  Rejection of bounds-based evidence does not by itself invalidate the receipt chain under {{I-D.mcguinness-oauth-actor-receipts}}; whether the token remains acceptable without bounds evidence is local policy, except where step 5 applies.
 
 ## Composition with Actor-Signed Hop Proofs {#composition-with-proofs}
 
