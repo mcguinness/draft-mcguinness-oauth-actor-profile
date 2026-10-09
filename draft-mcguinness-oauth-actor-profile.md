@@ -731,7 +731,7 @@ A JWT access token presented as `subject_token` (`subject_token_type=urn:ietf:pa
 
 #### Transaction Token {#txn-token-as-subject-token}
 
-A Transaction Token presented as `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:txn_token`) establishes `sub` and, when present, `sub_profile`, inbound `act` chain state, and a top-level presenter binding.  The AS or TTS receiving it MUST apply steps 1 through 4 of [Input Processing](#token-exchange-input-processing) with the following rules; steps 5 and 6 apply only when the output is a JWT access token, and for a Transaction Token output, [Transaction Token Output Rules](#transaction-token-output-rules) apply instead.
+A Transaction Token presented as `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:txn_token`) establishes `sub` and, when present, `sub_profile`, inbound `act` chain state, and a top-level presenter binding.  The AS or TTS receiving it MUST apply steps 1 through 4 of [Input Processing](#token-exchange-input-processing) with the following rules; steps 5 and 6 apply when the output is a JWT access token or a JWT assertion grant, and for a Transaction Token output, [Transaction Token Output Rules](#transaction-token-output-rules) apply instead.
 
 Validation per {{I-D.ietf-oauth-transaction-tokens}} covers the signature, `aud`, `exp`, and issuer identity:
 
