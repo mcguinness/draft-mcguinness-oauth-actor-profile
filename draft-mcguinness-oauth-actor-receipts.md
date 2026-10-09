@@ -47,6 +47,15 @@ normative:
   RFC9728:
   I-D.ietf-oauth-transaction-tokens:
   I-D.mcguinness-oauth-actor-profile:
+    title: "OAuth Actor Profile for Delegation"
+    author:
+     -
+        fullname: Karl McGuinness
+        organization: Independent
+    date: 2026-10-09
+    seriesinfo:
+      Internet-Draft: draft-mcguinness-oauth-actor-profile-01
+    target: https://www.ietf.org/archive/id/draft-mcguinness-oauth-actor-profile-01.txt
 
   I-D.mora-oauth-entity-profiles:
     title: "OAuth Entity Profiles"
