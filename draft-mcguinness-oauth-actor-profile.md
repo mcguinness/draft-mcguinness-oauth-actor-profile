@@ -1057,7 +1057,7 @@ On a request path where delegated-token processing may apply, an RS MUST validat
 
 When the resource server evaluates a JWT access token as a delegated token under local policy, it MUST:
 
-1.  Validate the `typ` header, signature, `iss`, `aud`, and temporal claims per {{RFC9068}}.  If the request path requires actor-profile conformance, including through `actor_profile_required: true`:
+1.  Validate the `typ` header, signature, `iss`, `aud`, and temporal claims per {{RFC9068}}, and reject a token whose visible `act` chain exceeds the configured maximum depth ([Delegation Chains](#delegation-chains)).  If the request path requires actor-profile conformance, including through `actor_profile_required: true`:
 
     *  A token evaluated as delegated MUST carry `act`, and every actor object in the visible `act` chain MUST include `iss`.  Otherwise, reject the token with HTTP 401 and `error="invalid_token"`.  This is structural validation, not independent authentication of historical actors.
     *  Non-delegated tokens need not carry `act`.
@@ -1074,7 +1074,8 @@ When the resource server evaluates a JWT access token as a delegated token under
 
 7.  If any of the above steps fail, return an appropriate error response.  The HTTP authentication scheme used in the `WWW-Authenticate` challenge follows the token's binding mechanism: `Bearer` per {{Section 3.1 of RFC6750}} for bearer or mTLS-bound ({{RFC8705}}) tokens, or `DPoP` per {{Section 7.1 of RFC9449}} for DPoP-bound tokens.
 
-    *  If signature, `iss`, `aud`, or temporal validation fails: HTTP 401 with `error="invalid_token"`.
+    *  If signature, `iss`, `aud`, temporal, or depth validation fails: HTTP 401 with `error="invalid_token"`.
+    *  If identifier reconciliation that the authorization decision requires fails (step 4): HTTP 403 with `error="actor_unauthorized"`.
     *  If DPoP proof validation for `cnf.jkt` fails: HTTP 401 per {{Section 7 of RFC9449}}.
     *  If the client certificate does not match `cnf.x5t#S256`: HTTP 401 with `error="invalid_token"`, per {{Section 3 of RFC8705}}.
     *  If actor authorization required by local policy fails for a structurally valid token: HTTP 403 with `error="actor_unauthorized"`, registered in [OAuth Error Registry](#iana-error-codes).  The RS MUST NOT use the `insufficient_scope` error code for this failure, because requesting broader scope does not resolve an actor-policy denial.
@@ -1090,6 +1091,7 @@ When the resource server evaluates a Transaction Token as a delegated token unde
 
     *  If the token carries `act`, the top-level `iss` claim MUST be present, and the RS MUST validate it as the token issuer.
     *  If the token carries neither `act` nor `iss`, the RS MUST determine the issuer through the Transaction Token trust-domain rules and local configuration.
+    *  A token whose visible `act` chain exceeds the configured maximum depth ([Delegation Chains](#delegation-chains)) fails validation.
     *  If the request path requires actor-profile conformance, including through `actor_profile_required: true`, a token evaluated as delegated MUST carry `act`, and every actor object in the visible `act` chain MUST include `iss`.  If either is missing, reject the request.  This is structural validation, not independent authentication of historical actors.  Non-delegated tokens need not carry `act`.
 
 2.  When the token carries a top-level presenter-binding claim such as `cnf`, validate the accompanying proof according to the applicable deployment profile, because {{I-D.ietf-oauth-transaction-tokens}} defines no presenter-proof mechanism.  The top-level presenter binding applies only to the current presenter.
@@ -1126,7 +1128,7 @@ When an AS supports delegated opaque access tokens through introspection, it MUS
 
 An introspecting RS MUST apply the same delegated-token processing as for equivalent locally validated JWT claims, including actor authorization when required by local policy.
 
-If policy or token context indicates delegation, a missing `act` member is an inconsistency, and the RS MUST reject the token; `actor_profile_required` alone does not indicate delegation.  Otherwise, the RS MAY treat an active response without `act` as non-delegated.
+If policy or token context indicates delegation, a missing `act` member is an inconsistency, and the RS MUST reject the token with HTTP 401 and `error="invalid_token"`; `actor_profile_required` alone does not indicate delegation.  Otherwise, the RS MAY treat an active response without `act` as non-delegated.
 
 Introspection endpoints for delegated tokens SHOULD be advertised using the `introspection_endpoint` parameter in AS metadata ({{RFC8414}}).  When revocation is integrated, the introspection response for a revoked delegated token returns `"active": false` per {{Section 2.2 of RFC7662}} and MUST NOT include the `act` or `sub_profile` members.
 
