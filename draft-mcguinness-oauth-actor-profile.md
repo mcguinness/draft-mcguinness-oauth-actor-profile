@@ -194,7 +194,7 @@ This document uses dot-path notation to refer to nested claim values.  For examp
 
 ## Overview
 
-When an implementation uses this profile to represent an actor distinct from the subject, it MUST apply the requirements in this section.  The absence of an explicit inbound actor credential MUST NOT be interpreted as making the OAuth client the delegated actor.
+When an implementation uses this profile to represent an actor distinct from the subject, it MUST apply the requirements in this section.  The absence of an explicit inbound actor credential MUST NOT by itself be interpreted as making the OAuth client the delegated actor.
 
 ## Profile Invariants
 
