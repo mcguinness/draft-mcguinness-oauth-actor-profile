@@ -576,13 +576,14 @@ The OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT best practi
 
 ### Adversaries Mitigated by This Profile
 
-*  **Compromised downstream issuer fabricating prior-hop provenance.**  Such an issuer cannot forge prior issuers' receipt signatures, and the `prh` chain prevents it from dropping or reordering inner receipts.
+*  **Compromised downstream issuer fabricating prior-hop provenance.**  Such an issuer cannot forge prior issuers' receipt signatures, and the `prh` chain prevents it from reordering retained receipts or removing one from between receipts it retains.
 *  **Token mutation in transit.**  Each receipt is independently signed; modification invalidates the receipt's signature and any newer receipt's `prh`.
 *  **Receipt transplantation between tokens with matching visible `act` chains.**  The outer-token signature prevents parties other than the issuer from constructing a substitute outer token to host transplanted receipts.  `receipt[0].origin_jti` adds diagnostic confirmation in the originating-issuance case ({{receipt-to-token-binding-limits}}) but no defense against a compromised outer issuer ({{compromised-outer-issuer}}).
 *  **Partial-coverage misclaim.**  Step 6 of {{consumer-processing}} rejects a chain with a dropped inner receipt or a trimmed oldest end, so an issuer can withhold coverage of the oldest hops only by beginning a new chain, and it cannot claim `actor_receipts_complete: true` unless the receipt count matches the visible actor-chain depth.
 
 ### Adversaries Not Mitigated
 
+*  **Omission at a compromised signing hop.**  A compromised issuer can drop the newest receipts it received by linking its own receipt to an older suffix of the chain ({{receipt-to-token-binding-limits}}).
 *  **Compromised current outer token issuer.**  Such an issuer can wrap previously harvested valid receipts in a new outer token ({{compromised-outer-issuer}}).
 *  **Compromised receipt signing key for any one issuer.**  Forged receipts are indistinguishable from legitimate ones and cannot be revoked individually.  Remediation: remove the compromised issuer from the trusted-issuer set; a short receipt `exp` bounds the exposure window.
 *  **Compromised actor at a hop.**  Receipts attest issuer assertions, not actor non-repudiation.  Actor-signed proofs from a companion profile ({{extensibility}}) show that an actor's key signed its participation, but do not mitigate a compromised actor key or a malicious actor.
@@ -611,7 +612,7 @@ Receipts do not prove that the current outer token's audience, scope, expiration
 
 In the originating-issuance case, a present `receipt[0].origin_jti`, signed by the issuer that signed the outer token and equal to that token's `jti`, binds `receipt[0]` to that outer-token instance and prevents transplantation from a different token whose visible `act` structure happens to match; `prh` then extends that binding to every inner receipt.  Without that leading anchor (case 1 of {{receipt-instance-binding}}), the chain supplies issuer-signed hop provenance only; inner `origin_jti` values are historical.
 
-A compromised issuer can omit some or all of its own receipts and any outermost receipts from issuers it controls, but it cannot fabricate, reorder, or selectively drop receipts signed by other trusted issuers.
+A compromised issuer can omit some or all of its own receipts and, at its own hop, the newest receipts it received: it can link its receipt to an older suffix of the inbound chain, and a later honest issuer then extends that shortened chain.  It cannot fabricate receipts signed by other trusted issuers, reorder retained receipts, or remove one from between receipts it retains, because their signatures and `prh` links commit to that history.  Receipts prove that each retained hop was attested, not that every intermediate issuer preserved what it received.
 
 Divergence in issuer or token identifier removes current-instance binding ({{receipt-instance-binding}}).  This profile provides no in-band means to distinguish legitimate reissuance from malicious rewrapping, so unexpected divergence warrants investigation.
 
