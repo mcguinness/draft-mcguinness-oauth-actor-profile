@@ -1781,6 +1781,7 @@ The Enterprise IdP AS validates the shared client assertion for both client auth
   "client_id": "https://agents.enterprise.example/travel-assistant",
   "azp": "https://agents.enterprise.example/travel-assistant",
   "aud": "https://as.travel-provider.example",
+  "resource": "https://api.travel-provider.example",
   "jti": "ent-idj-20260401-001",
   "exp": 1743379200,
   "iat": 1743375600,
