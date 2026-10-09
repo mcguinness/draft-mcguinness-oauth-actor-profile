@@ -1017,7 +1017,7 @@ The `prh` claim is omitted because this is a single-element chain.  `actor_proof
 * Clarified completeness and introspection: `actor_proofs_complete` after extension depends on the proof count, an introspection `false` makes no completeness attestation, and filtering a covered actor omits the proofs.
 * Compared `sub_profile` values as sets with a matching issuer check, and had deployment configuration supply the `act.iss` the actor signs.
 * Allowed a TTS to include `jti`, carried `actor_proof` in Transaction Token requests, and deferred Transaction Token rejection at the resource server to the deployment.
-* Checked `alg` and `typ` before key resolution.
+* Checked `alg` and `typ` before key resolution, and placed resource-server actor authorization after proof processing.
 * Removed BCP 14 keywords from guidance no other party can observe, named the IETF as change controller, and aligned the examples with the base profile.
 
 -00
