@@ -272,7 +272,7 @@ An issuer, resource server, or other recipient relying on this profile MUST perf
     *  Skip comparison for D when the newer receipt carries `reauthorized` listing D in `dimensions`, establishing a new basis for D.
     *  Otherwise, the newer receipt's `bounds[D]` must be within the older receipt's `bounds[D]` under {{governed-dimensions}}.  Failure MUST reject bounds evidence.
 
-4.  Compare the current token with `receipt[0]` for each monotonic D that `receipt[0]` carries in `bounds` and whose effective token value is available from claims, introspection, or trusted context.  The token's value MUST be within `receipt[0].bounds[D]`.  Skip `resource` comparison when its effective value cannot be determined.
+4.  Compare the current token with `receipt[0]` for each monotonic D that `receipt[0]` carries in `bounds` and whose effective token value is available from claims, introspection, or trusted context.  The token's value MUST be within `receipt[0].bounds[D]`.  A resource server MAY use the resource identifiers it serves as the token's effective `resource` value; otherwise, skip `resource` comparison when its effective value cannot be determined.
 
 5.  Enforce dimensions required by `authority_bounds_required` or local policy.  Each required D must be recorded on every receipt and pass steps 3 and 4; a step-4 comparison that cannot be made because the token's effective value for D cannot be determined fails D.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt coverage ({{protected-resource-metadata}}).
 
@@ -543,7 +543,7 @@ The following example shows the outer token:
 A recipient verifies this chain as follows:
 
 *  Scope narrows to `trips:book`.
-*  The resource set narrows to the bookings endpoint, so the chain also passes verification where `resource` is required.  URI prefixes do not imply containment.
+*  The resource set narrows to the bookings endpoint, so the chain also passes verification where `resource` is required, when the resource server uses the resource identifier it serves as the token's effective value (step 4).  URI prefixes do not imply containment.
 *  The outer token's scope equals the newest recorded scope.
 *  Audience changes are recorded without comparison under the default audience rules.
 
