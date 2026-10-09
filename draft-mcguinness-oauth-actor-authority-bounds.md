@@ -261,7 +261,7 @@ A partial receipt chain can carry bounds on any subset of its receipts.  Deploym
 
 An issuer, resource server, or other recipient relying on this profile MUST perform the following steps:
 
-1.  Validate the outer token and receipt chain under steps 1 to 10 of the consumer processing of {{I-D.mcguinness-oauth-actor-receipts}} and, when the token carries `actor_proofs`, the sibling-reference check of {{I-D.mcguinness-oauth-actor-proofs}}.  Bounds in receipts that fail that validation MUST NOT be used.
+1.  Validate the outer token and receipt chain under steps 1 to 10 of the consumer processing of {{I-D.mcguinness-oauth-actor-receipts}} and, when the token carries `actor_proofs`, the consumer processing of {{I-D.mcguinness-oauth-actor-proofs}} through its sibling-reference check.  Bounds in receipts that fail that validation MUST NOT be used.
 
 2.  Check claim types:
     *  `bounds` is an object whose recognized members have the types defined in {{governed-dimensions}}.
@@ -272,7 +272,7 @@ An issuer, resource server, or other recipient relying on this profile MUST perf
     *  Skip comparison for D when the newer receipt carries `reauthorized` listing D in `dimensions`, establishing a new basis for D.
     *  Otherwise, the newer receipt's `bounds[D]` must be within the older receipt's `bounds[D]` under {{governed-dimensions}}.  Failure MUST reject bounds evidence.
 
-4.  Compare the current token with `receipt[0]` for each monotonic D that `receipt[0]` carries in `bounds` and whose effective token value is available from claims, introspection, or trusted context.  The token's value MUST be within `receipt[0].bounds[D]`.  A resource server MAY use the resource identifiers it serves as the token's effective `resource` value; otherwise, skip `resource` comparison when its effective value cannot be determined.
+4.  Compare the current token with `receipt[0]` for each monotonic D that `receipt[0]` carries in `bounds` and whose effective token value is available from claims, introspection, or trusted context.  The token's value MUST be within `receipt[0].bounds[D]`.  A resource server MAY use the resource identifier of the protected resource receiving the request as the token's effective `resource` value; otherwise, skip `resource` comparison when its effective value cannot be determined.
 
 5.  Enforce dimensions required by `authority_bounds_required` or local policy.  Each required D must be recorded on every receipt and pass steps 3 and 4; a step-4 comparison that cannot be made because the token's effective value for D cannot be determined fails D.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt coverage ({{protected-resource-metadata}}).
 
@@ -288,7 +288,7 @@ When the token also carries `actor_proofs` validated under {{I-D.mcguinness-oaut
 *  when both `receipt[i].bounds.resource` and `actor_proofs[i].target.resource` are present, the recorded set MUST be within the consented set;
 *  when both `receipt[i].bounds.scope` and `actor_proofs[i].target.scope` (defined below) are present, the recorded scope set MUST be within the consented scope set.
 
-A failed comparison means the issuer recorded authority broader than the actor consented to at that hop; recipients validating both companions MUST reject both the bounds-based evidence and the proof-based evidence for the token; the receipt chain's hop provenance is unaffected.
+A failed comparison means the issuer recorded authority broader than the actor consented to at that hop; recipients validating the receipts and proofs companions MUST reject both the bounds-based evidence and the proof-based evidence for the token; the receipt chain's hop provenance is unaffected.
 
 An issuer that supports this profile and accepts a proof carrying `target.scope` MUST NOT embed that proof in a token whose scope exceeds `target.scope`.  A recipient that supports this profile and relies on the proof chain MUST verify, independently of receipt coverage, that the current token's effective scope is within `actor_proofs[0].target.scope` when that member is present, under {{scope-dimension}}; a token whose scope exceeds it has diverged from the proof chain, and the target-binding strict mode of {{I-D.mcguinness-oauth-actor-proofs}} decides whether the recipient rejects the chain.  A recipient that cannot determine the token's effective scope MUST NOT infer scope-level consent from the proof.
 
@@ -543,7 +543,7 @@ The following example shows the outer token:
 A recipient verifies this chain as follows:
 
 *  Scope narrows to `trips:book`.
-*  The resource set narrows to the bookings endpoint, so the chain also passes verification where `resource` is required, when the resource server uses the resource identifier it serves as the token's effective value (step 4).  URI prefixes do not imply containment.
+*  The resource set narrows to the bookings endpoint, so the chain also passes verification where `resource` is required, when the resource server uses the identifier of the protected resource receiving the request as the token's effective value (step 4).  URI prefixes do not imply containment.
 *  The outer token's scope equals the newest recorded scope.
 *  Audience changes are recorded without comparison under the default audience rules.
 
