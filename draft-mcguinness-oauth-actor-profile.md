@@ -320,7 +320,7 @@ Implementations MUST define and enforce a local maximum delegation depth.  Imple
 A token represents delegation when the party exercising the token's authorization at runtime (the actor) is distinct from the token subject (`sub`) and the subject has authorized the actor to do so.  The following conditions establish this:
 
 1.  A validated `actor_token` identifying a distinct actor was present in the exchange request that produced this token.
-2.  An inbound `subject_token` from a trusted upstream issuer already carried an `act` chain, establishing that delegation was present before the current exchange.
+2.  An inbound `subject_token` from a trusted upstream issuer already carried an `act` chain, or the state of a refresh token presented as `subject_token` records one, establishing that delegation was present before the current exchange.
 3.  The issuing AS has an independent delegation basis such as a pre-registered grant, an explicit consent record, a `may_act` claim in a validated upstream token (see [`may_act`](#may-act)), or a policy rule establishing that the current client or actor is acting as a distinct party on behalf of `sub` (see [JWT Access Tokens](#jwt-access-tokens) for the outside-Token-Exchange case).  In Token Exchange, such a basis applies only to an actor established as the next paragraph describes.
 
 In Token Exchange, an independent delegation basis can authorize an actor established under this profile's processing rules but cannot by itself establish a new actor.  A new actor is established from a validated `actor_token` or, at an AS other than a TTS, from the authenticated client on the [`may_act`](#may-act) path without `actor_token`.  Existing delegation is preserved under presenter continuation ([Presenter Transition Model](#token-exchange-presenter-model)).  A Token Exchange that establishes no new actor and has no inbound `act` chain does not represent delegation.
@@ -630,7 +630,7 @@ A client registration MAY supply that basis only if it uniquely identifies one a
 
 For the authorization code grant, the AS MAY include the `act` claim when an independent delegation basis, such as authorization state, registration, consent, or local policy, establishes that the OAuth client is acting as a distinct actor for the resource owner.  The actor identity MUST derive from that delegation basis.  Without such a basis, the AS MUST NOT include `act`.
 
-For the `refresh_token` grant ({{Section 6 of RFC6749}}), the AS MUST carry the `act` chain recorded for the grant into the refreshed token unchanged or reject the request; it MUST NOT issue a refreshed token without that chain.
+An AS that issues a refresh token together with a token carrying `act` MUST record that chain for the grant.  For the `refresh_token` grant ({{Section 6 of RFC6749}}), the AS MUST carry the `act` chain recorded for the grant into the refreshed token unchanged or reject the request; it MUST NOT issue a refreshed token without that chain.
 
 This document defines no actor-selection or actor-proof parameter for the authorization code grant; actor determination there is deployment-specific.
 
@@ -650,11 +650,11 @@ For JWT `actor_token` inputs, the AS identifies the credential profile as follow
 
 ## Presenter Transition Model {#token-exchange-presenter-model}
 
-For PoP migration, this profile distinguishes two classes of `subject_token` input according to whether they carry inbound `act` state and presenter-continuity information; [Input Processing](#token-exchange-input-processing) classifies each input type.
+For PoP migration, this profile distinguishes two classes of `subject_token` input according to whether they carry presenter-continuity information; [Input Processing](#token-exchange-input-processing) classifies each input type.
 
 Identity-only inputs (ID Tokens and refresh tokens) establish `sub` and MAY establish supporting subject state such as `sub_profile` or an authorization ceiling.  They do not establish presenter continuity.  An ID Token establishes no inbound `act` state; a refresh token establishes it only from an `act` chain recorded in its state ([Refresh Token](#refresh-tokens)).  Neither input by itself justifies adding a new actor.
 
-Token-state inputs (JWT assertion grants, JWT access tokens, and Transaction Tokens) establish `sub` and MAY establish `sub_profile`, inbound `act` chain state, and current-presenter binding through top-level `cnf`.  They are the only `subject_token` inputs from which this document defines interoperable delegation-chain preservation and presenter continuation.
+Token-state inputs (JWT assertion grants, JWT access tokens, and Transaction Tokens) establish `sub` and MAY establish `sub_profile`, inbound `act` chain state, and current-presenter binding through top-level `cnf`.  They are the only `subject_token` inputs from which this document defines presenter continuation.
 
 A Token Exchange is delegated when it establishes a new actor or carries an inbound `act` chain, including one recorded in the state of a refresh token presented as `subject_token` ([Delegation Chains](#delegation-chains)).  A delegated Token Exchange operates in exactly one of two presenter-transition modes:
 
@@ -763,11 +763,11 @@ Because an ID Token carries no OAuth scope ceiling, scope determination comes fr
 
 ##### Overview {#refresh-token-overview}
 
-A refresh token presented as `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:refresh_token`) establishes `sub` and an authorized scope, which the AS obtains from trusted server state rather than by extracting actor claims from the token.  A refresh token MAY be used as `subject_token` when the AS can validate its state directly or through a trusted back-channel to its issuer.  It MUST NOT be treated as a portable cross-domain delegation artifact or used as `actor_token`.  Client binding, cross-client presentation, and cross-AS acceptance policies remain deployment-specific.
+A refresh token presented as `subject_token` (`subject_token_type=urn:ietf:params:oauth:token-type:refresh_token`) establishes `sub`, an authorized scope, and any `act` chain recorded for its grant, which the AS obtains from trusted server state rather than by extracting actor claims from the token.  A refresh token MAY be used as `subject_token` when the AS can validate its state directly or through a trusted back-channel to its issuer.  It MUST NOT be treated as a portable cross-domain delegation artifact or used as `actor_token`.  Client binding, cross-client presentation, and cross-AS acceptance policies remain deployment-specific.
 
 ##### Processing {#refresh-token-as-subject-token}
 
-The AS validates the refresh token through its token store or a trusted back-channel to its issuer; signature validation alone is insufficient, and an expired, revoked, or otherwise invalid token fails validation.  For a token issued by another AS, the AS MUST NOT accept it unless that back-channel provides the subject, client binding, authorized scope, and revocation state.
+The AS validates the refresh token through its token store or a trusted back-channel to its issuer; signature validation alone is insufficient, and an expired, revoked, or otherwise invalid token fails validation.  For a token issued by another AS, the AS MUST NOT accept it unless that back-channel provides the subject, client binding, authorized scope, revocation state, and any `act` chain recorded for the grant.
 
 The AS MUST verify that the requesting client or authenticated presenter is authorized to use the refresh token under the refresh token's client-binding, sender-constraint, rotation, and cross-client presentation policy.  If the requester is not authorized to use the refresh token, the AS MUST reject the request with `invalid_request`.
 
