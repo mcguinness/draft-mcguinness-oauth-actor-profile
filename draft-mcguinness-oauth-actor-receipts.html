@@ -1049,7 +1049,7 @@ svg {
 </tr></thead>
 <tfoot><tr>
 <td class="left">McGuinness</td>
-<td class="center">Expires 11 April 2027</td>
+<td class="center">Expires 12 April 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1062,12 +1062,12 @@ svg {
 <dd class="internet-draft">draft-mcguinness-oauth-actor-receipts-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-10-08" class="published">8 October 2026</time>
+<time datetime="2026-10-09" class="published">9 October 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-04-11">11 April 2027</time></dd>
+<dd class="expires"><time datetime="2027-04-12">12 April 2027</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1117,7 +1117,7 @@ svg {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 11 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 12 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1895,7 +1895,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-6.3-5">Reissuance can make <code>receipt[0]</code> diverge from the current outer-token instance in two ways:<a href="#section-6.3-5" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-6.3-6.1">
-            <p id="section-6.3-6.1.1"><strong>Different-issuer reissuance</strong>: <code>receipt[0].iss</code> differs from the outer token's <code>iss</code>, for example when an introspection endpoint operated as a separate trust principal re-emits the token, or a token translator at a domain boundary reissues it.  A common case is a Resource Authorization Server that redeems an Identity Assertion JWT Authorization Grant (ID-JAG) or other JWT assertion grant (<span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>) without adding a hop; the actor alignment and subject alignment of steps 7 and 8 of <a href="#consumer-processing" class="auto internal xref">Section 7</a> still apply.<a href="#section-6.3-6.1.1" class="pilcrow">¶</a></p>
+            <p id="section-6.3-6.1.1"><strong>Different-issuer reissuance</strong>: <code>receipt[0].iss</code> differs from the outer token's <code>iss</code>, for example when an introspection endpoint operated as a separate trust principal re-emits the token, a token translator at a domain boundary reissues it, or a TTS issues a Transaction Token by presenter continuation from a token whose newest receipt another issuer created.  A common case is a Resource Authorization Server that redeems an Identity Assertion JWT Authorization Grant (ID-JAG) or other JWT assertion grant (<span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>) without adding a hop; the actor alignment and subject alignment of steps 7 and 8 of <a href="#consumer-processing" class="auto internal xref">Section 7</a> still apply.<a href="#section-6.3-6.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.3-6.2">
             <p id="section-6.3-6.2.1"><strong>Same-issuer reissuance</strong>: <code>receipt[0].iss</code> matches the outer token's <code>iss</code>, but a present <code>receipt[0].origin_jti</code> differs from the outer token's <code>jti</code>, for example when an AS refreshes its own access token.<a href="#section-6.3-6.2.1" class="pilcrow">¶</a></p>
@@ -1958,7 +1958,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-7-1">An issuer, resource server, or other recipient that relies on <code>actor_receipts</code> <span class="bcp14">MUST</span> perform the following steps.<a href="#section-7-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-7-2">
 <li id="section-7-2.1">
-          <p id="section-7-2.1.1">Validate the outer token according to its token type and the core actor profile.<a href="#section-7-2.1.1" class="pilcrow">¶</a></p>
+          <p id="section-7-2.1.1">Validate the outer token according to its token type and the core actor profile, including any presenter proof the core actor profile requires of the recipient.  At a resource server, actor authorization under the core actor profile follows this processing, so it can use validated receipts (<a href="#use-by-resource-servers" class="auto internal xref">Section 7.4</a>).<a href="#section-7-2.1.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-7-2.2">
           <p id="section-7-2.2.1">If <code>actor_receipts</code> is absent, treat the token as lacking receipt-based provenance.  Local policy or Protected Resource Metadata parameters (such as <code>actor_receipts_required</code> and <code>actor_receipts_complete_required</code>, defined in <a href="#discovery-capability-signaling" class="auto internal xref">Section 8</a>) determine whether that is acceptable.  If <code>actor_receipts_complete</code> is present with the value <code>true</code> while <code>actor_receipts</code> is absent, the combination is malformed; the recipient <span class="bcp14">MUST</span> treat this as a failed required check and apply the rejection rule following step 11.<a href="#section-7-2.2.1" class="pilcrow">¶</a></p>
@@ -2316,7 +2316,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-resource-server-errors">
 <a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-resource-server-errors" class="section-name selfRef">Resource Server Errors</a>
         </h3>
-<p id="section-9.2-1">When a resource server rejects a request because <code>actor_receipts</code> validation fails under <a href="#consumer-processing" class="auto internal xref">Section 7</a>, it <span class="bcp14">SHOULD</span> return the <code>invalid_token</code> error code per the bearer-token error model in <span><a href="https://rfc-editor.org/rfc/rfc6750#section-3.1" class="relref">Section 3.1</a> of [<a href="#RFC6750" class="cite xref">RFC6750</a>]</span>.  For a Transaction Token, the recipient instead rejects the request through the deployment's Transaction Token handling, because <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> defines no error response.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
+<p id="section-9.2-1">When a resource server rejects a request because <code>actor_receipts</code> validation fails under <a href="#consumer-processing" class="auto internal xref">Section 7</a>, it <span class="bcp14">SHOULD</span> return the <code>invalid_token</code> error code (<span><a href="https://rfc-editor.org/rfc/rfc6750#section-3.1" class="relref">Section 3.1</a> of [<a href="#RFC6750" class="cite xref">RFC6750</a>]</span>) in a challenge that uses the authentication scheme the core actor profile's resource server processing selects, such as <code>DPoP</code> for a DPoP-bound token.  For a Transaction Token, the recipient instead rejects the request through the deployment's Transaction Token handling, because <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> defines no error response.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
 <p id="section-9.2-2">When the failure is specifically that required receipts are absent or coverage is incomplete (per <code>actor_receipts_required</code> or <code>actor_receipts_complete_required</code>), the resource server <span class="bcp14">SHOULD</span> include an <code>error_description</code> value identifying a receipt-coverage failure so that clients and operators can distinguish it from generic token-validation failures.<a href="#section-9.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -3121,7 +3121,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <h3 id="name-example-transaction-token-s">
 <a href="#appendix-A.2" class="section-number selfRef">A.2. </a><a href="#name-example-transaction-token-s" class="section-name selfRef">Example: Transaction Token Service Rebinding</a>
         </h3>
-<p id="appendix-A.2-1">Suppose the booking tool exchanges the access token above at a TTS, and the TTS rebinds the issued Transaction Token to an internal workload identified as <code>https://wimse.travel-provider.example/payments</code>.<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.2-1">Suppose an internal workload identified as <code>https://wimse.travel-provider.example/payments</code> exchanges the access token above at a TTS, presenting its own workload credential, issued by <code>https://tts.travel-provider.example</code>, as <code>actor_token</code>, and the TTS rebinds the issued Transaction Token to it.<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
 <p id="appendix-A.2-2">The resulting Transaction Token can carry:<a href="#appendix-A.2-2" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="appendix-A.2-3">
 <pre>
@@ -3301,7 +3301,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="appendix-B-3.2.1">Added Receipt Instance Binding; strict mode rejects only issuer divergence, and a same-issuer chain whose <code>origin_jti</code> differs, as after refresh, is accepted without instance binding.<a href="#appendix-B-3.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.3">
-          <p id="appendix-B-3.3.1">Named ID-JAG and other assertion-grant redemption without a new hop as different-issuer reissuance.<a href="#appendix-B-3.3.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.3.1">Named ID-JAG and other assertion-grant redemption without a new hop, and TTS presenter continuation, as different-issuer reissuance.<a href="#appendix-B-3.3.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.4">
           <p id="appendix-B-3.4.1">Defined one lifetime rule for extension, reissuance, and refresh (lower the token's <code>exp</code>, drop the array, or fail), added a floor for receipt <code>exp</code>, and made an expired older receipt invalid.<a href="#appendix-B-3.4.1" class="pilcrow">¶</a></p>
@@ -3331,7 +3331,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <p id="appendix-B-3.12.1">Allowed a TTS to include <code>jti</code> for instance binding, and deferred Transaction Token rejection at the resource server to the deployment.<a href="#appendix-B-3.12.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.13">
-          <p id="appendix-B-3.13.1">Checked <code>typ</code> and <code>alg</code> before key resolution, and rejected a chain with any untrusted receipt issuer.<a href="#appendix-B-3.13.1" class="pilcrow">¶</a></p>
+          <p id="appendix-B-3.13.1">Checked <code>typ</code> and <code>alg</code> before key resolution, rejected a chain with any untrusted receipt issuer, and placed resource-server actor authorization after receipt processing.<a href="#appendix-B-3.13.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-B-3.14">
           <p id="appendix-B-3.14.1">Narrowed the threat-model claims about actor-signed proofs.<a href="#appendix-B-3.14.1" class="pilcrow">¶</a></p>

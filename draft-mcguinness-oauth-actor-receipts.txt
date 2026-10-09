@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                          8 October 2026
-Expires: 11 April 2027
+Intended status: Standards Track                          9 October 2026
+Expires: 12 April 2027
 
 
              OAuth Actor Receipts for Delegation Provenance
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 11 April 2027.
+   This Internet-Draft will expire on 12 April 2027.
 
 Copyright Notice
 
@@ -695,12 +695,14 @@ Table of Contents
 
    *  *Different-issuer reissuance*: receipt[0].iss differs from the
       outer token's iss, for example when an introspection endpoint
-      operated as a separate trust principal re-emits the token, or a
-      token translator at a domain boundary reissues it.  A common case
-      is a Resource Authorization Server that redeems an Identity
-      Assertion JWT Authorization Grant (ID-JAG) or other JWT assertion
-      grant ([I-D.mcguinness-oauth-actor-profile]) without adding a hop;
-      the actor alignment and subject alignment of steps 7 and 8 of
+      operated as a separate trust principal re-emits the token, a token
+      translator at a domain boundary reissues it, or a TTS issues a
+      Transaction Token by presenter continuation from a token whose
+      newest receipt another issuer created.  A common case is a
+      Resource Authorization Server that redeems an Identity Assertion
+      JWT Authorization Grant (ID-JAG) or other JWT assertion grant
+      ([I-D.mcguinness-oauth-actor-profile]) without adding a hop; the
+      actor alignment and subject alignment of steps 7 and 8 of
       Section 7 still apply.
 
    *  *Same-issuer reissuance*: receipt[0].iss matches the outer token's
@@ -803,7 +805,10 @@ Table of Contents
    actor_receipts MUST perform the following steps.
 
    1.   Validate the outer token according to its token type and the
-        core actor profile.
+        core actor profile, including any presenter proof the core actor
+        profile requires of the recipient.  At a resource server, actor
+        authorization under the core actor profile follows this
+        processing, so it can use validated receipts (Section 7.4).
 
    2.   If actor_receipts is absent, treat the token as lacking receipt-
         based provenance.  Local policy or Protected Resource Metadata
@@ -1256,11 +1261,12 @@ Table of Contents
 
    When a resource server rejects a request because actor_receipts
    validation fails under Section 7, it SHOULD return the invalid_token
-   error code per the bearer-token error model in Section 3.1 of
-   [RFC6750].  For a Transaction Token, the recipient instead rejects
-   the request through the deployment's Transaction Token handling,
-   because [I-D.ietf-oauth-transaction-tokens] defines no error
-   response.
+   error code (Section 3.1 of [RFC6750]) in a challenge that uses the
+   authentication scheme the core actor profile's resource server
+   processing selects, such as DPoP for a DPoP-bound token.  For a
+   Transaction Token, the recipient instead rejects the request through
+   the deployment's Transaction Token handling, because
+   [I-D.ietf-oauth-transaction-tokens] defines no error response.
 
    When the failure is specifically that required receipts are absent or
    coverage is incomplete (per actor_receipts_required or
@@ -2135,10 +2141,11 @@ A.1.  Example: Two-Hop Delegation Chain
 
 A.2.  Example: Transaction Token Service Rebinding
 
-   Suppose the booking tool exchanges the access token above at a TTS,
-   and the TTS rebinds the issued Transaction Token to an internal
-   workload identified as https://wimse.travel-provider.example/
-   payments.
+   Suppose an internal workload identified as https://wimse.travel-
+   provider.example/payments exchanges the access token above at a TTS,
+   presenting its own workload credential, issued by https://tts.travel-
+   provider.example, as actor_token, and the TTS rebinds the issued
+   Transaction Token to it.
 
    The resulting Transaction Token can carry:
 
@@ -2328,7 +2335,8 @@ Document History
       after refresh, is accepted without instance binding.
 
    *  Named ID-JAG and other assertion-grant redemption without a new
-      hop as different-issuer reissuance.
+      hop, and TTS presenter continuation, as different-issuer
+      reissuance.
 
    *  Defined one lifetime rule for extension, reissuance, and refresh
       (lower the token's exp, drop the array, or fail), added a floor
@@ -2367,8 +2375,9 @@ Document History
       Transaction Token rejection at the resource server to the
       deployment.
 
-   *  Checked typ and alg before key resolution, and rejected a chain
-      with any untrusted receipt issuer.
+   *  Checked typ and alg before key resolution, rejected a chain with
+      any untrusted receipt issuer, and placed resource-server actor
+      authorization after receipt processing.
 
    *  Narrowed the threat-model claims about actor-signed proofs.
 
