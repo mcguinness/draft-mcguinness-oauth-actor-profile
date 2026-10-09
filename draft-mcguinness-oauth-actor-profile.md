@@ -1610,7 +1610,7 @@ This token carries a single-hop actor object: the `act` claim is present but con
 
 ## Transaction Token
 
-After processing the payroll request, the Payroll API exchanges the inbound access token at the Audit TTS to call the internal Audit Service.  The Payroll API is the requesting workload (`req_wl`).  The TTS validates the inbound delegation chain, preserves it as an inner `act` object, and adds a new outermost actor for the Payroll API:
+After processing the payroll request, the Payroll API exchanges the inbound access token at the Audit TTS to call the internal Audit Service, presenting its workload credential as `actor_token`.  The Payroll API is the requesting workload (`req_wl`).  In presenter-rebind mode, the TTS validates the inbound delegation chain and the workload credential, preserves the chain as an inner `act` object, and adds a new outermost actor for the Payroll API:
 
 ~~~json
 {
