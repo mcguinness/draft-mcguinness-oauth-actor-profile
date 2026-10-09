@@ -987,7 +987,7 @@ The resulting state (subject, classification, chain, and binding) is input to [T
 
 ## Transaction Token Output Rules {#transaction-token-output-rules}
 
-The TTS applies [Delegation Chain Validation and Construction](#delegation-chain-algorithm) and [JWT Access Token Output](#jwt-access-token-propagation), with the Transaction Token adaptations below.
+The TTS applies [Delegation Chain Validation and Construction](#delegation-chain-algorithm) and [JWT Access Token Output](#jwt-access-token-propagation), except its JWT access token structure requirement and its step 6, with the Transaction Token adaptations below.  Transaction Token scope follows [Supported Subject Tokens](#supported-subject-tokens).
 
 When a TTS receives a Token Exchange request to issue or refresh a Transaction Token from an inbound JWT assertion grant, JWT access token, or Transaction Token, it MUST apply the following rules; steps 3 through 6 apply only when the request is delegated ([Presenter Transition Model](#token-exchange-presenter-model)), including when an `actor_token` establishes delegation for an inbound token without `act`:
 
@@ -1005,7 +1005,7 @@ When a TTS receives a Token Exchange request to issue or refresh a Transaction T
 
 5.  The TTS MUST determine whether the request is presenter continuation or presenter rebind:
 
-    *  **Presenter continuation**: The TTS MUST authenticate the requester as the same current presenter as the inbound token.  When the inbound token carries `act`, the authenticated requester MUST correspond to the outermost (`act.iss`, `act.sub`) pair, or the TTS MUST reject the request with the `invalid_request` error code.  If the required actor relationship is prohibited by local policy, absent, or cannot be confirmed from the current inputs and policy, the TTS MUST reject the request with `actor_unauthorized`.
+    *  **Presenter continuation**: The TTS MUST authenticate the requester as the same current presenter as the inbound token.  When the inbound token carries `act`, the authenticated requester MUST correspond to the outermost (`act.iss`, `act.sub`) pair, or the TTS MUST reject the request with the `invalid_request` error code.  If local policy prohibits the preserved actor relationship, the TTS MUST reject the request with `actor_unauthorized`.
     *  **Presenter rebind**: The TTS MUST validate a direct presenter `actor_token` for the new presenter under [Actor Tokens](#actor-tokens).  Before creating a new outermost `act` object, the TTS MUST evaluate whether the newly authenticated presenter is authorized under local policy to act on behalf of `sub` for the requested transaction.  If the required actor relationship is prohibited by local policy, absent, or cannot be confirmed from the current inputs and policy, the TTS MUST reject the request with `actor_unauthorized`.
 
     If the current inputs satisfy neither the presenter-continuation nor the presenter-rebind requirements, the TTS MUST reject the request with the `invalid_request` error code.
