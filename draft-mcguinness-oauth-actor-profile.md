@@ -753,7 +753,7 @@ An OpenID Connect ID Token {{OpenID.Core}} presented as `subject_token` (`subjec
 
 ##### Processing {#id-token-as-subject-token}
 
-Any checks on `aud` or `azp` during validation remain OpenID Connect and client-identity checks; they do not by themselves establish the delegated actor under this profile.
+When the client is authenticated, the AS MUST verify that the ID Token's `aud` contains that client's `client_id`, as {{Section 4.3.3 of I-D.ietf-oauth-identity-assertion-authz-grant}} requires for an ID-JAG; otherwise, it MUST reject the request with `invalid_request`.  These checks on `aud` and `azp` remain OpenID Connect and client-identity checks; they do not by themselves establish the delegated actor under this profile.
 
 The AS MUST use the validated ID Token's `sub` as the subject identity for the issued token, subject to the same-subject preservation rule in [JWT Access Token Output](#jwt-access-token-propagation).  The AS SHOULD set `sub_profile` to `user` in the issued token if it can authoritatively classify the ID Token's `sub` as a human user identity and no conflicting subject classification is available under local policy.
 
