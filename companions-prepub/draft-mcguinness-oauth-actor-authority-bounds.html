@@ -1648,16 +1648,16 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-domain-transitions" class="section-name selfRef">Domain Transitions</a>
         </h3>
 <p id="section-6.3-1">A trust-domain boundary, or a TTS issuing Transaction Token scope (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11#section-9.2" class="relref">Section 9.2</a> of [<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>), can change the authority vocabulary of a dimension, making syntactic comparison unsuitable.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
-<p id="section-6.3-2">An issuer that adds a hop at which a dimension's authority vocabulary differs from the inbound token's:<a href="#section-6.3-2" class="pilcrow">¶</a></p>
+<p id="section-6.3-2">An issuer that adds a hop at which the authority vocabulary of a dimension the new receipt records in <code>bounds</code> differs from the inbound token's:<a href="#section-6.3-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-6.3-3.1">
-            <p id="section-6.3-3.1.1"><span class="bcp14">MUST</span> record <code>reauthorized</code> on the new receipt with <code>method: domain_transition</code> and with <code>dimensions</code> listing each governed dimension whose vocabulary changes and that the new receipt records in <code>bounds</code>, establishing a new monotonicity basis for those dimensions;<a href="#section-6.3-3.1.1" class="pilcrow">¶</a></p>
+            <p id="section-6.3-3.1.1"><span class="bcp14">MUST</span> record <code>reauthorized</code> on the new receipt with <code>method: domain_transition</code> and with <code>dimensions</code> listing each such dimension, establishing a new monotonicity basis for those dimensions;<a href="#section-6.3-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.3-3.2">
             <p id="section-6.3-3.2.1"><span class="bcp14">MUST</span> record the new authority values for those dimensions in the new receipt's <code>bounds</code>;<a href="#section-6.3-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.3-3.3">
-            <p id="section-6.3-3.3.1"><span class="bcp14">SHOULD</span> reference, via <code>reauthorized.artifact</code>, the policy or agreement under which the cross-domain translation is authorized.<a href="#section-6.3-3.3.1" class="pilcrow">¶</a></p>
+            <p id="section-6.3-3.3.1"><span class="bcp14">SHOULD</span> reference, via <code>reauthorized.artifact</code>, the policy or agreement under which the translation is authorized.<a href="#section-6.3-3.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 <p id="section-6.3-4">Comparison applies within each segment between vocabulary changes.  A recipient requiring end-to-end monotonicity <span class="bcp14">MUST</span> reject chains containing <code>domain_transition</code> bases unless explicit trusted mappings establish equivalence across the change.<a href="#section-6.3-4" class="pilcrow">¶</a></p>
@@ -1682,7 +1682,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <p id="section-7-1">An issuer, resource server, or other recipient relying on this profile <span class="bcp14">MUST</span> perform the following steps:<a href="#section-7-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-7-2">
 <li id="section-7-2.1">
-          <p id="section-7-2.1.1">Validate the outer token and receipt chain under steps 1 to 10 of the consumer processing of <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> and, when the token carries <code>actor_proofs</code>, the sibling-reference check of <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span>.  Bounds in receipts that fail that validation <span class="bcp14">MUST NOT</span> be used.<a href="#section-7-2.1.1" class="pilcrow">¶</a></p>
+          <p id="section-7-2.1.1">Validate the outer token and receipt chain under steps 1 to 10 of the consumer processing of <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> and, when the token carries <code>actor_proofs</code>, the consumer processing of <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span> through its sibling-reference check.  Bounds in receipts that fail that validation <span class="bcp14">MUST NOT</span> be used.<a href="#section-7-2.1.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-7-2.2">
           <p id="section-7-2.2.1">Check claim types:<a href="#section-7-2.2.1" class="pilcrow">¶</a></p>
@@ -1710,7 +1710,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           </ul>
 </li>
         <li id="section-7-2.4">
-          <p id="section-7-2.4.1">Compare the current token with <code>receipt[0]</code> for each monotonic D that <code>receipt[0]</code> carries in <code>bounds</code> and whose effective token value is available from claims, introspection, or trusted context.  The token's value <span class="bcp14">MUST</span> be within <code>receipt[0].bounds[D]</code>.  A resource server <span class="bcp14">MAY</span> use the resource identifiers it serves as the token's effective <code>resource</code> value; otherwise, skip <code>resource</code> comparison when its effective value cannot be determined.<a href="#section-7-2.4.1" class="pilcrow">¶</a></p>
+          <p id="section-7-2.4.1">Compare the current token with <code>receipt[0]</code> for each monotonic D that <code>receipt[0]</code> carries in <code>bounds</code> and whose effective token value is available from claims, introspection, or trusted context.  The token's value <span class="bcp14">MUST</span> be within <code>receipt[0].bounds[D]</code>.  A resource server <span class="bcp14">MAY</span> use the resource identifier of the protected resource receiving the request as the token's effective <code>resource</code> value; otherwise, skip <code>resource</code> comparison when its effective value cannot be determined.<a href="#section-7-2.4.1" class="pilcrow">¶</a></p>
 </li>
         <li id="section-7-2.5">
           <p id="section-7-2.5.1">Enforce dimensions required by <code>authority_bounds_required</code> or local policy.  Each required D must be recorded on every receipt and pass steps 3 and 4; a step-4 comparison that cannot be made because the token's effective value for D cannot be determined fails D.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt coverage (<a href="#protected-resource-metadata" class="auto internal xref">Section 8.2</a>).<a href="#section-7-2.5.1" class="pilcrow">¶</a></p>
@@ -1737,7 +1737,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="section-7.1-2.3.1">when both <code>receipt[i].bounds.scope</code> and <code>actor_proofs[i].target.scope</code> (defined below) are present, the recorded scope set <span class="bcp14">MUST</span> be within the consented scope set.<a href="#section-7.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-7.1-3">A failed comparison means the issuer recorded authority broader than the actor consented to at that hop; recipients validating both companions <span class="bcp14">MUST</span> reject both the bounds-based evidence and the proof-based evidence for the token; the receipt chain's hop provenance is unaffected.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+<p id="section-7.1-3">A failed comparison means the issuer recorded authority broader than the actor consented to at that hop; recipients validating the receipts and proofs companions <span class="bcp14">MUST</span> reject both the bounds-based evidence and the proof-based evidence for the token; the receipt chain's hop provenance is unaffected.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
 <p id="section-7.1-4">An issuer that supports this profile and accepts a proof carrying <code>target.scope</code> <span class="bcp14">MUST NOT</span> embed that proof in a token whose scope exceeds <code>target.scope</code>.  A recipient that supports this profile and relies on the proof chain <span class="bcp14">MUST</span> verify, independently of receipt coverage, that the current token's effective scope is within <code>actor_proofs[0].target.scope</code> when that member is present, under <a href="#scope-dimension" class="auto internal xref">Section 4.1</a>; a token whose scope exceeds it has diverged from the proof chain, and the target-binding strict mode of <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span> decides whether the recipient rejects the chain.  A recipient that cannot determine the token's effective scope <span class="bcp14">MUST NOT</span> infer scope-level consent from the proof.<a href="#section-7.1-4" class="pilcrow">¶</a></p>
 <p id="section-7.1-5">This document defines one extension member for the proof <code>target</code> object, under the constraining-extension rule of <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span>:<a href="#section-7.1-5" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-7.1-6">
@@ -1927,7 +1927,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
               <p id="section-11.1.2-1.4.1"><strong>Semantic expansion within syntactic subsets.</strong>  See <a href="#scope-subsumption-gaps" class="auto internal xref">Section 11.3</a>.<a href="#section-11.1.2-1.4.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-11.1.2-1.5">
-              <p id="section-11.1.2-1.5.1"><strong>Cross-domain expansion.</strong>  A <code>domain_transition</code> basis reset is an unverified re-expression of authority (<a href="#domain-transitions" class="auto internal xref">Section 6.3</a>).<a href="#section-11.1.2-1.5.1" class="pilcrow">¶</a></p>
+              <p id="section-11.1.2-1.5.1"><strong>Expansion at a vocabulary change.</strong>  A <code>domain_transition</code> basis reset is an unverified re-expression of authority (<a href="#domain-transitions" class="auto internal xref">Section 6.3</a>).<a href="#section-11.1.2-1.5.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-11.1.2-1.6">
               <p id="section-11.1.2-1.6.1"><strong>Compromised current outer-token issuer.</strong>  As in the receipts companion, a compromised outer issuer can omit this profile's claims entirely; recipients detect that downgrade only by requiring the evidence (<a href="#discovery-capability-signaling" class="auto internal xref">Section 8</a>).<a href="#section-11.1.2-1.6.1" class="pilcrow">¶</a></p>
@@ -2309,7 +2309,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             <p id="appendix-A.1-8.1.1">Scope narrows to <code>trips:book</code>.<a href="#appendix-A.1-8.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.1-8.2">
-            <p id="appendix-A.1-8.2.1">The resource set narrows to the bookings endpoint, so the chain also passes verification where <code>resource</code> is required, when the resource server uses the resource identifier it serves as the token's effective value (step 4).  URI prefixes do not imply containment.<a href="#appendix-A.1-8.2.1" class="pilcrow">¶</a></p>
+            <p id="appendix-A.1-8.2.1">The resource set narrows to the bookings endpoint, so the chain also passes verification where <code>resource</code> is required, when the resource server uses the identifier of the protected resource receiving the request as the token's effective value (step 4).  URI prefixes do not imply containment.<a href="#appendix-A.1-8.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="appendix-A.1-8.3">
             <p id="appendix-A.1-8.3.1">The outer token's scope equals the newest recorded scope.<a href="#appendix-A.1-8.3.1" class="pilcrow">¶</a></p>

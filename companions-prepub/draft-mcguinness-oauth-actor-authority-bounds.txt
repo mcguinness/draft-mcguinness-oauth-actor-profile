@@ -519,20 +519,19 @@ Table of Contents
    authority vocabulary of a dimension, making syntactic comparison
    unsuitable.
 
-   An issuer that adds a hop at which a dimension's authority vocabulary
-   differs from the inbound token's:
+   An issuer that adds a hop at which the authority vocabulary of a
+   dimension the new receipt records in bounds differs from the inbound
+   token's:
 
    *  MUST record reauthorized on the new receipt with method:
-      domain_transition and with dimensions listing each governed
-      dimension whose vocabulary changes and that the new receipt
-      records in bounds, establishing a new monotonicity basis for those
-      dimensions;
+      domain_transition and with dimensions listing each such dimension,
+      establishing a new monotonicity basis for those dimensions;
 
    *  MUST record the new authority values for those dimensions in the
       new receipt's bounds;
 
    *  SHOULD reference, via reauthorized.artifact, the policy or
-      agreement under which the cross-domain translation is authorized.
+      agreement under which the translation is authorized.
 
    Comparison applies within each segment between vocabulary changes.  A
    recipient requiring end-to-end monotonicity MUST reject chains
@@ -558,9 +557,10 @@ Table of Contents
 
    1.  Validate the outer token and receipt chain under steps 1 to 10 of
        the consumer processing of [I-D.mcguinness-oauth-actor-receipts]
-       and, when the token carries actor_proofs, the sibling-reference
-       check of [I-D.mcguinness-oauth-actor-proofs].  Bounds in receipts
-       that fail that validation MUST NOT be used.
+       and, when the token carries actor_proofs, the consumer processing
+       of [I-D.mcguinness-oauth-actor-proofs] through its sibling-
+       reference check.  Bounds in receipts that fail that validation
+       MUST NOT be used.
 
    2.  Check claim types:
 
@@ -590,9 +590,10 @@ Table of Contents
        that receipt[0] carries in bounds and whose effective token value
        is available from claims, introspection, or trusted context.  The
        token's value MUST be within receipt[0].bounds[D].  A resource
-       server MAY use the resource identifiers it serves as the token's
-       effective resource value; otherwise, skip resource comparison
-       when its effective value cannot be determined.
+       server MAY use the resource identifier of the protected resource
+       receiving the request as the token's effective resource value;
+       otherwise, skip resource comparison when its effective value
+       cannot be determined.
 
    5.  Enforce dimensions required by authority_bounds_required or local
        policy.  Each required D must be recorded on every receipt and
@@ -635,10 +636,10 @@ Table of Contents
       the consented scope set.
 
    A failed comparison means the issuer recorded authority broader than
-   the actor consented to at that hop; recipients validating both
-   companions MUST reject both the bounds-based evidence and the proof-
-   based evidence for the token; the receipt chain's hop provenance is
-   unaffected.
+   the actor consented to at that hop; recipients validating the
+   receipts and proofs companions MUST reject both the bounds-based
+   evidence and the proof-based evidence for the token; the receipt
+   chain's hop provenance is unaffected.
 
    An issuer that supports this profile and accepts a proof carrying
    target.scope MUST NOT embed that proof in a token whose scope exceeds
@@ -858,8 +859,8 @@ Table of Contents
 
    *  *Semantic expansion within syntactic subsets.* See Section 11.3.
 
-   *  *Cross-domain expansion.* A domain_transition basis reset is an
-      unverified re-expression of authority (Section 6.3).
+   *  *Expansion at a vocabulary change.* A domain_transition basis
+      reset is an unverified re-expression of authority (Section 6.3).
 
    *  *Compromised current outer-token issuer.* As in the receipts
       companion, a compromised outer issuer can omit this profile's
@@ -1233,9 +1234,9 @@ A.1.  Example: Two-Hop Chain with Narrowing Bounds
 
    *  The resource set narrows to the bookings endpoint, so the chain
       also passes verification where resource is required, when the
-      resource server uses the resource identifier it serves as the
-      token's effective value (step 4).  URI prefixes do not imply
-      containment.
+      resource server uses the identifier of the protected resource
+      receiving the request as the token's effective value (step 4).
+      URI prefixes do not imply containment.
 
    *  The outer token's scope equals the newest recorded scope.
 

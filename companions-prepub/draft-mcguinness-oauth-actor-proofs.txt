@@ -588,7 +588,7 @@ Table of Contents
 6.1.  Accepting a Proof for a New Actor Hop
 
    An issuer that receives a valid actor_proof naming the actor it
-   establishes adds a new outermost hop for that actor, rather than
+   establishes MUST add a new outermost hop for that actor, rather than
    preserving the inbound chain under the core actor profile's allowance
    for a repeated actor.
 
@@ -619,9 +619,10 @@ Table of Contents
        source trusted under the issuer's local policy and validate the
        proof's signature (Section 11.3).
 
-   5.  MUST ensure that the issued outer token's exp is no later than
-       the proof's exp, lowering it when needed, and verify that iat is
-       plausible under the issuer's clock-skew policy.
+   5.  MUST verify that the proof has not expired, ensure that the
+       issued outer token's exp is no later than the proof's exp,
+       lowering it when needed, and verify that iat is plausible under
+       the issuer's clock-skew policy.
 
    6.  MUST NOT issue an outer token whose aud or effective resource
        indicators exceed the proof's target binding.  Every audience of
@@ -862,10 +863,10 @@ Table of Contents
    actor_proofs MUST perform the following steps.
 
    1.   Validate the outer token according to its token type and the
-        core actor profile, including its presenter proof.  At a
-        resource server, actor authorization under the core actor
-        profile follows this processing, so it can use validated proofs
-        (Section 7.3).
+        core actor profile, including any presenter proof the core actor
+        profile requires of the recipient.  At a resource server, actor
+        authorization under the core actor profile follows this
+        processing, so it can use validated proofs (Section 7.3).
 
    2.   If actor_proofs is absent, treat the token as lacking actor-
         signed evidence.  Local policy or Protected Resource Metadata
@@ -995,13 +996,14 @@ Table of Contents
    9.   Evaluate outer-token binding and target binding:
 
         *  when the outer token has no jti, a present
-           actor_proofs[0].origin_jti is historical provenance and binds
-           no instance; otherwise, when actor_proofs[0].origin_jti is
-           present and equals the outer token's jti, the proof chain is
-           bound to the current outer-token instance; when it is present
-           and differs, the chain has diverged: Section 11.4.1 decides
-           whether the recipient rejects it (rejection is the default),
-           and an accepted value is historical provenance;
+           actor_proofs[0].origin_jti binds no instance and the chain
+           has diverged (Section 11.4.1); otherwise, when
+           actor_proofs[0].origin_jti is present and equals the outer
+           token's jti, the proof chain is bound to the current outer-
+           token instance; when it is present and differs, the chain has
+           diverged: Section 11.4.1 decides whether the recipient
+           rejects it (rejection is the default), and an accepted value
+           is historical provenance;
 
         *  when actor_proofs[0].origin_jti is absent, the proof chain
            carries no instance binding of its own; this is not by itself
@@ -1556,8 +1558,8 @@ Table of Contents
    NOT infer consent to the current audience or resources.  With
    receipts, it SHOULD apply one reissuance-trust decision to both
    companions for different-issuer reissuance.  A same-issuer refresh,
-   which the receipts companion accepts without instance binding, still
-   diverges from a present proof origin_jti under this section.
+   which the receipts companion can accept without instance binding,
+   still diverges from a present proof origin_jti under this section.
 
 11.5.  Hash Algorithm Agility
 
@@ -2340,7 +2342,8 @@ Document History
       Token requests, and deferred Transaction Token rejection at the
       resource server to the deployment.
 
-   *  Checked alg and typ before key resolution.
+   *  Checked alg and typ before key resolution, and placed resource-
+      server actor authorization after proof processing.
 
    *  Removed BCP 14 keywords from guidance no other party can observe,
       named the IETF as change controller, and aligned the examples with
