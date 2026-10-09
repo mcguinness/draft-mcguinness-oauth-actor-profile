@@ -552,7 +552,7 @@ When the failure reflects an actor-authorization decision rather than a structur
 
 ## Resource Server Errors
 
-When a resource server rejects a request because `actor_proofs` validation fails under {{consumer-processing}}, it SHOULD return `invalid_token` per the bearer-token error model in {{Section 3.1 of RFC6750}}.  For a Transaction Token, the recipient instead rejects the token through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response for a rejected Transaction Token.
+When a resource server rejects a request because `actor_proofs` validation fails under {{consumer-processing}}, it SHOULD return `invalid_token` ({{Section 3.1 of RFC6750}}) in a challenge that uses the authentication scheme the core actor profile's resource server processing selects, such as `DPoP` for a DPoP-bound token.  For a Transaction Token, the recipient instead rejects the token through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response for a rejected Transaction Token.
 
 When the failure is specifically that required proofs are absent or coverage is incomplete (per `actor_proofs_required` or `actor_proofs_complete_required`), the resource server SHOULD include an `error_description` value identifying proof-coverage failure so that clients and operators can distinguish it from generic token-validation failures.
 

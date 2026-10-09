@@ -538,7 +538,7 @@ When the failure reflects an actor-authorization decision rather than a structur
 
 ## Resource Server Errors
 
-When a resource server rejects a request because `actor_receipts` validation fails under {{consumer-processing}}, it SHOULD return the `invalid_token` error code per the bearer-token error model in {{Section 3.1 of RFC6750}}.  For a Transaction Token, the recipient instead rejects the request through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
+When a resource server rejects a request because `actor_receipts` validation fails under {{consumer-processing}}, it SHOULD return the `invalid_token` error code ({{Section 3.1 of RFC6750}}) in a challenge that uses the authentication scheme the core actor profile's resource server processing selects, such as `DPoP` for a DPoP-bound token.  For a Transaction Token, the recipient instead rejects the request through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.
 
 When the failure is specifically that required receipts are absent or coverage is incomplete (per `actor_receipts_required` or `actor_receipts_complete_required`), the resource server SHOULD include an `error_description` value identifying a receipt-coverage failure so that clients and operators can distinguish it from generic token-validation failures.
 
