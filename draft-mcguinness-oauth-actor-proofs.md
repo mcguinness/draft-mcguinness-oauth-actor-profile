@@ -403,7 +403,7 @@ Byte-for-byte preservation keeps the `proof_jti` value fixed, making later proof
 
 An issuer, resource server, or other recipient that relies on `actor_proofs` MUST perform the following steps.
 
-1.  Validate the outer token according to its token type and the core actor profile, including its presenter proof.  At a resource server, actor authorization under the core actor profile follows this processing, so it can use validated proofs ({{use-by-resource-servers}}).
+1.  Validate the outer token according to its token type and the core actor profile, including any presenter proof the core actor profile requires of the recipient.  At a resource server, actor authorization under the core actor profile follows this processing, so it can use validated proofs ({{use-by-resource-servers}}).
 2.  If `actor_proofs` is absent, treat the token as lacking actor-signed evidence.  Local policy or Protected Resource Metadata parameters such as `actor_proofs_required` and `actor_proofs_complete_required` defined in {{discovery-capability-signaling}} determine whether that is acceptable.  If `actor_proofs_complete` is present with the value `true` while `actor_proofs` is absent, the combination is malformed; the recipient MUST treat this as a failed required check and apply the rejection rule following step 11.
 3.  Verify that `actor_proofs`, if present, is a non-empty JSON array of strings.  Verify that `actor_proofs_complete`, if present, is a JSON boolean.
 4.  Verify that the number of proofs does not exceed the visible actor-chain depth of the outer token.  If the outer token carries `actor_proofs_complete: true`, verify that the proof count exactly equals the visible actor-chain depth; if it does not, the check fails.

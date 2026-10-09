@@ -374,7 +374,7 @@ A TTS that adds a presenter as the new outermost actor follows {{extending-an-ex
 
 An issuer, resource server, or other recipient that relies on `actor_receipts` MUST perform the following steps.
 
-1.  Validate the outer token according to its token type and the core actor profile, including its presenter proof.  At a resource server, actor authorization under the core actor profile follows this processing, so it can use validated receipts ({{use-by-resource-servers}}).
+1.  Validate the outer token according to its token type and the core actor profile, including any presenter proof the core actor profile requires of the recipient.  At a resource server, actor authorization under the core actor profile follows this processing, so it can use validated receipts ({{use-by-resource-servers}}).
 2.  If `actor_receipts` is absent, treat the token as lacking receipt-based provenance.  Local policy or Protected Resource Metadata parameters (such as `actor_receipts_required` and `actor_receipts_complete_required`, defined in {{discovery-capability-signaling}}) determine whether that is acceptable.  If `actor_receipts_complete` is present with the value `true` while `actor_receipts` is absent, the combination is malformed; the recipient MUST treat this as a failed required check and apply the rejection rule following step 11.
 3.  Verify that `actor_receipts`, if present, is a non-empty JSON array of strings.  Verify that `actor_receipts_complete`, if present, is a JSON boolean.
 4.  Verify that the number of receipts does not exceed the visible actor-chain depth of the outer token.  If the outer token carries `actor_receipts_complete: true`, verify that the receipt count exactly equals the visible actor-chain depth; if it does not, the check fails.
