@@ -1537,9 +1537,9 @@ Table of Contents
    establishes sub and, when present, sub_profile, inbound act chain
    state, and a top-level presenter binding.  The AS or TTS receiving it
    MUST apply steps 1 through 4 of Input Processing (Section 6.2) with
-   the following rules; steps 5 and 6 apply only when the output is a
-   JWT access token, and for a Transaction Token output, Transaction
-   Token Output Rules (Section 7.4) apply instead.
+   the following rules; steps 5 and 6 apply when the output is a JWT
+   access token or a JWT assertion grant, and for a Transaction Token
+   output, Transaction Token Output Rules (Section 7.4) apply instead.
 
    Validation per [I-D.ietf-oauth-transaction-tokens] covers the
    signature, aud, exp, and issuer identity:
