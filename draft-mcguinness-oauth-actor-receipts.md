@@ -593,7 +593,7 @@ Companion profiles ({{extensibility}}) can extend the set of mitigated adversari
 
 ## Current Presenter Validation
 
-When the outer token carries a top-level `cnf` claim ({{RFC7800}}), the current request is always validated against it, using the proof mechanism appropriate to the token type and deployment, such as DPoP {{RFC9449}} or mutual-TLS {{RFC8705}} (steps 9 and 10 of {{consumer-processing}}).  Recipients MUST distinguish receipt JWTs (identified by `typ` value `actor-receipt+jwt`) from outer tokens that carry `cnf` for current-request proof-of-possession; receipt `cnf` records historical binding and never satisfies a current-request PoP requirement under {{RFC7800}}, {{RFC9449}}, or {{RFC8705}}.
+When the outer token carries a top-level `cnf` claim ({{RFC7800}}), the current request is validated against it whenever the core actor profile requires the recipient to verify that binding (a resource server always; an AS in presenter rebind does not verify the previous presenter's binding), using the proof mechanism appropriate to the token type and deployment, such as DPoP {{RFC9449}} or mutual-TLS {{RFC8705}} (steps 9 and 10 of {{consumer-processing}}).  Recipients MUST distinguish receipt JWTs (identified by `typ` value `actor-receipt+jwt`) from outer tokens that carry `cnf` for current-request proof-of-possession; receipt `cnf` records historical binding and never satisfies a current-request PoP requirement under {{RFC7800}}, {{RFC9449}}, or {{RFC8705}}.
 
 ## Trust in Receipt Issuers {#trust-in-receipt-issuers}
 

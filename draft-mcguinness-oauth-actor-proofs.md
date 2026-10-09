@@ -605,7 +605,7 @@ The general OAuth 2.0 Security Best Current Practice {{RFC9700}} and the JWT bes
 
 ## Current Presenter Validation
 
-When the outer token carries a top-level `cnf` claim ({{RFC7800}}), the current request is always validated against it, using a mechanism such as DPoP {{RFC9449}} or mutual-TLS {{RFC8705}}.
+When the outer token carries a top-level `cnf` claim ({{RFC7800}}), the current request is validated against it whenever the core actor profile requires the recipient to verify that binding (a resource server always; an AS in presenter rebind does not verify the previous presenter's binding), using a mechanism such as DPoP {{RFC9449}} or mutual-TLS {{RFC8705}}.  Proof signatures never satisfy current-request proof of possession.
 
 An actor proof does not substitute for that validation:
 
