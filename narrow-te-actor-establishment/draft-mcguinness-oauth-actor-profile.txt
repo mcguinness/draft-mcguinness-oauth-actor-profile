@@ -646,17 +646,19 @@ Table of Contents
        a validated upstream token (see may_act (Section 6.5)), or a
        policy rule establishing that the current client or actor is
        acting as a distinct party on behalf of sub (see JWT Access
-       Tokens (Section 5) for the outside-Token-Exchange case).
+       Tokens (Section 5) for the outside-Token-Exchange case).  In
+       Token Exchange, such a basis applies only to an actor established
+       as the next paragraph describes.
 
    In Token Exchange, an independent delegation basis can authorize an
    actor established under this profile's processing rules but cannot by
    itself establish a new actor.  A new actor is established from a
-   validated actor_token or, at an AS, from the authenticated client on
-   the may_act (Section 6.5) path without actor_token.  Existing
-   delegation is preserved under presenter continuation (Presenter
-   Transition Model (Section 6.1)).  A Token Exchange that establishes
-   no new actor and has no inbound act chain does not represent
-   delegation.
+   validated actor_token or, at an AS other than a TTS, from the
+   authenticated client on the may_act (Section 6.5) path without
+   actor_token.  Existing delegation is preserved under presenter
+   continuation (Presenter Transition Model (Section 6.1)).  A Token
+   Exchange that establishes no new actor and has no inbound act chain
+   does not represent delegation.
 
    When a token represents delegation, the act claim MUST be present and
    MUST conform to Actor Object Structure (Section 3.4).  When none of
@@ -908,8 +910,7 @@ Table of Contents
    authentication assertions are outside the scope of this document.
    The act claim represents explicit delegation, even when the issuer
    derives the actor from authenticated client context, as on the
-   may_act (Section 6.5) path or, outside Token Exchange, under an
-   independent delegation basis.
+   may_act (Section 6.5) path.
 
    The following claims are defined for a JWT assertion grant that
    carries actor-profile delegation.  Claims not listed here follow the
@@ -947,11 +948,11 @@ Table of Contents
 
    The following example shows an AS-issued assertion grant, which is
    the recommended pattern.  The Enterprise IdP AS performed Token
-   Exchange, authenticated the agent as the OAuth client, established
-   the delegation relationship under local policy, and signed the
-   assertion.  Here, act.iss equals the assertion's iss because the
-   enterprise AS's issuer identifier is also the actor identifier
-   context for the agent:
+   Exchange, authenticated the agent, which presented its client
+   assertion as actor_token, confirmed the delegation relationship under
+   local policy, and signed the assertion.  Here, act.iss equals the
+   assertion's iss because the enterprise AS's issuer identifier is also
+   the actor identifier context for the agent:
 
    {
      "iss": "https://as.enterprise.example",
@@ -1341,8 +1342,8 @@ Table of Contents
 
    The AS processes a request that is not delegated under [RFC8693] and
    local policy, and a token issued for it omits act.  Local policy can
-   reject such a request, for example when the client or resource
-   requires explicit delegation.
+   reject such a request with actor_unauthorized, for example when the
+   client or resource requires explicit delegation.
 
    When a request that is not delegated presents a subject_token
    carrying a top-level cnf claim, the requester MUST prove possession
@@ -1616,7 +1617,9 @@ Table of Contents
    Whether an AS issues refresh tokens for delegated JWT assertion grant
    requests, how it revokes them, and whether their later use requires
    re-presenting upstream delegation artifacts remain deployment-
-   specific.
+   specific.  On Token Exchange, a refresh token subject_token
+   establishes no actor, so a delegated output requires an actor_token
+   (Input Processing (Section 6.2)).
 
 6.4.  Actor Tokens
 
@@ -1798,11 +1801,11 @@ Table of Contents
       constrained output is bound to the key or certificate the client
       demonstrates in the request.
 
-   When may_act is absent or the conditions above are not met, the AS
-   MUST satisfy the delegation-authorization check through another
-   recognized basis (a pre-registered grant, a consent record, or an
-   applicable policy rule).  That basis authorizes an actor established
-   from an actor_token but does not itself establish one (Delegation
+   When an actor_token establishes the actor and may_act is absent or
+   the conditions above are not met, the AS MUST satisfy the delegation-
+   authorization check through another recognized basis (a pre-
+   registered grant, a consent record, or an applicable policy rule).
+   Without an actor_token, such a basis establishes no actor (Delegation
    Chains (Section 3.5)).  The AS MUST NOT treat the presence of may_act
    alone as authorization for any actor other than the one whose
    canonical identity matches it.
@@ -1955,8 +1958,8 @@ Table of Contents
 7.1.1.  Actor Claim in Transaction Tokens
 
    Under this profile, a Transaction Token represents delegation when a
-   condition in Delegation Chains (Section 3.5) holds, typically because
-   an actor_token or an inbound act chain establishes that the workload
+   condition in Delegation Chains (Section 3.5) holds, that is, when an
+   actor_token or an inbound act chain establishes that the workload
    acts for sub.  When no such condition holds, including when a
    workload acts under its own grant without any delegation basis, the
    token omits act.  The TTS MUST NOT infer delegation solely because
