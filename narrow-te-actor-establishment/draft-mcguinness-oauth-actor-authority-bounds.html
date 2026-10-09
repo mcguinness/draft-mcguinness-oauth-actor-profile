@@ -1,0 +1,2436 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>OAuth Actor Chain Authority Bounds</title>
+<meta content="Karl McGuinness" name="author">
+<meta content="
+       This document defines OAuth Actor Chain Authority Bounds, an optional companion to the OAuth Actor Profile for Delegation and Actor Receipts.  Its receipt claims record the authority in effect at each hop, so that recipients can detect expansion of  scope  and  authorization_details , and of  aud  and  resource  where a deployment requires it, unless an explicit re-authorization establishes new bounds.  It also specifies comparison rules and discovery metadata. 
+    " name="description">
+<meta content="xml2rfc 3.34.1" name="generator">
+<meta content="oauth" name="keyword">
+<meta content="delegation" name="keyword">
+<meta content="actor" name="keyword">
+<meta content="authority" name="keyword">
+<meta content="attenuation" name="keyword">
+<meta content="monotonicity" name="keyword">
+<meta content="draft-mcguinness-oauth-actor-authority-bounds-latest" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.34.1
+    Python 3.14.8
+    ConfigArgParse 1.8.0
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.1.1
+    natsort 8.4.0
+    platformdirs 4.12.2
+    pycountry 24.6.1
+    PyYAML 6.0.3
+    requests 2.33.1
+    wcwidth 0.9.1
+-->
+<link href="draft-mcguinness-oauth-actor-authority-bounds.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Italic'), local('Lora-Italic'), url('https://martinthomson.github.io/rfc-css/fonts/lora-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Lora Regular'), local('Lora-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/lora-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-cyrillic.woff2') format('woff2');
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-vietnamese.woff2') format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Lora Bold'), local('Lora-Bold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Lora SemiBold'), local('Lora-SemiBold'), url('https://martinthomson.github.io/rfc-css/fonts/lora-semibold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Oxygen Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Oxygen Mono'), local('OxygenMono-Regular'), url('https://martinthomson.github.io/rfc-css/fonts/oxygenmono-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: italic;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic-ext.woff2') format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-greek.woff2') format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Sofia Sans Semi Condensed';
+  font-style: normal;
+  font-weight: 1 1000;
+  src: url('https://martinthomson.github.io/rfc-css/fonts/sofiasanssemicondensed-regular-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  color-scheme: light dark;
+  --background-color: #fff;
+  --text-color: #222;
+  --title-color: #191919;
+  --link-color: #2a6496;
+  --highlight-color: #f9f9f9;
+  --line-color: #eee;
+  --pilcrow-weak: #ddd;
+  --pilcrow-strong: #bbb;
+  --small-font-size: 14.5px;
+  --font-mono: 'Oxygen Mono', monospace;
+  --font-title: "Sofia Sans Semi Condensed", sans-serif;
+  scrollbar-color: #bbb #eee;
+}
+body {
+  max-width: 600px;
+  margin: 75px auto;
+  padding: 0 5px;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  font: 16px/22px "Lora", serif;
+  scroll-behavior: smooth;
+}
+
+.ears {
+  display: none;
+}
+
+/* headings */
+section {
+  clear: both;
+}
+.section-number {
+  padding-right: 0.5em;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  font-weight: 680;
+  margin: 0.8em 0 0.3em;
+  font-size-adjust: 0.5;
+  color: var(--title-color);
+}
+h1 {
+  &#title {
+    font-size: 32px;
+    line-height: 40px;
+    clear: both;
+    margin: 1.5em 0 0.2em;
+  }
+  &#rfcnum {
+    margin: 1.5em 0 0.2em;
+    & + h1#title {
+      margin: 0.2em 0;
+    }
+  }
+}
+
+h1, h2, h3 {
+  font-size: 22px;
+  line-height: 27px;
+}
+h4, h5, h6 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+/* general structure */
+.author {
+  padding-bottom: 0.3em;
+  vertical-align: top;
+}
+#abstract+p {
+  font-size: 18px;
+  line-height: 24px;
+  & code, & samp, & tt {
+    font-size: 16px;
+    line-height: 0;
+  }
+}
+
+p {
+  padding: 0;
+  margin: 0.5em 0;
+  text-align: left;
+}
+div {
+  margin: 0;
+}
+.alignRight {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    margin: 0;
+    float: right;
+    clear: both;
+  }
+  & > *:nth-child(2) {
+    clear: both;
+    display: block;
+    border: none;
+  }
+}
+svg {
+  display: block;
+  /* font-family isn't space-separated, but =~ will have to do */
+  &[font-family~="monospace" i], & [font-family~="monospace" i] {
+    font-family: var(--font-mono);
+  }
+}
+.alignCenter {
+  margin: 1em 0;
+  &.art-text {
+    background-color: var(--highlight-color);
+    border: 1px solid var(--line-color);
+    border-radius: 3px;
+    padding: 0.5em 1em 0;
+    margin-bottom: 0.5em;
+    & pre {
+      padding: 0;
+      width: auto;
+    }
+  }
+  & > *:first-child {
+    border: none;
+    /* this isn't optimal, but it's an existence proof.  PrinceXML doesn't
+       support flexbox yet.
+    */
+    display: table;
+    margin: 0 auto;
+  }
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 0.5em 2em;
+  & :is(ol, ul) {
+    margin-left: 1em;
+  }
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+  & li {
+    margin-top: 0.5em;
+  }
+}
+:is(ul, ol).compact, .ulCompact, .olCompact {
+  margin: 0 0 0 2em;
+  & li {
+    margin: 0;
+    & :first-child { margin-top: 0; }
+    & :last-child { margin-bottom: 0; }
+  }
+}
+
+/* definition lists */
+dl {
+  clear: left;
+  --indent: 3ch;
+  /* --indent: attr(indent ch); not supported in any browser, but we can dream */
+  &.olPercent {
+    --indent: 5ch;
+    & > dt {
+      min-width: calc(var(--indent) - 2ch);
+      float: none;
+    }
+  }
+
+  dl > dd > & {
+    margin-top: 0.5em;
+    margin-bottom: 0;
+  }
+
+  &:not(.dlNewline) > dt {
+    float: left;
+    margin-right: 2ch;
+    min-width: 8ch;
+  }
+  & > dd {
+    margin-bottom: .8em;
+    margin-left: var(--indent) !important; /* stupid element overrides */
+    min-height: 2ex;
+  }
+}
+:is(dl.compact, .dlCompact) > dd {
+  margin-bottom: 0;
+  & > :is(:first-child, .break:first-child + *) {
+    margin-top: 0;
+  }
+  & > :is(:last-child) {
+    margin-bottom: 0;
+  }
+}
+:is(dd, span).break {
+  display: none;
+}
+
+/* links */
+a {
+  text-decoration: none;
+  &[href] {
+    color: var(--link-color);
+    &:hover { text-decoration: underline; }
+    &.selfRef {
+      color: var(--text-color);
+      &:hover {
+        text-decoration: none;
+        background-color: var(--highlight-color);
+      }
+    }
+  }
+}
+.iref + a[href].internal {
+  color: var(--text-color);
+}
+a.xref:is(.cite, .auto), :is(#status-of-memo, #copyright) a {
+  white-space: nowrap;
+}
+
+/* Figures */
+tt, code, pre {
+  background-color: var(--highlight-color);
+  font: 14px/22px var(--font-mono);
+}
+tt, code {
+  /* changing the font for inline elements leads to different ascender
+     and descender heights; as we want to retain baseline alignment,
+     remove leading to avoid altering the final height of lines
+     note: this fails if these blocks take an entire line,
+     a different solution would be great */
+  line-height: 0;
+}
+:is(h1, h2, h3, h4, h5, h6) :is(tt, code) {
+  font-size: 84%;
+}
+pre {
+  border: 1px solid var(--line-color);
+  font-size: 13.5px;
+  line-height: 16px;
+  letter-spacing: -0.2px;
+  margin: 5px;
+  padding: 5px;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0.5em 0;
+  padding: 0;
+  & blockquote {
+    margin: 0.8em 0.4em 0.4em;
+  }
+}
+figcaption, caption {
+  font-style: italic;
+  margin: 0.5em 1.5em;
+  text-align: left;
+  caption-side: bottom;
+}
+@media screen {
+  /* Auto-collapse boilerplate. */
+  :is(#status-of-memo, #copyright) {
+    & p {
+      margin: -2px 0;
+      max-height: 0;
+      transition: max-height 2s ease, margin 0.5s ease 0.5s;
+      overflow: hidden;
+    }
+    &:hover p,
+    & h2:target ~ p {
+      margin: 0.5em 0;
+      max-height: 500px;
+      overflow: auto;
+    }
+  }
+  pre, svg {
+    display: inline-block;
+    /* In the horizontal direction, sometimes people make over-sized figures.
+       Scrollbars for those is therefore necessary: auto adds them as necessary..
+       In the vertical direction, the line-height can combine with the font
+       asender/descender height to produce scrollbars: hidden avoids that. */
+    overflow: auto hidden;
+  }
+  pre {
+    max-width: 100%;
+    width: calc(100% - 22px - 1em);
+  }
+  svg {
+    max-width: calc(100% - 22px - 1em);
+  }
+  figure pre {
+    display: block;
+    width: calc(100% - 25px);
+  }
+  :is(pre, svg) + .pilcrow {
+    display: inline-block;
+    vertical-align: text-bottom;
+    padding-bottom: 8px;
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 0 2em;
+  font-style: italic;
+}
+blockquote {
+  margin: 1em 0;
+  border-left: 2px var(--pilcrow-strong) solid;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+
+/* tables */
+table {
+  width: auto;
+  max-width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  &.right { margin-left: auto; }
+  &.center { margin-left: auto; margin-right: auto; }
+  &.left { margin-right: auto; }
+  & .text-left { text-align: left; }
+  & .text-center { text-align: center; }
+  & .text-right { text-align: right; }
+  & caption {
+    margin: 0;
+    padding: 3px 0 3px 1em;
+  }
+  & p { margin: 0; }
+}
+
+thead, tbody {
+  border: 1px solid var(--line-color);
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 10px;
+}
+th {
+  background-color: var(--line-color);
+}
+:is(tr:nth-child(2n), thead+tbody > tr:nth-child(2n+1)) > td {
+  background-color: var(--background-color);
+}
+:is(tr:nth-child(2n+1), thead+tbody > tr:nth-child(2n)) > td {
+  background-color: var(--highlight-color);
+}
+
+/* pilcrow */
+a.pilcrow {
+  margin-left: 3px;
+  opacity: 0.2;
+  user-select: none;
+  &[href] {
+    color: var(--pilcrow-weak);
+    &:hover { text-decoration: none; }
+  }
+  @media not print {
+    :hover > &, &:focus {
+      opacity: 1;
+    }
+    &[href]:hover {
+      color: var(--pilcrow-strong);
+      background-color: transparent;
+    }
+  }
+  @media print {
+    display: none;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid var(--line-color);
+}
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: 600;
+  font-size: var(--small-font-size);
+}
+.role {
+  font-variant: all-small-caps;
+}
+sub, sup {
+  line-height: 1;
+  font-size: 80%;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: var(--small-font-size);
+  line-height: 18px;
+  --identifier-width: 15ch;
+  & dt {
+    width: var(--identifier-width);
+    min-width: var(--identifier-width);
+    clear: left;
+    float: left;
+    text-align: right;
+    margin-right: 1ch;
+  }
+  & dd {
+    margin: 0;
+    margin-left: calc(1em + var(--identifier-width)) !important;
+    min-width: 5em;
+  }
+  & .authors {
+    & .author {
+      display: inline-block;
+      margin-right: 1.5em;
+    }
+    & .org {
+      font-style: italic;
+    }
+  }
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #999;
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+  & .prepared {
+    float: right;
+  }
+}
+
+/* table of contents */
+#toc {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+
+  & nav {
+    & ul {
+      margin: 0 0.5em 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    & li {
+      line-height: 1.3em;
+      margin: 2px 0;
+      padding-left: 1.2em;
+      text-indent: -1.2em;
+    }
+  }
+  & a.xref {
+    white-space: normal;
+  }
+}
+
+.references {
+  & > dt {
+    text-align: right;
+    font-weight: bold;
+    min-width: 10ch;
+    margin-right: 1.5ch;
+    &:target::before {
+      content: "⇒";
+      margin: 0 10px 0 -25px;
+    }
+  }
+  & > dd {
+    margin-left: 12ch !important;
+    overflow: visible;
+    & .refInstance {
+      margin-bottom: 0.8em;
+    }
+    & .ascii {
+      margin-bottom: 0.25em;
+    }
+  }
+}
+
+#rfc\.index\.index + ul {
+  margin-left: 0;
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  max-width: 20em;
+  margin: 1em auto 1em 0;
+
+  & .nameRole {
+    font-weight: 700;
+    margin-left: 0;
+  }
+  & .label {
+    margin: 0.5em 0;
+  }
+  & .type {
+    display: none;
+  }
+  & .alternative-contact {
+    margin: 0.5em 0 0.25em 0;
+  }
+  & .non-ascii {
+    margin: 0 0 0 2em;
+  }
+  & div.left {
+    text-align: left;
+  }
+  & div.right {
+    text-align: right;
+  }
+}
+
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+@media (min-width: 500px) {
+  #authors-addresses {
+    & > section {
+      column-count: 2;
+      column-gap: 20px;
+    }
+    & > section > h2 {
+      column-span: all;
+    }
+    /* hack for break-inside: avoid-column */
+    & address {
+      display: inline-block;
+      break-inside: avoid-column;
+    }
+  }
+}
+
+/* Comments */
+.rfcEditorRemove {
+  & p:first-of-type {
+    font-style: italic;
+  }
+}
+.cref {
+  background-color: rgba(249, 232, 105, 0.3);
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+
+@media screen {
+  #toc {
+    & nav {
+      font-family: var(--font-title);
+      font-weight: 360;
+      & > ul { margin-bottom: 2em; }
+      & ul {
+        margin: 0 0 0 4px;
+        & :is(p, li) {
+          margin: 2px 0;
+        }
+      }
+    }
+    & a.toplink {
+      float: right;
+    }
+  }
+}
+@media not screen {
+  #toc a.toplink {
+    display: none;
+  }
+}
+
+
+/* TOC layout for smaller screens */
+@media screen and (max-width: 929px) {
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 1px 0 0 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+    opacity: 0.6;
+    & h2 {
+      margin: 0;
+      padding: 2px 0 2px 6px;
+      padding-right: 1em;
+      font-size: 18px;
+      line-height: 24px;
+      min-width: 190px;
+      text-align: right;
+      background-color: #444;
+      color: white;
+      cursor: pointer;
+      &::before { /* css hamburger */
+        float: right;
+        position: relative;
+        width: 1em;
+        height: 1px;
+        left: -164px;
+        margin: 8px 0 0 0;
+        background: white none repeat scroll 0 0;
+        box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+        content: "";
+      }
+    }
+    & nav {
+      display: none;
+      background-color: var(--background-color);
+      padding: 0.5em 1em 1em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      height: calc(100vh - 48px);
+      border-left: 1px solid #ddd;
+    }
+    &.active {
+      opacity: 1;
+      & nav { display: block; }
+    }
+    /* Make the collapsed ToC header render white on gray also when it's a link */
+    & h2 a,
+    & h2 a:is(:link, :focus, :hover),
+    & a.toplink,
+    & a.toplink:hover {
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+    }
+    & a.toplink {
+      margin: 2px 0.5em 0;
+    }
+  }
+}
+
+/* TOC layout for wide screens */
+@media screen and (min-width: 930px) {
+  body {
+    padding-right: 360px;
+    padding-right: calc(min(180px + 20%, 500px));
+  }
+  #toc {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    right: calc(50vw - 480px);
+    width: 312px;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    & h2 {
+      margin: 0;
+      padding: 0.25em 1em 1em 0;
+    }
+    & nav {
+      display: block;
+      height: calc(90vh - 84px);
+      bottom: 0;
+      padding: 0.5em 0 2em;
+      overflow: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    & a.toplink {
+      margin: 8px 0.5em 0;
+    }
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc {
+    page-break-before: always;
+    border-top: none;
+    padding-top: 0;
+  }
+  #n-introduction {
+    page-break-before: always;
+  }
+  figure, pre, .vcard {
+    page-break-inside: avoid;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  :is(h2, h3, h4, h5, h6)+*, dd {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+}
+
+/* Dark mode. */
+@media (prefers-color-scheme: dark) {
+:root {
+  --background-color: #121212;
+  --text-color: #f0f0f0;
+  --title-color: #fff;
+  --link-color: #4da4f0;
+  --highlight-color: #282828;
+  --line-color: #444;
+  --pilcrow-weak: #444;
+  --pilcrow-strong: #666;
+  scrollbar-color: #777 #333;
+}
+}
+
+/* SVG Trick: a prefix match works because only black and white are allowed */
+svg {
+  & :is([stroke="black"], [stroke^="#000"]) {
+    stroke: var(--text-color);
+  }
+  & :is([stroke="white"], [stroke^="#fff"]) {
+    stroke: var(--background-color);
+  }
+  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+    fill: var(--text-color);
+  }
+  & :is([fill="white"], [fill^="#fff"]) {
+    fill: var(--background-color);
+  }
+}
+</style>
+
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">OAuth Actor Bounds</td>
+<td class="right">October 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">McGuinness</td>
+<td class="center">Expires 12 April 2027</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Web Authorization Protocol</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-mcguinness-oauth-actor-authority-bounds-latest</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-10-09" class="published">9 October 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Standards Track</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2027-04-12">12 April 2027</time></dd>
+<dt class="label-authors">Author:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">K. McGuinness</div>
+<div class="org">Independent</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">OAuth Actor Chain Authority Bounds</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document defines OAuth Actor Chain Authority Bounds, an optional companion to the OAuth Actor Profile for Delegation and Actor Receipts.  Its receipt claims record the authority in effect at each hop, so that recipients can detect expansion of <code>scope</code> and <code>authorization_details</code>, and of <code>aud</code> and <code>resource</code> where a deployment requires it, unless an explicit re-authorization establishes new bounds.  It also specifies comparison rules and discovery metadata.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+</section>
+<section class="note rfcEditorRemove" id="section-note.1">
+      <h2 id="name-about-this-document">
+<a href="#name-about-this-document" class="section-name selfRef">About This Document</a>
+      </h2>
+<p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
+<p id="section-note.1-2">
+        The latest revision of this draft can be found at <span><a href="https://mcguinness.github.io/draft-mcguinness-oauth-actor-profile/draft-mcguinness-oauth-actor-authority-bounds.html">https://mcguinness.github.io/draft-mcguinness-oauth-actor-profile/draft-mcguinness-oauth-actor-authority-bounds.html</a></span>.
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-mcguinness-oauth-actor-authority-bounds/">https://datatracker.ietf.org/doc/draft-mcguinness-oauth-actor-authority-bounds/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+<p id="section-note.1-3">
+        Discussion of this document takes place on the
+        Web Authorization Protocol Working Group mailing list (<span><a href="mailto:oauth@ietf.org">mailto:oauth@ietf.org</a></span>),
+        which is archived at <span><a href="https://mailarchive.ietf.org/arch/browse/oauth/">https://mailarchive.ietf.org/arch/browse/oauth/</a></span>.
+        Subscribe at <span><a href="https://www.ietf.org/mailman/listinfo/oauth/">https://www.ietf.org/mailman/listinfo/oauth/</a></span>.<a href="#section-note.1-3" class="pilcrow">¶</a></p>
+<p id="section-note.1-4">Source for this draft and an issue tracker can be found at
+        <span><a href="https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile">https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile</a></span>.<a href="#section-note.1-4" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 12 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-relationship-to-the-receipt" class="internal xref">Relationship to the Receipts Companion</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-governed-dimensions-and-com" class="internal xref">Governed Dimensions and Comparison Rules</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-scope" class="internal xref"><code>scope</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-aud-and-audience-governance" class="internal xref"><code>aud</code> and Audience Governance</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-resource" class="internal xref"><code>resource</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4">
+                <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="auto internal xref">4.4</a>.  <a href="#name-authorization_details" class="internal xref"><code>authorization_details</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.5">
+                <p id="section-toc.1-1.4.2.5.1"><a href="#section-4.5" class="auto internal xref">4.5</a>.  <a href="#name-dimensions-explicitly-not-g" class="internal xref">Dimensions Explicitly Not Governed</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-receipt-extension-claims" class="internal xref">Receipt Extension Claims</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-the-bounds-claim" class="internal xref">The <code>bounds</code> Claim</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-the-reauthorized-claim" class="internal xref">The <code>reauthorized</code> Claim</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-issuer-processing" class="internal xref">Issuer Processing</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-recording-bounds-at-a-new-h" class="internal xref">Recording Bounds at a New Hop</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-reissuance-and-refresh-with" class="internal xref">Reissuance and Refresh Without a New Hop</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-domain-transitions" class="internal xref">Domain Transitions</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4">
+                <p id="section-toc.1-1.6.2.4.1"><a href="#section-6.4" class="auto internal xref">6.4</a>.  <a href="#name-partial-and-sparse-coverage" class="internal xref">Partial and Sparse Coverage</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-consumer-processing" class="internal xref">Consumer Processing</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-composition-with-actor-sign" class="internal xref">Composition with Actor-Signed Hop Proofs</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-use-by-resource-servers" class="internal xref">Use by Resource Servers</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-introspection" class="internal xref">Introspection</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-discovery-and-capability-si" class="internal xref">Discovery and Capability Signaling</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.1">
+                <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-authorization-server-metada" class="internal xref">Authorization Server Metadata</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-protected-resource-metadata" class="internal xref">Protected Resource Metadata</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-error-handling" class="internal xref">Error Handling</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-extensibility" class="internal xref">Extensibility</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1">
+                <p id="section-toc.1-1.11.2.1.1"><a href="#section-11.1" class="auto internal xref">11.1</a>.  <a href="#name-threat-model" class="internal xref">Threat Model</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1.2.1">
+                    <p id="section-toc.1-1.11.2.1.2.1.1"><a href="#section-11.1.1" class="auto internal xref">11.1.1</a>.  <a href="#name-adversaries-mitigated-by-th" class="internal xref">Adversaries Mitigated by This Profile</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1.2.2">
+                    <p id="section-toc.1-1.11.2.1.2.2.1"><a href="#section-11.1.2" class="auto internal xref">11.1.2</a>.  <a href="#name-adversaries-not-mitigated" class="internal xref">Adversaries Not Mitigated</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.2">
+                <p id="section-toc.1-1.11.2.2.1"><a href="#section-11.2" class="auto internal xref">11.2</a>.  <a href="#name-re-authorization-abuse" class="internal xref">Re-Authorization Abuse</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.3">
+                <p id="section-toc.1-1.11.2.3.1"><a href="#section-11.3" class="auto internal xref">11.3</a>.  <a href="#name-scope-subsumption-gaps" class="internal xref">Scope Subsumption Gaps</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-privacy-considerations" class="internal xref">Privacy Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#section-13" class="auto internal xref">13</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.1">
+                <p id="section-toc.1-1.13.2.1.1"><a href="#section-13.1" class="auto internal xref">13.1</a>.  <a href="#name-json-web-token-claims-regis" class="internal xref">JSON Web Token Claims Registration</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.2">
+                <p id="section-toc.1-1.13.2.2.1"><a href="#section-13.2" class="auto internal xref">13.2</a>.  <a href="#name-oauth-actor-authority-bound" class="internal xref">OAuth Actor Authority Bounds Dimensions Registry</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.3">
+                <p id="section-toc.1-1.13.2.3.1"><a href="#section-13.3" class="auto internal xref">13.3</a>.  <a href="#name-oauth-actor-re-authorizatio" class="internal xref">OAuth Actor Re-Authorization Methods Registry</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.4">
+                <p id="section-toc.1-1.13.2.4.1"><a href="#section-13.4" class="auto internal xref">13.4</a>.  <a href="#name-oauth-authorization-server-" class="internal xref">OAuth Authorization Server Metadata Registration</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13.2.5">
+                <p id="section-toc.1-1.13.2.5.1"><a href="#section-13.5" class="auto internal xref">13.5</a>.  <a href="#name-oauth-protected-resource-me" class="internal xref">OAuth Protected Resource Metadata Registration</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
+            <p id="section-toc.1-1.14.1"><a href="#section-14" class="auto internal xref">14</a>. <a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#section-15" class="auto internal xref">15</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.1">
+                <p id="section-toc.1-1.15.2.1.1"><a href="#section-15.1" class="auto internal xref">15.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.2">
+                <p id="section-toc.1-1.15.2.2.1"><a href="#section-15.2" class="auto internal xref">15.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
+            <p id="section-toc.1-1.16.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-examples" class="internal xref">Examples</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.1">
+                <p id="section-toc.1-1.16.2.1.1"><a href="#appendix-A.1" class="auto internal xref">A.1</a>.  <a href="#name-example-two-hop-chain-with-" class="internal xref">Example: Two-Hop Chain with Narrowing Bounds</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.2">
+                <p id="section-toc.1-1.16.2.2.1"><a href="#appendix-A.2" class="auto internal xref">A.2</a>.  <a href="#name-example-re-authorization-at" class="internal xref">Example: Re-Authorization at a Hop</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16.2.3">
+                <p id="section-toc.1-1.16.2.3.1"><a href="#appendix-A.3" class="auto internal xref">A.3</a>.  <a href="#name-example-expansion-not-cover" class="internal xref">Example: Expansion Not Covered by Re-Authorization</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.17">
+            <p id="section-toc.1-1.17.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-document-history" class="internal xref">Document History</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.18">
+            <p id="section-toc.1-1.18.1"><a href="#appendix-C" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">The OAuth Actor Profile <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span> identifies delegated actors.  Actor Receipts <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> attest issuer participation, and Actor Proofs <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span> attest actor participation and target consent.  OAuth 2.0 Token Exchange <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> does not define a record of authority changes across hops, and these profiles do not add one.  Actor Receipts lists historical authority as a non-goal.  An actor proof binds only the target its actor authorized at one hop.  A recipient can therefore verify who participated at every hop without detecting that an intermediate issuer widened the authority flowing through the chain.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">This document defines OAuth Actor Chain Authority Bounds, an optional companion profile that closes that gap for deployments that use actor receipts.  Receipt claims record the authority in effect at each hop; recipients compare those values across hops and against the current token, and expansion requires an explicit re-authorization recorded in the receipt for a new hop.  The design center is:<a href="#section-1-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1-3.1">
+          <p id="section-1-3.1.1">keep the visible actor chain in <code>act</code> and per-hop provenance in <code>actor_receipts</code>;<a href="#section-1-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-3.2">
+          <p id="section-1-3.2.1">carry per-hop authority as receipt claims, so it inherits the receipt issuer's signature and the chain's integrity;<a href="#section-1-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-3.3">
+          <p id="section-1-3.3.1">make authority expansion an explicit, signed, auditable event rather than a silent change.<a href="#section-1-3.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-1-4">This profile adds bounds claims and discovery metadata; deployments opt in per resource or trust domain.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<p id="section-1-5">Recipients walk the validated receipt chain from oldest to newest and verify offline that each monotonic dimension narrows or stays the same, except where a re-authorization recorded at a hop establishes a new basis for the dimensions it lists, and that the current outer token does not exceed the newest recorded bounds (<a href="#consumer-processing" class="auto internal xref">Section 7</a>).  Verifying a dimension requires every receipt to record it; deployments that need that guarantee enforce dense coverage through <a href="#discovery-capability-signaling" class="auto internal xref">Section 8</a>.<a href="#section-1-5" class="pilcrow">¶</a></p>
+<p id="section-1-6">This profile does not interpret scope grammars (<a href="#scope-dimension" class="auto internal xref">Section 4.1</a>), constrain the origin issuer's initial choice of authority, or define cross-domain equivalence of authority vocabularies.  A trust-domain boundary is an explicit basis reset (<a href="#domain-transitions" class="auto internal xref">Section 6.3</a>), so deployments whose chains cross domains at every hop gain recording and audit value but little enforcement value.  Recording re-authorization between hops (a refresh or step-up without a new hop) is left to a later extension (<a href="#extensibility" class="auto internal xref">Section 10</a>).<a href="#section-1-6" class="pilcrow">¶</a></p>
+<p id="section-1-7">Attenuating Authorization Tokens <span>[<a href="#I-D.niyikiza-oauth-attenuating-agent-tokens" class="cite xref">I-D.niyikiza-oauth-attenuating-agent-tokens</a>]</span> address a related problem with a different model: a token holder derives a token with equal or narrower tool-level authority offline, and any enforcement point holding the root issuer's trust anchor verifies the derivation chain.  This profile instead adds evidence to issuance by authorization servers and Transaction Token Services, recording the authority each issuer applied in its signed receipt and permitting expansion only under a signed re-authorization.<a href="#section-1-7" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="conventions-and-definitions">
+<section id="section-2">
+      <h2 id="name-conventions-and-definitions">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-definitions" class="section-name selfRef">Conventions and Definitions</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">This document uses OAuth terminology from <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> and <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>.  The terms Actor Receipt, Receipt Chain, and Outer Token are used as defined in <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span>.  <code>receipt[i]</code> denotes entry i of the outer token's <code>actor_receipts</code> array, which that document orders newest first: <code>receipt[0]</code> is the receipt for the newest hop, whose actor is the outermost <code>act</code>.  The abbreviations AS, RS, and TTS denote authorization server, resource server, and Transaction Token Service, respectively.<a href="#section-2-2" class="pilcrow">¶</a></p>
+<p id="section-2-3">The following terms are used in this document:<a href="#section-2-3" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-2-4">
+        <dt id="section-2-4.1">Governed Dimension:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.2">
+          <p id="section-2-4.2.1">An authority dimension whose per-hop values are recorded under this profile and, when the dimension is monotonic, compared across hops.  This document defines four: <code>scope</code>, <code>aud</code>, <code>resource</code>, and <code>authorization_details</code>.<a href="#section-2-4.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.3">Monotonic Dimension:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.4">
+          <p id="section-2-4.4.1">A governed dimension whose recorded values are required not to expand across hops.  <code>scope</code> and <code>authorization_details</code> are monotonic by default; <code>aud</code> and <code>resource</code> are recorded but not monotonic unless a resource server names them in <code>authority_bounds_required</code> or local policy requires it (<a href="#audience-governance" class="auto internal xref">Section 4.2</a>, <a href="#resource-dimension" class="auto internal xref">Section 4.3</a>).<a href="#section-2-4.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.5">Authority Bounds:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.6">
+          <p id="section-2-4.6.1">The values of governed dimensions in effect for the token issued at a given hop, recorded in the receipt's <code>bounds</code> claim.<a href="#section-2-4.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.7">Re-Authorization Event:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.8">
+          <p id="section-2-4.8.1">An explicit event in which an authorized principal consents to new, possibly broader, authority.  It is recorded in the <code>reauthorized</code> claim of the receipt for the new actor hop at which it occurs.<a href="#section-2-4.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.9">Monotonicity Basis:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.10">
+          <p id="section-2-4.10.1">The point in the chain from which non-expansion of a dimension is measured.  The origin hop is the initial basis; each re-authorization recorded at a hop establishes a new basis for the dimensions it lists.<a href="#section-2-4.10.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-4.11">Dense Coverage:</dt>
+        <dd style="margin-left: 1.5em" id="section-2-4.12">
+          <p id="section-2-4.12.1">A condition in which every receipt in the chain carries <code>bounds</code> for a given dimension, so that monotonicity for that dimension is verified across every adjacency.<a href="#section-2-4.12.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+<p id="section-2-5">Examples in this document are illustrative and omit unrelated claims, signatures, and validation steps that a complete deployment would need.<a href="#section-2-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="relationship-to-the-receipts-companion">
+<section id="section-3">
+      <h2 id="name-relationship-to-the-receipt">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-relationship-to-the-receipt" class="section-name selfRef">Relationship to the Receipts Companion</a>
+      </h2>
+<p id="section-3-1">This profile uses two extension points in <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span>:<a href="#section-3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3-2.1">
+          <p id="section-3-2.1.1">Receipt extension claims: <code>bounds</code> and <code>reauthorized</code>, protected by the receipt signature.<a href="#section-3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-3-2.2">
+          <p id="section-3-2.2.1">Cross-receipt verification: comparisons across receipts.<a href="#section-3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-3-3">The receipt signing, linkage, byte-preservation, and coverage rules of that document continue to apply.<a href="#section-3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="governed-dimensions">
+<section id="section-4">
+      <h2 id="name-governed-dimensions-and-com">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-governed-dimensions-and-com" class="section-name selfRef">Governed Dimensions and Comparison Rules</a>
+      </h2>
+<p id="section-4-1">Consumer verification (<a href="#consumer-processing" class="auto internal xref">Section 7</a>) applies the comparison rules below.  A comparison is evaluated only when both compared values are present; absence of a recorded bound is missing evidence, not a successful comparison (<a href="#bounds-claim" class="auto internal xref">Section 5.1</a>).<a href="#section-4-1" class="pilcrow">¶</a></p>
+<div id="scope-dimension">
+<section id="section-4.1">
+        <h3 id="name-scope">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-scope" class="section-name selfRef"><code>scope</code></a>
+        </h3>
+<p id="section-4.1-1">The <code>scope</code> dimension records the space-separated scope string of <span><a href="https://rfc-editor.org/rfc/rfc6749#section-3.3" class="relref">Section 3.3</a> of [<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>.  Values are compared as follows:<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.1-2.1">
+            <p id="section-4.1-2.1.1">parse both values into sets of distinct scope tokens (separator: ASCII space, U+0020);<a href="#section-4.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.1-2.2">
+            <p id="section-4.1-2.2.1"><code>scope_a</code> is within <code>scope_b</code> if and only if every token in <code>scope_a</code> is also in <code>scope_b</code>;<a href="#section-4.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.1-2.3">
+            <p id="section-4.1-2.3.1">the empty string is the empty set and is within every scope set.<a href="#section-4.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-4.1-3">Comparison does not interpret scope semantics: <code>read:user/*</code> is not treated as covering <code>read:user/123</code> (<a href="#scope-subsumption-gaps" class="auto internal xref">Section 11.3</a>).<a href="#section-4.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="audience-governance">
+<section id="section-4.2">
+        <h3 id="name-aud-and-audience-governance">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-aud-and-audience-governance" class="section-name selfRef"><code>aud</code> and Audience Governance</a>
+        </h3>
+<p id="section-4.2-1">The <code>aud</code> dimension records the audience of the token issued at the hop, as a string or array of strings with the value space of <span><a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.3" class="relref">Section 4.1.3</a> of [<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>.  Comparison treats a single string as a one-element set; <code>aud_a</code> is within <code>aud_b</code> if and only if every value in <code>aud_a</code> is in <code>aud_b</code>.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<p id="section-4.2-2">By default, audience is recorded without monotonicity enforcement because Token Exchange commonly retargets tokens.  Recorded audiences remain useful for audit and comparison with actor-consented targets (<a href="#composition-with-proofs" class="auto internal xref">Section 7.1</a>).<a href="#section-4.2-2" class="pilcrow">¶</a></p>
+<p id="section-4.2-3">A deployment whose chains do not retarget, or that treats retargeting as a policy-controlled event, <span class="bcp14">MAY</span> require audience governance through the metadata in <a href="#discovery-capability-signaling" class="auto internal xref">Section 8</a> or local policy.  It then applies the same monotonicity rules to <code>aud</code>; retargeting <span class="bcp14">MUST</span> be covered by re-authorization or verification fails.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="resource-dimension">
+<section id="section-4.3">
+        <h3 id="name-resource">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-resource" class="section-name selfRef"><code>resource</code></a>
+        </h3>
+<p id="section-4.3-1">The <code>resource</code> dimension records the effective set of resource indicators that the issuer applied, as an array of absolute URIs with <span>[<a href="#RFC8707" class="cite xref">RFC8707</a>]</span> semantics.  An issuer that applied no resource indicator omits <code>bounds.resource</code> rather than recording an empty array; where a resource server requires <code>resource</code> (<a href="#protected-resource-metadata" class="auto internal xref">Section 8.2</a>), the omission fails that dimension.<a href="#section-4.3-1" class="pilcrow">¶</a></p>
+<p id="section-4.3-2">Values are compared as follows:<a href="#section-4.3-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.3-3.1">
+            <p id="section-4.3-3.1.1">compare URIs by simple string comparison (<span><a href="https://rfc-editor.org/rfc/rfc3986#section-6.2.1" class="relref">Section 6.2.1</a> of [<a href="#RFC3986" class="cite xref">RFC3986</a>]</span>); issuers need to record each resource indicator in the same form at every hop;<a href="#section-4.3-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.3-3.2">
+            <p id="section-4.3-3.2.1"><code>resource_a</code> is within <code>resource_b</code> if and only if every URI in <code>resource_a</code> is also in <code>resource_b</code>.<a href="#section-4.3-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-4.3-4">URI prefix subsumption (for example, treating <code>https://api.travel-provider.example/v1/</code> as covering <code>https://api.travel-provider.example/v1/users</code>) is not applied.  Issuers wishing to express prefix relationships <span class="bcp14">MUST</span> emit explicit URIs at each hop.<a href="#section-4.3-4" class="pilcrow">¶</a></p>
+<p id="section-4.3-5">By default, <code>resource</code> is recorded without monotonicity enforcement because Token Exchange uses the <code>resource</code> parameter to retarget tokens (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.1" class="relref">Section 2.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>).  A deployment <span class="bcp14">MAY</span> require monotonicity for <code>resource</code> through the same metadata or local policy as audience governance (<a href="#audience-governance" class="auto internal xref">Section 4.2</a>).  It then applies the same monotonicity rules to <code>resource</code>; retargeting <span class="bcp14">MUST</span> be covered by re-authorization or verification fails.<a href="#section-4.3-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="rar-dimension">
+<section id="section-4.4">
+        <h3 id="name-authorization_details">
+<a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-authorization_details" class="section-name selfRef"><code>authorization_details</code></a>
+        </h3>
+<p id="section-4.4-1">The <code>authorization_details</code> dimension records the Rich Authorization Requests array of <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span>.  Refinement is evaluated per object and per type:<a href="#section-4.4-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.4-2.1">
+            <p id="section-4.4-2.1.1">an array <code>ad_a</code> refines <code>ad_b</code> if and only if every object in <code>ad_a</code> refines some object in <code>ad_b</code>; objects present in <code>ad_b</code> but absent from <code>ad_a</code> represent narrowing and are permitted; objects in <code>ad_a</code> that refine no object in <code>ad_b</code> represent expansion and fail the comparison;<a href="#section-4.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.4-2.2">
+            <p id="section-4.4-2.2.1">an object refines another object only when both have the same <code>type</code>;<a href="#section-4.4-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.4-2.3">
+            <p id="section-4.4-2.3.1">for the common members defined by <span><a href="https://rfc-editor.org/rfc/rfc9396#section-2.2" class="relref">Section 2.2</a> of [<a href="#RFC9396" class="cite xref">RFC9396</a>]</span>, refinement requires: <code>actions</code> a subset, <code>locations</code> a subset under the URI rules of <a href="#resource-dimension" class="auto internal xref">Section 4.3</a>, <code>datatypes</code> a subset, <code>privileges</code> a subset, and <code>identifier</code> equal; a common member present in the <code>ad_b</code> object but absent from the <code>ad_a</code> object is expansion and fails the comparison, and one absent from the <code>ad_b</code> object but present in the <code>ad_a</code> object also fails the comparison unless the refinement rules for that <code>type</code> establish that it preserves or narrows authority, because the effect of a member depends on the API's semantics (<span><a href="https://rfc-editor.org/rfc/rfc9396#section-6.1" class="relref">Section 6.1</a> of [<a href="#RFC9396" class="cite xref">RFC9396</a>]</span>).<a href="#section-4.4-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-4.4-3">The common-member rules above apply to objects of a <code>type</code> whose members the recipient can evaluate, either because it knows that the <code>type</code> defines no other members or because it has a refinement rule for them.  For any other <code>type</code>, an object refines another object of the same <code>type</code> only when the two are equal as whole JSON objects (the same member names with equal values; member order is insignificant), and any change requires a type-specific refinement rule.  RAR type specifications <span class="bcp14">SHOULD</span> define their own refinement rules; see <a href="#extensibility" class="auto internal xref">Section 10</a>.<a href="#section-4.4-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="dimensions-explicitly-not-governed">
+<section id="section-4.5">
+        <h3 id="name-dimensions-explicitly-not-g">
+<a href="#section-4.5" class="section-number selfRef">4.5. </a><a href="#name-dimensions-explicitly-not-g" class="section-name selfRef">Dimensions Explicitly Not Governed</a>
+        </h3>
+<p id="section-4.5-1">This profile does not govern token lifetime (<code>exp</code>), presenter binding (<code>cnf</code>), subject identity (<code>sub</code>), or entity classification (<code>sub_profile</code>).  The base profiles define those rules.<a href="#section-4.5-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="receipt-extension-claims">
+<section id="section-5">
+      <h2 id="name-receipt-extension-claims">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-receipt-extension-claims" class="section-name selfRef">Receipt Extension Claims</a>
+      </h2>
+<p id="section-5-1">This section defines two extension claims for Actor Receipt JWTs, under the extension-claims rule of <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span>.  Both inherit the receipt's signature and byte-preservation protections.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div id="bounds-claim">
+<section id="section-5.1">
+        <h3 id="name-the-bounds-claim">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-the-bounds-claim" class="section-name selfRef">The <code>bounds</code> Claim</a>
+        </h3>
+<span class="break"></span><dl class="dlParallel" id="section-5.1-1">
+          <dt id="section-5.1-1.1">
+<code>bounds</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.1-1.2">
+            <p id="section-5.1-1.2.1"><span class="bcp14">OPTIONAL</span>.  A JSON object recording the authority bounds in effect for the token issued at this hop.  Members correspond to the governed dimensions:<a href="#section-5.1-1.2.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.1-1.2.2.1">
+                <p id="section-5.1-1.2.2.1.1"><code>scope</code>: a string of space-separated scope tokens;<a href="#section-5.1-1.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-5.1-1.2.2.2">
+                <p id="section-5.1-1.2.2.2.1"><code>aud</code>: a string or array of strings;<a href="#section-5.1-1.2.2.2.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-5.1-1.2.2.3">
+                <p id="section-5.1-1.2.2.3.1"><code>resource</code>: an array of URI strings;<a href="#section-5.1-1.2.2.3.1" class="pilcrow">¶</a></p>
+</li>
+              <li class="normal" id="section-5.1-1.2.2.4">
+                <p id="section-5.1-1.2.2.4.1"><code>authorization_details</code>: an array of <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span> objects.<a href="#section-5.1-1.2.2.4.1" class="pilcrow">¶</a></p>
+</li>
+            </ul>
+<p id="section-5.1-1.2.3">Each member, when present, <span class="bcp14">MUST</span> equal the corresponding effective value applied to the token issued at this hop: for <code>scope</code>, <code>aud</code>, and <code>authorization_details</code>, ordinarily the issued token's top-level claim of the same name; for <code>resource</code>, the resource-indicator set the issuer applied whether or not the token carries a claim.<a href="#section-5.1-1.2.3" class="pilcrow">¶</a></p>
+<p id="section-5.1-1.2.4">An absent member is missing evidence, not an assertion that authority was unconstrained or unchanged.  Recipients <span class="bcp14">MUST</span> treat it accordingly.  Additional dimensions <span class="bcp14">MAY</span> be registered under <a href="#iana-dimensions" class="auto internal xref">Section 13.2</a>; consumers <span class="bcp14">MUST</span> ignore unrecognized members unless a specification or local agreement supplies their comparison rule.<a href="#section-5.1-1.2.4" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-5.1-2">A receipt <span class="bcp14">MAY</span> omit <code>bounds</code> entirely, and a chain <span class="bcp14">MAY</span> mix receipts with and without it.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="reauthorized-claim">
+<section id="section-5.2">
+        <h3 id="name-the-reauthorized-claim">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-the-reauthorized-claim" class="section-name selfRef">The <code>reauthorized</code> Claim</a>
+        </h3>
+<span class="break"></span><dl class="dlParallel" id="section-5.2-1">
+          <dt id="section-5.2-1.1">
+<code>reauthorized</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-5.2-1.2">
+            <p id="section-5.2-1.2.1"><span class="bcp14">OPTIONAL</span>.  A JSON object recording that the authority issued at this hop was expanded relative to the inbound authority under an explicit re-authorization.  Members:<a href="#section-5.2-1.2.1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-5.2-1.2.2">
+              <dt id="section-5.2-1.2.2.1">
+<code>sub</code>:</dt>
+              <dd style="margin-left: 1.5em" id="section-5.2-1.2.2.2">
+                <p id="section-5.2-1.2.2.2.1"><span class="bcp14">REQUIRED</span>.  Identifier of the principal or authority that re-authorized the delegation, such as the subject, an approver, or the authority whose policy or agreement applies.  When the subject itself re-authorized, it equals the top-level <code>sub</code> of the token issued at this hop.  Recipients evaluate whether to trust the re-authorization under <a href="#reauthorization-abuse" class="auto internal xref">Section 11.2</a>.<a href="#section-5.2-1.2.2.2.1" class="pilcrow">¶</a></p>
+</dd>
+              <dd class="break"></dd>
+<dt id="section-5.2-1.2.2.3">
+<code>iss</code>:</dt>
+              <dd style="margin-left: 1.5em" id="section-5.2-1.2.2.4">
+                <p id="section-5.2-1.2.2.4.1"><span class="bcp14">REQUIRED</span>.  Identifier of the authorization server or other authority that captured the re-authorization.<a href="#section-5.2-1.2.2.4.1" class="pilcrow">¶</a></p>
+</dd>
+              <dd class="break"></dd>
+<dt id="section-5.2-1.2.2.5">
+<code>method</code>:</dt>
+              <dd style="margin-left: 1.5em" id="section-5.2-1.2.2.6">
+                <p id="section-5.2-1.2.2.6.1"><span class="bcp14">REQUIRED</span>.  A value from the re-authorization methods registry established in <a href="#iana-methods" class="auto internal xref">Section 13.3</a>, or a collision-resistant URI.  The initial registered values are:<a href="#section-5.2-1.2.2.6.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-5.2-1.2.2.6.2.1">
+                    <p id="section-5.2-1.2.2.6.2.1.1"><code>interactive_consent</code>: re-authorization by the principal through an interactive prompt;<a href="#section-5.2-1.2.2.6.2.1.1" class="pilcrow">¶</a></p>
+</li>
+                  <li class="normal" id="section-5.2-1.2.2.6.2.2">
+                    <p id="section-5.2-1.2.2.6.2.2.1"><code>step_up</code>: re-authorization through step-up authentication;<a href="#section-5.2-1.2.2.6.2.2.1" class="pilcrow">¶</a></p>
+</li>
+                  <li class="normal" id="section-5.2-1.2.2.6.2.3">
+                    <p id="section-5.2-1.2.2.6.2.3.1"><code>policy_grant</code>: programmatic re-authorization under a deployment policy artifact;<a href="#section-5.2-1.2.2.6.2.3.1" class="pilcrow">¶</a></p>
+</li>
+                  <li class="normal" id="section-5.2-1.2.2.6.2.4">
+                    <p id="section-5.2-1.2.2.6.2.4.1"><code>domain_transition</code>: the hop crosses a trust-domain boundary at which authority vocabularies change (<a href="#domain-transitions" class="auto internal xref">Section 6.3</a>).<a href="#section-5.2-1.2.2.6.2.4.1" class="pilcrow">¶</a></p>
+</li>
+                </ul>
+</dd>
+              <dd class="break"></dd>
+<dt id="section-5.2-1.2.2.7">
+<code>iat</code>:</dt>
+              <dd style="margin-left: 1.5em" id="section-5.2-1.2.2.8">
+                <p id="section-5.2-1.2.2.8.1"><span class="bcp14">REQUIRED</span>.  Time of the re-authorization.<a href="#section-5.2-1.2.2.8.1" class="pilcrow">¶</a></p>
+</dd>
+              <dd class="break"></dd>
+<dt id="section-5.2-1.2.2.9">
+<code>dimensions</code>:</dt>
+              <dd style="margin-left: 1.5em" id="section-5.2-1.2.2.10">
+                <p id="section-5.2-1.2.2.10.1"><span class="bcp14">REQUIRED</span>.  A non-empty array of the governed dimension names this re-authorization resets.  The receipt <span class="bcp14">MUST</span> carry <code>bounds</code> for each listed dimension.<a href="#section-5.2-1.2.2.10.1" class="pilcrow">¶</a></p>
+</dd>
+              <dd class="break"></dd>
+<dt id="section-5.2-1.2.2.11">
+<code>artifact</code>:</dt>
+              <dd style="margin-left: 1.5em" id="section-5.2-1.2.2.12">
+                <p id="section-5.2-1.2.2.12.1"><span class="bcp14">OPTIONAL</span>.  A URI or token identifier referencing an external artifact that evidences the re-authorization (for example, a consent record or step-up assertion).  Recipients <span class="bcp14">MAY</span> resolve and validate the artifact under local policy; <a href="#reauthorization-abuse" class="auto internal xref">Section 11.2</a> covers when deployments require it.<a href="#section-5.2-1.2.2.12.1" class="pilcrow">¶</a></p>
+</dd>
+            <dd class="break"></dd>
+</dl>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-5.2-2">When <code>reauthorized</code> is present on a receipt, that hop is a new monotonicity basis only for the dimensions listed in <code>reauthorized.dimensions</code>: the hop's bounds for a listed dimension are not compared against older bounds, and newer artifacts are compared against the post-re-authorization bounds (<a href="#consumer-processing" class="auto internal xref">Section 7</a>).  A receipt carrying <code>reauthorized</code> <span class="bcp14">SHOULD</span> carry <code>bounds</code> for every governed dimension in effect at the hop.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="issuer-processing">
+<section id="section-6">
+      <h2 id="name-issuer-processing">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-issuer-processing" class="section-name selfRef">Issuer Processing</a>
+      </h2>
+<p id="section-6-1">This section extends the issuer processing of <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span>, whose receipt creation, extension, preservation, and reissuance rules apply unchanged.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<div id="recording-bounds">
+<section id="section-6.1">
+        <h3 id="name-recording-bounds-at-a-new-h">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-recording-bounds-at-a-new-h" class="section-name selfRef">Recording Bounds at a New Hop</a>
+        </h3>
+<p id="section-6.1-1">When an issuer adds a new outermost actor hop and creates the receipt for it, and the deployment uses this profile, the issuer:<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-6.1-2">
+<li id="section-6.1-2.1">
+            <p id="section-6.1-2.1.1"><span class="bcp14">MUST</span> determine the issued token's effective <code>scope</code>, <code>aud</code>, <code>resource</code>, and <code>authorization_details</code> under the underlying grant rules.<a href="#section-6.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.1-2.2">
+            <p id="section-6.1-2.2.1"><span class="bcp14">MUST</span> include in the new receipt's <code>bounds</code> each dimension it attests, with each member equal to the effective issued value per <a href="#bounds-claim" class="auto internal xref">Section 5.1</a>.<a href="#section-6.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.1-2.3">
+            <p id="section-6.1-2.3.1">For each monotonic dimension it enforces, <span class="bcp14">MUST</span> verify that the issued value is within the inbound token's effective value for that dimension, and, when the inbound token's validated <code>receipt[0]</code> carries bounds for the dimension, within that receipt's recorded bound.<a href="#section-6.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-6.1-2.4">
+            <p id="section-6.1-2.4.1">When the requested authority would fail step 3, <span class="bcp14">MAY</span> narrow the issued <code>scope</code> to fit (<span><a href="https://rfc-editor.org/rfc/rfc6749#section-3.3" class="relref">Section 3.3</a> of [<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>; a Token Exchange response then reports the issued scope, <span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.1" class="relref">Section 2.2.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>), and, on a request other than Token Exchange, the issued <code>resource</code> value (<span><a href="https://rfc-editor.org/rfc/rfc8707#section-2.2" class="relref">Section 2.2</a> of [<a href="#RFC8707" class="cite xref">RFC8707</a>]</span>); it does not drop a requested audience, or a requested resource on a Token Exchange request, and steps 1 to 3 then apply to the narrowed value.  When the issuer has a re-authorization for the expansion, captured under one of the methods of <a href="#reauthorized-claim" class="auto internal xref">Section 5.2</a> by the issuer itself or by an authority it trusts, it <span class="bcp14">MAY</span> instead proceed by recording <code>reauthorized</code> on the new receipt, listing each expanded dimension in <code>reauthorized.dimensions</code>.  An issuer that does neither, or whose narrowing leaves nothing permitted, <span class="bcp14">MUST</span> reject the request under <a href="#error-handling" class="auto internal xref">Section 9</a>.<a href="#section-6.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+</section>
+</div>
+<div id="reissuance-and-refresh">
+<section id="section-6.2">
+        <h3 id="name-reissuance-and-refresh-with">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-reissuance-and-refresh-with" class="section-name selfRef">Reissuance and Refresh Without a New Hop</a>
+        </h3>
+<p id="section-6.2-1">Reissuance without a new actor hop creates no receipt, so recorded bounds cannot change through the receipt chain.  An issuer that reissues or refreshes while carrying a bounds-bearing receipt chain forward:<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.2-2.1">
+            <p id="section-6.2-2.1.1"><span class="bcp14">MUST NOT</span> issue an outer token whose value for any monotonic dimension exceeds <code>receipt[0]</code>'s recorded bound; narrowing further is always permitted;<a href="#section-6.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.2-2.2">
+            <p id="section-6.2-2.2.1">when the issued value would exceed the recorded bound for a monotonic dimension, even because broader authority was authorized without a new hop (for example, a refresh grant following step-up or an approver widening the underlying grant), <span class="bcp14">MUST</span> narrow the issued value to fit, fail the request, or, where local policy and resource requirements permit absent receipt coverage, drop the inherited <code>actor_receipts</code> array and with it the bounds evidence.<a href="#section-6.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="domain-transitions">
+<section id="section-6.3">
+        <h3 id="name-domain-transitions">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-domain-transitions" class="section-name selfRef">Domain Transitions</a>
+        </h3>
+<p id="section-6.3-1">A domain boundary can change the authority vocabulary, making syntactic comparison unsuitable.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
+<p id="section-6.3-2">An issuer that adds a hop whose authority vocabulary differs from the inbound token's:<a href="#section-6.3-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6.3-3.1">
+            <p id="section-6.3-3.1.1"><span class="bcp14">MUST</span> record <code>reauthorized</code> on the new receipt with <code>method: domain_transition</code> and with <code>dimensions</code> listing every governed dimension, establishing a new monotonicity basis at the boundary;<a href="#section-6.3-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.3-3.2">
+            <p id="section-6.3-3.2.1"><span class="bcp14">MUST</span> record the new domain's authority values in the new receipt's <code>bounds</code>;<a href="#section-6.3-3.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-6.3-3.3">
+            <p id="section-6.3-3.3.1"><span class="bcp14">SHOULD</span> reference, via <code>reauthorized.artifact</code>, the policy or agreement under which the cross-domain translation is authorized.<a href="#section-6.3-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-6.3-4">Comparison applies within each domain segment.  A recipient requiring end-to-end monotonicity <span class="bcp14">MUST</span> reject chains containing <code>domain_transition</code> bases unless explicit trusted mappings establish cross-domain equivalence.<a href="#section-6.3-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="partial-and-sparse-coverage">
+<section id="section-6.4">
+        <h3 id="name-partial-and-sparse-coverage">
+<a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-partial-and-sparse-coverage" class="section-name selfRef">Partial and Sparse Coverage</a>
+        </h3>
+<p id="section-6.4-1">A partial receipt chain can carry bounds on any subset of its receipts.  Deployments needing origin-hop evidence should enable recording at the origin issuer first.<a href="#section-6.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="consumer-processing">
+<section id="section-7">
+      <h2 id="name-consumer-processing">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-consumer-processing" class="section-name selfRef">Consumer Processing</a>
+      </h2>
+<p id="section-7-1">An issuer, resource server, or other recipient relying on this profile <span class="bcp14">MUST</span> perform the following steps:<a href="#section-7-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-7-2">
+<li id="section-7-2.1">
+          <p id="section-7-2.1.1">Validate the outer token and receipt chain under <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span>.  Bounds in receipts that fail that validation <span class="bcp14">MUST NOT</span> be used.<a href="#section-7-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-7-2.2">
+          <p id="section-7-2.2.1">Check claim types:<a href="#section-7-2.2.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7-2.2.2.1">
+              <p id="section-7-2.2.2.1.1"><code>bounds</code> is an object whose recognized members have the types defined in <a href="#governed-dimensions" class="auto internal xref">Section 4</a>.<a href="#section-7-2.2.2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-7-2.2.2.2">
+              <p id="section-7-2.2.2.2.1"><code>reauthorized</code> contains its required, correctly typed members, and the receipt carries <code>bounds</code> for each dimension named in <code>reauthorized.dimensions</code>.<a href="#section-7-2.2.2.2.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</li>
+        <li id="section-7-2.3">
+          <p id="section-7-2.3.1">Compare adjacent receipts for each monotonic dimension D (<code>aud</code> and <code>resource</code> are monotonic only when required):<a href="#section-7-2.3.1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7-2.3.2.1">
+              <p id="section-7-2.3.2.1.1">Apply this step to D only when every receipt in the chain records <code>bounds[D]</code>; a dimension recorded on only some receipts is recorded for audit but not verified.<a href="#section-7-2.3.2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-7-2.3.2.2">
+              <p id="section-7-2.3.2.2.1">Skip comparison for D when the newer receipt carries <code>reauthorized</code> listing D in <code>dimensions</code>, establishing a new basis for D.<a href="#section-7-2.3.2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-7-2.3.2.3">
+              <p id="section-7-2.3.2.3.1">Otherwise, the newer receipt's <code>bounds[D]</code> must be within the older receipt's <code>bounds[D]</code> under <a href="#governed-dimensions" class="auto internal xref">Section 4</a>.  Failure <span class="bcp14">MUST</span> reject bounds evidence.<a href="#section-7-2.3.2.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</li>
+        <li id="section-7-2.4">
+          <p id="section-7-2.4.1">Compare the current token with <code>receipt[0]</code> for each monotonic D that <code>receipt[0]</code> carries in <code>bounds</code> and whose effective token value is available from claims, introspection, or trusted context.  The token's value <span class="bcp14">MUST</span> be within <code>receipt[0].bounds[D]</code>.  Skip <code>resource</code> comparison when its effective value cannot be determined.<a href="#section-7-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-7-2.5">
+          <p id="section-7-2.5.1">Enforce dimensions required by <code>authority_bounds_required</code> or local policy.  Each required D must be recorded on every receipt and pass steps 3 and 4; a step-4 comparison that cannot be made because the token's effective value for D cannot be determined fails D.  Sparse coverage does not satisfy this requirement.  Full-chain enforcement also needs complete receipt coverage (<a href="#protected-resource-metadata" class="auto internal xref">Section 8.2</a>).<a href="#section-7-2.5.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-7-2.6">
+          <p id="section-7-2.6.1">Apply any additional rules defined by companion profiles whose claims appear in the artifacts (<a href="#extensibility" class="auto internal xref">Section 10</a>).<a href="#section-7-2.6.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+<p id="section-7-3">If any required check fails, the recipient <span class="bcp14">MUST</span> reject the token's bounds-based evidence and <span class="bcp14">MUST</span> apply the underlying protocol's error handling for the stage at which the failure occurred.  Rejection of bounds-based evidence does not by itself invalidate the receipt chain under <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span>; whether the token remains acceptable without bounds evidence is local policy, except where step 5 applies.<a href="#section-7-3" class="pilcrow">¶</a></p>
+<div id="composition-with-proofs">
+<section id="section-7.1">
+        <h3 id="name-composition-with-actor-sign">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-composition-with-actor-sign" class="section-name selfRef">Composition with Actor-Signed Hop Proofs</a>
+        </h3>
+<p id="section-7.1-1">When the token also carries <code>actor_proofs</code> validated under <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span>, recorded bounds and actor-consented target bindings are comparable at each hop covered by both artifacts.  For each index i covered by a bounds-bearing receipt and a proof:<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-7.1-2.1">
+            <p id="section-7.1-2.1.1">when <code>receipt[i].bounds.aud</code> is present, it <span class="bcp14">MUST</span> be within <code>actor_proofs[i].target.aud</code>;<a href="#section-7.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.1-2.2">
+            <p id="section-7.1-2.2.1">when both <code>receipt[i].bounds.resource</code> and <code>actor_proofs[i].target.resource</code> are present, the recorded set <span class="bcp14">MUST</span> be within the consented set;<a href="#section-7.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.1-2.3">
+            <p id="section-7.1-2.3.1">when both <code>receipt[i].bounds.scope</code> and <code>actor_proofs[i].target.scope</code> (defined below) are present, the recorded scope set <span class="bcp14">MUST</span> be within the consented scope set.<a href="#section-7.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-7.1-3">A failed comparison means the issuer recorded authority broader than the actor consented to at that hop; recipients validating both companions <span class="bcp14">MUST</span> treat it as a failed required check for both artifacts' evidence.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+<p id="section-7.1-4">An issuer that supports this profile and accepts a proof carrying <code>target.scope</code> <span class="bcp14">MUST NOT</span> embed that proof in a token whose scope exceeds <code>target.scope</code>.  A recipient that supports this profile and relies on the proof chain <span class="bcp14">MUST</span> verify, independently of receipt coverage, that the current token's effective scope is within <code>actor_proofs[0].target.scope</code> when that member is present, under <a href="#scope-dimension" class="auto internal xref">Section 4.1</a>; a token whose scope exceeds it has diverged from the proof chain, and the target-binding strict mode of <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span> decides whether the recipient rejects the chain.  A recipient that cannot determine the token's effective scope <span class="bcp14">MUST NOT</span> infer scope-level consent from the proof.<a href="#section-7.1-4" class="pilcrow">¶</a></p>
+<p id="section-7.1-5">This document defines one extension member for the proof <code>target</code> object, under the constraining-extension rule of <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span>:<a href="#section-7.1-5" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-7.1-6">
+          <dt id="section-7.1-6.1">
+<code>target.scope</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-7.1-6.2">
+            <p id="section-7.1-6.2.1"><span class="bcp14">OPTIONAL</span>.  A string of space-separated scope tokens the actor authorizes for the token issued at its hop, compared under the rules of <a href="#scope-dimension" class="auto internal xref">Section 4.1</a>.  As a constraining member, its presence narrows the actor's target binding; consumers that do not recognize it ignore it per <span>[<a href="#I-D.mcguinness-oauth-actor-proofs" class="cite xref">I-D.mcguinness-oauth-actor-proofs</a>]</span>.<a href="#section-7.1-6.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="use-by-resource-servers">
+<section id="section-7.2">
+        <h3 id="name-use-by-resource-servers">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-use-by-resource-servers" class="section-name selfRef">Use by Resource Servers</a>
+        </h3>
+<p id="section-7.2-1">An RS <span class="bcp14">MUST</span> still evaluate the current token under current policy; verified history alone does not authorize access.  Bounds verification compares values recorded in validated receipts, which the outer token carries as a top-level claim, with the current token's own claims and, when present, validated proofs; it does not make nested <code>act</code> objects inputs to access-control decisions (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>).<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="consumer-introspection">
+<section id="section-7.3">
+        <h3 id="name-introspection">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-introspection" class="section-name selfRef">Introspection</a>
+        </h3>
+<p id="section-7.3-1">Bounds travel inside receipts, so the introspection rules of <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> apply unchanged.  An introspection response whose <code>receipt[0]</code> carries <code>bounds</code> <span class="bcp14">MUST</span> also include the token's <code>scope</code>, <code>aud</code>, and <code>authorization_details</code> (<span><a href="https://rfc-editor.org/rfc/rfc9396#section-9.2" class="relref">Section 9.2</a> of [<a href="#RFC9396" class="cite xref">RFC9396</a>]</span>) members for each of those dimensions that <code>receipt[0].bounds</code> records, so that step 4 of <a href="#consumer-processing" class="auto internal xref">Section 7</a> can be applied.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="discovery-capability-signaling">
+<section id="section-8">
+      <h2 id="name-discovery-and-capability-si">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-discovery-and-capability-si" class="section-name selfRef">Discovery and Capability Signaling</a>
+      </h2>
+<p id="section-8-1">This metadata follows the discovery conventions of <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span>, using dimension-valued parameters where a boolean would not convey which dimensions are covered.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<div id="authorization-server-metadata">
+<section id="section-8.1">
+        <h3 id="name-authorization-server-metada">
+<a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-authorization-server-metada" class="section-name selfRef">Authorization Server Metadata</a>
+        </h3>
+<p id="section-8.1-1">The following parameters are defined for use in Authorization Server Metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>:<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-8.1-2">
+          <dt id="section-8.1-2.1">
+<code>authority_bounds_supported</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-8.1-2.2">
+            <p id="section-8.1-2.2.1"><span class="bcp14">OPTIONAL</span>.  A non-empty array of governed-dimension names.  The authorization server advertises that, for each named dimension, it can record receipt-attested bounds and enforce issuance-time monotonicity per <a href="#recording-bounds" class="auto internal xref">Section 6.1</a>.  Absence of the parameter, or of a dimension from the array, makes no claim of support.<a href="#section-8.1-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-8.1-3">This parameter applies equally to a Transaction Token Service that publishes metadata through the same framework.<a href="#section-8.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="protected-resource-metadata">
+<section id="section-8.2">
+        <h3 id="name-protected-resource-metadata">
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-protected-resource-metadata" class="section-name selfRef">Protected Resource Metadata</a>
+        </h3>
+<p id="section-8.2-1">The following parameters are defined for use in Protected Resource Metadata <span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span>:<a href="#section-8.2-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-8.2-2">
+          <dt id="section-8.2-2.1">
+<code>authority_bounds_required</code>:</dt>
+          <dd style="margin-left: 1.5em" id="section-8.2-2.2">
+            <p id="section-8.2-2.2.1"><span class="bcp14">OPTIONAL</span>.  A non-empty array of governed-dimension names.  For each named dimension, the resource server requires the dense receipt-attested enforcement of consumer step 5: <code>bounds</code> for the dimension on every receipt and successful verification.  Naming <code>aud</code> or <code>resource</code> makes that dimension monotonic (<a href="#audience-governance" class="auto internal xref">Section 4.2</a>, <a href="#resource-dimension" class="auto internal xref">Section 4.3</a>).  This is a deployment policy declaration, satisfied by configuring the authorization servers that serve the resource; clients <span class="bcp14">MAY</span> combine it with <code>authority_bounds_supported</code> to select an AS.<a href="#section-8.2-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+</dl>
+<p id="section-8.2-3">A resource server that needs full-chain rather than covered-prefix enforcement <span class="bcp14">SHOULD</span> pair <code>authority_bounds_required</code> with the receipts companion's <code>actor_receipts_complete_required</code>.  That completeness signal does not attest that the visible <code>act</code> chain is itself unfiltered; that separate assurance is the <code>chain_complete</code> introspection response member (<span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>).<a href="#section-8.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="error-handling">
+<section id="section-9">
+      <h2 id="name-error-handling">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-error-handling" class="section-name selfRef">Error Handling</a>
+      </h2>
+<p id="section-9-1">When an authorization server or Transaction Token Service rejects a token request because inbound bounds evidence fails validation under <a href="#consumer-processing" class="auto internal xref">Section 7</a> (for example, a monotonicity failure in the inbound chain), it returns an error response per <span><a href="https://rfc-editor.org/rfc/rfc6749#section-5.2" class="relref">Section 5.2</a> of [<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>: <code>invalid_request</code> for a Token Exchange request, as <span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.2" class="relref">Section 2.2.2</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> requires, or <code>invalid_grant</code> for a JWT bearer grant request (<span><a href="https://rfc-editor.org/rfc/rfc7523#section-3.1" class="relref">Section 3.1</a> of [<a href="#RFC7523" class="cite xref">RFC7523</a>]</span>).<a href="#section-9-1" class="pilcrow">¶</a></p>
+<p id="section-9-2">When requested authority exceeds the recorded bound without re-authorization and the issuer does not narrow the issued value to fit, or narrowing leaves nothing permitted (<a href="#recording-bounds" class="auto internal xref">Section 6.1</a>), the issuer <span class="bcp14">SHOULD</span> return:<a href="#section-9-2" class="pilcrow">¶</a></p>
+<table class="center" id="table-1">
+        <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">Dimension</th>
+            <th class="text-left" rowspan="1" colspan="1">Error</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>scope</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>invalid_scope</code> (<span><a href="https://rfc-editor.org/rfc/rfc6749#section-5.2" class="relref">Section 5.2</a> of [<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>)</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>aud</code> or <code>resource</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>invalid_target</code> (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-2.2.2" class="relref">Section 2.2.2</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> for Token Exchange; <span><a href="https://rfc-editor.org/rfc/rfc8707#section-2" class="relref">Section 2</a> of [<a href="#RFC8707" class="cite xref">RFC8707</a>]</span> otherwise)</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>authorization_details</code>
+</td>
+            <td class="text-left" rowspan="1" colspan="1">
+              <code>invalid_authorization_details</code> <span>[<a href="#RFC9396" class="cite xref">RFC9396</a>]</span>
+</td>
+          </tr>
+        </tbody>
+      </table>
+<p id="section-9-4">When the failure reflects an actor-authorization decision, the issuer uses the <code>actor_unauthorized</code> error code defined in the core actor profile <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>.  An absent required artifact is an input-validation failure: the <code>invalid_request</code> error code for a Token Exchange request and the <code>invalid_grant</code> error code for a JWT bearer grant or refresh request.<a href="#section-9-4" class="pilcrow">¶</a></p>
+<p id="section-9-5">When a resource server rejects a request because bounds verification fails or required dimensions are unsatisfied, it <span class="bcp14">SHOULD</span> return <code>invalid_token</code> per <span><a href="https://rfc-editor.org/rfc/rfc6750#section-3.1" class="relref">Section 3.1</a> of [<a href="#RFC6750" class="cite xref">RFC6750</a>]</span>, and <span class="bcp14">SHOULD</span> include an <code>error_description</code> identifying bounds-verification failure so operators can distinguish it from generic token validation.  For a Transaction Token, the resource server rejects it through the deployment's Transaction Token handling, because <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> defines no error response.<a href="#section-9-5" class="pilcrow">¶</a></p>
+<p id="section-9-6">An introspection server does not return an OAuth error for missing bounds artifacts; their presence is a property of the response.  This document defines no new OAuth error codes.<a href="#section-9-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="extensibility">
+<section id="section-10">
+      <h2 id="name-extensibility">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-extensibility" class="section-name selfRef">Extensibility</a>
+      </h2>
+<p id="section-10-1">This profile composes with the extensibility framework of <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> and adds its own surfaces:<a href="#section-10-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-10-2.1">
+          <p id="section-10-2.1.1"><strong>New governed dimensions</strong>, registered in the dimension registry (<a href="#iana-dimensions" class="auto internal xref">Section 13.2</a>) with a defined comparison rule and a declared governance class (monotonic by default, or record-only).<a href="#section-10-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-10-2.2">
+          <p id="section-10-2.2.1"><strong>New re-authorization methods</strong>, registered in the methods registry (<a href="#iana-methods" class="auto internal xref">Section 13.3</a>) or expressed as collision-resistant URIs.<a href="#section-10-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-10-2.3">
+          <p id="section-10-2.3.1"><strong>Per-type RAR refinement rules</strong>, defined by the specifications that define RAR types; such rules extend <a href="#rar-dimension" class="auto internal xref">Section 4.4</a> for their types without modifying this document.<a href="#section-10-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-10-2.4">
+          <p id="section-10-2.4.1"><strong>Re-authorization without a new hop.</strong>  Another specification can define a mechanism for recording it, including how a validated re-authorization establishes a replacement bound for the dimensions it covers, and the evidence, trust, ordering, expiry, preservation, and discovery rules it needs.  An issuer or recipient that supports such a mechanism uses the replacement bound in place of the affected receipt's <code>bounds[D]</code> wherever this document compares against it, for the covered dimensions only.  One that does not support it <span class="bcp14">MUST</span> apply the recorded bounds defined here.<a href="#section-10-2.4.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-10-3">Companion rules <span class="bcp14">MUST NOT</span> relax any requirement needed for conformance to this profile, other than through a replacement bound as described above; they <span class="bcp14">MAY</span> add rejection conditions.  A companion's partial-validation mode, defined under its own normative scope as <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> requires, is not conformance to this profile.<a href="#section-10-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-11">
+      <h2 id="name-security-considerations">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-11-1">Authority bounds do not replace token validation or authorization (<a href="#consumer-processing" class="auto internal xref">Section 7</a>).  The general OAuth 2.0 Security Best Current Practice <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> and the JWT best practices in <span>[<a href="#RFC8725" class="cite xref">RFC8725</a>]</span> apply.<a href="#section-11-1" class="pilcrow">¶</a></p>
+<div id="threat-model">
+<section id="section-11.1">
+        <h3 id="name-threat-model">
+<a href="#section-11.1" class="section-number selfRef">11.1. </a><a href="#name-threat-model" class="section-name selfRef">Threat Model</a>
+        </h3>
+<p id="section-11.1-1">Bounds inherit the receipts companion's per-issuer, non-transitive trust model; composition with proofs adds an actor-side check with an independent trust anchor.<a href="#section-11.1-1" class="pilcrow">¶</a></p>
+<div id="adversaries-mitigated-by-this-profile">
+<section id="section-11.1.1">
+          <h4 id="name-adversaries-mitigated-by-th">
+<a href="#section-11.1.1" class="section-number selfRef">11.1.1. </a><a href="#name-adversaries-mitigated-by-th" class="section-name selfRef">Adversaries Mitigated by This Profile</a>
+          </h4>
+<ul class="normal">
+<li class="normal" id="section-11.1.1-1.1">
+              <p id="section-11.1.1-1.1.1"><strong>Intermediate authority expansion.</strong>  Detection requires every receipt in the chain to record the dimension.  Recording a wider value fails comparison; recording a narrower value than was issued fails the next enforcing issuer's inbound check or step 4 of <a href="#consumer-processing" class="auto internal xref">Section 7</a>, which compares against the effective values the token carries, not request-time values; omission fails dense-coverage enforcement.<a href="#section-11.1.1-1.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-11.1.1-1.2">
+              <p id="section-11.1.1-1.2.1"><strong>Silent basis change.</strong>  Expansion requires a signed <code>reauthorized</code> claim inside a trusted issuer's receipt, scoped to the dimensions it lists.<a href="#section-11.1.1-1.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-11.1.1-1.3">
+              <p id="section-11.1.1-1.3.1"><strong>Issuance beyond actor consent, when proofs are present.</strong>  <a href="#composition-with-proofs" class="auto internal xref">Section 7.1</a> detects recorded authority broader than the actor-signed target binding at the same hop.<a href="#section-11.1.1-1.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+<div id="adversaries-not-mitigated">
+<section id="section-11.1.2">
+          <h4 id="name-adversaries-not-mitigated">
+<a href="#section-11.1.2" class="section-number selfRef">11.1.2. </a><a href="#name-adversaries-not-mitigated" class="section-name selfRef">Adversaries Not Mitigated</a>
+          </h4>
+<ul class="normal">
+<li class="normal" id="section-11.1.2-1.1">
+              <p id="section-11.1.2-1.1.1"><strong>Origin issuer choosing broad initial bounds.</strong>  No upstream value constrains the origin; constraining it requires origin-issuer policy, pre-authorization artifacts, or transparency mechanisms.<a href="#section-11.1.2-1.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-11.1.2-1.2">
+              <p id="section-11.1.2-1.2.1"><strong>Fabricated re-authorization by a trusted issuer.</strong>  See <a href="#reauthorization-abuse" class="auto internal xref">Section 11.2</a>.<a href="#section-11.1.2-1.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-11.1.2-1.3">
+              <p id="section-11.1.2-1.3.1"><strong>Full-chain collusion.</strong>  Colluding issuers can fabricate a monotonic chain at any level; this matches the receipts companion's trust boundary.<a href="#section-11.1.2-1.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-11.1.2-1.4">
+              <p id="section-11.1.2-1.4.1"><strong>Semantic expansion within syntactic subsets.</strong>  See <a href="#scope-subsumption-gaps" class="auto internal xref">Section 11.3</a>.<a href="#section-11.1.2-1.4.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-11.1.2-1.5">
+              <p id="section-11.1.2-1.5.1"><strong>Cross-domain expansion.</strong>  A <code>domain_transition</code> basis reset is an unverified re-expression of authority (<a href="#domain-transitions" class="auto internal xref">Section 6.3</a>).<a href="#section-11.1.2-1.5.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-11.1.2-1.6">
+              <p id="section-11.1.2-1.6.1"><strong>Compromised current outer-token issuer.</strong>  As in the receipts companion, a compromised outer issuer can omit this profile's claims entirely; recipients detect that downgrade only by requiring the evidence (<a href="#discovery-capability-signaling" class="auto internal xref">Section 8</a>).<a href="#section-11.1.2-1.6.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="reauthorization-abuse">
+<section id="section-11.2">
+        <h3 id="name-re-authorization-abuse">
+<a href="#section-11.2" class="section-number selfRef">11.2. </a><a href="#name-re-authorization-abuse" class="section-name selfRef">Re-Authorization Abuse</a>
+        </h3>
+<p id="section-11.2-1">If an issuer trusted to record re-authorization is compromised or over-trusted, it can use those records to justify arbitrary expansion.<a href="#section-11.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-11.2-2.1">
+            <p id="section-11.2-2.1.1">Recipients <span class="bcp14">MUST</span> evaluate re-authorization trust separately from receipt trust: which issuers are trusted to capture re-authorization, for which subjects, and by which methods, is explicit local policy.  A recipient <span class="bcp14">MAY</span> accept an issuer's receipts while rejecting its re-authorization records; a rejected re-authorization is a failed basis reset, and the chain is then evaluated without it, which typically fails monotonicity and rejects the token's bounds evidence.<a href="#section-11.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-11.2-2.2">
+            <p id="section-11.2-2.2.1">Deployments needing strong re-authorization integrity <span class="bcp14">SHOULD</span> require <code>reauthorized.artifact</code> and <span class="bcp14">SHOULD</span> validate the referenced artifact against the authority that captured the event (for example, verifying a consent receipt's signature), rather than accepting the recording issuer's bare assertion.<a href="#section-11.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-11.2-2.3">
+            <p id="section-11.2-2.3.1">A <code>domain_transition</code> basis makes values non-comparable, so an attacker who can insert one can present any expansion as authorized.  Recipients <span class="bcp14">SHOULD</span> restrict which issuers may record domain transitions to the deployment's known boundary issuers.<a href="#section-11.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="scope-subsumption-gaps">
+<section id="section-11.3">
+        <h3 id="name-scope-subsumption-gaps">
+<a href="#section-11.3" class="section-number selfRef">11.3. </a><a href="#name-scope-subsumption-gaps" class="section-name selfRef">Scope Subsumption Gaps</a>
+        </h3>
+<p id="section-11.3-1">Set-membership comparison detects only verbatim expansion: a lexically new token fails the subset check even when semantically narrower, and a preserved token can be broadened by configuration changes at the AS that defines it.  Deployments whose scope grammars carry hierarchy or wildcard semantics <span class="bcp14">MUST</span> either emit explicit narrowest-form scopes at every hop, or define and apply a deployment-specific comparison rule; this document does not define scope subsumption, and a general solution belongs in its own specification.<a href="#section-11.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="privacy-considerations">
+<section id="section-12">
+      <h2 id="name-privacy-considerations">
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-privacy-considerations" class="section-name selfRef">Privacy Considerations</a>
+      </h2>
+<p id="section-12-1">The privacy considerations of <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span> apply, including cross-service correlation and retention beyond token lifetime.  Bounds add disclosure of authority information:<a href="#section-12-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-12-2.1">
+          <p id="section-12-2.1.1"><code>bounds</code> exposes per-hop scope, audience, resource, and authorization-detail values to every recipient of the token or introspection response, revealing internal permission vocabulary, resource topology, and orchestration structure.  Issuers <span class="bcp14">SHOULD</span> record only the dimensions recipients need, and <span class="bcp14">MAY</span> enforce monotonicity at issuance without recording bounds where disclosure outweighs evidence value.<a href="#section-12-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-12-2.2">
+          <p id="section-12-2.2.1"><code>reauthorized</code> reveals consent prompts, step-up authentication, and policy decisions, with timing; this is sensitive activity metadata.<a href="#section-12-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-12-2.3">
+          <p id="section-12-2.3.1">A fully bounds-covered chain is a detailed narrative of authority narrowing across an organization; deployments <span class="bcp14">SHOULD</span> scope disclosure to audiences with adequate agreements, using the receipts companion's all-or-nothing granularity deliberately.<a href="#section-12-2.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-13">
+      <h2 id="name-iana-considerations">
+<a href="#section-13" class="section-number selfRef">13. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<div id="iana-jwt-claims">
+<section id="section-13.1">
+        <h3 id="name-json-web-token-claims-regis">
+<a href="#section-13.1" class="section-number selfRef">13.1. </a><a href="#name-json-web-token-claims-regis" class="section-name selfRef">JSON Web Token Claims Registration</a>
+        </h3>
+<p id="section-13.1-1">This document requests registration of the following JWT Claims in the "JSON Web Token Claims" registry <span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>:<a href="#section-13.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-13.1-2.1">
+            <p id="section-13.1-2.1.1">Claim Name: <code>bounds</code><a href="#section-13.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.1-2.2">
+            <p id="section-13.1-2.2.1">Claim Description: Authority bounds in effect for the token issued at the hop attested by an Actor Receipt JWT<a href="#section-13.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.1-2.3">
+            <p id="section-13.1-2.3.1">Change Controller: IETF<a href="#section-13.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.1-2.4">
+            <p id="section-13.1-2.4.1">Specification Document(s): This document<a href="#section-13.1-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.1-2.5">
+            <p id="section-13.1-2.5.1">Claim Name: <code>reauthorized</code><a href="#section-13.1-2.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.1-2.6">
+            <p id="section-13.1-2.6.1">Claim Description: Record of explicit re-authorization of delegated authority at a hop<a href="#section-13.1-2.6.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.1-2.7">
+            <p id="section-13.1-2.7.1">Change Controller: IETF<a href="#section-13.1-2.7.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.1-2.8">
+            <p id="section-13.1-2.8.1">Specification Document(s): This document<a href="#section-13.1-2.8.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-13.1-3">This document does not request separate registration for the members of the <code>bounds</code>, <code>reauthorized</code>, and proof <code>target</code> objects it defines; sub-object keys within a registered claim are scoped to that claim's JSON object, following the convention of <span>[<a href="#I-D.mcguinness-oauth-actor-profile" class="cite xref">I-D.mcguinness-oauth-actor-profile</a>]</span>.<a href="#section-13.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="iana-dimensions">
+<section id="section-13.2">
+        <h3 id="name-oauth-actor-authority-bound">
+<a href="#section-13.2" class="section-number selfRef">13.2. </a><a href="#name-oauth-actor-authority-bound" class="section-name selfRef">OAuth Actor Authority Bounds Dimensions Registry</a>
+        </h3>
+<p id="section-13.2-1">This document requests that IANA establish a registry titled "OAuth Actor Authority Bounds Dimensions", with the registration policy Specification Required.  Each entry records: Dimension Name, Governance Class (<code>monotonic</code> or <code>record-only</code>), Comparison Rule reference, and Specification Document(s).  Initial contents:<a href="#section-13.2-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-13.2-2.1">
+            <p id="section-13.2-2.1.1"><code>scope</code>, monotonic, <a href="#scope-dimension" class="auto internal xref">Section 4.1</a> of this document<a href="#section-13.2-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.2">
+            <p id="section-13.2-2.2.1"><code>aud</code>, record-only, <a href="#audience-governance" class="auto internal xref">Section 4.2</a> of this document<a href="#section-13.2-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.3">
+            <p id="section-13.2-2.3.1"><code>resource</code>, record-only, <a href="#resource-dimension" class="auto internal xref">Section 4.3</a> of this document<a href="#section-13.2-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.2-2.4">
+            <p id="section-13.2-2.4.1"><code>authorization_details</code>, monotonic, <a href="#rar-dimension" class="auto internal xref">Section 4.4</a> of this document<a href="#section-13.2-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-13.2-3">Designated experts <span class="bcp14">SHOULD</span> verify that a requested dimension has a deterministic comparison rule, a declared governance class, and semantics that do not overlap an existing entry.<a href="#section-13.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="iana-methods">
+<section id="section-13.3">
+        <h3 id="name-oauth-actor-re-authorizatio">
+<a href="#section-13.3" class="section-number selfRef">13.3. </a><a href="#name-oauth-actor-re-authorizatio" class="section-name selfRef">OAuth Actor Re-Authorization Methods Registry</a>
+        </h3>
+<p id="section-13.3-1">This document requests that IANA establish a registry titled "OAuth Actor Re-Authorization Methods", with the registration policy Specification Required.  Each entry records: Method Name, Description, and Specification Document(s).  Initial contents: <code>interactive_consent</code>, <code>step_up</code>, <code>policy_grant</code>, and <code>domain_transition</code>, as defined in <a href="#reauthorized-claim" class="auto internal xref">Section 5.2</a>.  Values not in the registry <span class="bcp14">MUST</span> be collision-resistant URIs.<a href="#section-13.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="oauth-authorization-server-metadata-registration">
+<section id="section-13.4">
+        <h3 id="name-oauth-authorization-server-">
+<a href="#section-13.4" class="section-number selfRef">13.4. </a><a href="#name-oauth-authorization-server-" class="section-name selfRef">OAuth Authorization Server Metadata Registration</a>
+        </h3>
+<p id="section-13.4-1">This document requests registration of the following metadata name in the "OAuth Authorization Server Metadata" registry <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span>:<a href="#section-13.4-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-13.4-2.1">
+            <p id="section-13.4-2.1.1">Metadata Name: <code>authority_bounds_supported</code><a href="#section-13.4-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.4-2.2">
+            <p id="section-13.4-2.2.1">Metadata Description: Array of authority-dimension names for which the server records receipt-attested bounds and enforces issuance-time monotonicity<a href="#section-13.4-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.4-2.3">
+            <p id="section-13.4-2.3.1">Change Controller: IETF<a href="#section-13.4-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.4-2.4">
+            <p id="section-13.4-2.4.1">Specification Document(s): This document<a href="#section-13.4-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="oauth-protected-resource-metadata-registration">
+<section id="section-13.5">
+        <h3 id="name-oauth-protected-resource-me">
+<a href="#section-13.5" class="section-number selfRef">13.5. </a><a href="#name-oauth-protected-resource-me" class="section-name selfRef">OAuth Protected Resource Metadata Registration</a>
+        </h3>
+<p id="section-13.5-1">This document requests registration of the following metadata name in the "OAuth Protected Resource Metadata" registry <span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span>:<a href="#section-13.5-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-13.5-2.1">
+            <p id="section-13.5-2.1.1">Metadata Name: <code>authority_bounds_required</code><a href="#section-13.5-2.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.5-2.2">
+            <p id="section-13.5-2.2.1">Metadata Description: Array of authority-dimension names for which the resource requires dense receipt-attested bounds enforcement<a href="#section-13.5-2.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.5-2.3">
+            <p id="section-13.5-2.3.1">Change Controller: IETF<a href="#section-13.5-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-13.5-2.4">
+            <p id="section-13.5-2.4.1">Specification Document(s): This document<a href="#section-13.5-2.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="acknowledgments">
+<section id="section-14">
+      <h2 id="name-acknowledgments">
+<a href="#section-14" class="section-number selfRef">14. </a><a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="section-14-1">The author thanks the OAuth Working Group for the specifications underlying this profile.  The PIC Model <span>[<a href="#PIC-MODEL" class="cite xref">PIC-MODEL</a>]</span> also informed the non-expansion property, which this document represents through signed OAuth evidence.<a href="#section-14-1" class="pilcrow">¶</a></p>
+<p id="section-14-2">Contributors and reviewers will be acknowledged in future revisions.<a href="#section-14-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-15">
+      <h2 id="name-references">
+<a href="#section-15" class="section-number selfRef">15. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-15.1">
+        <h3 id="name-normative-references">
+<a href="#section-15.1" class="section-number selfRef">15.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="RFC3986">[RFC3986]</dt>
+        <dd>
+<span class="refAuthor">Berners-Lee, T.</span>, <span class="refAuthor">Fielding, R.</span>, and <span class="refAuthor">L. Masinter</span>, <span class="refTitle">"Uniform Resource Identifier (URI): Generic Syntax"</span>, <span class="seriesInfo">STD 66</span>, <span class="seriesInfo">RFC 3986</span>, <span class="seriesInfo">DOI 10.17487/RFC3986</span>, <time datetime="2005-01" class="refDate">January 2005</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc3986">https://www.rfc-editor.org/info/rfc3986</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6749">[RFC6749]</dt>
+        <dd>
+<span class="refAuthor">Hardt, D., Ed.</span>, <span class="refTitle">"The OAuth 2.0 Authorization Framework"</span>, <span class="seriesInfo">RFC 6749</span>, <span class="seriesInfo">DOI 10.17487/RFC6749</span>, <time datetime="2012-10" class="refDate">October 2012</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc6749">https://www.rfc-editor.org/info/rfc6749</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC6750">[RFC6750]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span> and <span class="refAuthor">D. Hardt</span>, <span class="refTitle">"The OAuth 2.0 Authorization Framework: Bearer Token Usage"</span>, <span class="seriesInfo">RFC 6750</span>, <span class="seriesInfo">DOI 10.17487/RFC6750</span>, <time datetime="2012-10" class="refDate">October 2012</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc6750">https://www.rfc-editor.org/info/rfc6750</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7519">[RFC7519]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">N. Sakimura</span>, <span class="refTitle">"JSON Web Token (JWT)"</span>, <span class="seriesInfo">RFC 7519</span>, <span class="seriesInfo">DOI 10.17487/RFC7519</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7519">https://www.rfc-editor.org/info/rfc7519</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7523">[RFC7523]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Campbell, B.</span>, and <span class="refAuthor">C. Mortimore</span>, <span class="refTitle">"JSON Web Token (JWT) Profile for OAuth 2.0 Client Authentication and Authorization Grants"</span>, <span class="seriesInfo">RFC 7523</span>, <span class="seriesInfo">DOI 10.17487/RFC7523</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7523">https://www.rfc-editor.org/info/rfc7523</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8414">[RFC8414]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Sakimura, N.</span>, and <span class="refAuthor">J. Bradley</span>, <span class="refTitle">"OAuth 2.0 Authorization Server Metadata"</span>, <span class="seriesInfo">RFC 8414</span>, <span class="seriesInfo">DOI 10.17487/RFC8414</span>, <time datetime="2018-06" class="refDate">June 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8414">https://www.rfc-editor.org/info/rfc8414</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8693">[RFC8693]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.</span>, <span class="refAuthor">Nadalin, A.</span>, <span class="refAuthor">Campbell, B., Ed.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">C. Mortimore</span>, <span class="refTitle">"OAuth 2.0 Token Exchange"</span>, <span class="seriesInfo">RFC 8693</span>, <span class="seriesInfo">DOI 10.17487/RFC8693</span>, <time datetime="2020-01" class="refDate">January 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8693">https://www.rfc-editor.org/info/rfc8693</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8707">[RFC8707]</dt>
+        <dd>
+<span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Bradley, J.</span>, and <span class="refAuthor">H. Tschofenig</span>, <span class="refTitle">"Resource Indicators for OAuth 2.0"</span>, <span class="seriesInfo">RFC 8707</span>, <span class="seriesInfo">DOI 10.17487/RFC8707</span>, <time datetime="2020-02" class="refDate">February 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8707">https://www.rfc-editor.org/info/rfc8707</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8725">[RFC8725]</dt>
+        <dd>
+<span class="refAuthor">Sheffer, Y.</span>, <span class="refAuthor">Hardt, D.</span>, and <span class="refAuthor">M. Jones</span>, <span class="refTitle">"JSON Web Token Best Current Practices"</span>, <span class="seriesInfo">BCP 225</span>, <span class="seriesInfo">RFC 8725</span>, <span class="seriesInfo">DOI 10.17487/RFC8725</span>, <time datetime="2020-02" class="refDate">February 2020</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8725">https://www.rfc-editor.org/info/rfc8725</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9396">[RFC9396]</dt>
+        <dd>
+<span class="refAuthor">Lodderstedt, T.</span>, <span class="refAuthor">Richer, J.</span>, and <span class="refAuthor">B. Campbell</span>, <span class="refTitle">"OAuth 2.0 Rich Authorization Requests"</span>, <span class="seriesInfo">RFC 9396</span>, <span class="seriesInfo">DOI 10.17487/RFC9396</span>, <time datetime="2023-05" class="refDate">May 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9396">https://www.rfc-editor.org/info/rfc9396</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9728">[RFC9728]</dt>
+        <dd>
+<span class="refAuthor">Jones, M.B.</span>, <span class="refAuthor">Hunt, P.</span>, and <span class="refAuthor">A. Parecki</span>, <span class="refTitle">"OAuth 2.0 Protected Resource Metadata"</span>, <span class="seriesInfo">RFC 9728</span>, <span class="seriesInfo">DOI 10.17487/RFC9728</span>, <time datetime="2025-04" class="refDate">April 2025</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9728">https://www.rfc-editor.org/info/rfc9728</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.mcguinness-oauth-actor-profile">[I-D.mcguinness-oauth-actor-profile]</dt>
+        <dd>
+<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"OAuth Actor Profile for Delegation"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-actor-profile-00</span>, <time datetime="2026-04-30" class="refDate">30 April 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-00">https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-00</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.mcguinness-oauth-actor-receipts">[I-D.mcguinness-oauth-actor-receipts]</dt>
+        <dd>
+<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"OAuth Actor Receipts for Delegation Provenance"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-actor-receipts-00</span>, <time datetime="2026-07-04" class="refDate">4 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-receipts-00">https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-receipts-00</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.mcguinness-oauth-actor-proofs">[I-D.mcguinness-oauth-actor-proofs]</dt>
+        <dd>
+<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"OAuth Actor-Signed Hop Proofs"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-actor-proofs-00</span>, <time datetime="2026-07-04" class="refDate">4 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-proofs-00">https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-proofs-00</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc2119">https://www.rfc-editor.org/info/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+      <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8174">https://www.rfc-editor.org/info/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-15.2">
+        <h3 id="name-informative-references">
+<a href="#section-15.2" class="section-number selfRef">15.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="RFC9700">[RFC9700]</dt>
+        <dd>
+<span class="refAuthor">Lodderstedt, T.</span>, <span class="refAuthor">Bradley, J.</span>, <span class="refAuthor">Labunets, A.</span>, and <span class="refAuthor">D. Fett</span>, <span class="refTitle">"Best Current Practice for OAuth 2.0 Security"</span>, <span class="seriesInfo">BCP 240</span>, <span class="seriesInfo">RFC 9700</span>, <span class="seriesInfo">DOI 10.17487/RFC9700</span>, <time datetime="2025-01" class="refDate">January 2025</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9700">https://www.rfc-editor.org/info/rfc9700</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.ietf-oauth-transaction-tokens">[I-D.ietf-oauth-transaction-tokens]</dt>
+        <dd>
+<span class="refAuthor">Tulshibagwale, A.</span>, <span class="refAuthor">Fletcher, G.</span>, and <span class="refAuthor">P. Kasselman</span>, <span class="refTitle">"Transaction Tokens"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-transaction-tokens-11</span>, <time datetime="2026-07-30" class="refDate">30 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="I-D.niyikiza-oauth-attenuating-agent-tokens">[I-D.niyikiza-oauth-attenuating-agent-tokens]</dt>
+        <dd>
+<span class="refAuthor">Aimable, N.</span>, <span class="refTitle">"Attenuating Authorization Tokens for Agentic Delegation Chains"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-niyikiza-oauth-attenuating-agent-tokens-01</span>, <time datetime="2026-06-15" class="refDate">15 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-niyikiza-oauth-attenuating-agent-tokens-01">https://datatracker.ietf.org/doc/html/draft-niyikiza-oauth-attenuating-agent-tokens-01</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="PIC-MODEL">[PIC-MODEL]</dt>
+      <dd>
+<span class="refAuthor">PIC Protocol Project</span>, <span class="refTitle">"PIC Model Specification (Provenance Identity Continuity)"</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://github.com/pic-protocol/pic-spec">https://github.com/pic-protocol/pic-spec</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="examples">
+<section id="appendix-A">
+      <h2 id="name-examples">
+<a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-examples" class="section-name selfRef">Examples</a>
+      </h2>
+<p id="appendix-A-1">The examples in this appendix show decoded contents; actual receipts are signed JWTs in compact serialization.  Timestamps are illustrative.  The scenario continues the two-hop travel example of <span>[<a href="#I-D.mcguinness-oauth-actor-receipts" class="cite xref">I-D.mcguinness-oauth-actor-receipts</a>]</span>: Alice delegates to an AI travel-assistant agent through the enterprise AS, and the agent's token is exchanged at the travel-provider AS, which adds a booking tool as the outermost actor.  Because these receipts carry <code>bounds</code>, they are different byte strings from the receipts shown in that document's examples and carry their own identifiers.  The later examples vary <a href="#example-narrowing" class="auto internal xref">Appendix A.1</a> and show only the members that change; a token or receipt that changes is a different byte string with its own <code>jti</code>, and the <code>origin_jti</code> or <code>prh</code> that references it changes with it.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<div id="example-narrowing">
+<section id="appendix-A.1">
+        <h3 id="name-example-two-hop-chain-with-">
+<a href="#appendix-A.1" class="section-number selfRef">A.1. </a><a href="#name-example-two-hop-chain-with-" class="section-name selfRef">Example: Two-Hop Chain with Narrowing Bounds</a>
+        </h3>
+<p id="appendix-A.1-1">The following example shows the outer token:<a href="#appendix-A.1-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-A.1-2">
+<pre>
+{
+  "jti": "3c9f5a1e-7d2b-4e8c-a6f0-1b4d7e0a3c6f",
+  "iss": "https://as.travel-provider.example",
+  "aud": "https://api.travel-provider.example",
+  "scope": "trips:book",
+  "sub": "https://idp.enterprise.example/users/alice",
+  "act": {
+    "sub": "https://tools.travel-provider.example/booking-tool",
+    "iss": "https://as.travel-provider.example",
+    "sub_profile": "service",
+    "act": {
+      "sub": "https://agents.enterprise.example/travel-assistant",
+      "iss": "https://as.enterprise.example",
+      "sub_profile": "ai_agent"
+    }
+  },
+  "actor_receipts": [
+    "&lt;receipt-0&gt;",
+    "&lt;receipt-1&gt;"
+  ],
+  "actor_receipts_complete": true
+}
+</pre><a href="#appendix-A.1-2" class="pilcrow">¶</a>
+</div>
+<p id="appendix-A.1-3"><code>actor_receipts[1]</code>, signed by the enterprise AS at the first hop, records the authority granted to the agent:<a href="#appendix-A.1-3" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-A.1-4">
+<pre>
+{
+  "iss": "https://as.enterprise.example",
+  "sub": "https://idp.enterprise.example/users/alice",
+  "act": {
+    "sub": "https://agents.enterprise.example/travel-assistant",
+    "iss": "https://as.enterprise.example",
+    "sub_profile": "ai_agent"
+  },
+  "bounds": {
+    "scope": "trips:read trips:book profile:read",
+    "aud": ["https://as.travel-provider.example"],
+    "resource": [
+      "https://api.travel-provider.example/bookings",
+      "https://api.travel-provider.example/trips"
+    ]
+  },
+  "iat": 1776741600,
+  "exp": 1776832000,
+  "jti": "6e2a8c4f-9b1d-4f7a-8e3c-5a0b2d9f7e1a"
+}
+</pre><a href="#appendix-A.1-4" class="pilcrow">¶</a>
+</div>
+<p id="appendix-A.1-5"><code>actor_receipts[0]</code>, signed by the travel-provider AS when it added the booking tool, records narrower authority:<a href="#appendix-A.1-5" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-A.1-6">
+<pre>
+{
+  "iss": "https://as.travel-provider.example",
+  "sub": "https://idp.enterprise.example/users/alice",
+  "act": {
+    "sub": "https://tools.travel-provider.example/booking-tool",
+    "iss": "https://as.travel-provider.example",
+    "sub_profile": "service"
+  },
+  "bounds": {
+    "scope": "trips:book",
+    "aud": ["https://api.travel-provider.example"],
+    "resource": ["https://api.travel-provider.example/bookings"]
+  },
+  "prh": "Vt7RcW2yQm9ZpKd4Xa6bEu8sHf1jLn3iTg5oAw0eCkY",
+  "iat": 1776745200,
+  "exp": 1776832000,
+  "jti": "8d4b2f6a-1c3e-4a5d-9f7b-0e2c4a6d8f0b",
+  "origin_jti": "3c9f5a1e-7d2b-4e8c-a6f0-1b4d7e0a3c6f"
+}
+</pre><a href="#appendix-A.1-6" class="pilcrow">¶</a>
+</div>
+<p id="appendix-A.1-7">A recipient verifies this chain as follows:<a href="#appendix-A.1-7" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-A.1-8.1">
+            <p id="appendix-A.1-8.1.1">Scope narrows to <code>trips:book</code>.<a href="#appendix-A.1-8.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-A.1-8.2">
+            <p id="appendix-A.1-8.2.1">The resource set narrows to the bookings endpoint, so the chain also passes verification where <code>resource</code> is required.  URI prefixes do not imply containment.<a href="#appendix-A.1-8.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-A.1-8.3">
+            <p id="appendix-A.1-8.3.1">The outer token's scope equals the newest recorded scope.<a href="#appendix-A.1-8.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-A.1-8.4">
+            <p id="appendix-A.1-8.4.1">Audience changes are recorded without comparison under the default audience rules.<a href="#appendix-A.1-8.4.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="example-reauthorization">
+<section id="appendix-A.2">
+        <h3 id="name-example-re-authorization-at">
+<a href="#appendix-A.2" class="section-number selfRef">A.2. </a><a href="#name-example-re-authorization-at" class="section-name selfRef">Example: Re-Authorization at a Hop</a>
+        </h3>
+<p id="appendix-A.2-1">In this example, Alice completes step-up authentication at the travel-provider AS before that AS adds the booking tool, so that the tool can also cancel trips.  The outer token's <code>scope</code> is <code>trips:book trips:cancel</code>.  <code>actor_receipts[1]</code> is unchanged; <code>actor_receipts[0]</code> records the broader scope in <code>bounds</code> and adds <code>reauthorized</code>:<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-A.2-2">
+<pre>
+{
+  "bounds": {
+    "scope": "trips:book trips:cancel",
+    "aud": ["https://api.travel-provider.example"],
+    "resource": ["https://api.travel-provider.example/bookings"]
+  },
+  "reauthorized": {
+    "sub": "https://idp.enterprise.example/users/alice",
+    "iss": "https://as.travel-provider.example",
+    "method": "step_up",
+    "iat": 1776745140,
+    "dimensions": ["scope"]
+  }
+}
+</pre><a href="#appendix-A.2-2" class="pilcrow">¶</a>
+</div>
+<p id="appendix-A.2-3">A recipient whose policy trusts the travel-provider AS to record <code>step_up</code> re-authorization for Alice (<a href="#reauthorization-abuse" class="auto internal xref">Section 11.2</a>) verifies this chain as follows:<a href="#appendix-A.2-3" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-A.2-4.1">
+            <p id="appendix-A.2-4.1.1">Step 3 of <a href="#consumer-processing" class="auto internal xref">Section 7</a> skips the <code>scope</code> comparison between the receipts because <code>reauthorized.dimensions</code> lists <code>scope</code>; without that listing, <code>trips:cancel</code> would fail it.<a href="#appendix-A.2-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-A.2-4.2">
+            <p id="appendix-A.2-4.2.1">Step 4 passes: the outer token's scope equals the newly recorded scope.<a href="#appendix-A.2-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="appendix-A.2-4.3">
+            <p id="appendix-A.2-4.3.1">Other dimensions compare as in <a href="#example-narrowing" class="auto internal xref">Appendix A.1</a>.<a href="#appendix-A.2-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="example-unlisted-expansion">
+<section id="appendix-A.3">
+        <h3 id="name-example-expansion-not-cover">
+<a href="#appendix-A.3" class="section-number selfRef">A.3. </a><a href="#name-example-expansion-not-cover" class="section-name selfRef">Example: Expansion Not Covered by Re-Authorization</a>
+        </h3>
+<p id="appendix-A.3-1">This variant of <a href="#example-reauthorization" class="auto internal xref">Appendix A.2</a> also records <code>authorization_details</code> on both receipts, and the travel-provider AS widens that dimension without listing it in <code>reauthorized.dimensions</code>.  <code>actor_receipts[1].bounds</code> adds:<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-A.3-2">
+<pre>
+{
+  "authorization_details": [
+    {
+      "type": "trip_booking",
+      "actions": ["read", "book"],
+      "locations": ["https://api.travel-provider.example/bookings"]
+    }
+  ]
+}
+</pre><a href="#appendix-A.3-2" class="pilcrow">¶</a>
+</div>
+<p id="appendix-A.3-3"><code>actor_receipts[0].bounds</code> adds the following member, and the outer token carries it as a top-level claim:<a href="#appendix-A.3-3" class="pilcrow">¶</a></p>
+<div class="lang-json sourcecode" id="appendix-A.3-4">
+<pre>
+{
+  "authorization_details": [
+    {
+      "type": "trip_booking",
+      "actions": ["book", "cancel"],
+      "locations": ["https://api.travel-provider.example/bookings"]
+    }
+  ]
+}
+</pre><a href="#appendix-A.3-4" class="pilcrow">¶</a>
+</div>
+<p id="appendix-A.3-5">Step 3 of <a href="#consumer-processing" class="auto internal xref">Section 7</a> fails for <code>authorization_details</code>: <code>reauthorized.dimensions</code> lists only <code>scope</code>, and the newer object adds the <code>cancel</code> action, so it refines no older object, whether or not the recipient has a refinement rule for <code>trip_booking</code> (<a href="#rar-dimension" class="auto internal xref">Section 4.4</a>).  The recipient therefore rejects the token's bounds evidence, including the re-authorized <code>scope</code> bound.<a href="#appendix-A.3-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="document-history">
+<section id="appendix-B">
+      <h2 id="name-document-history">
+<a href="#name-document-history" class="section-name selfRef">Document History</a>
+      </h2>
+<p id="appendix-B-1">[[ To be removed from the final specification ]]<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+<p id="appendix-B-2">-00<a href="#appendix-B-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="appendix-B-3.1">
+          <p id="appendix-B-3.1.1">Initial version.<a href="#appendix-B-3.1.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-C">
+      <h2 id="name-authors-address">
+<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Karl McGuinness</span></div>
+<div dir="auto" class="left"><span class="org">Independent</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:public@karlmcguinness.com" class="email">public@karlmcguinness.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
