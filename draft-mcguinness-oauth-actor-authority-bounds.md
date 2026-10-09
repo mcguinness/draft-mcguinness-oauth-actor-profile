@@ -79,7 +79,7 @@ This profile adds bounds claims and discovery metadata; deployments opt in per r
 
 Recipients walk the validated receipt chain from oldest to newest and verify offline that each monotonic dimension narrows or stays the same, except where a re-authorization recorded at a hop establishes a new basis for the dimensions it lists, and that the current outer token does not exceed the newest recorded bounds ({{consumer-processing}}).  Verifying a dimension requires every receipt to record it; deployments that need that guarantee enforce dense coverage through {{discovery-capability-signaling}}.
 
-This profile does not interpret scope grammars ({{scope-dimension}}), constrain the origin issuer's initial choice of authority, or define cross-domain equivalence of authority vocabularies.  A trust-domain boundary is an explicit basis reset ({{domain-transitions}}), so deployments whose chains cross domains at every hop gain recording and audit value but little enforcement value.  Recording re-authorization between hops (a refresh or step-up without a new hop) is left to a later extension ({{extensibility}}).
+This profile does not interpret scope grammars ({{scope-dimension}}), constrain the origin issuer's initial choice of authority, or define cross-domain equivalence of authority vocabularies.  A change of authority vocabulary, as at a trust-domain boundary, is an explicit basis reset ({{domain-transitions}}), so deployments whose chains change vocabulary at every hop gain recording and audit value but little enforcement value.  Recording re-authorization between hops (a refresh or step-up without a new hop) is left to a later extension ({{extensibility}}).
 
 Attenuating Authorization Tokens {{I-D.niyikiza-oauth-attenuating-agent-tokens}} address a related problem with a different model: a token holder derives a token with equal or narrower tool-level authority offline, and any enforcement point holding the root issuer's trust anchor verifies the derivation chain.  This profile instead adds evidence to issuance by authorization servers and Transaction Token Services, recording the authority each issuer applied in its signed receipt and permitting expansion only under a signed re-authorization.
 
@@ -206,7 +206,7 @@ A receipt MAY omit `bounds` entirely, and a chain MAY mix receipts with and with
     *  `interactive_consent`: re-authorization by the principal through an interactive prompt;
     *  `step_up`: re-authorization through step-up authentication;
     *  `policy_grant`: programmatic re-authorization under a deployment policy artifact;
-    *  `domain_transition`: the hop crosses a trust-domain boundary at which authority vocabularies change ({{domain-transitions}}).
+    *  `domain_transition`: the hop changes the authority vocabulary of one or more dimensions, as at a trust-domain boundary or when a TTS issues Transaction Token scope ({{domain-transitions}}).
 
   `iat`:
   : REQUIRED.  Time of the re-authorization.
@@ -241,15 +241,17 @@ Reissuance without a new actor hop creates no receipt, so recorded bounds cannot
 
 ## Domain Transitions {#domain-transitions}
 
-A domain boundary can change the authority vocabulary, making syntactic comparison unsuitable.
+A trust-domain boundary, or a TTS issuing Transaction Token scope ({{Section 9.2 of I-D.ietf-oauth-transaction-tokens}}), can change the authority vocabulary of a dimension, making syntactic comparison unsuitable.
 
-An issuer that adds a hop whose authority vocabulary differs from the inbound token's:
+An issuer that adds a hop at which a dimension's authority vocabulary differs from the inbound token's:
 
-*  MUST record `reauthorized` on the new receipt with `method: domain_transition` and with `dimensions` listing every governed dimension, establishing a new monotonicity basis at the boundary;
-*  MUST record the new domain's authority values in the new receipt's `bounds`;
+*  MUST record `reauthorized` on the new receipt with `method: domain_transition` and with `dimensions` listing each governed dimension whose vocabulary changes and that the new receipt records in `bounds`, establishing a new monotonicity basis for those dimensions;
+*  MUST record the new authority values for those dimensions in the new receipt's `bounds`;
 *  SHOULD reference, via `reauthorized.artifact`, the policy or agreement under which the cross-domain translation is authorized.
 
-Comparison applies within each domain segment.  A recipient requiring end-to-end monotonicity MUST reject chains containing `domain_transition` bases unless explicit trusted mappings establish cross-domain equivalence.
+Comparison applies within each segment between vocabulary changes.  A recipient requiring end-to-end monotonicity MUST reject chains containing `domain_transition` bases unless explicit trusted mappings establish equivalence across the change.
+
+A TTS that changes the authority vocabulary in presenter continuation adds no hop and therefore cannot record a new basis.  For a monotonic dimension whose vocabulary changes, it fails the request or, where local policy and resource requirements permit absent receipt coverage, drops the inherited `actor_receipts` array ({{reissuance-and-refresh}}).
 
 ## Partial and Sparse Coverage
 
@@ -383,7 +385,7 @@ If an issuer trusted to record re-authorization is compromised or over-trusted, 
 
 *  Recipients MUST evaluate re-authorization trust separately from receipt trust: which issuers are trusted to capture re-authorization, for which subjects, and by which methods, is explicit local policy.  A recipient MAY accept an issuer's receipts while rejecting its re-authorization records; a rejected re-authorization is a failed basis reset, and the chain is then evaluated without it, which typically fails monotonicity and rejects the token's bounds evidence.
 *  Deployments needing strong re-authorization integrity SHOULD require `reauthorized.artifact` and SHOULD validate the referenced artifact against the authority that captured the event (for example, verifying a consent receipt's signature), rather than accepting the recording issuer's bare assertion.
-*  A `domain_transition` basis makes values non-comparable, so an attacker who can insert one can present any expansion as authorized.  Recipients SHOULD restrict which issuers may record domain transitions to the deployment's known boundary issuers.
+*  A `domain_transition` basis makes values non-comparable, so an attacker who can insert one can present any expansion as authorized.  Recipients SHOULD restrict which issuers may record domain transitions to the deployment's known boundary issuers and TTSs.
 
 ## Scope Subsumption Gaps {#scope-subsumption-gaps}
 
