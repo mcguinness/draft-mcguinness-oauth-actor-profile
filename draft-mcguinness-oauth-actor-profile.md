@@ -895,7 +895,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 7.  The AS MAY preserve inbound client identifiers per the output token profile or local policy.  Preserved values MUST retain their client-identity meaning; they do not represent delegation state ([Client Identity and Delegation](#client-identity-delegation)).  If preserving an optional identifier would create ambiguity about the delegated actor relationship, the AS SHOULD omit it.  JWT access tokens still require `client_id` per {{RFC9068}}.
 
-8.  On a Token Exchange request, the AS MUST issue the token for every requested `audience` and `resource` or reject the request with `invalid_target` ({{Section 2.2.2 of RFC8693}}).  On other grants, resource indicators follow {{Section 2.2 of RFC8707}}.
+8.  On a Token Exchange request, the AS MUST issue the token for every requested `audience` and `resource` or reject the request with `invalid_target` ({{Section 2.2.2 of RFC8693}}), unless the requested token type's specification permits a subset, as {{Section 4.3.3 of I-D.ietf-oauth-identity-assertion-authz-grant}} does for an ID-JAG's resources.  On other grants, resource indicators follow {{Section 2.2 of RFC8707}}.
 
 # Transaction Token Service Processing {#transaction-token-service}
 
@@ -983,7 +983,7 @@ For each accepted input, the TTS MUST apply the rules listed for it in the refer
 | JWT access token | Validation and extraction | [Input Processing](#token-exchange-input-processing); [JWT Access Token as subject_token](#jwt-access-token-as-subject-token) |
 | Transaction Token | Validation and extraction | [Input Processing](#token-exchange-input-processing); [Transaction Token as subject_token](#txn-token-as-subject-token) |
 
-The resulting state (subject, classification, chain, and binding) is input to [Transaction Token Output Rules](#transaction-token-output-rules) instead of to JWT access token issuance.  For an inbound Transaction Token, the TTS maintains the call chain of requesting workloads as {{Section 13.15 of I-D.ietf-oauth-transaction-tokens}} requires, and the issued token's `req_wl` identifies the workload that requested it ({{Section 9.2 of I-D.ietf-oauth-transaction-tokens}}).  The `scope` claim of a Transaction Token can use a different vocabulary from that of the inbound token ({{Section 9.2 of I-D.ietf-oauth-transaction-tokens}}), so the literal scope-subset rules of [Input Processing](#token-exchange-input-processing) step 5 do not apply.  The TTS still ensures that the requested scope does not exceed the authority of the `subject_token` ({{Section 13.6 of I-D.ietf-oauth-transaction-tokens}}) and rejects the request when that authority cannot be determined ({{Section 13.14 of I-D.ietf-oauth-transaction-tokens}}).  A replacement Transaction Token cannot expand the scope of permitted actions ({{Section 13.15 of I-D.ietf-oauth-transaction-tokens}}).
+The resulting state (subject, classification, chain, and binding) is input to [Transaction Token Output Rules](#transaction-token-output-rules) instead of to JWT access token issuance.  For an inbound Transaction Token, the TTS maintains the call chain of requesting workloads as {{Section 13.15 of I-D.ietf-oauth-transaction-tokens}} requires, and the issued token's `req_wl` identifies the workload that requested it ({{Section 9.2 of I-D.ietf-oauth-transaction-tokens}}).  The `scope` claim of a Transaction Token can use a different vocabulary from that of the inbound token ({{Section 9.2 of I-D.ietf-oauth-transaction-tokens}}), so the literal scope-subset rules of [Input Processing](#token-exchange-input-processing) step 5 do not apply.  The TTS still ensures that the requested scope does not exceed the authority of the `subject_token` ({{Section 13.6 of I-D.ietf-oauth-transaction-tokens}}) and rejects the request with `invalid_scope` when that authority cannot be determined ({{Section 13.14 of I-D.ietf-oauth-transaction-tokens}}).  A replacement Transaction Token cannot expand the scope of permitted actions ({{Section 13.15 of I-D.ietf-oauth-transaction-tokens}}).
 
 ## Transaction Token Output Rules {#transaction-token-output-rules}
 
@@ -1057,7 +1057,7 @@ On a request path where delegated-token processing may apply, an RS MUST validat
 
 When the resource server evaluates a JWT access token as a delegated token under local policy, it MUST:
 
-1.  Validate the `typ` header, signature, `iss`, `aud`, and temporal claims per {{RFC9068}}, and reject a token whose visible `act` chain exceeds the configured maximum depth ([Delegation Chains](#delegation-chains)).  If the request path requires actor-profile conformance, including through `actor_profile_required: true`:
+1.  Validate the `typ` header, signature, `iss`, `aud`, and `exp` per {{RFC9068}} and other temporal claims per {{RFC7519}}, and reject a token whose visible `act` chain exceeds the configured maximum depth ([Delegation Chains](#delegation-chains)).  If the request path requires actor-profile conformance, including through `actor_profile_required: true`:
 
     *  A token evaluated as delegated MUST carry `act`, and every actor object in the visible `act` chain MUST include `iss`.  Otherwise, reject the token with HTTP 401 and `error="invalid_token"`.  This is structural validation, not independent authentication of historical actors.
     *  Non-delegated tokens need not carry `act`.
@@ -1148,7 +1148,7 @@ The following error codes apply to both AS and TTS endpoints:
 |-------|-----------|
 | `invalid_request` | Malformed request, missing required request parameter, or an actor addition that would exceed the depth limit; on a Token Exchange request, also input-validation failures |
 | `invalid_grant` | On a JWT bearer grant request: input-validation failures, including an invalid assertion, untrusted issuer, or failed grant binding |
-| `invalid_scope` | No effective scope remains for reasons other than categorical actor denial |
+| `invalid_scope` | No effective scope remains for reasons other than categorical actor denial, or a Transaction Token's scope authority cannot be determined |
 | `actor_unauthorized` | Actor policy prohibits the request, rejects the actor type, or cannot confirm the required delegation relationship |
 
 Missing required claims include `act.sub`, `act.iss`, the binding claim of a sender-constrained JWT assertion grant, and the top-level `iss` claim on a delegated Transaction Token.  TTS failures to preserve the subject or to trust inbound actor identifiers use the `invalid_request` error code.
