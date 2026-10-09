@@ -699,7 +699,7 @@ For `subject_token` inputs:
 |---|---|---|---|
 | JWT assertion grant | [Authorization Grant Processing](#jwt-assertion-grants-processing) | In validation | See subsection |
 | JWT access token | {{RFC9068}}, `aud` relaxed | Trusted for its delegation chain | Its effective scope |
-| Transaction Token | [Transaction Token specification](#txn-token-as-subject-token) | Trusted issuer | Not defined here |
+| Transaction Token | [Transaction Token specification](#txn-token-as-subject-token) | Trusted issuer | See subsection |
 | ID Token | {{OpenID.Core}}, local policy | No separate check | None |
 | Refresh token | Token store or trusted back-channel | No separate check | Its authorized scope |
 
@@ -741,7 +741,7 @@ Validation per {{I-D.ietf-oauth-transaction-tokens}} covers the signature, `aud`
 
 In step 3, the AS uses the presenter-proof mechanism defined by the deployment profile; {{I-D.ietf-oauth-transaction-tokens}} defines none.
 
-The `req_wl` claim identifies the workload that requested the Transaction Token from the TTS.  For a JWT access token output, the AS MAY use `req_wl` for audit or local policy decisions but MUST NOT carry it forward into the issued JWT access token.  Transaction Token field semantics and any transaction-specific scope handling remain defined by {{I-D.ietf-oauth-transaction-tokens}}, {{RFC8693}}, and local policy.
+The `req_wl` claim identifies the workload that requested the Transaction Token from the TTS.  For a JWT access token output, the AS MAY use `req_wl` for audit or local policy decisions but MUST NOT carry it forward into the issued JWT access token.  The scope ceiling is the authority the Transaction Token represents; when the AS cannot determine that authority in the output's scope vocabulary, it MUST reject the request with `invalid_scope`, as {{Section 13.14 of I-D.ietf-oauth-transaction-tokens}} requires of a TTS.  Other Transaction Token field semantics remain defined by {{I-D.ietf-oauth-transaction-tokens}}, {{RFC8693}}, and local policy.
 
 ### Identity-Only Subject Tokens
 
