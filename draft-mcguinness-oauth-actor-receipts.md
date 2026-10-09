@@ -1070,7 +1070,7 @@ Under {{receipt-instance-binding}}, `origin_jti` is historical here because the 
 * Compared `sub_profile` values as sets.
 * Allowed a TTS to include `jti` for instance binding, and deferred Transaction Token rejection at the resource server to the deployment.
 * Checked `typ` and `alg` before key resolution, rejected a chain with any untrusted receipt issuer, and placed resource-server actor authorization after receipt processing.
-* Narrowed the threat-model claims about actor-signed proofs.
+* Narrowed the threat-model claims about actor-signed proofs, and stated that a compromised issuer can drop the newest receipts it received.
 * Removed BCP 14 keywords from guidance no other party can observe, named the IETF as change controller, and aligned the examples with the base profile.
 
 -00
