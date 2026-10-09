@@ -323,6 +323,8 @@ A token represents delegation when the party exercising the token's authorizatio
 2.  An inbound `subject_token` from a trusted upstream issuer already carried an `act` chain, establishing that delegation was present before the current exchange.
 3.  The issuing AS has an independent delegation basis such as a pre-registered grant, an explicit consent record, a `may_act` claim in a validated upstream token (see [`may_act`](#may-act)), or a policy rule establishing that the current client or actor is acting as a distinct party on behalf of `sub` (see [JWT Access Tokens](#jwt-access-tokens) for the outside-Token-Exchange case).
 
+In Token Exchange, an independent delegation basis can authorize an actor established under this profile's processing rules but cannot by itself establish a new actor.  A new actor is established from a validated `actor_token` or, at an AS, from the authenticated client on the [`may_act`](#may-act) path without `actor_token`.  Existing delegation is preserved under presenter continuation ([Presenter Transition Model](#token-exchange-presenter-model)).  A Token Exchange that establishes no new actor and has no inbound `act` chain does not represent delegation.
+
 When a token represents delegation, the `act` claim MUST be present and MUST conform to [Actor Object Structure](#actor-object-structure).  When none of these conditions holds, the token does not represent delegation and the `act` claim MUST be omitted.  The AS MUST NOT include the `act` claim solely because `sub` and the OAuth client identifier differ; the distinction between `sub` and `client_id` is expected and does not by itself constitute delegation under this profile.
 
 
@@ -449,7 +451,7 @@ When the inbound `subject_token` is a bearer credential or an identity-only cred
 
 These requirements apply to JWT authorization grants under {{RFC7521}} and {{RFC7523}}, including ID-JAG {{I-D.ietf-oauth-identity-assertion-authz-grant}}.  The grant profile defines issuance and exchange; this document defines actor representation and delegation processing.
 
-A JWT authorization grant MAY carry an `act` claim conforming to [Actor Object Structure](#actor-object-structure).  Actor claims in JWT client authentication assertions are outside the scope of this document.  The `act` claim represents explicit delegation, even when the issuer derives the actor from authenticated client context.
+A JWT authorization grant MAY carry an `act` claim conforming to [Actor Object Structure](#actor-object-structure).  Actor claims in JWT client authentication assertions are outside the scope of this document.  The `act` claim represents explicit delegation, even when the issuer derives the actor from authenticated client context, as on the [`may_act`](#may-act) path or, outside Token Exchange, under an independent delegation basis.
 
 The following claims are defined for a JWT assertion grant that carries actor-profile delegation.  Claims not listed here follow the requirements of {{RFC7521}} and {{RFC7523}}.
 
@@ -656,11 +658,11 @@ A Token Exchange is delegated when a condition in [Delegation Chains](#delegatio
 
 A delegated request that satisfies neither mode MUST be rejected with `invalid_request`.  A request that supplies an `actor_token`, or whose `subject_token` carries `act`, is processed as delegated; if that processing fails, the AS rejects the request and MUST NOT instead issue a token without `act`.
 
-The AS processes a request that is not delegated under {{RFC8693}} and local policy, and a token issued for it omits `act`.
+The AS processes a request that is not delegated under {{RFC8693}} and local policy, and a token issued for it omits `act`.  Local policy can reject such a request, for example when the client or resource requires explicit delegation.
 
 When a request that is not delegated presents a `subject_token` carrying a top-level `cnf` claim, the requester MUST prove possession of that binding, as in [Token Exchange Continuation](#token-exchange-continuation).
 
-Outside the [`may_act`](#may-act) path without `actor_token`, presenter rebind requires a **direct presenter credential**: an `actor_token` whose top-level `sub` names the new presenter.  Other means of establishing a presenter are deployment-specific.
+Outside the [`may_act`](#may-act) path without `actor_token`, presenter rebind requires a **direct presenter credential**: an `actor_token` whose top-level `sub` names the new presenter.  Other means of establishing a presenter are outside this profile.
 
 Identity-only inputs cannot support continuation, and bearer inputs support only bearer continuation.  To preserve a delegation chain while changing presenters, deployments SHOULD present the delegated credential as `subject_token` and a separate direct credential as `actor_token`.
 
@@ -679,7 +681,7 @@ When a Token Exchange request ({{RFC8693}}) presents a `subject_token` or `actor
 4.  The AS establishes inbound state as follows:
 
     *  From a validated JWT access token or Transaction Token `subject_token`, the AS MUST extract `sub`, `sub_profile` (if present), and `act` (if present) as the inbound delegation state for [JWT Access Token Output](#jwt-access-token-propagation).  A validated JWT assertion grant establishes the same inbound state.
-    *  An identity-only `subject_token` supplies no actor identity or presenter continuity.  The AS MUST establish the actor from `actor_token` or an independent delegation basis; otherwise, it MUST omit `act`.
+    *  An identity-only `subject_token` supplies no actor identity or presenter continuity.  The AS establishes a new actor from a validated `actor_token` or from the authenticated client on the [`may_act`](#may-act) path without `actor_token`; otherwise, the request is not delegated, and any token issued for it MUST omit `act`.
     *  For an `actor_token`, the AS MUST derive the outermost actor and handle any inbound chain as specified in [Actor Tokens](#actor-tokens).
 
 5.  The AS can reduce scope under local policy.  The effective scope of the issued token MUST NOT exceed the scope ceiling, if any, in the `subject_token`'s table row.
@@ -845,7 +847,7 @@ Actor identity is established as follows:
 *  **With `actor_token`**: the AS derives (`act.iss`, `act.sub`) under the credential's type-specific rules and reconciles that pair with the canonical `may_act` identifier.  The `may_act` claim MUST NOT override the derived actor.
 *  **Without `actor_token`**: the requesting client MUST be a confidential client that has authenticated in the request; public clients MUST NOT use this path.  The AS reconciles the authenticated client with the canonical `may_act` identifier and sets `act.sub` to the client's canonical identifier.  The AS MUST set `act.iss` to the issuer or namespace context that locally registered the client, typically the AS's own issuer URI.  The authenticated client is then the new presenter in presenter-rebind mode ([Presenter Transition Model](#token-exchange-presenter-model)), and a sender-constrained output is bound to the key or certificate the client demonstrates in the request.
 
-When `may_act` is absent or the conditions above are not met, the AS MUST satisfy the delegation-authorization check through another recognized basis (a pre-registered grant, a consent record, or an applicable policy rule).  The AS MUST NOT treat the presence of `may_act` alone as authorization for any actor other than the one whose canonical identity matches it.
+When `may_act` is absent or the conditions above are not met, the AS MUST satisfy the delegation-authorization check through another recognized basis (a pre-registered grant, a consent record, or an applicable policy rule).  That basis authorizes an actor established from an `actor_token` but does not itself establish one ([Delegation Chains](#delegation-chains)).  The AS MUST NOT treat the presence of `may_act` alone as authorization for any actor other than the one whose canonical identity matches it.
 
 ## Output Token Rules
 
