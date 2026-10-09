@@ -780,7 +780,7 @@ Whether an AS issues refresh tokens for delegated JWT assertion grant requests, 
 The following rules apply to every `actor_token` type in this section:
 
 1.  The credential MUST identify the acting party in its top-level `sub`.  If it carries `act`, the AS MUST reject with `invalid_request`.
-2.  After validating the credential, the AS MUST use its `sub` as the new outermost `act.sub` and set `act.iss` to that identifier's issuer or namespace context.
+2.  After validating the credential, the AS MUST use its `sub` as the new outermost `act.sub` and set `act.iss` to that identifier's namespace context: for a JWT client assertion, the issuer identifier of the AS at which the client is registered; for a workload identity credential, its `iss`, or its trust domain when `iss` is absent; for a JWT access token, its `iss`.
 3.  If the `subject_token` carries a chain, the new actor takes precedence over its outermost actor.  Different identities are permitted for presenter rebind.  Local policy MAY require equivalence on paths that only confirm an existing actor; when such a restriction applies and no trusted mapping establishes equivalence, the AS MUST reject with `invalid_request`.
 
 [Delegation Chain Validation and Construction](#delegation-chain-algorithm) governs nesting of the `subject_token` chain.
