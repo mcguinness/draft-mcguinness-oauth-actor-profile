@@ -895,7 +895,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 7.  The AS MAY preserve inbound client identifiers per the output token profile or local policy.  Preserved values MUST retain their client-identity meaning; they do not represent delegation state ([Client Identity and Delegation](#client-identity-delegation)).  If preserving an optional identifier would create ambiguity about the delegated actor relationship, the AS SHOULD omit it.  JWT access tokens still require `client_id` per {{RFC9068}}.
 
-8.  The AS MUST honor resource-indicator constraints ({{RFC8707}}) in delegated token requests.
+8.  On a Token Exchange request, the AS MUST issue the token for every requested `audience` and `resource` or reject the request with `invalid_target` ({{Section 2.2.2 of RFC8693}}).  On other grants, resource indicators follow {{Section 2.2 of RFC8707}}.
 
 # Transaction Token Service Processing {#transaction-token-service}
 
