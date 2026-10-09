@@ -260,7 +260,7 @@ act-object = {
 
   Implementations MUST NOT interpret `act.iss` as the current token issuer, credential issuer, or hop-provenance marker.  These entities can coincide but have distinct roles.  HTTPS URLs and workload-identity URNs are examples of possible context identifiers.
 
-  For example, a TTS at `https://tts.travel-provider.example` can issue a Transaction Token whose booking-tool actor has `act.iss` set to `https://as.travel-provider.example` when local policy uses that AS's identifier namespace for booking-tool identifiers.  The TTS signs the token; the AS supplies the namespace for the tool's identifier.
+  For example, a TTS at `https://tts.travel-provider.example` can issue a Transaction Token whose booking-tool actor has `act.iss` set to `https://as.travel-provider.example` because that AS issued the booking tool's workload credential.  The TTS signs the token; the AS supplies the namespace for the tool's identifier.
 
 `sub_profile`:
 : RECOMMENDED.  A space-delimited list of entity profile values classifying the actor identified by `act.sub`, as defined in {{Section 4.2 of I-D.mora-oauth-entity-profiles}}.  Values used within `act` objects MUST be registered with the "Actor Profile" usage location in the OAuth Entity Profiles registry ({{Section 14.1 of I-D.mora-oauth-entity-profiles}}) or be privately defined collision-resistant values.
@@ -1615,7 +1615,7 @@ This token carries a single-hop actor object: the `act` claim is present but con
 
 ## Transaction Token
 
-After processing the payroll request, the Payroll API exchanges the inbound access token at the Audit TTS to call the internal Audit Service, presenting its workload credential as `actor_token`.  The Payroll API is the requesting workload (`req_wl`).  In presenter-rebind mode, the TTS validates the inbound delegation chain and the workload credential, preserves the chain as an inner `act` object, and adds a new outermost actor for the Payroll API:
+After processing the payroll request, the Payroll API exchanges the inbound access token at the Audit TTS to call the internal Audit Service, presenting its workload credential, issued by `https://as.example.com`, as `actor_token`.  The Payroll API is the requesting workload (`req_wl`).  In presenter-rebind mode, the TTS validates the inbound delegation chain and the workload credential, preserves the chain as an inner `act` object, and adds a new outermost actor for the Payroll API:
 
 ~~~json
 {
@@ -1860,7 +1860,7 @@ The Booking Tool RS authorizes the (`sub`, outermost `act.sub`) pair ([Resource 
 
 ## Step 5: Booking Tool Exchanges Access Token for Transaction Token
 
-The Booking Tool cannot reuse the received access token for internal calls because the token is sender-constrained to `AgentJKT`, a key that the Booking Tool does not possess.  Instead, it requests a Transaction Token from the TTS.  In this example, the TTS receives the Booking Tool's WIMSE Workload Identity Token (WIT) as the Token Exchange `actor_token` and validates a Workload Proof Token (WPT).  The WIT identifies the Booking Tool and carries its confirmation key, while the WPT proves possession of that key and binds the request to the accompanying access token:
+The Booking Tool cannot reuse the received access token for internal calls because the token is sender-constrained to `AgentJKT`, a key that the Booking Tool does not possess.  Instead, it requests a Transaction Token from the TTS.  In this example, the TTS receives the Booking Tool's WIMSE Workload Identity Token (WIT), issued by the Travel Provider AS (`https://as.travel-provider.example`), as the Token Exchange `actor_token` and validates a Workload Proof Token (WPT).  The WIT identifies the Booking Tool and carries its confirmation key, while the WPT proves possession of that key and binds the request to the accompanying access token:
 
 ~~~
 NOTE: '\' line wrapping per RFC 8792
