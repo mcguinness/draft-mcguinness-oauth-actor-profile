@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-10-11T02:28:38.612006+00:00",
+  "timestamp": "2026-10-25T01:57:51.072448+00:00",
   "repo": "mcguinness/draft-mcguinness-oauth-actor-profile",
   "labels": [
     {
@@ -173,6 +173,22 @@
           "updatedAt": "2026-09-28T21:28:58Z"
         }
       ]
+    },
+    {
+      "number": 30,
+      "id": "I_kwDOR1X6Tc8AAAABZb88ww",
+      "title": "Promote Identity Chaining to a normative reference; keep WPT normative",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile/issues/30",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "## Problem\n\nSection 10.4 (Capability Signaling Usage) places a BCP 14 requirement on a parameter that only Identity Chaining defines, but `I-D.ietf-oauth-identity-chaining` is in the `informative:` block (rendered in 16.2 of `-01`):\n\n> When this profile is combined with Identity Chaining ({{I-D.ietf-oauth-identity-chaining}}), clients SHOULD additionally consult `identity_chaining_requested_token_types_supported`; the two parameter sets are independent.\n\n`identity_chaining_requested_token_types_supported` is defined in Section 3 of `draft-ietf-oauth-identity-chaining-17` and registered in its Section 4.1. A client cannot follow the SHOULD without reading that draft.\n\nThe IESG statement on normative and informative references applies here:\n- It defines the class: \"Normative references specify documents that must be read to understand or implement the technology in the new RFC, or whose technology must be present for the technology in the new RFC to work.\"\n- Its Note 1 covers optional features: \"Even references that are relevant only for optional features must be classified as normative if they meet the above conditions for normative references.\"\n\nCombining this profile with Identity Chaining is optional, so Note 1 decides it: the reference is normative.\n\n## Change\n\n- Move `I-D.ietf-oauth-identity-chaining` from `informative:` to `normative:`.\n- Leave the text of Section 10.4 unchanged.\n- Add a Document History entry for the reclassification.\n\nNot recommended: lowercasing \"SHOULD\" so the reference can stay informative. That removes a requirement instead of classifying its dependency.\n\n## WPT: keep normative (no change)\n\nDemoting `I-D.ietf-wimse-wpt` was considered and rejected. Section 6.4.2.2 (Workload Identity Credential, Processing) says:\n\n> When the request uses this credential to establish a sender-constrained output token in presenter-rebind mode, the AS MUST also validate proof for the new presenter binding: the WPT, or a DPoP proof ({{RFC9449}}) over the token endpoint URI whose key is the confirmation key in the credential's `cnf` claim (`cnf.jwk` for a WIMSE credential).\n\nThe case for demoting it:\n- The profile states no WPT-specific rule of its own.\n- DPoP is a fully specified alternative.\n\nWhy it stays normative:\n- The presenter-rebind MUST names the WPT as an accepted proof, on a path the profile itself specifies.\n- Validating that proof requires `draft-ietf-wimse-wpt`, and Note 1 makes the reference normative even though the path is optional.\n- The only rewording that would avoid the reference (\"a proof the workload-credential profile defines\") broadens the set of accepted proofs. That changes the requirement.\n\n## Effect on publication dependencies\n\nNone. Identity Chaining is already in this profile's normative Internet-Draft closure through two drafts it cites normatively:\n- `draft-ietf-oauth-transaction-tokens-11`, which cites `draft-ietf-oauth-identity-chaining-17` in its Section 17.1;\n- `draft-ietf-oauth-identity-assertion-authz-grant-04`, which cites `draft-ietf-oauth-identity-chaining-12` in its Section 11.1.\n\nIdentity Chaining is in the RFC Editor queue. The publication coupling under RFC 7322 Section 4.8.6 is unchanged.\n\nThe other normative references were reviewed against the `-01` text and stay as they are. Each is needed by a requirement or a definition the profile states:\n- Transaction Tokens;\n- Entity Profiles;\n- ID-JAG;\n- workload-creds;\n- OpenID Connect Core.\n\nThe informative references (RFC 9700, RFC 8792, `draft-parecki-oauth-jwt-dpop-grant` and OpenID Federation) are also correctly classified.\n\n## Acceptance\n\n- `I-D.ietf-oauth-identity-chaining` is in the `normative:` block, and Section 10.4's text is unchanged.\n- `I-D.ietf-wimse-wpt` stays in the `normative:` block.\n- Document History records the reclassification.\n- The draft builds, and idnits reports no new issue beyond the expected normative reference to an Internet-Draft.\n\n## Origin\n\nFound during the normative-reference review of `draft-mcguinness-oauth-mission`, which cites this profile normatively. That review recorded these rulings in mcguinness/mission-bound-authorization's decision log as D686 (2026-10-23).\n",
+      "createdAt": "2026-10-23T16:56:37Z",
+      "updatedAt": "2026-10-23T16:56:37Z",
+      "closedAt": null,
+      "comments": []
     }
   ],
   "pulls": [
