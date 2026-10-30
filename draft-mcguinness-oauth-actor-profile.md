@@ -1964,6 +1964,10 @@ The author thanks the OAuth Working Group for the specifications on which this p
 
 [[ To be removed from the final specification ]]
 
+-02
+
+* Aligned authorization code issuance with Delegation Chains: a token issued under an independent delegation basis carries `act` regardless of the requested scope.
+
 -01
 
 * Restructured and tightened the text: each rule has one home, dependencies are cited rather than restated, tables cover claim roles, token types, and error mappings, Token Exchange inputs share one processing algorithm, and Security Considerations point to the rules they rely on.  Removed the Conformance section, which restated those rules.
