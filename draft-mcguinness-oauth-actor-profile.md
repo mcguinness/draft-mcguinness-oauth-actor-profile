@@ -628,7 +628,7 @@ When an AS issues, outside Token Exchange, a JWT access token whose delegation r
 
 A client registration MAY supply that basis only if it uniquely identifies one acting entity and the AS can derive the actor identifier from the registration alone.  A registration shared by several actors does not satisfy this condition.
 
-For the authorization code grant, the AS MAY include the `act` claim when an independent delegation basis, such as authorization state, registration, consent, or local policy, establishes that the OAuth client is acting as a distinct actor for the resource owner.  The actor identity MUST derive from that delegation basis.  Without such a basis, the AS MUST NOT include `act`.
+For the authorization code grant, when an independent delegation basis, such as authorization state, registration, consent, or local policy, establishes that the OAuth client is acting as a distinct actor for the resource owner, the issued token represents delegation and carries `act` as [Delegation Chains](#delegation-chains) requires, regardless of the requested scope.  The actor identity MUST derive from that delegation basis.  Without such a basis, the AS MUST NOT include `act`.
 
 An AS that issues a refresh token together with a token carrying `act` MUST record that chain for the grant.  For the `refresh_token` grant ({{Section 6 of RFC6749}}), the AS MUST carry the `act` chain recorded for the grant into the refreshed token unchanged or reject the request; it MUST NOT issue a refreshed token without that chain.
 
@@ -1963,6 +1963,10 @@ The author thanks the OAuth Working Group for the specifications on which this p
 {:numbered="false"}
 
 [[ To be removed from the final specification ]]
+
+-02
+
+* Aligned authorization code issuance with Delegation Chains: a token issued under an independent delegation basis carries `act` regardless of the requested scope.
 
 -01
 
