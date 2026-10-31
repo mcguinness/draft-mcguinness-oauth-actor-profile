@@ -918,41 +918,39 @@ Table of Contents
    values are the issuers' assertion, not proof, that tokens share a
    delegation authorization, since an issuer can copy any value it
    receives.  A recipient groups tokens from different issuers by dlg_id
-   only when it trusts those issuers to assert that the tokens derive
-   from the same delegation authorization.
+   only when it trusts each of them to make that assertion.
 
-   If an issuer includes dlg_id in a token derived from a validated JWT
-   assertion grant, token-state subject_token, or refresh token that
-   carries dlg_id directly or in recorded state, it MUST copy that value
-   unchanged, even when it reduces scope, adds an actor, crosses a trust
-   domain, or issues several tokens.  When no such input carries one, an
-   issuer that includes dlg_id MUST reuse any value it has already
-   assigned to the same delegation authorization and otherwise MUST
-   assign a new value as Section 4.1.7 of [RFC7519] requires for jti, so
-   that values do not collide across issuers.  The issuer determines
-   which of these issuances share a delegation authorization: a standing
-   policy can cover many and a refresh stays under its original one,
-   while a new authorization by the resource owner starts another.  An
-   issuer MUST NOT take dlg_id from any other input, such as a request
-   parameter or an actor_token.
+   An issuer that includes dlg_id in a token chooses its value as
+   follows:
+
+   *  If the token is derived from a validated JWT assertion grant,
+      token-state subject_token, or refresh token that carries dlg_id
+      directly or in recorded state, the issuer MUST copy that value
+      unchanged, even when it reduces scope, adds an actor, crosses a
+      trust domain, or issues several tokens.
+
+   *  Otherwise, the issuer MUST reuse the value it already assigned to
+      the same delegation authorization or, if it has none, assign a new
+      one as Section 4.1.7 of [RFC7519] requires for jti.  The issuer
+      decides which of its issuances share a delegation authorization: a
+      standing policy can cover many and a refresh never starts a new
+      one, but a new authorization by the resource owner does.
+
+   *  The issuer MUST NOT take the value from any other input, such as a
+      request parameter or an actor_token.
 
    An issuer can omit dlg_id from any token (Privacy Considerations
-   (Section 14)); a token derived from that token keeps the value only
-   if the issuer's state, such as a refresh token's grant state, records
-   it, and otherwise can carry a new value.  Different or absent values
-   therefore do not show that tokens come from different delegation
-   authorizations.
+   (Section 14)).  A later issuer with no record of the value can then
+   assign a new one, so different or absent values do not show that
+   tokens come from different delegation authorizations.
 
-   For example, a resource owner authorizes an agent, and the AS assigns
-   D1 and records it in the refresh token's grant state.  Tokens the AS
-   issues on refresh carry D1, and so do two tokens a Token Exchange
-   derives from one of them for different audiences, even when the
-   exchange adds an actor.  If an issuer in another trust domain derives
-   token T from one of those and omits dlg_id, a later issuer that
-   derives a token from T and has no state for the authorization can
-   assign D2, so D1 and D2 describe one delegation authorization.  When
-   the resource owner authorizes the agent again, the AS assigns a new
-   value, D3.
+   For example, after a resource owner authorizes an agent and the AS
+   assigns D1, tokens issued on refresh and Token Exchange outputs
+   derived from them carry D1, including outputs for several audiences
+   and one that adds an actor.  If an issuer in another trust domain
+   omits the claim, a later issuer deriving a token from its output can
+   assign D2 for the same authorization.  A new authorization by the
+   resource owner gets a new value, D3.
 
 4.  JWT Assertion Grants
 
