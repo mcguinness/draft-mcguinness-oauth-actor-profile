@@ -901,15 +901,16 @@ Table of Contents
 
    A delegation authorization, the grant, consent, or policy decision
    under which an AS first issues a delegated token (Delegation Chains
-   (Section 3.5)), can yield many tokens: refreshed tokens, Token
-   Exchange outputs, and tokens issued in other trust domains.
-   Recipients that audit delegated activity, or show a resource owner
-   one entry per authorization, need to group those tokens, but no
-   existing claim identifies the authorization.  The jti claim
-   identifies one token; the (sub, act.sub) pair is shared by every
-   authorization a subject grants the same actor and changes when the
-   chain gains an actor; and txn ([I-D.ietf-oauth-transaction-tokens])
-   identifies a transaction, not an authorization.
+   (Section 3.5)), can yield many tokens: access tokens issued on the
+   refresh_token grant, Token Exchange outputs, and tokens issued in
+   other trust domains.  Recipients that audit delegated activity, or
+   show a resource owner one entry per authorization, need to group
+   those tokens, but no existing claim identifies the authorization.
+   The jti claim identifies one token; the (sub, act.sub) pair is shared
+   by every authorization a subject grants the same actor and changes
+   when the chain gains an actor; and txn
+   ([I-D.ietf-oauth-transaction-tokens]) identifies a transaction, not
+   an authorization.
 
    A token that carries act MAY carry the top-level dlg_id (delegation
    correlation identifier) claim, an opaque, case-sensitive string that
