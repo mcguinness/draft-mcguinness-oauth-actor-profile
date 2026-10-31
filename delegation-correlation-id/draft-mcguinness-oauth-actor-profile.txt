@@ -905,12 +905,11 @@ Table of Contents
    refresh_token grant, Token Exchange outputs, and tokens issued in
    other trust domains.  Recipients that audit delegated activity, or
    show a resource owner one entry per authorization, need to group
-   those tokens, but no existing claim identifies the authorization.
-   The jti claim identifies one token; the (sub, act.sub) pair is shared
-   by every authorization a subject grants the same actor and changes
-   when the chain gains an actor; and txn
-   ([I-D.ietf-oauth-transaction-tokens]) identifies a transaction, not
-   an authorization.
+   those tokens.  The jti claim identifies one token; the (sub, act.sub)
+   pair is shared by every authorization a subject grants the same actor
+   and changes when the chain gains an actor; and txn
+   ([I-D.ietf-oauth-transaction-tokens]) identifies a transaction.  None
+   of these identifies a delegation authorization.
 
    A token that carries act MAY carry the top-level dlg_id (delegation
    correlation identifier) claim, an opaque, case-sensitive string that
@@ -919,7 +918,8 @@ Table of Contents
    values are the issuers' assertion, not proof, that tokens share a
    delegation authorization, since an issuer can copy any value it
    receives.  A recipient groups tokens from different issuers by dlg_id
-   only when it trusts each issuer to follow this section.
+   only when it trusts those issuers to assert that the tokens derive
+   from the same delegation authorization.
 
    If an issuer includes dlg_id in a token derived from a validated JWT
    assertion grant, token-state subject_token, or refresh token that
@@ -942,6 +942,17 @@ Table of Contents
    it, and otherwise can carry a new value.  Different or absent values
    therefore do not show that tokens come from different delegation
    authorizations.
+
+   For example, a resource owner authorizes an agent, and the AS assigns
+   D1 and records it in the refresh token's grant state.  Tokens the AS
+   issues on refresh carry D1, and so do two tokens a Token Exchange
+   derives from one of them for different audiences, even when the
+   exchange adds an actor.  If an issuer in another trust domain derives
+   token T from one of those and omits dlg_id, a later issuer that
+   derives a token from T and has no state for the authorization can
+   assign D2, so D1 and D2 describe one delegation authorization.  When
+   the resource owner authorizes the agent again, the AS assigns a new
+   value, D3.
 
 4.  JWT Assertion Grants
 
