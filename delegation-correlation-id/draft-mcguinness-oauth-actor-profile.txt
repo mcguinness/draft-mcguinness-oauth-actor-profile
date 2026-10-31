@@ -918,23 +918,30 @@ Table of Contents
    Recipients MUST NOT use dlg_id as an authorization input: equal
    values are the issuers' assertion, not proof, that tokens share a
    delegation authorization, since an issuer can copy any value it
-   receives.
+   receives.  A recipient groups tokens from different issuers by dlg_id
+   only when it trusts each issuer to follow this section.
 
    If an issuer includes dlg_id in a token derived from a validated JWT
    assertion grant, token-state subject_token, or refresh token that
    carries dlg_id directly or in recorded state, it MUST copy that value
-   unchanged, even when it adds an actor, crosses a trust domain, or
-   issues several tokens.  When no such input carries one, as on a new
-   authorization by the resource owner, the issuer MAY assign a new
-   value and MUST assign it as Section 4.1.7 of [RFC7519] requires for
-   jti, so that values do not collide across issuers.  An issuer MUST
-   NOT take dlg_id from any other input, such as a request parameter or
-   an actor_token.
+   unchanged, even when it reduces scope, adds an actor, crosses a trust
+   domain, or issues several tokens.  When no such input carries one, an
+   issuer that includes dlg_id MUST reuse any value it has already
+   assigned to the same delegation authorization and otherwise MUST
+   assign a new value as Section 4.1.7 of [RFC7519] requires for jti, so
+   that values do not collide across issuers.  The issuer determines
+   which of these issuances share a delegation authorization: a standing
+   policy can cover many and a refresh stays under its original one,
+   while a new authorization by the resource owner starts another.  An
+   issuer MUST NOT take dlg_id from any other input, such as a request
+   parameter or an actor_token.
 
    An issuer can omit dlg_id from any token (Privacy Considerations
    (Section 14)); a token derived from that token keeps the value only
    if the issuer's state, such as a refresh token's grant state, records
-   it.
+   it, and otherwise can carry a new value.  Different or absent values
+   therefore do not show that tokens come from different delegation
+   authorizations.
 
 4.  JWT Assertion Grants
 
