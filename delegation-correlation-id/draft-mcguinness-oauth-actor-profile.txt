@@ -899,39 +899,35 @@ Table of Contents
 
 3.8.  Delegation Correlation Identifier
 
-   The top-level dlg_id (delegation correlation identifier) claim
+   A token that carries act MAY carry the top-level dlg_id (delegation
+   correlation identifier) claim, an opaque, case-sensitive string that
    correlates the tokens derived from one delegation authorization: the
    grant, consent, or policy decision under which an AS first issues a
-   token that represents delegation (Delegation Chains (Section 3.5)).
-   Its value is an opaque, case-sensitive string.  A token that carries
-   act MAY carry dlg_id.
+   delegated token (Delegation Chains (Section 3.5)).
 
-   When an issuer derives a token from a validated JWT assertion grant,
-   token-state subject_token, or refresh token, and that input or its
-   recorded state carries dlg_id, the issuer MUST use that value
-   unchanged if it includes the claim.  The value stays the same when
-   the issuer adds a new actor, crosses a trust domain, or issues
-   several tokens from the same input.  When no such input carries
-   dlg_id, the issuer MAY assign a new value, as on a new authorization
-   by the resource owner, and MUST assign it as Section 4.1.7 of
-   [RFC7519] requires for jti, so that two delegation authorizations,
-   even at different issuers, do not share a value.  An issuer MUST NOT
-   take dlg_id from any other request input, such as a request parameter
-   or an actor_token.
+   If an issuer includes dlg_id in a token derived from a validated JWT
+   assertion grant, token-state subject_token, or refresh token that
+   carries dlg_id directly or in recorded state, it MUST copy that value
+   unchanged, even when it adds an actor, crosses a trust domain, or
+   issues several tokens.  When no such input carries one, as on a new
+   authorization by the resource owner, the issuer MAY assign a new
+   value and MUST assign it as Section 4.1.7 of [RFC7519] requires for
+   jti, so that values do not collide across issuers.  An issuer MUST
+   NOT take dlg_id from any other input, such as a request parameter or
+   an actor_token.
 
    An issuer can omit dlg_id from any token (Privacy Considerations
-   (Section 14)).  An issuer that later derives a token from it can
-   carry the original value only if state it holds, such as a refresh
-   token's grant state, still records the value.  Equal values are the
-   issuers' assertion that tokens share a delegation authorization, not
-   proof of it, because an issuer can copy any value it receives.
-   Recipients can use dlg_id for correlation and audit and MUST NOT use
-   it as an authorization input.
+   (Section 14)); a token derived from that token keeps the value only
+   if the issuer's state, such as a refresh token's grant state, records
+   it.  Equal values are the issuers' assertion, not proof, that tokens
+   share a delegation authorization, since an issuer can copy any value
+   it receives.  Recipients MUST NOT use dlg_id as an authorization
+   input.
 
-   The dlg_id claim is independent of the txn claim
+   The claim is independent of txn
    ([I-D.ietf-oauth-transaction-tokens]): one delegation authorization
-   can span several transactions, and one transaction can involve
-   several delegation authorizations.
+   can span several transactions, and one transaction several delegation
+   authorizations.
 
 4.  JWT Assertion Grants
 
@@ -972,8 +968,7 @@ Table of Contents
       MUST conform to the actor object structure defined in Actor
       Profile for Delegation (Section 3).
 
-   dlg_id (OPTIONAL):  Correlates tokens derived from one delegation
-      authorization, as defined in Delegation Correlation Identifier
+   dlg_id (OPTIONAL):  See Delegation Correlation Identifier
       (Section 3.8).
 
    cnf (REQUIRED when sender-constrained; otherwise OPTIONAL):  When the
@@ -1232,8 +1227,7 @@ Table of Contents
       actor object structure defined in Actor Profile for Delegation
       (Section 3).
 
-   dlg_id (OPTIONAL):  Correlates tokens derived from one delegation
-      authorization, as defined in Delegation Correlation Identifier
+   dlg_id (OPTIONAL):  See Delegation Correlation Identifier
       (Section 3.8).
 
    cnf (REQUIRED when sender-constrained; otherwise OPTIONAL):  Binds
@@ -2046,8 +2040,7 @@ Table of Contents
       Tokens (Section 7.1.1) for delegation semantics and the
       relationship between act.sub and req_wl.
 
-   dlg_id (OPTIONAL):  Correlates tokens derived from one delegation
-      authorization, as defined in Delegation Correlation Identifier
+   dlg_id (OPTIONAL):  See Delegation Correlation Identifier
       (Section 3.8).
 
 7.1.1.  Actor Claim in Transaction Tokens
@@ -2558,9 +2551,8 @@ Table of Contents
       chain as complete unless local policy or deployment context
       indicates otherwise.
 
-   *  dlg_id: OPTIONAL.  The token's delegation correlation identifier
-      (Delegation Correlation Identifier (Section 3.8)), when its
-      authorization context includes one.
+   *  dlg_id: OPTIONAL.  The value from the token's authorization
+      context (Delegation Correlation Identifier (Section 3.8)).
 
    The AS MUST return actor claims from the token's authorization
    context, including the complete nested chain, except for the
@@ -3408,13 +3400,11 @@ Table of Contents
    [I-D.ietf-oauth-transaction-tokens] when propagating it across trust
    domains.
 
-   A dlg_id value links the tokens derived from one delegation
-   authorization across services and trust domains for as long as that
-   authorization lasts.  Issuers SHOULD include it only in tokens whose
-   recipients need that correlation and SHOULD NOT derive it from
-   identifiers of the subject or actor.  An issuer can record the value
-   for a grant without including it in every token issued under that
-   grant.
+   A dlg_id value links the tokens of one delegation authorization
+   across services and trust domains for as long as the authorization
+   lasts.  Issuers SHOULD include it only for recipients that need that
+   correlation and SHOULD NOT derive it from subject or actor
+   identifiers.
 
    The act.sub_profile claim reveals the actor's entity type, including
    whether it is an AI agent.  In some jurisdictions or deployment
@@ -3515,8 +3505,7 @@ Table of Contents
 
    *  Name: dlg_id
 
-   *  Description: Delegation correlation identifier, with the semantics
-      of the dlg_id JWT claim.
+   *  Description: Delegation Correlation Identifier
 
    *  Change Controller: IETF
 
