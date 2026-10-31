@@ -915,6 +915,10 @@ Table of Contents
    A token that carries act MAY carry the top-level dlg_id (delegation
    correlation identifier) claim, an opaque, case-sensitive string that
    correlates the tokens derived from one delegation authorization.
+   Recipients MUST NOT use dlg_id as an authorization input: equal
+   values are the issuers' assertion, not proof, that tokens share a
+   delegation authorization, since an issuer can copy any value it
+   receives.
 
    If an issuer includes dlg_id in a token derived from a validated JWT
    assertion grant, token-state subject_token, or refresh token that
@@ -930,10 +934,7 @@ Table of Contents
    An issuer can omit dlg_id from any token (Privacy Considerations
    (Section 14)); a token derived from that token keeps the value only
    if the issuer's state, such as a refresh token's grant state, records
-   it.  Equal values are the issuers' assertion, not proof, that tokens
-   share a delegation authorization, since an issuer can copy any value
-   it receives.  Recipients MUST NOT use dlg_id as an authorization
-   input.
+   it.
 
 4.  JWT Assertion Grants
 
