@@ -899,11 +899,21 @@ Table of Contents
 
 3.8.  Delegation Correlation Identifier
 
+   A delegation authorization, the grant, consent, or policy decision
+   under which an AS first issues a delegated token (Delegation Chains
+   (Section 3.5)), can yield many tokens: refreshed tokens, Token
+   Exchange outputs, and tokens issued in other trust domains.
+   Recipients that audit delegated activity, or show a resource owner
+   one entry per authorization, need to group those tokens, but no
+   existing claim identifies the authorization.  The jti claim
+   identifies one token; the (sub, act.sub) pair is shared by every
+   authorization a subject grants the same actor and changes when the
+   chain gains an actor; and txn ([I-D.ietf-oauth-transaction-tokens])
+   identifies a transaction, not an authorization.
+
    A token that carries act MAY carry the top-level dlg_id (delegation
    correlation identifier) claim, an opaque, case-sensitive string that
-   correlates the tokens derived from one delegation authorization: the
-   grant, consent, or policy decision under which an AS first issues a
-   delegated token (Delegation Chains (Section 3.5)).
+   correlates the tokens derived from one delegation authorization.
 
    If an issuer includes dlg_id in a token derived from a validated JWT
    assertion grant, token-state subject_token, or refresh token that
@@ -923,11 +933,6 @@ Table of Contents
    share a delegation authorization, since an issuer can copy any value
    it receives.  Recipients MUST NOT use dlg_id as an authorization
    input.
-
-   The claim is independent of txn
-   ([I-D.ietf-oauth-transaction-tokens]): one delegation authorization
-   can span several transactions, and one transaction several delegation
-   authorizations.
 
 4.  JWT Assertion Grants
 
