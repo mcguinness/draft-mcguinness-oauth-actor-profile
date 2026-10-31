@@ -445,6 +445,22 @@ Other actors that become presenters therefore need a direct credential: a worklo
 
 When the inbound `subject_token` is a bearer credential or an identity-only credential and the request supplies a validated `actor_token` establishing a new presenter, the issuer MAY issue a sender-constrained output token bound to that new presenter.  The absence of a top-level `cnf` claim in the `subject_token` imposes no continuity obligation in this case.
 
+## Delegation Correlation Identifier {#delegation-correlation}
+
+A delegation authorization, the grant, consent, or policy decision under which an AS first issues a delegated token ([Delegation Chains](#delegation-chains)), can yield many tokens: access tokens issued on the `refresh_token` grant, Token Exchange outputs, and tokens issued in other trust domains.  Recipients that audit delegated activity, or show a resource owner one entry per authorization, need to group those tokens.  The `jti` claim identifies one token; the (`sub`, `act.sub`) pair is shared by every authorization a subject grants the same actor and changes when the chain gains an actor; and `txn` ({{I-D.ietf-oauth-transaction-tokens}}) identifies a transaction.  None of these identifies a delegation authorization.
+
+A token that carries `act` MAY carry the top-level `dlg_id` (delegation correlation identifier) claim, an opaque, case-sensitive string that correlates the tokens derived from one delegation authorization.  Recipients MUST NOT use `dlg_id` as an authorization input: equal values are the issuers' assertion, not proof, that tokens share a delegation authorization, since an issuer can copy any value it receives.  A recipient groups tokens from different issuers by `dlg_id` only when it trusts each of them to make that assertion.
+
+An issuer that includes `dlg_id` in a token chooses its value as follows:
+
+*  If the token is derived from a validated JWT assertion grant, token-state `subject_token`, or refresh token that carries `dlg_id` directly or in recorded state, the issuer MUST copy that value unchanged, even when it reduces scope, adds an actor, crosses a trust domain, or issues several tokens.
+*  Otherwise, the issuer MUST reuse the value it already assigned to the same delegation authorization or, if it has none, assign a new one as {{Section 4.1.7 of RFC7519}} requires for `jti`.  The issuer decides which of its issuances share a delegation authorization: a standing policy can cover many and a refresh never starts a new one, but a new authorization by the resource owner does.
+*  The issuer MUST NOT take the value from any other input, such as a request parameter or an `actor_token`.
+
+An issuer can omit `dlg_id` from any token ([Privacy Considerations](#privacy)).  A later issuer with no record of the value can then assign a new one, so different or absent values do not show that tokens come from different delegation authorizations.
+
+For example, after a resource owner authorizes an agent and the AS assigns `D1`, tokens issued on refresh and Token Exchange outputs derived from them carry `D1`, including outputs for several audiences and one that adds an actor.  If an issuer in another trust domain omits the claim, a later issuer deriving a token from its output can assign `D2` for the same authorization.  A new authorization by the resource owner gets a new value, `D3`.
+
 # JWT Assertion Grants {#jwt-assertion-grants}
 
 ## Structure {#jwt-assertion-grants-structure}
@@ -469,6 +485,9 @@ The following claims are defined for a JWT assertion grant that carries actor-pr
 
 `act` (REQUIRED when delegation is asserted):
 : The actor object identifying the entity exercising the subject's delegated rights.  MUST conform to the actor object structure defined in [Actor Profile for Delegation](#actor-profile).
+
+`dlg_id` (OPTIONAL):
+: See [Delegation Correlation Identifier](#delegation-correlation).
 
 `cnf` (REQUIRED when sender-constrained; otherwise OPTIONAL):
 : When the JWT assertion grant is sender-constrained, the assertion MUST carry a top-level `cnf` claim identifying the binding: `cnf.jkt` per {{RFC9449}} when DPoP is used, or `cnf.x5t#S256` per {{RFC8705}} when mTLS is used.  When the assertion is not sender-constrained, a top-level `cnf` claim is OPTIONAL unless another profile or local policy requires it.
@@ -583,6 +602,9 @@ The following claims are defined for a JWT access token that carries actor-profi
 
 `act` (REQUIRED when the token represents delegation per [Delegation Chains](#delegation-chains)):
 : The actor object identifying the entity exercising the subject's delegated rights.  MUST conform to the actor object structure defined in [Actor Profile for Delegation](#actor-profile).
+
+`dlg_id` (OPTIONAL):
+: See [Delegation Correlation Identifier](#delegation-correlation).
 
 `cnf` (REQUIRED when sender-constrained; otherwise OPTIONAL):
 : Binds the access token to the current presenter when a sender-constraining mechanism such as DPoP or mTLS is used.
@@ -897,6 +919,8 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 8.  On a Token Exchange request, the AS MUST issue the token for every requested `audience` and `resource` or reject the request with `invalid_target` ({{Section 2.2.2 of RFC8693}}), unless the requested token type's specification permits a subset, as {{Section 4.3.3 of I-D.ietf-oauth-identity-assertion-authz-grant}} does for an ID-JAG's resources.  On other grants, resource indicators follow {{Section 2.2 of RFC8707}}.
 
+9.  If the issued token carries `dlg_id`, its value follows [Delegation Correlation Identifier](#delegation-correlation).
+
 # Transaction Token Service Processing {#transaction-token-service}
 
 ## Transaction Tokens {#transaction-tokens}
@@ -913,6 +937,9 @@ Transaction Token claims are defined in {{I-D.ietf-oauth-transaction-tokens}}.  
 
 `act` (REQUIRED when the token represents delegation per [Delegation Chains](#delegation-chains); omitted otherwise):
 : Represents the current acting party and any prior delegation steps, and conforms to [Actor Object Structure](#actor-object-structure).  See [Actor Claim in Transaction Tokens](#actor-claim-in-transaction-tokens) for delegation semantics and the relationship between `act.sub` and `req_wl`.
+
+`dlg_id` (OPTIONAL):
+: See [Delegation Correlation Identifier](#delegation-correlation).
 
 ### Actor Claim in Transaction Tokens {#actor-claim-in-transaction-tokens}
 
@@ -1115,6 +1142,7 @@ When token introspection ({{RFC7662}}) is used for delegated tokens, an AS MUST 
 *  `scope`: REQUIRED.  The effective scope of the token.
 *  `iss`: REQUIRED when the AS has a stable issuer identifier.
 *  `chain_complete`: OPTIONAL.  When absent, the RS SHOULD treat the chain as complete unless local policy or deployment context indicates otherwise.
+*  `dlg_id`: OPTIONAL.  The value from the token's authorization context ([Delegation Correlation Identifier](#delegation-correlation)).
 
 The AS MUST return actor claims from the token's authorization context, including the complete nested chain, except for the following privacy-filtering allowance.
 
@@ -1130,7 +1158,7 @@ An introspecting RS MUST apply the same delegated-token processing as for equiva
 
 If policy or token context indicates delegation, a missing `act` member is an inconsistency, and the RS MUST reject the token with HTTP 401 and `error="invalid_token"`; `actor_profile_required` alone does not indicate delegation.  Otherwise, the RS MAY treat an active response without `act` as non-delegated.
 
-Introspection endpoints for delegated tokens SHOULD be advertised using the `introspection_endpoint` parameter in AS metadata ({{RFC8414}}).  When revocation is integrated, the introspection response for a revoked delegated token returns `"active": false` per {{Section 2.2 of RFC7662}} and MUST NOT include the `act` or `sub_profile` members.
+Introspection endpoints for delegated tokens SHOULD be advertised using the `introspection_endpoint` parameter in AS metadata ({{RFC8414}}).  When revocation is integrated, the introspection response for a revoked delegated token returns `"active": false` per {{Section 2.2 of RFC7662}} and MUST NOT include the `act`, `sub_profile`, or `dlg_id` members.
 
 Resource servers that cache introspection responses for delegated tokens should use short cache lifetimes consistent with revocation requirements.
 
@@ -1498,6 +1526,8 @@ Issuers SHOULD minimize disclosure of prior actors through audience and token-de
 
 A Transaction Token's `txn` value links service calls in the same transaction and can enable correlation across organizations.  Deployments SHOULD follow the privacy guidance in {{I-D.ietf-oauth-transaction-tokens}} when propagating it across trust domains.
 
+A `dlg_id` value links the tokens of one delegation authorization across services and trust domains for as long as the authorization lasts.  Issuers SHOULD include it only for recipients that need that correlation and SHOULD NOT derive it from subject or actor identifiers.
+
 The `act.sub_profile` claim reveals the actor's entity type, including whether it is an AI agent.  In some jurisdictions or deployment contexts, this disclosure can be legally significant or can reveal sensitive information about user behavior and tool composition.  Issuers SHOULD consider audience-specific disclosure constraints and SHOULD omit unnecessary entity classifications when constructing new actor objects.  Inherited actors remain subject to the preservation rules in [Preserve Inbound Chain](#preserve-inbound-chain).
 
 The `req_wl` claim can reveal internal workload topology.  A TTS SHOULD disclose it only where needed for authorization, audit, or policy enforcement, and SHOULD avoid exposing internal workload identifiers across domains unless the deployment requires it.
@@ -1548,15 +1578,27 @@ This document requests IANA to register the following value in the "OAuth Extens
 
 ## OAuth Token Introspection Response Registry
 
-This document requests IANA to register the following value in the "OAuth Token Introspection Response" registry ({{Section 3.1 of RFC7662}}):
+This document requests IANA to register the following values in the "OAuth Token Introspection Response" registry ({{Section 3.1 of RFC7662}}):
 
 *  Name: `chain_complete`
 *  Description: Boolean indicating whether the `act` delegation chain in the introspection response is complete.  When `false`, one or more inner `act` chain entries have been omitted from the response for privacy reasons.  When absent, the chain SHOULD be treated as complete unless local policy or deployment context indicates otherwise.
 *  Change Controller: IETF
 *  Reference: [Token Introspection](#token-introspection) of this document
 
+*  Name: `dlg_id`
+*  Description: Delegation Correlation Identifier
+*  Change Controller: IETF
+*  Reference: [Delegation Correlation Identifier](#delegation-correlation) of this document
+
 
 ## JWT Claims Registry
+
+This document requests IANA to register the following value in the "JSON Web Token Claims" registry ({{RFC7519}}):
+
+*  Claim Name: `dlg_id`
+*  Claim Description: Delegation Correlation Identifier
+*  Change Controller: IETF
+*  Specification Document(s): [Delegation Correlation Identifier](#delegation-correlation) of this document
 
 This document does not request independent entries in the "JSON Web Token Claims" registry for the `act` object sub-claims (`iss`, `sub_profile`, and any extension claims) it defines or profiles.  These claims appear only within the JSON object value of the `act` claim, which {{RFC8693}} already registers in the "JSON Web Token Claims" registry.
 
