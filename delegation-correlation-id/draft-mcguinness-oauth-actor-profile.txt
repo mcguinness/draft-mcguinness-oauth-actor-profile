@@ -920,11 +920,13 @@ Table of Contents
    or an actor_token.
 
    An issuer can omit dlg_id from any token (Privacy Considerations
-   (Section 14)); tokens later derived from that token then cannot carry
-   the original value.  Equal values are the issuers' assertion that
-   tokens share a delegation authorization, not proof of it, because an
-   issuer can copy any value it receives.  Recipients can use dlg_id for
-   correlation and audit and MUST NOT use it as an authorization input.
+   (Section 14)).  An issuer that later derives a token from it can
+   carry the original value only if state it holds, such as a refresh
+   token's grant state, still records the value.  Equal values are the
+   issuers' assertion that tokens share a delegation authorization, not
+   proof of it, because an issuer can copy any value it receives.
+   Recipients can use dlg_id for correlation and audit and MUST NOT use
+   it as an authorization input.
 
    The dlg_id claim is independent of the txn claim
    ([I-D.ietf-oauth-transaction-tokens]): one delegation authorization
