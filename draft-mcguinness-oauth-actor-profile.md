@@ -447,9 +447,11 @@ When the inbound `subject_token` is a bearer credential or an identity-only cred
 
 ## Delegation Correlation Identifier {#delegation-correlation}
 
-A delegation authorization, the grant, consent, or policy decision under which an AS first issues a delegated token ([Delegation Chains](#delegation-chains)), can yield many tokens: access tokens issued on the `refresh_token` grant, Token Exchange outputs, and tokens issued in other trust domains.  Recipients that audit delegated activity, or show a resource owner one entry per authorization, need to group those tokens.  The `jti` claim identifies one token; the (`sub`, `act.sub`) pair is shared by every authorization a subject grants the same actor and changes when the chain gains an actor; and `txn` ({{I-D.ietf-oauth-transaction-tokens}}) identifies a transaction.  None of these identifies a delegation authorization.
+A delegation authorization, the grant, consent, or policy decision under which an AS first issues a delegated token ([Delegation Chains](#delegation-chains)), can yield many tokens: access tokens issued on the `refresh_token` grant, Token Exchange outputs, and tokens issued in other trust domains.  Recipients that audit delegated activity may need to associate successive tokens with the delegation authorization from which they were derived.  The `jti` claim identifies one token; the (`sub`, `act.sub`) pair is shared by every authorization a subject grants the same actor and changes when the chain gains an actor; and `txn` ({{I-D.ietf-oauth-transaction-tokens}}) identifies a transaction.  None of these identifies a delegation authorization.
 
 A token that carries `act` MAY carry the top-level `dlg_id` (delegation correlation identifier) claim, an opaque, case-sensitive string that correlates the tokens derived from one delegation authorization.  Recipients MUST NOT use `dlg_id` as an authorization input: equal values are the issuers' assertion, not proof, that tokens share a delegation authorization, since an issuer can copy any value it receives.  A recipient groups tokens from different issuers by `dlg_id` only when it trusts each of them to make that assertion.
+
+The `dlg_id` claim does not define an authorization object, task approval, authority limits, or issuance and revocation controls.  Deployments can use other identifiers for their correlation needs; this profile does not require `dlg_id`.
 
 An issuer that includes `dlg_id` in a token chooses its value as follows:
 
