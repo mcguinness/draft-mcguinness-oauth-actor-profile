@@ -1045,11 +1045,11 @@ svg {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">OAuth Actor Profile</td>
-<td class="right">October 2026</td>
+<td class="right">November 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">McGuinness</td>
-<td class="center">Expires 4 May 2027</td>
+<td class="center">Expires 5 May 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1062,12 +1062,12 @@ svg {
 <dd class="internet-draft">draft-mcguinness-oauth-actor-profile-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-10-31" class="published">31 October 2026</time>
+<time datetime="2026-11-01" class="published">1 November 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-05-04">4 May 2027</time></dd>
+<dd class="expires"><time datetime="2027-05-05">5 May 2027</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1117,7 +1117,7 @@ svg {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 4 May 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 5 May 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -2107,22 +2107,23 @@ PreserveChain(inbound_chain):
         <h3 id="name-delegation-correlation-iden">
 <a href="#section-3.8" class="section-number selfRef">3.8. </a><a href="#name-delegation-correlation-iden" class="section-name selfRef">Delegation Correlation Identifier</a>
         </h3>
-<p id="section-3.8-1">A delegation authorization, the grant, consent, or policy decision under which an AS first issues a delegated token (<span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.5</a>)</span>), can yield many tokens: access tokens issued on the <code>refresh_token</code> grant, Token Exchange outputs, and tokens issued in other trust domains.  Recipients that audit delegated activity, or show a resource owner one entry per authorization, need to group those tokens.  The <code>jti</code> claim identifies one token; the (<code>sub</code>, <code>act.sub</code>) pair is shared by every authorization a subject grants the same actor and changes when the chain gains an actor; and <code>txn</code> (<span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>) identifies a transaction.  None of these identifies a delegation authorization.<a href="#section-3.8-1" class="pilcrow">¶</a></p>
+<p id="section-3.8-1">A delegation authorization, the grant, consent, or policy decision under which an AS first issues a delegated token (<span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.5</a>)</span>), can yield many tokens: access tokens issued on the <code>refresh_token</code> grant, Token Exchange outputs, and tokens issued in other trust domains.  Recipients that audit delegated activity may need to associate successive tokens with the delegation authorization from which they were derived.  The <code>jti</code> claim identifies one token; the (<code>sub</code>, <code>act.sub</code>) pair is shared by every authorization a subject grants the same actor and changes when the chain gains an actor; and <code>txn</code> (<span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>) identifies a transaction.  None of these identifies a delegation authorization.<a href="#section-3.8-1" class="pilcrow">¶</a></p>
 <p id="section-3.8-2">A token that carries <code>act</code> <span class="bcp14">MAY</span> carry the top-level <code>dlg_id</code> (delegation correlation identifier) claim, an opaque, case-sensitive string that correlates the tokens derived from one delegation authorization.  Recipients <span class="bcp14">MUST NOT</span> use <code>dlg_id</code> as an authorization input: equal values are the issuers' assertion, not proof, that tokens share a delegation authorization, since an issuer can copy any value it receives.  A recipient groups tokens from different issuers by <code>dlg_id</code> only when it trusts each of them to make that assertion.<a href="#section-3.8-2" class="pilcrow">¶</a></p>
-<p id="section-3.8-3">An issuer that includes <code>dlg_id</code> in a token chooses its value as follows:<a href="#section-3.8-3" class="pilcrow">¶</a></p>
+<p id="section-3.8-3">The <code>dlg_id</code> claim does not define an authorization object, task approval, authority limits, or issuance and revocation controls.  Deployments can use other identifiers for their correlation needs; this profile does not require <code>dlg_id</code>.<a href="#section-3.8-3" class="pilcrow">¶</a></p>
+<p id="section-3.8-4">An issuer that includes <code>dlg_id</code> in a token chooses its value as follows:<a href="#section-3.8-4" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="section-3.8-4.1">
-            <p id="section-3.8-4.1.1">If the token is derived from a validated JWT assertion grant, token-state <code>subject_token</code>, or refresh token that carries <code>dlg_id</code> directly or in recorded state, the issuer <span class="bcp14">MUST</span> copy that value unchanged, even when it reduces scope, adds an actor, crosses a trust domain, or issues several tokens.<a href="#section-3.8-4.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-3.8-5.1">
+            <p id="section-3.8-5.1.1">If the token is derived from a validated JWT assertion grant, token-state <code>subject_token</code>, or refresh token that carries <code>dlg_id</code> directly or in recorded state, the issuer <span class="bcp14">MUST</span> copy that value unchanged, even when it reduces scope, adds an actor, crosses a trust domain, or issues several tokens.<a href="#section-3.8-5.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-3.8-4.2">
-            <p id="section-3.8-4.2.1">Otherwise, the issuer <span class="bcp14">MUST</span> reuse the value it already assigned to the same delegation authorization or, if it has none, assign a new one as <span><a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.7" class="relref">Section 4.1.7</a> of [<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> requires for <code>jti</code>.  The issuer decides which of its issuances share a delegation authorization: a standing policy can cover many and a refresh never starts a new one, but a new authorization by the resource owner does.<a href="#section-3.8-4.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-3.8-5.2">
+            <p id="section-3.8-5.2.1">Otherwise, the issuer <span class="bcp14">MUST</span> reuse the value it already assigned to the same delegation authorization or, if it has none, assign a new one as <span><a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.7" class="relref">Section 4.1.7</a> of [<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> requires for <code>jti</code>.  The issuer decides which of its issuances share a delegation authorization: a standing policy can cover many and a refresh never starts a new one, but a new authorization by the resource owner does.<a href="#section-3.8-5.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-3.8-4.3">
-            <p id="section-3.8-4.3.1">The issuer <span class="bcp14">MUST NOT</span> take the value from any other input, such as a request parameter or an <code>actor_token</code>.<a href="#section-3.8-4.3.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-3.8-5.3">
+            <p id="section-3.8-5.3.1">The issuer <span class="bcp14">MUST NOT</span> take the value from any other input, such as a request parameter or an <code>actor_token</code>.<a href="#section-3.8-5.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-3.8-5">An issuer can omit <code>dlg_id</code> from any token (<span><a href="#privacy" class="internal xref">Privacy Considerations</a> (<a href="#privacy" class="auto internal xref">Section 14</a>)</span>).  A later issuer with no record of the value can then assign a new one, so different or absent values do not show that tokens come from different delegation authorizations.<a href="#section-3.8-5" class="pilcrow">¶</a></p>
-<p id="section-3.8-6">For example, after a resource owner authorizes an agent and the AS assigns <code>D1</code>, tokens issued on refresh and Token Exchange outputs derived from them carry <code>D1</code>, including outputs for several audiences and one that adds an actor.  If an issuer in another trust domain omits the claim, a later issuer deriving a token from its output can assign <code>D2</code> for the same authorization.  A new authorization by the resource owner gets a new value, <code>D3</code>.<a href="#section-3.8-6" class="pilcrow">¶</a></p>
+<p id="section-3.8-6">An issuer can omit <code>dlg_id</code> from any token (<span><a href="#privacy" class="internal xref">Privacy Considerations</a> (<a href="#privacy" class="auto internal xref">Section 14</a>)</span>).  A later issuer with no record of the value can then assign a new one, so different or absent values do not show that tokens come from different delegation authorizations.<a href="#section-3.8-6" class="pilcrow">¶</a></p>
+<p id="section-3.8-7">For example, after a resource owner authorizes an agent and the AS assigns <code>D1</code>, tokens issued on refresh and Token Exchange outputs derived from them carry <code>D1</code>, including outputs for several audiences and one that adds an actor.  If an issuer in another trust domain omits the claim, a later issuer deriving a token from its output can assign <code>D2</code> for the same authorization.  A new authorization by the resource owner gets a new value, <code>D3</code>.<a href="#section-3.8-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>

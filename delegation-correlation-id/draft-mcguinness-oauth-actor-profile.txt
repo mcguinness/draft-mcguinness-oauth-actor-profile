@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                         31 October 2026
-Expires: 4 May 2027
+Intended status: Standards Track                         1 November 2026
+Expires: 5 May 2027
 
 
                    OAuth Actor Profile for Delegation
@@ -56,7 +56,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 4 May 2027.
+   This Internet-Draft will expire on 5 May 2027.
 
 Copyright Notice
 
@@ -903,13 +903,13 @@ Table of Contents
    under which an AS first issues a delegated token (Delegation Chains
    (Section 3.5)), can yield many tokens: access tokens issued on the
    refresh_token grant, Token Exchange outputs, and tokens issued in
-   other trust domains.  Recipients that audit delegated activity, or
-   show a resource owner one entry per authorization, need to group
-   those tokens.  The jti claim identifies one token; the (sub, act.sub)
-   pair is shared by every authorization a subject grants the same actor
-   and changes when the chain gains an actor; and txn
-   ([I-D.ietf-oauth-transaction-tokens]) identifies a transaction.  None
-   of these identifies a delegation authorization.
+   other trust domains.  Recipients that audit delegated activity may
+   need to associate successive tokens with the delegation authorization
+   from which they were derived.  The jti claim identifies one token;
+   the (sub, act.sub) pair is shared by every authorization a subject
+   grants the same actor and changes when the chain gains an actor; and
+   txn ([I-D.ietf-oauth-transaction-tokens]) identifies a transaction.
+   None of these identifies a delegation authorization.
 
    A token that carries act MAY carry the top-level dlg_id (delegation
    correlation identifier) claim, an opaque, case-sensitive string that
@@ -919,6 +919,11 @@ Table of Contents
    delegation authorization, since an issuer can copy any value it
    receives.  A recipient groups tokens from different issuers by dlg_id
    only when it trusts each of them to make that assertion.
+
+   The dlg_id claim does not define an authorization object, task
+   approval, authority limits, or issuance and revocation controls.
+   Deployments can use other identifiers for their correlation needs;
+   this profile does not require dlg_id.
 
    An issuer that includes dlg_id in a token chooses its value as
    follows:
