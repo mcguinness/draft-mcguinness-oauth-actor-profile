@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-11-03T04:15:34.352396+00:00",
+  "timestamp": "2026-11-05T03:54:44.773198+00:00",
   "repo": "mcguinness/draft-mcguinness-oauth-actor-profile",
   "labels": [
     {
@@ -318,6 +318,38 @@
       "body": "## Problem\n\n\u00a73.4 is explicit that `client_profile` (client classification) MUST NOT appear inside an `act` object \u2014 classification belongs at the top level, and an AS/RS encountering it inside `act` MAY reject or ignore it. But the draft is **silent on owner-authored recall metadata**: a resource-owner-chosen label for a delegated connection (e.g. a user nickname so a person can later answer \"which of these Claude Desktop grants do I revoke?\").\n\nThis is a third bucket, distinct from both actor identity and the delegation correlator (`dlg_id`, #3):\n\n- **Enforce** \u2014 `act.sub` (+ `act.iss`): AS-vouched actor identity, sole authz input.\n- **Correlate (machine)** \u2014 `dlg_id`: AS-minted, opaque, the RS grant-collapse key.\n- **Recall (human)** \u2014 an owner-authored label: display only, so a person recognizes a connection weeks later.\n\nWithout a stated rule, the natural (wrong) implementation is to stamp the label as an `act` member. We were about to do exactly that and stopped. Walking it against the profile shows three reasons it is wrong \u2014 the same reasoning that bars `client_profile` from `act`:\n\n1. **Authority mismatch.** Every `act` member is *actor identity* \u2014 asserted by the AS (`act.sub`/`act.iss`) or self-asserted by the agent. A recall label is authored by the **resource owner**, about *their* relationship to the connection \u2014 not an actor property. Nesting it in `act` re-mixes authorities the profile otherwise keeps apart.\n\n2. **Chain-preservation mis-propagates it.** Preserve-Inbound-Chain copies unrecognized `act` members verbatim into inherited actor objects down the chain. An owner's per-connection nickname would then ride into downstream hops attached to the wrong actor \u2014 actively harmful across a cross-domain hop (ID-JAG / identity-chaining), where it leaks the owner's label into another domain's actor object.\n\n3. **It is recall, not correlation or identity.** It must never be a collapse key (that is the AS-minted `dlg_id`) and never an authz input.\n\n## Proposed change\n\nAdd a short normative note (symmetric to the \u00a73.4 `client_profile` rule):\n\n> Owner-authored recall metadata \u2014 a label or annotation authored by the resource owner to recognize a delegated connection \u2014 MUST NOT appear as a member of an `act` object. Such metadata lives at the top level of the token or out of band (e.g. surfaced via RFC 7662 introspection). It is NOT subject to chain preservation: an issuer reissuing, refreshing, or exchanging a delegated token MUST NOT copy owner-authored recall metadata from an inbound `act` object into an inherited actor object.\n\n## Implementation data\n\nDeployed delegated-agent AS (context in #31, correlator in #3). We capture a user-chosen connection label at lane election, hold it in an authoritative mutable AS table, and surface it via RFC 7662 introspection on the full response only. We **dropped** the in-`act` placement entirely for the three reasons above. The label is display/recall only \u2014 never a scope, floor, authz input, collapse key, or token claim.\n\n## Relationship to existing items\n\n- Complements the \u00a73.4 `client_profile`-stays-top-level rule \u2014 same authority-separation principle, different authorship (client vs resource owner).\n- Distinct from `dlg_id` (#3): that is a machine correlator with a cross-party wire contract; this recall metadata has no interop wire format and is deliberately **not** a standardized claim \u2014 the normative content is the *negative* rule (where it must not go), not a new claim name or IANA registration.",
       "createdAt": "2026-10-31T23:33:14Z",
       "updatedAt": "2026-10-31T23:33:14Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 36,
+      "id": "I_kwDOR1X6Tc8AAAABcOHsDg",
+      "title": "Actor-identity examples describe an agent instance as the actor",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile/issues/36",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Two examples in the actor-identity sections use \"agent instance\" for the actor.\n\n1. Client Identity and Delegation: \"When a single `client_id` registration serves multiple distinct acting entities (for example, an agent orchestration platform executing requests on behalf of different agent instances), `client_id` alone does not identify the runtime actor.\" The acting entities in that example are agents. Proposed: \"on behalf of different agents\", and \"does not identify the acting principal\", which matches the next sentence.\n\n2. Actor Identity Rotation: \"When `act.sub` itself must change (for example, because an agent instance is replaced, a workload is renamed, or an actor identifier namespace migrates)\". When a scheduler moves `agent-42` from one worker to another, the actor is still `agent-42`, and the worker change alone does not establish that a different principal received authority. Proposed: drop \"an agent instance is replaced\" from the examples and add:\n\n   > Moving an actor to a different runtime does not by itself change its identity.\n\nNeither change alters a requirement. A separate, optional normative clarification would extend the SHOULD earlier in the section (\"a durable, stable identifier independent of ephemeral key material\") to cover the runtime as well. That broadens the recommendation and can be decided on its own.\n\nClient Instance Identifiers takes the same position from the receiving side. A Receiver MUST NOT \"set an access token's `sub` claim, add an `act` claim, or extend an actor chain solely from instance evidence.\"\n\nRelated: #4, closed by #12, clarified how token `act.cnf` composes with receipts and proofs. This issue concerns separate uses of \"agent instance\" in the actor-identity examples.",
+      "createdAt": "2026-11-03T18:33:12Z",
+      "updatedAt": "2026-11-03T18:33:12Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 37,
+      "id": "I_kwDOR1X6Tc8AAAABcOHtRg",
+      "title": "Top-Level `cnf`: does a key other actors can use identify the outermost actor?",
+      "url": "https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile/issues/37",
+      "state": "OPEN",
+      "author": "mcguinness",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "Top-Level `cnf` Governs the Current Presenter says:\n\n> When delegation is present, that current presenter is the party identified by the outermost `act` claim: when DPoP (RFC 9449) is used, the top-level `cnf.jkt` MUST identify that party's key; when mTLS (RFC 8705) is used, the top-level `cnf.x5t#S256` MUST identify that party's certificate.\n\nThe draft does not say whether a key counts as \"that party's\" when other actors can also use it. The case to decide is one where several distinct actors have unrestricted access to the same private key, or can obtain accepted proofs from it without actor-specific enforcement. Any of them holding the token can then satisfy its sender constraint.\n\nThis can happen when several agents run in one pod and each can use the pod's mTLS private key or a worker-wide DPoP key. A token that names `agent-42` in `act` and is bound to that key can then be presented by any of them. Sharing a host does not by itself give every agent use of the key, so the question is about use of the private key, not about where actors run.\n\nThree options:\n\n1. **Require actor-specific use.** Whatever holds the key, such as the actor's runtime, a key store, or a shared signer that produces proofs only for the actor the token names, MUST restrict its use to that actor. The authorization server validates the actor credential and the proof as it does today. A trusted credential and a valid proof do not by themselves demonstrate exclusivity, so the draft would also say what the server relies on for it, such as the credential issuer's binding or deployment evidence.\n2. **Permit shared use**, with a security consideration that a valid proof then binds the token to the actors who can use the key, not to the outermost actor. This option still needs to say whether a mediated shared signer is permitted on different terms from unrestricted access, and what a resource server may infer from a valid proof, since the proof looks the same in both cases.\n3. **Leave exclusivity assurance to deployment policy**, stated explicitly, and document what receivers may infer from a valid proof when the profile does not establish exclusivity. The draft is silent today, which leaves the question unresolved rather than delegated, so this option also needs text.\n\nClient Instance Identifiers needs the answer only to say whether a token bound to such a key can satisfy both drafts at once (mcguinness/draft-mcguinness-oauth-client-instance-id#38).\n",
+      "createdAt": "2026-11-03T18:33:13Z",
+      "updatedAt": "2026-11-03T18:33:17Z",
       "closedAt": null,
       "comments": []
     }
