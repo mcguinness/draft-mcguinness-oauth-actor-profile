@@ -856,10 +856,11 @@ Table of Contents
    to assert delegation chains to recognize the marking and carry it
    into derived tokens.  A party that implements only this document
    cannot recognize the marking.  A TTS and an AS processing the
-   refresh_token grant MUST NOT omit actors and carry any marking they
-   recognize (Transaction Token Output Rules (Section 7.4), Delegated
-   Token Issuance (Section 5.2)); Token Exchange with a refresh token as
-   subject_token follows this section like any other Token Exchange.
+   refresh_token grant MUST NOT omit actors.  Each MUST carry forward
+   any omission marking it recognizes (Transaction Token Output Rules
+   (Section 7.4), Delegated Token Issuance (Section 5.2)).  Token
+   Exchange with a refresh token as subject_token follows this section
+   like any other Token Exchange.
 
    A recipient that detects an omission through the profile's marking
    MUST NOT treat the chain as complete delegation history and MUST
