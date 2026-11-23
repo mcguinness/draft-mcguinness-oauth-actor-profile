@@ -326,6 +326,11 @@ Table of Contents
    Delegation:  The act by which a principal authorizes another party
       (the actor) to exercise a subset of the principal's rights.
 
+   Delegated-Access Requirement:  A resource policy that permits a
+      request on a particular path or for a particular operation only
+      when the RS establishes that a distinct actor is authorized to act
+      for the subject.
+
    Cross-Domain Delegation:  Delegation in which the subject and actor
       are governed by different trust domains or identifier namespaces.
       Deployment policy determines whether a token represents cross-
@@ -509,10 +514,13 @@ Table of Contents
    sub_profile:  RECOMMENDED.  A space-delimited list of entity profile
       values classifying the actor identified by act.sub, as defined in
       Section 4.2 of [I-D.mora-oauth-entity-profiles].  Values used
-      within act objects MUST be registered with the "Actor Profile"
-      usage location in the OAuth Entity Profiles registry (Section 14.1
-      of [I-D.mora-oauth-entity-profiles]) or be privately defined
-      collision-resistant values.
+      within act objects MUST be registered for the "Actor Profile"
+      usage location or be privately defined collision-resistant values.
+      Until IANA establishes the registry, issuers and recipients use
+      the initial Actor Profile values from Section 14.1 of
+      [I-D.mora-oauth-entity-profiles]: user for a human resource owner,
+      service for a backend service, and ai_agent for an autonomous or
+      semi-autonomous AI entity.
 
       If the acting entity fits more than one profile, multiple values
       MAY be included as a space-delimited string (e.g., "service
@@ -1087,10 +1095,13 @@ Table of Contents
    registered delegation grant, an explicit consent record, or a policy
    rule covering the acting party or a class of acting parties.
 
-   A client registration MAY supply that basis only if it uniquely
+   The AS MUST apply Common Issuance Rules (Section 6.6).  A client
+   registration MAY supply the delegation basis only if it uniquely
    identifies one acting entity and the AS can derive the actor
-   identifier from the registration alone.  A registration shared by
-   several actors does not satisfy this condition.
+   identifier from that registration alone.  When the AS derives the new
+   actor identifier from the client registration, it MUST set act.iss to
+   the issuer identifier of the AS at which the client is registered, as
+   specified for JWT client assertions in Actor Tokens (Section 6.4).
 
    For the authorization code grant, the AS MAY include the act claim
    when an independent delegation basis, such as authorization state,
@@ -1165,11 +1176,12 @@ Table of Contents
    On rebind the issuer MUST validate any proof required by the actor
    credential or deployment, including for a bearer output.  The subject
    token's prior binding alone does not require proof from the prior
-   presenter.  With a validated actor_token, the issuer MAY upgrade a
-   bearer or identity-only input to a sender-constrained output.  To
-   change presenters while retaining a chain, deployments SHOULD supply
-   the delegated credential as subject_token and the direct credential
-   as actor_token.
+   presenter.  JWT Assertion Grant (Section 6.3.1) restricts rebind of
+   bound grants by issuer.  With a validated actor_token, the issuer MAY
+   upgrade a bearer or identity-only input to a sender-constrained
+   output.  To change presenters while retaining a chain, deployments
+   SHOULD supply the delegated credential as subject_token and the
+   direct credential as actor_token.
 
    Identity-only inputs (ID Tokens and refresh tokens) establish the
    subject and can supply classification or an authorization ceiling.
@@ -1305,14 +1317,16 @@ Table of Contents
    code instead (Section 2.2.2 of [RFC8693]).
 
    In presenter continuation, step 5 of Authorization Grant Processing
-   (Section 4.2) applies.  In presenter rebind, the new presenter's
-   binding supersedes the grant's: the AS does not perform step 5's
-   match of the request's proof against the grant's top-level cnf, and
-   it treats the grant as having no enforced grant-level sender
-   constraint, so the (iss, jti) single-use rule in step 1 of
-   Authorization Grant Processing (Section 4.2) applies.  The AS still
-   validates any proof that the new presenter's credential profile or
-   the deployment requires, as the rebind rules specify.
+   (Section 4.2) applies.  For presenter rebind of a DPoP- or mTLS-bound
+   assertion grant, the AS MUST reject the request with invalid_request
+   unless local policy explicitly permits rebind for the grant's
+   validated issuer.  On rebind, the AS does not perform step 5's match
+   of the request's proof against the grant's top-level cnf, and it
+   treats the grant as having no enforced grant-level sender constraint,
+   so the (iss, jti) single-use rule in step 1 of Authorization Grant
+   Processing (Section 4.2) applies.  The AS still validates any proof
+   that the new presenter's credential profile or the deployment
+   requires, as the rebind rules specify.
 
    The grant's scope ceiling is its scope claim when present (such as
    the ID-JAG scope claim of
@@ -2664,9 +2678,9 @@ Table of Contents
 
 13.3.  Assertion Replay Prevention
 
-   On rebind, a party holding a sender-constrained assertion grant can
-   redeem it once without the original key if it presents an actor
-   credential authorized to act for sub.  JWT Assertion Grant as
+   Enabling rebind for a grant issuer permits redemption of a bound
+   assertion grant once without proof of its original key by a requester
+   that establishes an authorized new presenter.  JWT Assertion Grant as
    subject_token (Section 6.3.1) applies the single-use check in
    Authorization Grant Processing (Section 4.2).  Short lifetimes limit
    exposure and replay-record retention.
@@ -2964,13 +2978,11 @@ Table of Contents
 15.8.  OAuth Entity Profiles Registry
 
    This document makes no independent requests to the "OAuth Entity
-   Profiles" registry.  It normatively depends on the "Actor Profile"
-   usage location, the actor array in entity_profiles_supported, and the
-   registration of user, service, and ai_agent with that usage location,
-   all of which are defined and requested by
-   [I-D.mora-oauth-entity-profiles].  The IANA actions for those entries
-   are contingent on the progression of
-   [I-D.mora-oauth-entity-profiles].
+   Profiles" registry.  [I-D.mora-oauth-entity-profiles] defines the
+   claim syntax and the actor array in entity_profiles_supported and
+   requests the registry and its initial entries.  Until the registry is
+   established, Actor Object Structure (Section 3.4) specifies the
+   applicable vocabulary.
 
 16.  References
 
@@ -3154,6 +3166,13 @@ Document History
    [[ To be removed from the final specification ]]
 
    -02
+
+   *  Defined a delegated-access requirement, specified the pre-
+      registration actor vocabulary, and required explicit issuer-
+      specific policy for rebind of a DPoP- or mTLS-bound assertion
+      grant.  Outside Token Exchange, delegated JWT access token
+      issuance applies the common rules and scopes a registration-
+      derived actor identifier to the registering AS.
 
    *  Added Omitting Prior Actors: by default an issuer keeps the
       complete chain or rejects the request; a profile can define
