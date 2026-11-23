@@ -9,7 +9,7 @@
 <meta content="
        This document defines a common representation of delegated actors in OAuth JSON Web Token (JWT) assertion grants, JWT access tokens, and Transaction Tokens.  It profiles the  act  claim defined by OAuth 2.0 Token Exchange, requires issuer-scoped actor identifiers, and uses the  sub_profile  claim to classify actor entity types.  It specifies token processing, delegation-chain propagation, sender-constraint handling, and discovery metadata, so that issuers and resource servers in different trust domains interpret delegated actors consistently. 
     " name="description">
-<meta content="xml2rfc 3.34.1" name="generator">
+<meta content="xml2rfc 3.35.0" name="generator">
 <meta content="oauth" name="keyword">
 <meta content="delegation" name="keyword">
 <meta content="actor" name="keyword">
@@ -17,19 +17,19 @@
 <meta content="token" name="keyword">
 <meta content="draft-mcguinness-oauth-actor-profile-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.34.1
-    Python 3.14.8
-    ConfigArgParse 1.8.0
+  xml2rfc 3.35.0
+    Python 3.14.10
+    ConfigArgParse 1.10.1
     google-i18n-address 3.1.1
     intervaltree 3.2.1
     Jinja2 3.1.6
     lxml 6.1.1
     natsort 8.4.0
-    platformdirs 4.12.2
+    platformdirs 4.14.7
     pycountry 24.6.1
     PyYAML 6.0.3
     requests 2.33.1
-    wcwidth 0.9.1
+    wcwidth 0.9.4
 -->
 <link href="draft-mcguinness-oauth-actor-profile.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -1030,7 +1030,7 @@ svg {
   & :is([stroke="white"], [stroke^="#fff"]) {
     stroke: var(--background-color);
   }
-  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+  & :is([fill="black"], [fill^="#000"], :not([fill], [fill] *)) {
     fill: var(--text-color);
   }
   & :is([fill="white"], [fill^="#fff"]) {
@@ -1045,11 +1045,11 @@ svg {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">OAuth Actor Profile</td>
-<td class="right">October 2026</td>
+<td class="right">November 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">McGuinness</td>
-<td class="center">Expires 12 April 2027</td>
+<td class="center">Expires 27 May 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1062,12 +1062,12 @@ svg {
 <dd class="internet-draft">draft-mcguinness-oauth-actor-profile-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-10-09" class="published">9 October 2026</time>
+<time datetime="2026-11-23" class="published">23 November 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-04-12">12 April 2027</time></dd>
+<dd class="expires"><time datetime="2027-05-27">27 May 2027</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1117,7 +1117,7 @@ svg {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 12 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 27 May 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1197,6 +1197,9 @@ svg {
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.6.2.2">
                     <p id="section-toc.1-1.3.2.6.2.2.1"><a href="#section-3.6.2" class="auto internal xref">3.6.2</a>.  <a href="#name-construction-steps" class="internal xref">Construction Steps</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.6.2.3">
+                    <p id="section-toc.1-1.3.2.6.2.3.1"><a href="#section-3.6.3" class="auto internal xref">3.6.3</a>.  <a href="#name-omitting-prior-actors" class="internal xref">Omitting Prior Actors</a></p>
 </li>
                 </ul>
 </li>
@@ -1637,7 +1640,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
         <dd class="break"></dd>
 <dt id="section-2-4.11">Delegation Chain:</dt>
         <dd style="margin-left: 1.5em" id="section-2-4.12">
-          <p id="section-2-4.12.1">The sequence of actors representing how authorization has passed from the subject principal (<code>sub</code>) to the first actor (innermost <code>act</code>) and through any intermediate parties to the immediate actor (outermost <code>act.sub</code>).  The chain is conveyed by the nested structure of the <code>act</code> claim.<a href="#section-2-4.12.1" class="pilcrow">¶</a></p>
+          <p id="section-2-4.12.1">The sequence of actors representing how authorization has passed from the subject principal (<code>sub</code>) to the first actor (innermost <code>act</code> in a complete chain) and through any intermediate parties to the immediate actor (outermost <code>act.sub</code>).  The chain is conveyed by the nested structure of the <code>act</code> claim.<a href="#section-2-4.12.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-2-4.13">Outermost Actor:</dt>
@@ -1727,7 +1730,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
           <h4 id="name-representation-and-policy">
 <a href="#section-3.3.1" class="section-number selfRef">3.3.1. </a><a href="#name-representation-and-policy" class="section-name selfRef">Representation and Policy</a>
           </h4>
-<p id="section-3.3.1-1">This profile standardizes actor representation, propagation, validation, and discovery.  Delegation approval, trust frameworks, and identifier mappings remain deployment-specific.  Cross-domain deployments require agreements that cover permitted delegation relationships and identifier namespaces.<a href="#section-3.3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.3.1-1">This profile standardizes actor representation, propagation, validation, and discovery.  Delegation approval, trust frameworks, identifier mappings, and whether a recipient accepts an incomplete delegation chain remain deployment-specific.  Cross-domain deployments require agreements that cover permitted delegation relationships and identifier namespaces.<a href="#section-3.3.1-1" class="pilcrow">¶</a></p>
 <p id="section-3.3.1-2"><span><a href="#actor-authorization" class="internal xref">Actor Authorization</a> (<a href="#actor-authorization" class="auto internal xref">Section 8.1</a>)</span> describes when an RS enforces authorization of the (<code>sub</code>, outermost <code>act.sub</code>) pair; this document does not require it on every request.<a href="#section-3.3.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1833,17 +1836,17 @@ act-object = {
         <h3 id="name-delegation-chains">
 <a href="#section-3.5" class="section-number selfRef">3.5. </a><a href="#name-delegation-chains" class="section-name selfRef">Delegation Chains</a>
         </h3>
-<p id="section-3.5-1">Delegation chains <span class="bcp14">MUST</span> use nested <code>act</code> objects as specified in <span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>.  The outermost object identifies the immediate actor; the innermost object identifies the first actor authorized by the subject.  The chain records prior actors under the conveying issuer's trust, without independently proving each hop.  This profile defines one linear chain per token; concurrent delegations use separate tokens.<a href="#section-3.5-1" class="pilcrow">¶</a></p>
+<p id="section-3.5-1">Delegation chains <span class="bcp14">MUST</span> use nested <code>act</code> objects as specified in <span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>.  The outermost object identifies the immediate actor; in a complete chain, the innermost object identifies the first actor authorized by the subject.  The chain records prior actors under the conveying issuer's trust, without independently proving each hop.  This profile defines one linear chain per token; concurrent delegations use separate tokens.<a href="#section-3.5-1" class="pilcrow">¶</a></p>
 <p id="section-3.5-2">This document uses the following terms:<a href="#section-3.5-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-3.5-3.1">
             <p id="section-3.5-3.1.1">A <strong>hop</strong> is a single <code>act</code> object in a delegation chain.  The number of hops in a chain equals the chain's delegation depth.<a href="#section-3.5-3.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-3.5-3.2">
-            <p id="section-3.5-3.2.1">A <strong>visible hop</strong> is a hop that appears in the token's <code>act</code> chain as received by a recipient, after any filtering by an introspection server.<a href="#section-3.5-3.2.1" class="pilcrow">¶</a></p>
+            <p id="section-3.5-3.2.1">A <strong>visible hop</strong> is a hop that appears in the token's <code>act</code> chain as received by a recipient, after any omission under <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span> or filtering by an introspection server.<a href="#section-3.5-3.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-3.5-3.3">
-            <p id="section-3.5-3.3.1">A <strong>single-hop actor object</strong> is an <code>act</code> object with no nested <code>act</code>; it represents delegation depth 1.<a href="#section-3.5-3.3.1" class="pilcrow">¶</a></p>
+            <p id="section-3.5-3.3.1">A <strong>single-hop actor object</strong> is an <code>act</code> object with no nested <code>act</code>; it represents delegation depth 1, or a visible depth of 1 in a chain with omitted actors (<span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span>).<a href="#section-3.5-3.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-3.5-3.4">
             <p id="section-3.5-3.4.1">An <strong>inbound delegation chain</strong> is the complete <code>act</code> structure received in an inbound token, whether depth 1 or greater.<a href="#section-3.5-3.4.1" class="pilcrow">¶</a></p>
@@ -1877,7 +1880,7 @@ act-object = {
 <p id="section-3.5-6">In this example, Alice (<code>sub</code>) authorized the travel assistant (inner <code>act</code>), which delegated to the booking tool (outermost <code>act</code>).  The booking tool is the current presenter.<a href="#section-3.5-6" class="pilcrow">¶</a></p>
 <p id="section-3.5-7">Delegation depth is the number of <code>act</code> objects in the chain, counting from the outermost.  Depth is counted on the resulting chain after any new outermost <code>act</code> is added, not on the inbound token.<a href="#section-3.5-7" class="pilcrow">¶</a></p>
 <p id="section-3.5-8">Depth 1 is the minimum interoperable depth.  Implementations for cross-domain multi-hop use <span class="bcp14">SHOULD</span> support at least depth 4, and should document their maximum.  Same-domain deployments can use a shallower maximum when it is sufficient for their architecture.<a href="#section-3.5-8" class="pilcrow">¶</a></p>
-<p id="section-3.5-9">Implementations <span class="bcp14">MUST</span> define and enforce a local maximum delegation depth.  Implementations that receive a token exceeding their configured local maximum <span class="bcp14">MUST</span> reject it as an invalid input under the applicable token-processing rules; AS and TTS errors follow <span><a href="#actor-profile-error-responses" class="internal xref">Error Responses</a> (<a href="#actor-profile-error-responses" class="auto internal xref">Section 9</a>)</span>.  When a request would add an actor beyond that limit, the AS <span class="bcp14">MUST</span> reject the request with the <code>invalid_request</code> error code; it <span class="bcp14">MUST NOT</span> silently truncate the chain.<a href="#section-3.5-9" class="pilcrow">¶</a></p>
+<p id="section-3.5-9">Implementations <span class="bcp14">MUST</span> define and enforce a local maximum delegation depth.  Implementations that receive a token exceeding their configured local maximum <span class="bcp14">MUST</span> reject it as an invalid input under the applicable token-processing rules; AS and TTS errors follow <span><a href="#actor-profile-error-responses" class="internal xref">Error Responses</a> (<a href="#actor-profile-error-responses" class="auto internal xref">Section 9</a>)</span>.  When a request would add an actor beyond that limit, the AS <span class="bcp14">MUST</span> reject the request with the <code>invalid_request</code> error code; it <span class="bcp14">MUST NOT</span> silently truncate the chain.  The local maximum applies to the visible chain.  An implementation that also limits total delegation depth <span class="bcp14">MUST</span> reject an incomplete chain (<span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span>) unless it can establish that the total depth, counting every actor hidden from it, is within that limit.<a href="#section-3.5-9" class="pilcrow">¶</a></p>
 <p id="section-3.5-10">A token represents delegation when the party exercising the token's authorization at runtime (the actor) is distinct from the token subject (<code>sub</code>) and the subject has authorized the actor to do so.  The following conditions establish this:<a href="#section-3.5-10" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-3.5-11">
 <li id="section-3.5-11.1">
@@ -2016,7 +2019,7 @@ AddOutermostActor(inbound_chain, new_actor):
   return outermost
 </pre><a href="#section-3.6.2.1-2" class="pilcrow">¶</a>
 </div>
-<p id="section-3.6.2.1-3">The AS <span class="bcp14">MUST</span> set the new actor's <code>act.iss</code> and <span class="bcp14">MUST NOT</span> change any inherited actor field.  It <span class="bcp14">MUST</span> preserve the entire inbound chain; <span><a href="#enforce-depth-limit" class="internal xref">Enforce Depth Limit</a> (<a href="#enforce-depth-limit" class="auto internal xref">Section 3.6.1.4</a>)</span> rejects a resulting chain that exceeds the local maximum.<a href="#section-3.6.2.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.6.2.1-3">The AS <span class="bcp14">MUST</span> set the new actor's <code>act.iss</code>.  Except as <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span> permits, it <span class="bcp14">MUST NOT</span> change any inherited actor field and <span class="bcp14">MUST</span> preserve the entire inbound chain; <span><a href="#enforce-depth-limit" class="internal xref">Enforce Depth Limit</a> (<a href="#enforce-depth-limit" class="auto internal xref">Section 3.6.1.4</a>)</span> rejects a resulting chain that exceeds the local maximum.<a href="#section-3.6.2.1-3" class="pilcrow">¶</a></p>
 <p id="section-3.6.2.1-4">If the new actor has the same (<code>act.iss</code>, <code>act.sub</code>) pair as the inbound outermost actor, the AS <span class="bcp14">MAY</span> instead apply <span><a href="#preserve-inbound-chain" class="internal xref">Preserve Inbound Chain</a> (<a href="#preserve-inbound-chain" class="auto internal xref">Section 3.6.2.2</a>)</span> to avoid a duplicate entry.<a href="#section-3.6.2.1-4" class="pilcrow">¶</a></p>
 <p id="section-3.6.2.1-5">This profile does not standardize detection of identifier reappearance deeper in the inbound chain (for example, the same actor appearing in both inner and outer positions of a longer chain).  An AS <span class="bcp14">MAY</span> apply local policy to such cases; the chain-construction algorithm itself neither requires nor prohibits cycle detection.<a href="#section-3.6.2.1-5" class="pilcrow">¶</a></p>
 </section>
@@ -2033,7 +2036,7 @@ PreserveChain(inbound_chain):
   return inbound_chain  // copy without modification
 </pre><a href="#section-3.6.2.2-2" class="pilcrow">¶</a>
 </div>
-<p id="section-3.6.2.2-3">The AS <span class="bcp14">MUST</span> copy the validated inbound chain exactly into the issued token.  The AS <span class="bcp14">MUST NOT</span> add, remove, or rewrite any field in any actor object of a preserved delegation chain.<a href="#section-3.6.2.2-3" class="pilcrow">¶</a></p>
+<p id="section-3.6.2.2-3">Except as <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span> permits, the AS <span class="bcp14">MUST</span> copy the validated inbound chain exactly into the issued token and <span class="bcp14">MUST NOT</span> add, remove, or rewrite any field in any actor object of a preserved delegation chain.<a href="#section-3.6.2.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="omit-act">
@@ -2044,6 +2047,30 @@ PreserveChain(inbound_chain):
 <p id="section-3.6.2.3-1">When no delegation is present and no actor information should appear in the issued token, the AS omits <code>act</code>, as required by <span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.5</a>)</span>.  The AS <span class="bcp14">MUST NOT</span> silently drop an inbound <code>act</code> claim; if it cannot preserve or extend the chain, it <span class="bcp14">MUST</span> reject the request per <span><a href="#actor-profile-error-responses" class="internal xref">Error Responses</a> (<a href="#actor-profile-error-responses" class="auto internal xref">Section 9</a>)</span>.<a href="#section-3.6.2.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
+</section>
+</div>
+<div id="omit-prior-actors">
+<section id="section-3.6.3">
+          <h4 id="name-omitting-prior-actors">
+<a href="#section-3.6.3" class="section-number selfRef">3.6.3. </a><a href="#name-omitting-prior-actors" class="section-name selfRef">Omitting Prior Actors</a>
+          </h4>
+<p id="section-3.6.3-1">By default, an issuer that preserves or extends a delegation chain includes all of it or rejects the request.  An issuer <span class="bcp14">MAY</span> omit inner actor objects under a profile that defines how to omit them and how to mark the omission in tokens and introspection responses.  An issuer that omits actors:<a href="#section-3.6.3-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-3.6.3-2.1">
+              <p id="section-3.6.3-2.1.1"><span class="bcp14">MUST</span> first apply <span><a href="#delegation-chain-algorithm" class="internal xref">Delegation Chain Validation and Construction</a> (<a href="#delegation-chain-algorithm" class="auto internal xref">Section 3.6</a>)</span>, including <span><a href="#enforce-depth-limit" class="internal xref">Enforce Depth Limit</a> (<a href="#enforce-depth-limit" class="auto internal xref">Section 3.6.1.4</a>)</span>;<a href="#section-3.6.3-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.6.3-2.2">
+              <p id="section-3.6.3-2.2.1"><span class="bcp14">MUST NOT</span> omit the outermost actor object or the <code>act</code> claim;<a href="#section-3.6.3-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.6.3-2.3">
+              <p id="section-3.6.3-2.3.1"><span class="bcp14">MUST</span> omit only whole actor objects and keep the remaining ones in order, with their members other than the nested <code>act</code> unchanged; and<a href="#section-3.6.3-2.3.1" class="pilcrow">¶</a></p>
+</li>
+            <li class="normal" id="section-3.6.3-2.4">
+              <p id="section-3.6.3-2.4.1"><span class="bcp14">MUST</span> include the profile's marking in the issued token.<a href="#section-3.6.3-2.4.1" class="pilcrow">¶</a></p>
+</li>
+          </ul>
+<p id="section-3.6.3-3">An issuer that omits actors, or that preserves, extends, or refreshes a chain it knows to be incomplete, <span class="bcp14">MUST</span> reject the request unless the profile or a trust agreement binds every party that trusts the issuer to assert delegation chains to recognize the marking and carry it into derived tokens.  A party that implements only this document cannot recognize the marking.  A TTS and an AS processing the <code>refresh_token</code> grant <span class="bcp14">MUST NOT</span> omit actors.  Each <span class="bcp14">MUST</span> carry forward any omission marking it recognizes (<span><a href="#transaction-token-output-rules" class="internal xref">Transaction Token Output Rules</a> (<a href="#transaction-token-output-rules" class="auto internal xref">Section 7.4</a>)</span>, <span><a href="#delegated-token-issuance" class="internal xref">Delegated Token Issuance</a> (<a href="#delegated-token-issuance" class="auto internal xref">Section 5.2</a>)</span>).  Token Exchange with a refresh token as <code>subject_token</code> follows this section like any other Token Exchange.<a href="#section-3.6.3-3" class="pilcrow">¶</a></p>
+<p id="section-3.6.3-4">A recipient that detects an omission through the profile's marking <span class="bcp14">MUST NOT</span> treat the chain as complete delegation history and <span class="bcp14">MUST</span> reject the token unless its trust agreement or an applicable profile permits incomplete chains.  It knows only that the delegation depth exceeds the visible depth, unless the profile conveys how many actors are hidden from it.  The innermost visible actor need not be the first actor the subject authorized, and adjacent visible actors need not have delegated directly to each other.<a href="#section-3.6.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2239,10 +2266,10 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li id="section-4.2-2.5">
-            <p id="section-4.2-2.5.1">If the inbound assertion's <code>act</code> object contains a nested <code>act</code> object (indicating that the asserted actor is itself a delegatee), the AS <span class="bcp14">MUST</span> handle the inner chain as follows:<a href="#section-4.2-2.5.1" class="pilcrow">¶</a></p>
+            <p id="section-4.2-2.5.1">The assertion is pre-chained when its <code>act</code> object contains a nested <code>act</code> object or an omission marking the AS recognizes (<span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span>) shows that prior actors were omitted; either indicates that the asserted actor is itself a delegatee.  If the assertion is pre-chained and the AS does not accept pre-chained assertions, the AS <span class="bcp14">MUST</span> reject the request.  When a nested <code>act</code> object is present, the AS <span class="bcp14">MUST</span> handle the inner chain as follows:<a href="#section-4.2-2.5.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-4.2-2.5.2.1">
-                <p id="section-4.2-2.5.2.1.1"><strong>Propagation decision</strong>: The AS <span class="bcp14">SHOULD</span> propagate the inner chain by preserving its nested structure, provided the resulting chain depth does not exceed the limit in <span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.5</a>)</span>.  If the AS does not accept pre-chained assertions, it <span class="bcp14">MUST</span> reject the request.<a href="#section-4.2-2.5.2.1.1" class="pilcrow">¶</a></p>
+                <p id="section-4.2-2.5.2.1.1"><strong>Propagation decision</strong>: Except as <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span> permits, the AS <span class="bcp14">MUST</span> propagate the inner chain by preserving its nested structure, provided the resulting chain depth does not exceed the limit in <span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.5</a>)</span>.<a href="#section-4.2-2.5.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-4.2-2.5.2.2">
                 <p id="section-4.2-2.5.2.2.1"><strong>Prior-actor context</strong>: For inner <code>act</code> objects, <span><a href="#carry-prior-actor-context" class="internal xref">Carry Prior-Actor Context</a> (<a href="#carry-prior-actor-context" class="auto internal xref">Section 3.6.1.3</a>)</span> applies.<a href="#section-4.2-2.5.2.2.1" class="pilcrow">¶</a></p>
@@ -2311,7 +2338,7 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
             </ul>
 </li>
           <li id="section-4.2-2.8">
-            <p id="section-4.2-2.8.1">If the AS accepts the assertion, it <span class="bcp14">MUST</span> propagate the actor information into the issued token according to the rules for the output token type.  For JWT access tokens, see <span><a href="#jwt-access-token-propagation" class="internal xref">JWT Access Token Output</a> (<a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.6.2</a>)</span>.  For Transaction Tokens, see <span><a href="#transaction-token-output-rules" class="internal xref">Transaction Token Output Rules</a> (<a href="#transaction-token-output-rules" class="auto internal xref">Section 7.4</a>)</span>.  When the output is another JWT assertion grant profile, the resulting assertion <span class="bcp14">MUST</span> preserve the validated actor information subject to local policy and the chain-depth limit in <span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.5</a>)</span>.<a href="#section-4.2-2.8.1" class="pilcrow">¶</a></p>
+            <p id="section-4.2-2.8.1">If the AS accepts the assertion, it <span class="bcp14">MUST</span> propagate the actor information into the issued token according to the rules for the output token type.  For JWT access tokens, see <span><a href="#jwt-access-token-propagation" class="internal xref">JWT Access Token Output</a> (<a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.6.2</a>)</span>.  For Transaction Tokens, see <span><a href="#transaction-token-output-rules" class="internal xref">Transaction Token Output Rules</a> (<a href="#transaction-token-output-rules" class="auto internal xref">Section 7.4</a>)</span>.  When the output is another JWT assertion grant profile, the resulting assertion <span class="bcp14">MUST</span> preserve the validated actor information, except as <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span> permits, subject to the chain-depth limit in <span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.5</a>)</span>.<a href="#section-4.2-2.8.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
 </section>
@@ -2411,7 +2438,7 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
 <p id="section-5.2-1">When an AS issues, outside Token Exchange, a JWT access token whose delegation rests on an independent delegation basis (<span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.5</a>)</span>), it <span class="bcp14">MUST</span> establish that basis for the (<code>sub</code>, actor) relationship before including <code>act</code>.  Examples include a pre-registered delegation grant, an explicit consent record, or a policy rule covering the acting party or a class of acting parties.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
 <p id="section-5.2-2">A client registration <span class="bcp14">MAY</span> supply that basis only if it uniquely identifies one acting entity and the AS can derive the actor identifier from the registration alone.  A registration shared by several actors does not satisfy this condition.<a href="#section-5.2-2" class="pilcrow">¶</a></p>
 <p id="section-5.2-3">For the authorization code grant, the AS <span class="bcp14">MAY</span> include the <code>act</code> claim when an independent delegation basis, such as authorization state, registration, consent, or local policy, establishes that the OAuth client is acting as a distinct actor for the resource owner.  The actor identity <span class="bcp14">MUST</span> derive from that delegation basis.  Without such a basis, the AS <span class="bcp14">MUST NOT</span> include <code>act</code>.<a href="#section-5.2-3" class="pilcrow">¶</a></p>
-<p id="section-5.2-4">An AS that issues a refresh token together with a token carrying <code>act</code> <span class="bcp14">MUST</span> record that chain for the grant.  For the <code>refresh_token</code> grant (<span><a href="https://rfc-editor.org/rfc/rfc6749#section-6" class="relref">Section 6</a> of [<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>), the AS <span class="bcp14">MUST</span> carry the <code>act</code> chain recorded for the grant into the refreshed token unchanged or reject the request; it <span class="bcp14">MUST NOT</span> issue a refreshed token without that chain.<a href="#section-5.2-4" class="pilcrow">¶</a></p>
+<p id="section-5.2-4">An AS that issues a refresh token together with a token carrying <code>act</code> <span class="bcp14">MUST</span> record that chain for the grant as issued, with any marking of omitted actors (<span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span>).  For the <code>refresh_token</code> grant (<span><a href="https://rfc-editor.org/rfc/rfc6749#section-6" class="relref">Section 6</a> of [<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>), the AS <span class="bcp14">MUST</span> carry the <code>act</code> chain recorded for the grant, with any recorded marking, into the refreshed token unchanged or reject the request; it <span class="bcp14">MUST NOT</span> issue a refreshed token without that chain.<a href="#section-5.2-4" class="pilcrow">¶</a></p>
 <p id="section-5.2-5">This document defines no actor-selection or actor-proof parameter for the authorization code grant; actor determination there is deployment-specific.<a href="#section-5.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2688,10 +2715,10 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
               <h6 id="name-processing-2">
 <a href="#section-6.3.2.2.2" class="section-number selfRef">6.3.2.2.2. </a><a href="#name-processing-2" class="section-name selfRef">Processing</a>
               </h6>
-<p id="section-6.3.2.2.2-1">The AS validates the refresh token through its token store or a trusted back-channel to its issuer; signature validation alone is insufficient, and an expired, revoked, or otherwise invalid token fails validation.  For a token issued by another AS, the AS <span class="bcp14">MUST NOT</span> accept it unless that back-channel provides the subject, client binding, authorized scope, revocation state, and any <code>act</code> chain recorded for the grant.<a href="#section-6.3.2.2.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.3.2.2.2-1">The AS validates the refresh token through its token store or a trusted back-channel to its issuer; signature validation alone is insufficient, and an expired, revoked, or otherwise invalid token fails validation.  For a token issued by another AS, the AS <span class="bcp14">MUST NOT</span> accept it unless that back-channel provides the subject, client binding, authorized scope, revocation state, any <code>act</code> chain recorded for the grant, and any omission marking recorded with that chain.<a href="#section-6.3.2.2.2-1" class="pilcrow">¶</a></p>
 <p id="section-6.3.2.2.2-2">The AS <span class="bcp14">MUST</span> verify that the requesting client or authenticated presenter is authorized to use the refresh token under the refresh token's client-binding, sender-constraint, rotation, and cross-client presentation policy.  If the requester is not authorized to use the refresh token, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_request</code>.<a href="#section-6.3.2.2.2-2" class="pilcrow">¶</a></p>
 <p id="section-6.3.2.2.2-3">The AS <span class="bcp14">MUST</span> extract the subject identity and authorized scope associated with the refresh token from its token store or other trusted refresh-token state.  The <code>sub</code> of the user associated with the refresh token becomes <code>sub</code> in the issued token.<a href="#section-6.3.2.2.2-3" class="pilcrow">¶</a></p>
-<p id="section-6.3.2.2.2-4">Whether an AS issues refresh tokens for delegated JWT assertion grant requests, how it revokes them, and whether their later use requires re-presenting upstream delegation artifacts remain deployment-specific.  On Token Exchange, a refresh token <code>subject_token</code> establishes no new actor.  When the refresh token's state records an <code>act</code> chain, the AS <span class="bcp14">MUST</span> treat that chain as inbound <code>act</code> state: the request is delegated, an identity-only input cannot use presenter continuation, so the request requires presenter rebind (<span><a href="#token-exchange-presenter-model" class="internal xref">Presenter Transition Model</a> (<a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>)</span>), and the AS <span class="bcp14">MUST NOT</span> issue a token without that chain.<a href="#section-6.3.2.2.2-4" class="pilcrow">¶</a></p>
+<p id="section-6.3.2.2.2-4">Whether an AS issues refresh tokens for delegated JWT assertion grant requests, how it revokes them, and whether their later use requires re-presenting upstream delegation artifacts remain deployment-specific.  On Token Exchange, a refresh token <code>subject_token</code> establishes no new actor.  When the refresh token's state records an <code>act</code> chain, the AS <span class="bcp14">MUST</span> treat that chain as inbound <code>act</code> state: the request is delegated, an identity-only input cannot use presenter continuation, so the request requires presenter rebind (<span><a href="#token-exchange-presenter-model" class="internal xref">Presenter Transition Model</a> (<a href="#token-exchange-presenter-model" class="auto internal xref">Section 6.1</a>)</span>), and the AS <span class="bcp14">MUST NOT</span> issue a token without that chain and any marking recorded with it, except as <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span> permits.<a href="#section-6.3.2.2.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2783,7 +2810,7 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
             <h5 id="name-processing-4">
 <a href="#section-6.4.2.2" class="section-number selfRef">6.4.2.2. </a><a href="#name-processing-4" class="section-name selfRef">Processing</a>
             </h5>
-<p id="section-6.4.2.2-1">For WIMSE workload identity credentials (<span>[<a href="#I-D.ietf-wimse-workload-creds" class="cite xref">I-D.ietf-wimse-workload-creds</a>]</span>), validation follows the rules defined in that specification.  The issuer is identified by <code>iss</code> or, for a WIMSE credential without <code>iss</code> (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-02#section-5.1" class="relref">Section 5.1</a> of [<a href="#I-D.ietf-wimse-workload-creds" class="cite xref">I-D.ietf-wimse-workload-creds</a>]</span>), by the trust anchors configured for the trust domain of its <code>sub</code> (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-02#section-3" class="relref">Section 3</a> of [<a href="#I-D.ietf-wimse-workload-creds" class="cite xref">I-D.ietf-wimse-workload-creds</a>]</span>).<a href="#section-6.4.2.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.4.2.2-1">For WIMSE workload identity credentials (<span>[<a href="#I-D.ietf-wimse-workload-creds" class="cite xref">I-D.ietf-wimse-workload-creds</a>]</span>), validation follows the rules defined in that specification.  The issuer is identified by <code>iss</code> or, for a WIMSE credential without <code>iss</code> (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-03#section-5.1" class="relref">Section 5.1</a> of [<a href="#I-D.ietf-wimse-workload-creds" class="cite xref">I-D.ietf-wimse-workload-creds</a>]</span>), by the trust anchors configured for the trust domain of its <code>sub</code> (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-03#section-3" class="relref">Section 3</a> of [<a href="#I-D.ietf-wimse-workload-creds" class="cite xref">I-D.ietf-wimse-workload-creds</a>]</span>).<a href="#section-6.4.2.2-1" class="pilcrow">¶</a></p>
 <p id="section-6.4.2.2-2">The AS <span class="bcp14">MUST</span> validate any proof the workload-credential profile requires, such as a WIMSE Workload Proof Token (WPT, <span>[<a href="#I-D.ietf-wimse-wpt" class="cite xref">I-D.ietf-wimse-wpt</a>]</span>) per its specification, whether or not the output token is sender-constrained.  When the request uses this credential to establish a sender-constrained output token in presenter-rebind mode, the AS <span class="bcp14">MUST</span> also validate proof for the new presenter binding: the WPT, or a DPoP proof (<span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>) over the token endpoint URI whose key is the confirmation key in the credential's <code>cnf</code> claim (<code>cnf.jwk</code> for a WIMSE credential).  If a required proof is absent or invalid, the AS <span class="bcp14">MUST</span> reject under <span><a href="#actor-profile-error-responses" class="internal xref">Error Responses</a> (<a href="#actor-profile-error-responses" class="auto internal xref">Section 9</a>)</span>, using the proof mechanism's error when specified and <code>invalid_request</code> otherwise.<a href="#section-6.4.2.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2888,7 +2915,7 @@ In either case:<a href="#section-4.2-2.4.3" class="pilcrow">¶</a></p>
               <p id="section-6.6.2-4.3.1">The AS <span class="bcp14">MUST</span> construct the <code>act</code> claim using the construction decision order in <span><a href="#delegation-chain-algorithm" class="internal xref">Delegation Chain Validation and Construction</a> (<a href="#delegation-chain-algorithm" class="auto internal xref">Section 3.6</a>)</span>: extend with a new actor, preserve an existing chain, or omit <code>act</code>, in that order.  An actor derived from <code>actor_token</code> is asserted by the issuing AS; consumers <span class="bcp14">MUST NOT</span> infer that it was present in the <code>subject_token</code> or endorsed by its issuer.<a href="#section-6.6.2-4.3.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-6.6.2-4.4">
-              <p id="section-6.6.2-4.4.1">The AS <span class="bcp14">MUST</span> reject the request if actor validation fails or the resulting chain exceeds the depth limit, using <span><a href="#actor-profile-error-responses" class="internal xref">Error Responses</a> (<a href="#actor-profile-error-responses" class="auto internal xref">Section 9</a>)</span>.  It <span class="bcp14">MUST NOT</span> issue a partially preserved chain.<a href="#section-6.6.2-4.4.1" class="pilcrow">¶</a></p>
+              <p id="section-6.6.2-4.4.1">The AS <span class="bcp14">MUST</span> reject the request if actor validation fails or the resulting chain exceeds the depth limit, using <span><a href="#actor-profile-error-responses" class="internal xref">Error Responses</a> (<a href="#actor-profile-error-responses" class="auto internal xref">Section 9</a>)</span>.  It <span class="bcp14">MUST NOT</span> issue a partially preserved chain except as <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span> permits.<a href="#section-6.6.2-4.4.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-6.6.2-4.5">
               <p id="section-6.6.2-4.5.1">Top-level <code>sub_profile</code> follows <span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span>, which recommends it when the AS can authoritatively classify the token's <code>sub</code> entity type.  When the AS carries a trusted inbound top-level <code>sub_profile</code> into the issued token, it <span class="bcp14">MUST</span> preserve its unrecognized but syntactically valid values.<a href="#section-6.6.2-4.5.1" class="pilcrow">¶</a></p>
@@ -3222,7 +3249,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
             <p id="section-8.2-3.7.1">If any of the above steps fail, return an appropriate error response.  The HTTP authentication scheme used in the <code>WWW-Authenticate</code> challenge follows the token's binding mechanism: <code>Bearer</code> per <span><a href="https://rfc-editor.org/rfc/rfc6750#section-3.1" class="relref">Section 3.1</a> of [<a href="#RFC6750" class="cite xref">RFC6750</a>]</span> for bearer or mTLS-bound (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>) tokens, or <code>DPoP</code> per <span><a href="https://rfc-editor.org/rfc/rfc9449#section-7.1" class="relref">Section 7.1</a> of [<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> for DPoP-bound tokens.<a href="#section-8.2-3.7.1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.2-3.7.2.1">
-                <p id="section-8.2-3.7.2.1.1">If signature, <code>iss</code>, <code>aud</code>, temporal, or depth validation fails: HTTP 401 with <code>error="invalid_token"</code>.<a href="#section-8.2-3.7.2.1.1" class="pilcrow">¶</a></p>
+                <p id="section-8.2-3.7.2.1.1">If signature, <code>iss</code>, <code>aud</code>, temporal, or depth validation fails, or the chain is incomplete and the RS does not accept incomplete chains (<span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span>): HTTP 401 with <code>error="invalid_token"</code>.<a href="#section-8.2-3.7.2.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="section-8.2-3.7.2.2">
                 <p id="section-8.2-3.7.2.2.1">If identifier reconciliation that the authorization decision requires fails (step 4): HTTP 403 with <code>error="actor_unauthorized"</code>.<a href="#section-8.2-3.7.2.2.1" class="pilcrow">¶</a></p>
@@ -3279,7 +3306,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
             <p id="section-8.3-3.4.1">Apply actor authorization per <span><a href="#actor-authorization" class="internal xref">Actor Authorization</a> (<a href="#actor-authorization" class="auto internal xref">Section 8.1</a>)</span> when required by local policy or when the token is accepted as satisfying a delegated-access requirement for the request path.<a href="#section-8.3-3.4.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.3-3.5">
-            <p id="section-8.3-3.5.1">Optionally traverse inner <code>act</code> objects to audit the full delegation chain.  They are not inputs to access-control decisions (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) and have the trust properties in <span><a href="#carry-prior-actor-context" class="internal xref">Carry Prior-Actor Context</a> (<a href="#carry-prior-actor-context" class="auto internal xref">Section 3.6.1.3</a>)</span>.<a href="#section-8.3-3.5.1" class="pilcrow">¶</a></p>
+            <p id="section-8.3-3.5.1">Optionally traverse inner <code>act</code> objects to audit the visible delegation chain.  They are not inputs to access-control decisions (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>) and have the trust properties in <span><a href="#carry-prior-actor-context" class="internal xref">Carry Prior-Actor Context</a> (<a href="#carry-prior-actor-context" class="auto internal xref">Section 3.6.1.3</a>)</span>.<a href="#section-8.3-3.5.1" class="pilcrow">¶</a></p>
 </li>
           <li id="section-8.3-3.6">
             <p id="section-8.3-3.6.1">If any of the above steps fail, the RS <span class="bcp14">MUST</span> reject the request through the deployment's Transaction Token handling, because <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> defines no error response.  Validation or presenter-proof failures are token-validation failures; failures of actor authorization required by local policy are authorization failures.  The RS <span class="bcp14">MUST NOT</span> include actor-specific rejection details in error responses exposed outside the trust domain.<a href="#section-8.3-3.6.1" class="pilcrow">¶</a></p>
@@ -3316,8 +3343,8 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
             <p id="section-8.4-2.7.1"><code>chain_complete</code>: <span class="bcp14">OPTIONAL</span>.  When absent, the RS <span class="bcp14">SHOULD</span> treat the chain as complete unless local policy or deployment context indicates otherwise.<a href="#section-8.4-2.7.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-8.4-3">The AS <span class="bcp14">MUST</span> return actor claims from the token's authorization context, including the complete nested chain, except for the following privacy-filtering allowance.<a href="#section-8.4-3" class="pilcrow">¶</a></p>
-<p id="section-8.4-4">If local privacy policy requires omitting inner actors, the AS <span class="bcp14">MAY</span> filter them but <span class="bcp14">MUST</span> include <code>"chain_complete": false</code>.<a href="#section-8.4-4" class="pilcrow">¶</a></p>
+<p id="section-8.4-3">The AS <span class="bcp14">MUST</span> return actor claims from the token's authorization context, including the nested chain as issued, except for the following privacy-filtering allowance.<a href="#section-8.4-3" class="pilcrow">¶</a></p>
+<p id="section-8.4-4">If local privacy policy requires omitting inner actors, the AS <span class="bcp14">MAY</span> filter them but <span class="bcp14">MUST</span> include <code>"chain_complete": false</code>.  When it knows that the token's chain omits actors under <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span>, it <span class="bcp14">MUST</span> also include <code>"chain_complete": false</code> and the profile's marking, so that the RS can distinguish issuer omission from introspection filtering.<a href="#section-8.4-4" class="pilcrow">¶</a></p>
 <p id="section-8.4-5">When <code>chain_complete</code> is <code>false</code>, the subject and the outermost actor remain available for authorization, and the RS records the incompleteness in any audit of the chain.<a href="#section-8.4-5" class="pilcrow">¶</a></p>
 <p id="section-8.4-6">The RS <span class="bcp14">MUST NOT</span> treat a partial chain as complete delegation history.  Companion profiles with data aligned to <code>act</code> define their filtering behavior as required by <span><a href="#companion-profile-extensibility" class="internal xref">Companion Profiles and Extension Points</a> (<a href="#companion-profile-extensibility" class="auto internal xref">Section 11</a>)</span>.<a href="#section-8.4-6" class="pilcrow">¶</a></p>
 <p id="section-8.4-7">When an AS supports delegated opaque access tokens through introspection, it <span class="bcp14">MUST</span> return the members listed above for active delegated tokens.  Support for this compatibility path <span class="bcp14">MUST NOT</span> be inferred solely from <code>actor_profile_required</code> metadata; see <span><a href="#profile-scope" class="internal xref">Profile Scope</a> (<a href="#profile-scope" class="auto internal xref">Section 3.3</a>)</span>.<a href="#section-8.4-7" class="pilcrow">¶</a></p>
@@ -3620,7 +3647,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
           <p id="section-11-3.4.1"><span class="bcp14">SHOULD</span> define any supplementary provenance, receipt, or chain-wide state in separate top-level claims or equivalent companion mechanisms rather than by overloading members inside inherited <code>act</code> objects;<a href="#section-11-3.4.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-11-3.5">
-          <p id="section-11-3.5.1">if it defines data that aligns to the visible <code>act</code> chain, <span class="bcp14">MUST</span> specify the alignment rules, the behavior when coverage is partial, and the behavior when introspection or privacy filtering suppresses part of the visible chain.<a href="#section-11-3.5.1" class="pilcrow">¶</a></p>
+          <p id="section-11-3.5.1">if it defines data that aligns to the visible <code>act</code> chain, <span class="bcp14">MUST</span> specify the alignment rules, the behavior when coverage is partial, and the behavior when introspection or privacy filtering, or omission under <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span>, suppresses part of the visible chain.<a href="#section-11-3.5.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="section-11-4">A companion profile can define authorization based on independently verifiable per-hop evidence that it carries in its own top-level claims.  Nested <code>act</code> objects remain informational for access control (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>).<a href="#section-11-4" class="pilcrow">¶</a></p>
@@ -3902,7 +3929,8 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <a href="#section-13.11" class="section-number selfRef">13.11. </a><a href="#name-delegation-depth-limits" class="section-name selfRef">Delegation Depth Limits</a>
         </h3>
 <p id="section-13.11-1">Unbounded delegation chains increase the attack surface, complicate policy evaluation, and enable denial of service through chain parsing; the local maximum depth that <span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.5</a>)</span> requires bounds them.<a href="#section-13.11-1" class="pilcrow">¶</a></p>
-<p id="section-13.11-2">Extensions that attach per-hop signed material grow token size in proportion to chain depth.  Deployments that combine the reference chain depth with one or more such per-hop mechanisms <span class="bcp14">SHOULD</span> measure realistic token sizes against their transport limits (HTTP header limits are often 8 KB) and consider using token introspection (<span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>) where inline carriage exceeds those limits.<a href="#section-13.11-2" class="pilcrow">¶</a></p>
+<p id="section-13.11-2">After an issuer omits prior actors (<span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span>), a party that detects the omission knows only that the delegation depth exceeds the visible depth.  For example, a recipient with a maximum depth of 2 that receives one visible actor cannot tell whether the chain is within its limit.  A recipient that limits total delegation depth therefore rejects such a chain unless it can count every actor hidden from it (<span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.5</a>)</span>).  A count that covers only the issuer's omission understates the depth once introspection filtering removes further actors.<a href="#section-13.11-2" class="pilcrow">¶</a></p>
+<p id="section-13.11-3">Extensions that attach per-hop signed material grow token size in proportion to chain depth.  Deployments that combine the reference chain depth with one or more such per-hop mechanisms <span class="bcp14">SHOULD</span> measure realistic token sizes against their transport limits (HTTP header limits are often 8 KB) and consider using token introspection (<span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>) where inline carriage exceeds those limits.<a href="#section-13.11-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="actor-identity-rotation">
@@ -3934,7 +3962,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <p id="section-14-1">Delegation chains can reveal sensitive information about user behavior, enterprise topology, software suppliers, and internal tool composition.  Issuers therefore <span class="bcp14">SHOULD</span> disclose only the actor information needed by the relying party for authorization, audit, or policy enforcement.<a href="#section-14-1" class="pilcrow">¶</a></p>
 <p id="section-14-2">Cross-domain deployments <span class="bcp14">SHOULD</span> prefer stable but non-reassigned identifiers and <span class="bcp14">SHOULD</span> consider pairwise identifiers for human subjects when a globally correlatable identifier is not required by the use case.<a href="#section-14-2" class="pilcrow">¶</a></p>
 <p id="section-14-3">When the same logical entity can appear in different identifier namespaces, such as <code>azp</code>, <code>req_wl</code>, and <code>act.sub</code>, issuers and relying parties <span class="bcp14">SHOULD</span> use explicit issuer scoping and locally trusted mapping rules rather than string equality alone to determine whether those identifiers refer to the same entity.<a href="#section-14-3" class="pilcrow">¶</a></p>
-<p id="section-14-4">Issuers <span class="bcp14">SHOULD</span> minimize disclosure of prior actors through audience and token-design decisions made before issuance.  Once an issuer preserves a delegation chain, <span><a href="#preserve-inbound-chain" class="internal xref">Preserve Inbound Chain</a> (<a href="#preserve-inbound-chain" class="auto internal xref">Section 3.6.2.2</a>)</span> requires copying it intact.  If local privacy requirements would require omitting a chain element, the issuer rejects the request rather than truncating the chain.<a href="#section-14-4" class="pilcrow">¶</a></p>
+<p id="section-14-4">Issuers <span class="bcp14">SHOULD</span> minimize disclosure of prior actors through audience and token-design decisions made before issuance.  Once an issuer preserves a delegation chain, <span><a href="#preserve-inbound-chain" class="internal xref">Preserve Inbound Chain</a> (<a href="#preserve-inbound-chain" class="auto internal xref">Section 3.6.2.2</a>)</span> requires copying it intact.  Unless <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span> permits omission, an issuer whose local privacy requirements would require omitting a chain element rejects the request rather than truncating the chain.<a href="#section-14-4" class="pilcrow">¶</a></p>
 <p id="section-14-5">A Transaction Token's <code>txn</code> value links service calls in the same transaction and can enable correlation across organizations.  Deployments <span class="bcp14">SHOULD</span> follow the privacy guidance in <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> when propagating it across trust domains.<a href="#section-14-5" class="pilcrow">¶</a></p>
 <p id="section-14-6">The <code>act.sub_profile</code> claim reveals the actor's entity type, including whether it is an AI agent.  In some jurisdictions or deployment contexts, this disclosure can be legally significant or can reveal sensitive information about user behavior and tool composition.  Issuers <span class="bcp14">SHOULD</span> consider audience-specific disclosure constraints and <span class="bcp14">SHOULD</span> omit unnecessary entity classifications when constructing new actor objects.  Inherited actors remain subject to the preservation rules in <span><a href="#preserve-inbound-chain" class="internal xref">Preserve Inbound Chain</a> (<a href="#preserve-inbound-chain" class="auto internal xref">Section 3.6.2.2</a>)</span>.<a href="#section-14-6" class="pilcrow">¶</a></p>
 <p id="section-14-7">The <code>req_wl</code> claim can reveal internal workload topology.  A TTS <span class="bcp14">SHOULD</span> disclose it only where needed for authorization, audit, or policy enforcement, and <span class="bcp14">SHOULD</span> avoid exposing internal workload identifiers across domains unless the deployment requires it.<a href="#section-14-7" class="pilcrow">¶</a></p>
@@ -4047,7 +4075,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
             <p id="section-15.5-2.1.1">Name: <code>chain_complete</code><a href="#section-15.5-2.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-15.5-2.2">
-            <p id="section-15.5-2.2.1">Description: Boolean indicating whether the <code>act</code> delegation chain in the introspection response is complete.  When <code>false</code>, one or more inner <code>act</code> chain entries have been omitted from the response for privacy reasons.  When absent, the chain <span class="bcp14">SHOULD</span> be treated as complete unless local policy or deployment context indicates otherwise.<a href="#section-15.5-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-15.5-2.2.1">Description: Boolean indicating whether the <code>act</code> delegation chain in the introspection response is complete.  When <code>false</code>, one or more inner <code>act</code> chain entries have been omitted during token issuance at this or an earlier hop, or during introspection filtering.  When absent, the chain <span class="bcp14">SHOULD</span> be treated as complete unless local policy or deployment context indicates otherwise.<a href="#section-15.5-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-15.5-2.3">
             <p id="section-15.5-2.3.1">Change Controller: IETF<a href="#section-15.5-2.3.1" class="pilcrow">¶</a></p>
@@ -4165,7 +4193,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <dd class="break"></dd>
 <dt id="I-D.ietf-wimse-workload-creds">[I-D.ietf-wimse-workload-creds]</dt>
         <dd>
-<span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Salowey, J. A.</span>, <span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Sheffer, Y.</span>, and <span class="refAuthor">Y. Rosomakho</span>, <span class="refTitle">"WIMSE Workload Credentials"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-workload-creds-02</span>, <time datetime="2026-07-02" class="refDate">2 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-02">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-02</a>&gt;</span>. </dd>
+<span class="refAuthor">Campbell, B.</span>, <span class="refAuthor">Salowey, J. A.</span>, <span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Sheffer, Y.</span>, and <span class="refAuthor">Y. Rosomakho</span>, <span class="refTitle">"WIMSE Workload Credentials"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-wimse-workload-creds-03</span>, <time datetime="2026-10-30" class="refDate">30 October 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-03">https://datatracker.ietf.org/doc/html/draft-ietf-wimse-workload-creds-03</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.ietf-wimse-wpt">[I-D.ietf-wimse-wpt]</dt>
         <dd>
