@@ -16,12 +16,12 @@ Abstract
    This document defines a common representation of delegated actors in
    OAuth JSON Web Token (JWT) assertion grants, JWT access tokens, and
    Transaction Tokens.  It profiles the act claim defined by OAuth 2.0
-   Token Exchange, requires issuer-scoped actor identifiers, and uses
-   the sub_profile claim to classify actor entity types.  It specifies
-   token processing, delegation-chain propagation, sender-constraint
-   handling, and discovery metadata, so that issuers and resource
-   servers in different trust domains interpret delegated actors
-   consistently.
+   Token Exchange, requires issuer-scoped actor identifiers, and can
+   carry the sub_profile claim to classify actor entity types.  It
+   specifies token processing, delegation-chain propagation, sender-
+   constraint handling, and discovery metadata, so that issuers and
+   resource servers in different trust domains interpret delegated
+   actors consistently.
 
 About This Document
 
@@ -469,23 +469,23 @@ Table of Contents
    An actor object conforming to this profile is a JSON object that is
    the value of the act claim.  In addition to the sub claim required by
    [RFC8693], a profile-conformant actor object MUST contain an iss
-   claim and SHOULD contain a sub_profile claim when the issuer can
-   authoritatively classify the actor's entity type.  An act object that
-   omits the iss claim conforms to [RFC8693] but does not conform to
-   this profile.  Implementations MUST treat it as nonconforming and
-   MUST NOT infer semantics for absent claims.  When local policy or
-   advertised metadata requires profile conformance for a token or
-   assertion, recipients MUST reject such actor objects.  Otherwise, an
-   AS MAY apply local rules for non-profile processing; it MUST NOT add
-   iss to an inherited actor, silently drop the inbound act, or carry
-   the nonconforming chain into a profile-conforming output, and it MUST
-   reject a request requiring that output.  Migration and Adoption
-   (Section 12.1) describes a staged rollout.
+   claim and MAY contain a sub_profile claim classifying the actor's
+   entity type.  An act object that omits the iss claim conforms to
+   [RFC8693] but does not conform to this profile.  Implementations MUST
+   treat it as nonconforming and MUST NOT infer semantics for absent
+   claims.  When local policy or advertised metadata requires profile
+   conformance for a token or assertion, recipients MUST reject such
+   actor objects.  Otherwise, an AS MAY apply local rules for non-
+   profile processing; it MUST NOT add iss to an inherited actor,
+   silently drop the inbound act, or carry the nonconforming chain into
+   a profile-conforming output, and it MUST reject a request requiring
+   that output.  Migration and Adoption (Section 12.1) describes a
+   staged rollout.
 
    act-object = {
      "sub"           : StringOrURI,        ; REQUIRED
      "iss"           : StringOrURI,        ; REQUIRED
-     ? "sub_profile" : JSON String,        ; RECOMMENDED
+     ? "sub_profile" : JSON String,        ; OPTIONAL
      * StringOrURI => any                  ; extension claims
    }
 
@@ -511,35 +511,27 @@ Table of Contents
       booking tool's workload credential.  The TTS signs the token; the
       AS supplies the namespace for the tool's identifier.
 
-   sub_profile:  RECOMMENDED.  A space-delimited list of entity profile
-      values classifying the actor identified by act.sub, as defined in
-      Section 4.2 of [I-D.mora-oauth-entity-profiles].  Values used
-      within act objects MUST be registered for the "Actor Profile"
-      usage location or be privately defined collision-resistant values.
-      Until IANA establishes the registry, issuers and recipients use
-      the initial Actor Profile values from Section 14.1 of
-      [I-D.mora-oauth-entity-profiles]: user for a human resource owner,
-      service for a backend service, and ai_agent for an autonomous or
-      semi-autonomous AI entity.
+   sub_profile:  OPTIONAL.  A space-delimited list of entity profile
+      values classifying the actor identified by act.sub.
+      [I-D.mora-oauth-entity-profiles] defines its syntax, its values
+      (such as user, service, and ai_agent), and their registry.  An
+      implementation that does not process actor classification handles
+      act.sub_profile like any other unrecognized actor member,
+      including copying it unchanged when it preserves a chain.
 
-      If the acting entity fits more than one profile, multiple values
-      MAY be included as a space-delimited string (e.g., "service
-      ai_agent").  [I-D.mora-oauth-entity-profiles] defines
-      interoperability requirements and implementation guidance for
-      multi-value strings.
+      [I-D.mora-oauth-entity-profiles] also defines multi-value strings
+      such as "service ai_agent".
 
-      When sub_profile is absent from an act object, implementations
-      MUST NOT assume a specific entity type for the actor; resource
-      servers that enforce entity-type-based access control MUST treat
-      an absent sub_profile as an unclassified actor and SHOULD apply
-      the more restrictive policy applicable to unknown entity types.
+      A recipient MUST NOT assume an entity type for an actor whose
+      sub_profile is absent or unrecognized.  A resource that requires a
+      particular actor type MUST NOT grant access on an absent or
+      unrecognized value; it needs a classification from an issuer it
+      trusts to assert it.
 
       The sub_profile claim MAY also appear as a top-level JWT claim
       outside any act object to classify the entity type of the token's
       sub; it applies exclusively to sub and does not affect sub_profile
-      values within act objects.  Issuers SHOULD include a top-level
-      sub_profile when they can authoritatively classify the subject
-      entity type.
+      values within act objects.
 
    The top-level cnf claim ([RFC7800]) carries the current presenter's
    binding; see Sender Constraint and Proof-of-Possession Validation
@@ -834,8 +826,8 @@ Table of Contents
    jti (REQUIRED):  Identifies the assertion for replay prevention
       (Authorization Grant Processing (Section 4.2)).
 
-   sub_profile (RECOMMENDED):  Classifies the entity type of sub.  MUST
-      conform to Section 4.2 of [I-D.mora-oauth-entity-profiles].
+   sub_profile (OPTIONAL):  Classifies the entity type of sub, as
+      defined in [I-D.mora-oauth-entity-profiles].
 
    act (REQUIRED when the grant represents delegation per Delegation
    Chains (Section 3.5)):  The actor object identifying the entity
@@ -1036,8 +1028,8 @@ Table of Contents
    sub (REQUIRED):  Identifies the principal on whose behalf the access
       token is issued.
 
-   sub_profile (RECOMMENDED):  Classifies the entity type of sub.  MUST
-      conform to Section 4.2 of [I-D.mora-oauth-entity-profiles].
+   sub_profile (OPTIONAL):  Classifies the entity type of sub, as
+      defined in [I-D.mora-oauth-entity-profiles].
 
    act (REQUIRED when the token represents delegation per Delegation
    Chains (Section 3.5)):  The actor object identifying the entity
@@ -1402,8 +1394,8 @@ Table of Contents
 
    The AS MUST use the validated ID Token's sub as the subject identity
    for the issued token, subject to the same-subject rule in Common
-   Issuance Rules (Section 6.6).  The AS SHOULD set sub_profile to user
-   in the issued token if it can authoritatively classify the ID Token's
+   Issuance Rules (Section 6.6).  The AS MAY set sub_profile to user in
+   the issued token if it can authoritatively classify the ID Token's
    sub as a human user identity and no conflicting subject
    classification is available under local policy.
 
@@ -1688,16 +1680,19 @@ Table of Contents
       token contained that actor or that its issuer endorsed the actor.
 
    *  Set top-level sub_profile according to Actor Object Structure
-      (Section 3.4).  The issuer MUST validate inbound sub_profile
-      values, at the top level and in inherited actor objects, against
-      the syntax requirements of this document and MUST reject malformed
-      values.  It MUST also reject a value at the top level or in the
-      outermost actor that the applicable registry, a deployment-
+      (Section 3.4).  An issuer that processes actor classification
+      ([I-D.mora-oauth-entity-profiles]) MUST validate inbound
+      sub_profile values, at the top level and in inherited actor
+      objects, against that specification's syntax and MUST reject
+      malformed values.  It MUST also reject a value at the top level or
+      in the outermost actor that the applicable registry, a deployment-
       specific allowed set, or the local policy applicable to the token
       it is issuing disallows; inner actors' values are prior-actor
       context (Delegation Chain Validation and Construction
       (Section 3.6)).  It MUST preserve unrecognized but syntactically
-      valid values that it carries forward.
+      valid values that it carries forward.  An issuer that does not
+      process actor classification handles act.sub_profile as an
+      unrecognized actor member (Actor Object Structure (Section 3.4)).
 
    *  For a sender-constrained delegated Token Exchange output, set top-
       level cnf according to Presenter Transition Model (Section 6.1).
@@ -2059,8 +2054,7 @@ Table of Contents
       in this document.
 
    *  sub_profile: REQUIRED when the token's authorization context
-      includes a top-level sub_profile; otherwise SHOULD be included
-      when the AS can authoritatively classify the subject entity type.
+      includes a top-level sub_profile; otherwise OPTIONAL.
 
    *  scope: REQUIRED.  The effective scope of the token.
 
@@ -2689,8 +2683,9 @@ Table of Contents
 
    An attacker who can present a token with a crafted sub_profile or
    delegation chain can attempt to escalate privileges.  Common Issuance
-   Rules (Section 6.6) requires issuers to validate inbound sub_profile
-   values and to reject malformed or disallowed ones.
+   Rules (Section 6.6) requires issuers that process actor
+   classification to validate inbound sub_profile values and to reject
+   malformed or disallowed ones.
 
 13.5.  Confused Deputy
 
@@ -2980,9 +2975,7 @@ Table of Contents
    This document makes no independent requests to the "OAuth Entity
    Profiles" registry.  [I-D.mora-oauth-entity-profiles] defines the
    claim syntax and the actor array in entity_profiles_supported and
-   requests the registry and its initial entries.  Until the registry is
-   established, Actor Object Structure (Section 3.4) specifies the
-   applicable vocabulary.
+   requests the registry and its initial entries.
 
 16.  References
 
@@ -3085,13 +3078,6 @@ Table of Contents
               <https://datatracker.ietf.org/doc/html/draft-ietf-wimse-
               wpt-02>.
 
-   [I-D.mora-oauth-entity-profiles]
-              Mora, S. C., Dingle, P., and K. McGuinness, "OAuth Entity
-              Profiles", Work in Progress, Internet-Draft, draft-mora-
-              oauth-entity-profiles-01, 17 April 2026,
-              <https://www.ietf.org/archive/id/draft-mora-oauth-entity-
-              profiles-01.txt>.
-
    [I-D.ietf-oauth-identity-assertion-authz-grant]
               Parecki, A., McGuinness, K., and B. Campbell, "Identity
               Assertion JWT Authorization Grant", Work in Progress,
@@ -3119,6 +3105,13 @@ Table of Contents
               "Best Current Practice for OAuth 2.0 Security", BCP 240,
               RFC 9700, DOI 10.17487/RFC9700, January 2025,
               <https://www.rfc-editor.org/info/rfc9700>.
+
+   [I-D.mora-oauth-entity-profiles]
+              Mora, S. C., Dingle, P., and K. McGuinness, "OAuth Entity
+              Profiles", Work in Progress, Internet-Draft, draft-mora-
+              oauth-entity-profiles-01, 17 April 2026,
+              <https://www.ietf.org/archive/id/draft-mora-oauth-entity-
+              profiles-01.txt>.
 
    [I-D.parecki-oauth-jwt-dpop-grant]
               Parecki, A., "JWT Authorization Grants with DPoP", Work in
@@ -3167,13 +3160,6 @@ Document History
 
    -02
 
-   *  Defined a delegated-access requirement, specified the pre-
-      registration actor vocabulary, and required explicit issuer-
-      specific policy for rebind of a DPoP- or mTLS-bound assertion
-      grant.  Outside Token Exchange, delegated JWT access token
-      issuance applies the common rules and scopes a registration-
-      derived actor identifier to the registering AS.
-
    *  Added Omitting Prior Actors: by default an issuer keeps the
       complete chain or rejects the request; a profile can define
       omission of inner actors, never the outermost actor or act, when
@@ -3200,8 +3186,14 @@ Document History
       a JWT access token subject_token needs an aud the requester is
       locally authorized to use, policy rejection of sub_profile values
       applies only to the subject and outermost actor, a rebind that
-      names the current outermost actor keeps the chain unchanged, and
-      the Illustrative Use Case shows the token sequence as a table.
+      names the current outermost actor keeps the chain unchanged,
+      sub_profile is optional with Entity Profiles as an informative
+      reference, a delegated-access requirement is defined, rebind of a
+      DPoP- or mTLS-bound assertion grant needs explicit issuer-specific
+      policy, delegated JWT access token issuance outside Token Exchange
+      applies the common rules and scopes a registration-derived actor
+      identifier to the registering AS, and the Illustrative Use Case
+      shows the token sequence as a table.
 
    -01
 
