@@ -630,7 +630,11 @@ Table of Contents
    applicable token-processing rules; AS and TTS errors follow Error
    Responses (Section 9).  When a request would add an actor beyond that
    limit, the AS MUST reject the request with the invalid_request error
-   code; it MUST NOT silently truncate the chain.
+   code; it MUST NOT silently truncate the chain.  The local maximum
+   applies to the visible chain.  An implementation that also limits
+   total delegation depth MUST reject an incomplete chain (Omitting
+   Prior Actors (Section 3.6.3)) unless it can establish that the total
+   depth, counting every actor hidden from it, is within that limit.
 
    A token represents delegation when the party exercising the token's
    authorization at runtime (the actor) is distinct from the token
@@ -853,10 +857,11 @@ Table of Contents
    (Section 3.6), including Enforce Depth Limit (Section 3.6.1.4), to
    the chain as it stands before its own omission.  A party that detects
    the omission knows only that the delegation depth exceeds the visible
-   depth, unless the profile conveys how many actors were omitted.  In a
-   chain with omitted actors, the innermost visible actor need not be
-   the first actor the subject authorized, and adjacent visible actors
-   need not have delegated directly to each other.
+   depth, unless the profile conveys how many actors are hidden from
+   that party.  In a chain with omitted actors, the innermost visible
+   actor need not be the first actor the subject authorized, and
+   adjacent visible actors need not have delegated directly to each
+   other.
 
    A TTS and an AS processing the refresh_token grant MUST NOT omit
    actors.  They carry any marking they recognize with the chain
@@ -1107,16 +1112,19 @@ Table of Contents
        *  If the delegation relationship is prohibited by AS policy or
           cannot be confirmed: reject with actor_unauthorized.
 
-   5.  If the inbound assertion's act object contains a nested act
-       object (indicating that the asserted actor is itself a
-       delegatee), the AS MUST handle the inner chain as follows:
+   5.  The assertion is pre-chained when its act object contains a
+       nested act object or an omission marking the AS recognizes
+       (Omitting Prior Actors (Section 3.6.3)) shows that prior actors
+       were omitted; either indicates that the asserted actor is itself
+       a delegatee.  If the AS does not accept pre-chained assertions,
+       it MUST reject the request.  When a nested act object is present,
+       the AS MUST handle the inner chain as follows:
 
        *  *Propagation decision*: Except as Omitting Prior Actors
           (Section 3.6.3) permits, the AS MUST propagate the inner chain
           by preserving its nested structure, provided the resulting
           chain depth does not exceed the limit in Delegation Chains
-          (Section 3.5).  If the AS does not accept pre-chained
-          assertions, it MUST reject the request.
+          (Section 3.5).
 
        *  *Prior-actor context*: For inner act objects, Carry
           Prior-Actor Context (Section 3.6.1.3) applies.
@@ -3335,9 +3343,11 @@ Table of Contents
    the delegation depth exceeds the visible depth.  For example, a
    recipient with a maximum depth of 2 that receives one visible actor
    cannot tell whether the chain is within its limit.  A recipient that
-   enforces a hard depth limit rejects an incomplete chain unless it can
-   establish that the chain is within the limit, which requires the
-   profile to convey how many actors were omitted.
+   limits total delegation depth therefore rejects such a chain unless
+   it can count every actor hidden from it (Delegation Chains
+   (Section 3.5)).  A count that covers only the issuer's omission
+   understates the depth once introspection filtering removes further
+   actors.
 
    Extensions that attach per-hop signed material grow token size in
    proportion to chain depth.  Deployments that combine the reference
