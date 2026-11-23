@@ -275,7 +275,7 @@ The top-level `cnf` claim ({{RFC7800}}) carries the current presenter's binding;
 
 The `client_profile` claim defined in {{I-D.mora-oauth-entity-profiles}} classifies the OAuth client and MUST NOT appear within an `act` object.  Client classification belongs at the top level of the token.  An AS or RS that encounters a `client_profile` member inside an `act` object MAY reject the token or ignore the offending member; it MUST NOT treat that member as a valid actor classification.
 
-When an `act` object contains extension members beyond those defined in this document, issuers and consumers MUST ignore unrecognized members unless another specification or local policy defines their meaning.  An issuer that preserves a validated delegation chain copies unrecognized extension members in inherited `act` objects unchanged, as [Preserve Inbound Chain](#preserve-inbound-chain) requires.
+When an `act` object contains extension members beyond those defined in this document, issuers and consumers MUST ignore unrecognized members unless another specification or local policy defines their meaning.  An issuer that preserves a validated delegation chain copies unrecognized extension members in inherited `act` objects unchanged, as [Preserve Inbound Chain](#preserve-inbound-chain) requires.  Extension members identify or describe the actor ({{Section 4.1 of RFC8693}}), and their names follow the claim-name rules in {{Section 4 of RFC7519}}.
 
 
 ## Delegation Chains {#delegation-chains}
