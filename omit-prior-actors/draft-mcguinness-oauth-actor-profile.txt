@@ -564,11 +564,11 @@ Table of Contents
 
    Delegation chains MUST use nested act objects as specified in
    Section 4.1 of [RFC8693].  The outermost object identifies the
-   immediate actor; the innermost object identifies the first actor
-   authorized by the subject.  The chain records prior actors under the
-   conveying issuer's trust, without independently proving each hop.
-   This profile defines one linear chain per token; concurrent
-   delegations use separate tokens.
+   immediate actor; in a complete chain, the innermost object identifies
+   the first actor authorized by the subject.  The chain records prior
+   actors under the conveying issuer's trust, without independently
+   proving each hop.  This profile defines one linear chain per token;
+   concurrent delegations use separate tokens.
 
    This document uses the following terms:
 
@@ -580,7 +580,8 @@ Table of Contents
       Actors (Section 3.6.3) or filtering by an introspection server.
 
    *  A *single-hop actor object* is an act object with no nested act;
-      it represents delegation depth 1.
+      it represents delegation depth 1, or a visible depth of 1 in a
+      chain with omitted actors (Omitting Prior Actors (Section 3.6.3)).
 
    *  An *inbound delegation chain* is the complete act structure
       received in an inbound token, whether depth 1 or greater.
@@ -831,15 +832,30 @@ Table of Contents
 
    By default, an issuer that preserves or extends a delegation chain
    includes the complete chain or rejects the request.  An issuer MAY
-   omit inner actor objects when a profile defines how and the trust
-   agreement between the issuer and the token's recipient, or that
-   profile, permits it.  Such a profile MUST NOT permit omitting the
-   outermost actor object or the act claim, and MUST define a marking
-   that lets every later recipient detect the omission, including after
-   an issuer that does not implement the profile preserves the chain.  A
-   recipient that detects such an omission MUST NOT treat the chain as
-   complete delegation history and MUST reject the token unless its
-   trust agreement or an applicable profile permits incomplete chains.
+   omit inner actor objects when a profile defines how and that profile
+   or a trust agreement covers every recipient that relies on the chain,
+   including recipients of tokens derived from it.  A recipient that
+   implements only this document cannot detect an omission.  Such a
+   profile MUST NOT permit omitting the outermost actor object or the
+   act claim, and MUST define a marking that the recipients it covers
+   can detect.  A recipient that detects such an omission MUST NOT treat
+   the chain as complete delegation history and MUST reject the token
+   unless its trust agreement or an applicable profile permits
+   incomplete chains.
+
+   The issuer applies Delegation Chain Validation and Construction
+   (Section 3.6), including Enforce Depth Limit (Section 3.6.1.4), to
+   the complete chain before omitting any actor object.  Later issuers
+   and recipients can enforce depth limits only on the visible chain
+   unless the profile conveys how many actors were omitted.  In a chain
+   with omitted actors, the innermost visible actor need not be the
+   first actor the subject authorized, and adjacent visible actors need
+   not have delegated directly to each other.
+
+   A TTS and an AS processing the refresh_token grant do not omit
+   actors; they carry the chain unchanged, with any marking the
+   applicable profile defines (Transaction Token Output Rules
+   (Section 7.4), Delegated Token Issuance (Section 5.2)).
 
 3.7.  Sender Constraint and Proof-of-Possession Validation
 
@@ -1276,10 +1292,12 @@ Table of Contents
    a basis, the AS MUST NOT include act.
 
    An AS that issues a refresh token together with a token carrying act
-   MUST record that chain for the grant.  For the refresh_token grant
-   (Section 6 of [RFC6749]), the AS MUST carry the act chain recorded
-   for the grant into the refreshed token unchanged or reject the
-   request; it MUST NOT issue a refreshed token without that chain.
+   MUST record that chain for the grant as issued, with any marking of
+   omitted actors (Omitting Prior Actors (Section 3.6.3)).  For the
+   refresh_token grant (Section 6 of [RFC6749]), the AS MUST carry the
+   act chain recorded for the grant, with any recorded marking, into the
+   refreshed token unchanged or reject the request; it MUST NOT issue a
+   refreshed token without that chain.
 
    This document defines no actor-selection or actor-proof parameter for
    the authorization code grant; actor determination there is
@@ -2530,7 +2548,9 @@ Table of Contents
    following privacy-filtering allowance.
 
    If local privacy policy requires omitting inner actors, the AS MAY
-   filter them but MUST include "chain_complete": false.
+   filter them but MUST include "chain_complete": false.  It MUST also
+   include "chain_complete": false when it knows that the token's chain
+   omits actors under Omitting Prior Actors (Section 3.6.3).
 
    When chain_complete is false, the subject and the outermost actor
    remain available for authorization, and the RS records the
