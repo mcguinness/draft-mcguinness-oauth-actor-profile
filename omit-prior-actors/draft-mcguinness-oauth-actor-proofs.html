@@ -9,7 +9,7 @@
 <meta content="
        This document defines OAuth Actor-Signed Hop Proofs, an optional companion to the OAuth Actor Profile for Delegation.  Each proof is a signed JSON Web Token (JWT) recording an actor's participation and authorized target for one hop.  The  actor_proofs  claim carries a hash-linked chain verified through trusted actor-key sources.  This document specifies proof conveyance, validation, optional links to Actor Receipts, metadata parameters, and introspection response members. 
     " name="description">
-<meta content="xml2rfc 3.34.1" name="generator">
+<meta content="xml2rfc 3.35.0" name="generator">
 <meta content="oauth" name="keyword">
 <meta content="delegation" name="keyword">
 <meta content="actor" name="keyword">
@@ -17,19 +17,19 @@
 <meta content="proof" name="keyword">
 <meta content="draft-mcguinness-oauth-actor-proofs-latest" name="ietf.draft">
 <!-- Generator version information:
-  xml2rfc 3.34.1
-    Python 3.14.8
-    ConfigArgParse 1.8.0
+  xml2rfc 3.35.0
+    Python 3.14.10
+    ConfigArgParse 1.10.1
     google-i18n-address 3.1.1
     intervaltree 3.2.1
     Jinja2 3.1.6
     lxml 6.1.1
     natsort 8.4.0
-    platformdirs 4.12.2
+    platformdirs 4.14.7
     pycountry 24.6.1
     PyYAML 6.0.3
     requests 2.33.1
-    wcwidth 0.9.1
+    wcwidth 0.9.4
 -->
 <link href="draft-mcguinness-oauth-actor-proofs.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -1030,7 +1030,7 @@ svg {
   & :is([stroke="white"], [stroke^="#fff"]) {
     stroke: var(--background-color);
   }
-  & :is([fill="black"], [fill^="#000"], :not([fill])) {
+  & :is([fill="black"], [fill^="#000"], :not([fill], [fill] *)) {
     fill: var(--text-color);
   }
   & :is([fill="white"], [fill^="#fff"]) {
@@ -1045,11 +1045,11 @@ svg {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">OAuth Actor Proofs</td>
-<td class="right">October 2026</td>
+<td class="right">November 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">McGuinness</td>
-<td class="center">Expires 12 April 2027</td>
+<td class="center">Expires 27 May 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1062,12 +1062,12 @@ svg {
 <dd class="internet-draft">draft-mcguinness-oauth-actor-proofs-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-10-09" class="published">9 October 2026</time>
+<time datetime="2026-11-23" class="published">23 November 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-04-12">12 April 2027</time></dd>
+<dd class="expires"><time datetime="2027-05-27">27 May 2027</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1117,7 +1117,7 @@ svg {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 12 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 27 May 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -3042,11 +3042,11 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <dd class="break"></dd>
 <dt id="I-D.mcguinness-oauth-actor-profile">[I-D.mcguinness-oauth-actor-profile]</dt>
         <dd>
-<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"OAuth Actor Profile for Delegation"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-actor-profile-00</span>, <time datetime="2026-04-30" class="refDate">30 April 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-00">https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-00</a>&gt;</span>. </dd>
+<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"OAuth Actor Profile for Delegation"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-actor-profile-01</span>, <time datetime="2026-10-08" class="refDate">8 October 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-01">https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-profile-01</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.mcguinness-oauth-actor-receipts">[I-D.mcguinness-oauth-actor-receipts]</dt>
         <dd>
-<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"OAuth Actor Receipts for Delegation Provenance"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-actor-receipts-00</span>, <time datetime="2026-07-04" class="refDate">4 July 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-receipts-00">https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-receipts-00</a>&gt;</span>. </dd>
+<span class="refAuthor">McGuinness, K.</span>, <span class="refTitle">"OAuth Actor Receipts for Delegation Provenance"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mcguinness-oauth-actor-receipts-01</span>, <time datetime="2026-10-08" class="refDate">8 October 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-receipts-01">https://datatracker.ietf.org/doc/html/draft-mcguinness-oauth-actor-receipts-01</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.mora-oauth-entity-profiles">[I-D.mora-oauth-entity-profiles]</dt>
         <dd>
@@ -3075,7 +3075,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <dd class="break"></dd>
 <dt id="I-D.mw-oauth-actor-chain">[I-D.mw-oauth-actor-chain]</dt>
         <dd>
-<span class="refAuthor">Prasad, A.</span>, <span class="refAuthor">Krishnan, R.</span>, <span class="refAuthor">Lopez, D.</span>, and <span class="refAuthor">S. Addepalli</span>, <span class="refTitle">"Cryptographically Verifiable Actor Chains for OAuth 2.0 Token Exchange"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mw-oauth-actor-chain-01</span>, <time datetime="2026-06-15" class="refDate">15 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mw-oauth-actor-chain-01">https://datatracker.ietf.org/doc/html/draft-mw-oauth-actor-chain-01</a>&gt;</span>. </dd>
+<span class="refAuthor">Prasad, A.</span>, <span class="refAuthor">Krishnan, R.</span>, <span class="refAuthor">Lopez, D.</span>, <span class="refAuthor">Addepalli, S.</span>, and <span class="refAuthor">S. Krishnan</span>, <span class="refTitle">"OAuth Actor Chain: Protocol and Interoperability"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-mw-oauth-actor-chain-03</span>, <time datetime="2026-11-01" class="refDate">1 November 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-mw-oauth-actor-chain-03">https://datatracker.ietf.org/doc/html/draft-mw-oauth-actor-chain-03</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.liu-oauth-chain-delegation">[I-D.liu-oauth-chain-delegation]</dt>
         <dd>
@@ -3087,11 +3087,11 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <dd class="break"></dd>
 <dt id="I-D.ietf-oauth-attestation-based-client-auth">[I-D.ietf-oauth-attestation-based-client-auth]</dt>
         <dd>
-<span class="refAuthor">Looker, T.</span>, <span class="refAuthor">Bastian, P.</span>, and <span class="refAuthor">C. Bormann</span>, <span class="refTitle">"OAuth 2.0 Attestation-Based Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-attestation-based-client-auth-11</span>, <time datetime="2026-09-03" class="refDate">3 September 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-11</a>&gt;</span>. </dd>
+<span class="refAuthor">Looker, T.</span>, <span class="refAuthor">Bastian, P.</span>, and <span class="refAuthor">C. Bormann</span>, <span class="refTitle">"OAuth 2.0 Attestation-Based Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-attestation-based-client-auth-12</span>, <time datetime="2026-10-12" class="refDate">12 October 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-12">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-attestation-based-client-auth-12</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="I-D.ietf-oauth-spiffe-client-auth">[I-D.ietf-oauth-spiffe-client-auth]</dt>
       <dd>
-<span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Rose, S.</span>, <span class="refAuthor">Thorgersen, S.</span>, and <span class="refAuthor">N. Cam-Winget</span>, <span class="refTitle">"OAuth SPIFFE Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-spiffe-client-auth-02</span>, <time datetime="2026-06-15" class="refDate">15 June 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-02</a>&gt;</span>. </dd>
+<span class="refAuthor">Schwenkschuster, A.</span>, <span class="refAuthor">Kasselman, P.</span>, <span class="refAuthor">Rose, S.</span>, <span class="refAuthor">Thorgersen, S.</span>, and <span class="refAuthor">N. Cam-Winget</span>, <span class="refTitle">"OAuth SPIFFE Client Authentication"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-oauth-spiffe-client-auth-03</span>, <time datetime="2026-11-02" class="refDate">2 November 2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-03">https://datatracker.ietf.org/doc/html/draft-ietf-oauth-spiffe-client-auth-03</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 </dl>
 </section>

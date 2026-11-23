@@ -4,8 +4,8 @@
 
 Web Authorization Protocol                                 K. McGuinness
 Internet-Draft                                               Independent
-Intended status: Standards Track                          9 October 2026
-Expires: 12 April 2027
+Intended status: Standards Track                        23 November 2026
+Expires: 27 May 2027
 
 
              OAuth Actor Receipts for Delegation Provenance
@@ -55,7 +55,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 12 April 2027.
+   This Internet-Draft will expire on 27 May 2027.
 
 Copyright Notice
 
@@ -2002,9 +2002,9 @@ Table of Contents
    [I-D.mcguinness-oauth-actor-profile]
               McGuinness, K., "OAuth Actor Profile for Delegation", Work
               in Progress, Internet-Draft, draft-mcguinness-oauth-actor-
-              profile-01, 9 October 2026,
-              <https://www.ietf.org/archive/id/draft-mcguinness-oauth-
-              actor-profile-01.txt>.
+              profile-01, 8 October 2026,
+              <https://datatracker.ietf.org/doc/html/draft-mcguinness-
+              oauth-actor-profile-01>.
 
    [I-D.mora-oauth-entity-profiles]
               Mora, S. C., Dingle, P., and K. McGuinness, "OAuth Entity
@@ -2035,12 +2035,12 @@ Table of Contents
               <https://www.rfc-editor.org/info/rfc9700>.
 
    [I-D.mw-oauth-actor-chain]
-              Prasad, A., Krishnan, R., Lopez, D., and S. Addepalli,
-              "Cryptographically Verifiable Actor Chains for OAuth 2.0
-              Token Exchange", Work in Progress, Internet-Draft, draft-
-              mw-oauth-actor-chain-01, 15 June 2026,
+              Prasad, A., Krishnan, R., Lopez, D., Addepalli, S., and S.
+              Krishnan, "OAuth Actor Chain: Protocol and
+              Interoperability", Work in Progress, Internet-Draft,
+              draft-mw-oauth-actor-chain-03, 1 November 2026,
               <https://datatracker.ietf.org/doc/html/draft-mw-oauth-
-              actor-chain-01>.
+              actor-chain-03>.
 
    [I-D.liu-oauth-chain-delegation]
               Liu, D., Zhu, J., Krishnan, S., and A. Parecki,
@@ -2053,9 +2053,9 @@ Table of Contents
               Liu, D., Zhu, J., Krishnan, S., and A. Parecki,
               "Authorization Evidence and Audit Trail for OAuth 2.0
               Access Tokens", Work in Progress, Internet-Draft, draft-
-              liu-oauth-authorization-evidence-01, 22 June 2026,
+              liu-oauth-authorization-evidence-02, 2 November 2026,
               <https://datatracker.ietf.org/doc/html/draft-liu-oauth-
-              authorization-evidence-01>.
+              authorization-evidence-02>.
 
 Appendix A.  Examples
 
