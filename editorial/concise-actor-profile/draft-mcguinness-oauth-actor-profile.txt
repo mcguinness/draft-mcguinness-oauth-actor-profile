@@ -1000,9 +1000,9 @@ Table of Contents
        *  The AS MAY use that client identity as an additional
           authorization input.
 
-       *  The AS SHOULD NOT infer that the client is authorized to act
-          on behalf of the subject solely because the client initiated
-          the request.
+       *  The AS MUST NOT infer that the client is authorized to act on
+          behalf of the subject solely because the client initiated the
+          request.
 
        *  When local policy maps the client identity to an actor
           identifier expected to match act.sub, the AS SHOULD perform
@@ -1251,31 +1251,34 @@ Table of Contents
 
    For subject_token inputs:
 
-    +===============+===================+================+============+
-    | Input         | Validated per     | Issuer trust   | Scope      |
-    |               |                   | check          | ceiling    |
-    +===============+===================+================+============+
-    | JWT assertion | Authorization     | In validation  | See        |
-    | grant         | Grant Processing  |                | subsection |
-    |               | (Section 4.2)     |                |            |
-    +---------------+-------------------+----------------+------------+
-    | JWT access    | [RFC9068], aud    | Trusted for    | Its        |
-    | token         | relaxed           | its delegation | effective  |
-    |               |                   | chain          | scope      |
-    +---------------+-------------------+----------------+------------+
-    | Transaction   | Transaction Token | Trusted issuer | See        |
-    | Token         | specification     |                | subsection |
-    |               | (Section 6.3.3)   |                |            |
-    +---------------+-------------------+----------------+------------+
-    | ID Token      | [OpenID.Core],    | No separate    | None       |
-    |               | local policy      | check          |            |
-    +---------------+-------------------+----------------+------------+
-    | Refresh token | Token store or    | No separate    | Its        |
-    |               | trusted back-     | check          | authorized |
-    |               | channel           |                | scope      |
-    +---------------+-------------------+----------------+------------+
+    +=============+========================+============+============+
+    | Input       | Validated per          | Issuer     | Scope      |
+    |             |                        | trust      | ceiling    |
+    |             |                        | check      |            |
+    +=============+========================+============+============+
+    | JWT         | Authorization Grant    | In         | See        |
+    | assertion   | Processing             | validation | subsection |
+    | grant       | (Section 4.2)          |            |            |
+    +-------------+------------------------+------------+------------+
+    | JWT access  | [RFC9068], with the    | Trusted    | Its        |
+    | token       | subject-token audience | for its    | effective  |
+    |             | check (Section 6.3.2)  | delegation | scope      |
+    |             |                        | chain      |            |
+    +-------------+------------------------+------------+------------+
+    | Transaction | Transaction Token      | Trusted    | See        |
+    | Token       | specification          | issuer     | subsection |
+    |             | (Section 6.3.3)        |            |            |
+    +-------------+------------------------+------------+------------+
+    | ID Token    | [OpenID.Core], local   | No         | None       |
+    |             | policy                 | separate   |            |
+    |             |                        | check      |            |
+    +-------------+------------------------+------------+------------+
+    | Refresh     | Token store or trusted | No         | Its        |
+    | token       | back-channel           | separate   | authorized |
+    |             |                        | check      | scope      |
+    +-------------+------------------------+------------+------------+
 
-                                  Table 4
+                                 Table 4
 
    For actor_token inputs, each of which establishes the outermost
    actor:
@@ -1333,11 +1336,13 @@ Table of Contents
    (Section 6.2) with the following rules.  Validation follows Section 4
    of [RFC9068] for its typ header, signature, iss, and exp, and
    [RFC7519] for nbf when present; the token carries the sub and jti
-   claims that Section 2.2 of [RFC9068] requires.  Because a JWT access
-   token used as subject_token was issued for a resource server, its aud
-   does not ordinarily include the Token Exchange AS's token endpoint;
-   the AS MUST NOT reject the inbound token solely because its aud does
-   not include the AS's token endpoint URI.
+   claims that Section 2.2 of [RFC9068] requires.  The AS MUST reject
+   the request with invalid_request unless at least one value in the
+   token's aud identifies an audience that local policy permits the
+   requester to use in a subject token from that issuer.  For example, a
+   resource server can be authorized to exchange tokens addressed to its
+   own API.  The AS MUST NOT reject a token solely because aud omits the
+   AS's token endpoint URI.
 
 6.3.3.  Transaction Token
 
@@ -1594,10 +1599,10 @@ Table of Contents
    identifies the acting party and satisfies the direct actor credential
    requirement in Presenter Transition Model (Section 6.1).
 
-   Validation per [RFC9068] applies the aud relaxation in JWT Access
-   Token as subject_token (Section 6.3.2).  A JWT access token without
-   top-level cnf is accepted as actor_token only when its sub
-   corresponds to the authenticated client under Identifier
+   Validation follows [RFC9068].  The AS MUST NOT reject the actor token
+   solely because its aud omits the AS's token endpoint URI.  A JWT
+   access token without top-level cnf is accepted as actor_token only
+   when its sub corresponds to the authenticated client under Identifier
    Reconciliation (Conventions and Definitions (Section 2)); otherwise,
    the AS MUST reject the request with invalid_request.  When the
    credential carries top-level cnf, the AS MUST validate proof for that
@@ -2156,35 +2161,40 @@ Table of Contents
 
    The following error codes apply to both AS and TTS endpoints:
 
-   +====================+=============================================+
-   | Error              | Condition                                   |
-   +====================+=============================================+
-   | invalid_request    | Malformed request, missing required request |
-   |                    | parameter, or an actor addition that would  |
-   |                    | exceed the depth limit; on a Token Exchange |
-   |                    | request, also input-validation failures     |
-   +--------------------+---------------------------------------------+
-   | invalid_grant      | On a JWT bearer grant request: input-       |
-   |                    | validation failures, including an invalid   |
-   |                    | assertion, untrusted issuer, or failed      |
-   |                    | grant binding                               |
-   +--------------------+---------------------------------------------+
-   | invalid_scope      | No effective scope remains for reasons      |
-   |                    | other than categorical actor denial, or a   |
-   |                    | Transaction Token's scope authority cannot  |
-   |                    | be determined                               |
-   +--------------------+---------------------------------------------+
-   | actor_unauthorized | Actor policy prohibits the request, rejects |
-   |                    | the actor type, or cannot confirm the       |
-   |                    | required delegation relationship            |
-   +--------------------+---------------------------------------------+
-   | invalid_target     | On a Token Exchange request, the AS cannot  |
-   |                    | issue for every requested audience and      |
-   |                    | resource (Common Issuance Rules             |
-   |                    | (Section 6.6))                              |
-   +--------------------+---------------------------------------------+
+   +====================+==============================================+
+   | Error              | Condition                                    |
+   +====================+==============================================+
+   | invalid_request    | Malformed request, missing required          |
+   |                    | request parameter, or an actor               |
+   |                    | addition that would exceed the depth         |
+   |                    | limit; on a Token Exchange request,          |
+   |                    | also input-validation failures               |
+   +--------------------+----------------------------------------------+
+   | invalid_grant      | On a JWT bearer grant request: input-        |
+   |                    | validation failures, including an            |
+   |                    | invalid assertion, untrusted issuer,         |
+   |                    | or failed grant binding                      |
+   +--------------------+----------------------------------------------+
+   | invalid_scope      | No effective scope remains for reasons       |
+   |                    | other than categorical actor denial,         |
+   |                    | or a Transaction Token's scope               |
+   |                    | authority cannot be determined               |
+   +--------------------+----------------------------------------------+
+   | actor_unauthorized | Actor policy prohibits the request,          |
+   |                    | rejects the actor type, or cannot            |
+   |                    | confirm the required delegation              |
+   |                    | relationship                                 |
+   +--------------------+----------------------------------------------+
+   | invalid_target     | On a Token Exchange request, the AS          |
+   |                    | cannot issue for every requested             |
+   |                    | audience and resource (Common Issuance       |
+   |                    | Rules (Section 6.6)), or the AS cannot       |
+   |                    | satisfy a resource's delegated-token         |
+   |                    | requirement (Protected Resource              |
+   |                    | Metadata (Section 10.2))                     |
+   +--------------------+----------------------------------------------+
 
-                                 Table 7
+                                  Table 7
 
    Missing required claims include act.sub, act.iss, the binding claim
    of a sender-constrained JWT assertion grant, and the top-level iss
@@ -2376,11 +2386,11 @@ Table of Contents
 
       An AS that knows, by configuration or from this metadata, that
       actor_profile_required is true for the resource MUST reject a
-      request that would produce a nonconforming delegated token for the
-      resource unless a supported introspection path provides equivalent
-      actor information.  An RS enforcing this policy MUST reject a
-      delegated request for which neither form of actor information is
-      available.
+      request that would produce a nonconforming delegated token for
+      that resource with invalid_target, unless a supported
+      introspection path provides equivalent actor information.  An RS
+      enforcing this policy MUST reject a delegated request for which
+      neither form of actor information is available.
 
       The parameter applies to the resource as a whole.  An RS with
       path-specific requirements MUST enforce them at the request layer.
@@ -3245,6 +3255,12 @@ Document History
    [[ To be removed from the final specification ]]
 
    -02
+
+   *  Specified invalid_target when the AS cannot satisfy a resource's
+      delegated-token requirement.  Prohibited inferring delegation
+      authority solely from initiation of a JWT assertion grant request.
+      Required a locally authorized input audience for JWT access tokens
+      used as subject tokens.
 
    *  Added Omitting Prior Actors: by default an issuer keeps the
       complete chain or rejects the request; a profile can define
