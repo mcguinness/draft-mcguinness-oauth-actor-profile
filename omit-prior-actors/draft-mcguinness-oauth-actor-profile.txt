@@ -833,27 +833,30 @@ Table of Contents
    By default, an issuer that preserves or extends a delegation chain
    includes the complete chain or rejects the request.  An issuer MAY
    omit inner actor objects when a profile defines how to omit them and
-   how to mark the omission, and that profile or a trust agreement binds
-   every party that trusts the issuer to assert delegation chains to
-   recognize the profile's marking and carry it into tokens derived from
-   the chain.  A party that implements only this document cannot
-   recognize that marking.  An issuer that omits actors MUST NOT omit
-   the outermost actor object or the act claim, and MUST include the
-   profile's marking in the issued token.  It omits whole actor objects
-   and keeps the remaining actor objects in order, with their members
-   other than the nested act unchanged.  A recipient that detects an
-   omission through the profile's marking MUST NOT treat the chain as
-   complete delegation history and MUST reject the token unless its
-   trust agreement or an applicable profile permits incomplete chains.
+   how to mark the omission in tokens and introspection responses.  An
+   issuer that omits actors, or that preserves, extends, or refreshes a
+   chain it knows to be incomplete, MUST reject the request unless the
+   profile or a trust agreement binds every party that trusts the issuer
+   to assert delegation chains to recognize the profile's marking and
+   carry it into tokens derived from the chain.  A party that implements
+   only this document cannot recognize that marking.  An issuer that
+   omits actors MUST NOT omit the outermost actor object or the act
+   claim, and MUST include the profile's marking in the issued token.
+   It omits whole actor objects and keeps the remaining actor objects in
+   order, with their members other than the nested act unchanged.  A
+   recipient that detects an omission through the profile's marking MUST
+   NOT treat the chain as complete delegation history and MUST reject
+   the token unless its trust agreement or an applicable profile permits
+   incomplete chains.
 
    The issuer applies Delegation Chain Validation and Construction
    (Section 3.6), including Enforce Depth Limit (Section 3.6.1.4), to
-   the chain as it stands before its own omission.  Later issuers and
-   recipients can enforce depth limits only on the visible chain unless
-   the profile conveys how many actors were omitted.  In a chain with
-   omitted actors, the innermost visible actor need not be the first
-   actor the subject authorized, and adjacent visible actors need not
-   have delegated directly to each other.
+   the chain as it stands before its own omission.  A party that detects
+   the omission knows only that the delegation depth exceeds the visible
+   depth, unless the profile conveys how many actors were omitted.  In a
+   chain with omitted actors, the innermost visible actor need not be
+   the first actor the subject authorized, and adjacent visible actors
+   need not have delegated directly to each other.
 
    A TTS and an AS processing the refresh_token grant MUST NOT omit
    actors.  They carry any marking they recognize with the chain
@@ -1668,8 +1671,8 @@ Table of Contents
    insufficient, and an expired, revoked, or otherwise invalid token
    fails validation.  For a token issued by another AS, the AS MUST NOT
    accept it unless that back-channel provides the subject, client
-   binding, authorized scope, revocation state, and any act chain
-   recorded for the grant.
+   binding, authorized scope, revocation state, any act chain recorded
+   for the grant, and any omission marking recorded with that chain.
 
    The AS MUST verify that the requesting client or authenticated
    presenter is authorized to use the refresh token under the refresh
@@ -2507,7 +2510,7 @@ Table of Contents
        when required by local policy or when the token is accepted as
        satisfying a delegated-access requirement for the request path.
 
-   5.  Optionally traverse inner act objects to audit the full
+   5.  Optionally traverse inner act objects to audit the visible
        delegation chain.  They are not inputs to access-control
        decisions (Section 4.1 of [RFC8693]) and have the trust
        properties in Carry Prior-Actor Context (Section 3.6.1.3).
@@ -2556,9 +2559,11 @@ Table of Contents
    following privacy-filtering allowance.
 
    If local privacy policy requires omitting inner actors, the AS MAY
-   filter them but MUST include "chain_complete": false.  It MUST also
-   include "chain_complete": false when it knows that the token's chain
-   omits actors under Omitting Prior Actors (Section 3.6.3).
+   filter them but MUST include "chain_complete": false.  When it knows
+   that the token's chain omits actors under Omitting Prior Actors
+   (Section 3.6.3), it MUST also include "chain_complete": false and the
+   profile's marking, so that the RS can distinguish issuer omission
+   from introspection filtering.
 
    When chain_complete is false, the subject and the outermost actor
    remain available for authorization, and the RS records the
@@ -3326,11 +3331,13 @@ Table of Contents
    requires bounds them.
 
    After an issuer omits prior actors (Omitting Prior Actors
-   (Section 3.6.3)), the visible depth is only a lower bound on the
-   delegation depth.  A later issuer or recipient that relies on a depth
-   limit, such as a maximum of 1 to refuse sub-delegation, cannot
-   enforce it on such a chain unless the profile conveys how many actors
-   were omitted.
+   (Section 3.6.3)), a party that detects the omission knows only that
+   the delegation depth exceeds the visible depth.  For example, a
+   recipient with a maximum depth of 2 that receives one visible actor
+   cannot tell whether the chain is within its limit.  A recipient that
+   enforces a hard depth limit rejects an incomplete chain unless it can
+   establish that the chain is within the limit, which requires the
+   profile to convey how many actors were omitted.
 
    Extensions that attach per-hop signed material grow token size in
    proportion to chain depth.  Deployments that combine the reference
