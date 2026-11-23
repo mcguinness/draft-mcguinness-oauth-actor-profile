@@ -241,15 +241,33 @@ Table of Contents
 
 1.1.  Illustrative Use Case
 
-   Alice authorizes an AI travel agent to book a trip.  The enterprise
-   AS issues a credential with Alice as sub and the agent as act.  The
-   agent presents that credential to a booking provider's AS for an
-   access token, and the provider then issues a Transaction Token for an
-   internal booking tool.  Alice remains the subject; the tool becomes
-   the outermost actor, and the agent becomes an inner actor.  Each
-   trust domain issues a new token under its own policy, and the
-   outermost actor changes only when a new presenter is established.
-   The cross-domain example (Appendix A) shows the complete flow.
+   Alice authorizes an AI travel assistant to book a trip.  The
+   enterprise AS issues an ID-JAG naming the assistant as actor, the
+   assistant redeems it at the travel provider for an access token, and
+   the provider's booking tool exchanges that token for a Transaction
+   Token.  Each trust domain issues a new token under its own policy,
+   and the outermost actor changes only when a new presenter is
+   established:
+
+   +=============+=========+=================+=============+===========+
+   | Token       | Subject | Outermost actor | Prior       | Presenter |
+   |             |         |                 | actor       | key       |
+   +=============+=========+=================+=============+===========+
+   | ID Token    | Alice   |                 |             |           |
+   +-------------+---------+-----------------+-------------+-----------+
+   | ID-JAG      | Alice   | Assistant       |             | AgentJKT  |
+   +-------------+---------+-----------------+-------------+-----------+
+   | Access      | Alice   | Assistant       |             | AgentJKT  |
+   | token       |         |                 |             |           |
+   +-------------+---------+-----------------+-------------+-----------+
+   | Transaction | Alice   | Booking tool    | Assistant   | ToolJKT   |
+   | Token       |         |                 |             |           |
+   +-------------+---------+-----------------+-------------+-----------+
+
+                                  Table 1
+
+   The cross-domain example (Appendix A) names the credentials used and
+   points to the complete requests and tokens.
 
 1.2.  Relationship to Related Work
 
@@ -325,10 +343,13 @@ Table of Contents
       chain (the one not nested inside any other act object).  The
       outermost actor identifies the current presenter of the token.
 
-   Presenter:  The party that presents a token to an AS or RS.  In a
-      delegated token, the outermost actor is the current presenter; a
-      top-level cnf claim, when present, binds the token to that
-      presenter's key or certificate.
+   Presenter:  The party that a token identifies as its current holder.
+      For a delegated token, this is the outermost actor; a top-level
+      cnf claim, when present, binds the token to the presenter's key or
+      certificate.  The requester of a Token Exchange, the party making
+      the request, can differ from the presenter of its subject_token;
+      presenter rebind (Presenter Transition Model (Section 6.1)) makes
+      the new actor the presenter of the issued token.
 
    Local Policy:  Rules or decisions, not defined by this document, that
       an AS, RS, or organization applies, such as delegation approval,
@@ -384,7 +405,7 @@ Table of Contents
      |                    | binding                                  |
      +--------------------+------------------------------------------+
 
-                                  Table 1
+                                  Table 2
 
    Inner actors have the trust properties described in Carry Prior-Actor
    Context (Section 3.6.3).
@@ -424,7 +445,7 @@ Table of Contents
       |                | Transaction Token                         |
       +----------------+-------------------------------------------+
 
-                                 Table 2
+                                 Table 3
 
    Subject to endpoint policy and the underlying grant mechanism,
    implementations MAY transform supported inputs into outputs for which
@@ -673,9 +694,10 @@ Table of Contents
    1.  If a new actor is established, create an outermost actor object
        (Section 3.4) and nest any validated inbound chain beneath it.
        If the new actor has the same (act.iss, act.sub) as the inbound
-       outermost actor, the AS MAY preserve the chain to avoid a
-       duplicate.  Local policy governs repeated identifiers deeper in
-       the chain.
+       outermost actor, the AS MUST instead copy the inbound chain
+       unchanged, as in rule 2; the request remains a rebind for its
+       binding (Presenter Transition Model (Section 6.1)).  Local policy
+       governs repeated identifiers deeper in the chain.
 
    2.  Otherwise, if a validated inbound chain exists, copy it into the
        issued token.
@@ -763,7 +785,9 @@ Table of Contents
    claim: when DPoP ([RFC9449]) is used, the top-level cnf.jkt MUST
    identify that party's key; when mTLS ([RFC8705]) is used, the top-
    level cnf.x5t#S256 MUST identify that party's certificate.  The AS or
-   RS MUST validate proof of possession against the top-level cnf.
+   RS MUST validate proof of possession against the top-level cnf,
+   except that presenter rebind supersedes the binding of a Token
+   Exchange subject_token (Presenter Transition Model (Section 6.1)).
 
    A confirmation member such as act.cnf is permitted as extension data
    under Actor Object Structure (Section 3.4) and has no proof-of-
@@ -1100,39 +1124,43 @@ Table of Contents
    validated actor_token nor the may_act (Section 6.5) path establishes
    a new presenter.
 
-   +==============+=========================+==========================+
-   | Transition   | Required evidence       | Output presenter and     |
-   |              |                         | binding                  |
-   +==============+=========================+==========================+
-   | Presenter    | Requester MUST prove    | Same presenter;          |
-   | continuation | possession of the       | inbound chain copied.    |
-   | (bound)      | subject token's top-    | A sender-constrained     |
-   |              | level binding.          | output retains the       |
-   |              |                         | binding.                 |
-   +--------------+-------------------------+--------------------------+
-   | Presenter    | Subject token has no    | Same presenter;          |
-   | continuation | top-level binding, and  | inbound chain copied;    |
-   | (bearer)     | the authenticated       | bearer output.           |
-   |              | requester matches the   |                          |
-   |              | outermost (act.iss,     |                          |
-   |              | act.sub) under          |                          |
-   |              | Identifier              |                          |
-   |              | Reconciliation          |                          |
-   |              | (Section 2).            |                          |
-   +--------------+-------------------------+--------------------------+
-   | Presenter    | A validated direct      | New presenter as the     |
-   | rebind       | actor credential        | new outermost actor      |
-   |              | (Section 6.4) names the | over any inbound         |
-   |              | new presenter in its    | chain.  For a sender-    |
-   |              | top-level sub, or the   | constrained output,      |
-   |              | authenticated client    | the issuer MUST verify   |
-   |              | qualifies under may_act | the new presenter's      |
-   |              | (Section 6.5) at an AS  | proof and bind the       |
-   |              | other than a TTS.       | output to that key or    |
-   |              |                         | certificate.             |
-   +--------------+-------------------------+--------------------------+
+    +==============+====================+=============================+
+    | Transition   | Required evidence  | Output presenter and        |
+    |              |                    | binding                     |
+    +==============+====================+=============================+
+    | Presenter    | Requester MUST     | Same presenter; inbound     |
+    | continuation | prove possession   | chain copied.  A sender-    |
+    | (bound)      | of the subject     | constrained output retains  |
+    |              | token's top-level  | the binding.                |
+    |              | binding.           |                             |
+    +--------------+--------------------+-----------------------------+
+    | Presenter    | Subject token has  | Same presenter; inbound     |
+    | continuation | no top-level       | chain copied; bearer        |
+    | (bearer)     | binding, and the   | output.                     |
+    |              | authenticated      |                             |
+    |              | requester matches  |                             |
+    |              | the outermost      |                             |
+    |              | (act.iss, act.sub) |                             |
+    |              | under Identifier   |                             |
+    |              | Reconciliation     |                             |
+    |              | (Section 2).       |                             |
+    +--------------+--------------------+-----------------------------+
+    | Presenter    | A validated direct | New presenter as the new    |
+    | rebind       | actor credential   | outermost actor over any    |
+    |              | (Section 6.4)      | inbound chain, or the       |
+    |              | names the new      | inbound chain unchanged     |
+    |              | presenter in its   | when the new actor is       |
+    |              | top-level sub, or  | already the outermost actor |
+    |              | the authenticated  | (rule 1 of Construct the    |
+    |              | client qualifies   | Chain (Section 3.6.4)).     |
+    |              | under may_act      | For a sender-constrained    |
+    |              | (Section 6.5) at   | output, the issuer MUST     |
+    |              | an AS other than a | verify the new presenter's  |
+    |              | TTS.               | proof and bind the output   |
+    |              |                    | to that key or certificate. |
+    +--------------+--------------------+-----------------------------+
 
-                                  Table 3
+                                  Table 4
 
    On rebind the issuer MUST validate any proof required by the actor
    credential or deployment, including for a bearer output.  The subject
@@ -1174,8 +1202,8 @@ Table of Contents
    When a Token Exchange request ([RFC8693]) presents a subject_token or
    actor_token of a type defined in this section, the AS MUST apply the
    following steps, using the input type's row in the tables below and
-   the rules in its subsection.  Steps 1 through 4 apply to each input;
-   steps 5 and 6 apply to the issued token.
+   the rules in its subsection.  Steps 1 through 3 apply to each input;
+   steps 4 through 6 apply to the request.
 
    1.  The AS MUST validate the input per the specification in its table
        row.  If validation fails, the AS MUST reject the request with
@@ -1188,10 +1216,7 @@ Table of Contents
        that row states.  If not, the AS MUST reject the request with
        invalid_request.
 
-   3.  The AS MUST apply Presenter Transition Model (Section 6.1) and
-       the input type's proof requirements.
-
-   4.  The AS establishes inbound state as follows:
+   3.  The AS establishes the input's state as follows:
 
        *  From a validated JWT access token or Transaction Token
           subject_token, the AS MUST extract sub, sub_profile (if
@@ -1205,6 +1230,10 @@ Table of Contents
        *  For an actor_token, the AS MUST derive the outermost actor and
           handle any inbound chain as specified in Actor Tokens
           (Section 6.4).
+
+   4.  The AS MUST select one transition for the request under Presenter
+       Transition Model (Section 6.1) and apply the proof requirements
+       of its input types.
 
    5.  The AS can reduce scope under local policy.  The effective scope
        of the issued token MUST NOT exceed the scope ceiling, if any, in
@@ -1242,7 +1271,7 @@ Table of Contents
     |             |                        | check      | scope      |
     +-------------+------------------------+------------+------------+
 
-                                 Table 4
+                                 Table 5
 
    For actor_token inputs, each of which establishes the outermost
    actor:
@@ -1259,7 +1288,7 @@ Table of Contents
      |                      | aud relaxed   | party's identity       |
      +----------------------+---------------+------------------------+
 
-                                  Table 5
+                                  Table 6
 
 6.3.  Subject Tokens
 
@@ -1325,7 +1354,7 @@ Table of Contents
    with invalid_request if validation fails or the issuer cannot be
    established.
 
-   In step 3, the AS uses the presenter-proof mechanism defined by the
+   In step 4, the AS uses the presenter-proof mechanism defined by the
    deployment profile; [I-D.ietf-oauth-transaction-tokens] defines none.
 
    The req_wl claim identifies the workload that requested the
@@ -1832,11 +1861,12 @@ Table of Contents
       sub for the requested transaction.  If the required relationship
       is absent, prohibited, or cannot be confirmed, the TTS MUST reject
       the request with actor_unauthorized.  The TTS adds the new
-      outermost actor and nests any inbound chain beneath it (Construct
-      the Chain (Section 3.6.4)).  A deployment MAY use may_act as an
-      authorization hint, but it MUST NOT replace credential validation,
-      presenter authentication, or the rules that govern whether a new
-      outermost act is created.
+      outermost actor and nests any inbound chain beneath it, or keeps
+      the chain unchanged when the new actor is already the outermost
+      actor (rule 1 of Construct the Chain (Section 3.6.4)).  A
+      deployment MAY use may_act as an authorization hint, but it MUST
+      NOT replace credential validation, presenter authentication, or
+      the rules that govern whether a new outermost act is created.
 
    The TTS MUST NOT omit prior actors and MUST carry forward any
    recognized omission marking (Omitting Prior Actors (Section 3.6.6)).
@@ -1857,6 +1887,13 @@ Table of Contents
 8.  Resource Server Processing
 
 8.1.  Validating Delegated Requests
+
+   For example, a resource that advertises actor_profile_required: true
+   can still accept an ordinary request whose token carries no act, as a
+   non-delegated request.  On a request path that requires delegated
+   access, the RS rejects that token, because it needs conforming actor
+   information (Protected Resource Metadata (Section 10.2)) and applies
+   Actor Authorization (Section 8.2) to the request.
 
    When an RS evaluates a JWT access token or Transaction Token as
    delegated, it MUST:
@@ -1921,7 +1958,7 @@ Table of Contents
     |                                 | policy denial.                |
     +---------------------------------+-------------------------------+
 
-                                  Table 6
+                                  Table 7
 
    The RS MUST use the Bearer challenge for bearer and mTLS-bound tokens
    (Section 3.1 of [RFC6750], [RFC8705]) and DPoP for DPoP-bound tokens
@@ -2123,7 +2160,7 @@ Table of Contents
     |                    | (Common Issuance Rules (Section 6.6))     |
     +--------------------+-------------------------------------------+
 
-                                 Table 7
+                                 Table 8
 
    TTS failures to preserve the subject or to trust inbound actor
    identifiers use the invalid_request error code.
@@ -2171,7 +2208,7 @@ Table of Contents
    |                                      |             |requests      |
    +--------------------------------------+-------------+--------------+
 
-                                  Table 8
+                                  Table 9
 
    [I-D.ietf-oauth-identity-assertion-authz-grant] defines
    authorization_grant_profiles_supported, and
@@ -3099,23 +3136,6 @@ Appendix A.  Cross-Domain Delegation Example
    authenticates the tool, authorizes it to act for Alice, and adds it
    as the outermost actor.
 
-   +=============+=========+=================+=============+===========+
-   | Token       | Subject | Outermost actor | Prior       | Presenter |
-   |             |         |                 | actor       | key       |
-   +=============+=========+=================+=============+===========+
-   | ID Token    | Alice   |                 |             |           |
-   +-------------+---------+-----------------+-------------+-----------+
-   | ID-JAG      | Alice   | Assistant       |             | AgentJKT  |
-   +-------------+---------+-----------------+-------------+-----------+
-   | Access      | Alice   | Assistant       |             | AgentJKT  |
-   | token       |         |                 |             |           |
-   +-------------+---------+-----------------+-------------+-----------+
-   | Transaction | Alice   | Booking tool    | Assistant   | ToolJKT   |
-   | Token       |         |                 |             |           |
-   +-------------+---------+-----------------+-------------+-----------+
-
-                                  Table 9
-
    At the TTS, the booking tool presents its WIMSE workload identity
    credential ([I-D.ietf-wimse-workload-creds]) as actor_token with a
    Workload Proof Token ([I-D.ietf-wimse-wpt]).  The examples directory
@@ -3159,8 +3179,10 @@ Document History
       names invalid_target, inferring delegation authority solely from a
       client initiating a JWT assertion grant request is now prohibited,
       a JWT access token subject_token needs an aud the requester is
-      locally authorized to use, and policy rejection of sub_profile
-      values applies only to the subject and outermost actor.
+      locally authorized to use, policy rejection of sub_profile values
+      applies only to the subject and outermost actor, a rebind that
+      names the current outermost actor keeps the chain unchanged, and
+      the Illustrative Use Case shows the token sequence as a table.
 
    -01
 
