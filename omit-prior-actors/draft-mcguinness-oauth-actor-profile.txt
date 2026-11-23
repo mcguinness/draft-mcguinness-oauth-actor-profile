@@ -835,38 +835,40 @@ Table of Contents
 3.6.3.  Omitting Prior Actors
 
    By default, an issuer that preserves or extends a delegation chain
-   includes the complete chain or rejects the request.  An issuer MAY
-   omit inner actor objects when a profile defines how to omit them and
-   how to mark the omission in tokens and introspection responses.  An
-   issuer that omits actors, or that preserves, extends, or refreshes a
-   chain it knows to be incomplete, MUST reject the request unless the
+   includes all of it or rejects the request.  An issuer MAY omit inner
+   actor objects under a profile that defines how to omit them and how
+   to mark the omission in tokens and introspection responses.  An
+   issuer that omits actors:
+
+   *  MUST first apply Delegation Chain Validation and Construction
+      (Section 3.6), including Enforce Depth Limit (Section 3.6.1.4);
+
+   *  MUST NOT omit the outermost actor object or the act claim;
+
+   *  MUST omit only whole actor objects and keep the remaining ones in
+      order, with their members other than the nested act unchanged; and
+
+   *  MUST include the profile's marking in the issued token.
+
+   An issuer that omits actors, or that preserves, extends, or refreshes
+   a chain it knows to be incomplete, MUST reject the request unless the
    profile or a trust agreement binds every party that trusts the issuer
-   to assert delegation chains to recognize the profile's marking and
-   carry it into tokens derived from the chain.  A party that implements
-   only this document cannot recognize that marking.  An issuer that
-   omits actors MUST NOT omit the outermost actor object or the act
-   claim, and MUST include the profile's marking in the issued token.
-   It omits whole actor objects and keeps the remaining actor objects in
-   order, with their members other than the nested act unchanged.  A
-   recipient that detects an omission through the profile's marking MUST
-   NOT treat the chain as complete delegation history and MUST reject
-   the token unless its trust agreement or an applicable profile permits
-   incomplete chains.
+   to assert delegation chains to recognize the marking and carry it
+   into derived tokens.  A party that implements only this document
+   cannot recognize the marking.  A TTS and an AS processing the
+   refresh_token grant MUST NOT omit actors and carry any marking they
+   recognize (Transaction Token Output Rules (Section 7.4), Delegated
+   Token Issuance (Section 5.2)); Token Exchange with a refresh token as
+   subject_token follows this section like any other Token Exchange.
 
-   The issuer applies Delegation Chain Validation and Construction
-   (Section 3.6), including Enforce Depth Limit (Section 3.6.1.4), to
-   the chain as it stands before its own omission.  A party that detects
-   the omission knows only that the delegation depth exceeds the visible
-   depth, unless the profile conveys how many actors are hidden from
-   that party.  In a chain with omitted actors, the innermost visible
-   actor need not be the first actor the subject authorized, and
-   adjacent visible actors need not have delegated directly to each
-   other.
-
-   A TTS and an AS processing the refresh_token grant MUST NOT omit
-   actors.  They carry any marking they recognize with the chain
-   (Transaction Token Output Rules (Section 7.4), Delegated Token
-   Issuance (Section 5.2)).
+   A recipient that detects an omission through the profile's marking
+   MUST NOT treat the chain as complete delegation history and MUST
+   reject the token unless its trust agreement or an applicable profile
+   permits incomplete chains.  It knows only that the delegation depth
+   exceeds the visible depth, unless the profile conveys how many actors
+   are hidden from it.  The innermost visible actor need not be the
+   first actor the subject authorized, and adjacent visible actors need
+   not have delegated directly to each other.
 
 3.7.  Sender Constraint and Proof-of-Possession Validation
 
@@ -1116,9 +1118,10 @@ Table of Contents
        nested act object or an omission marking the AS recognizes
        (Omitting Prior Actors (Section 3.6.3)) shows that prior actors
        were omitted; either indicates that the asserted actor is itself
-       a delegatee.  If the AS does not accept pre-chained assertions,
-       it MUST reject the request.  When a nested act object is present,
-       the AS MUST handle the inner chain as follows:
+       a delegatee.  If the assertion is pre-chained and the AS does not
+       accept pre-chained assertions, the AS MUST reject the request.
+       When a nested act object is present, the AS MUST handle the inner
+       chain as follows:
 
        *  *Propagation decision*: Except as Omitting Prior Actors
           (Section 3.6.3) permits, the AS MUST propagate the inner chain
@@ -1702,8 +1705,8 @@ Table of Contents
    request is delegated, an identity-only input cannot use presenter
    continuation, so the request requires presenter rebind (Presenter
    Transition Model (Section 6.1)), and the AS MUST NOT issue a token
-   without that chain and any marking recorded with it (Omitting Prior
-   Actors (Section 3.6.3)).
+   without that chain and any marking recorded with it, except as
+   Omitting Prior Actors (Section 3.6.3) permits.
 
 6.4.  Actor Tokens
 
@@ -3513,10 +3516,10 @@ Table of Contents
 
    *  Description: Boolean indicating whether the act delegation chain
       in the introspection response is complete.  When false, one or
-      more inner act chain entries have been omitted, either from the
-      response for privacy reasons or by the token's issuer.  When
-      absent, the chain SHOULD be treated as complete unless local
-      policy or deployment context indicates otherwise.
+      more inner act chain entries have been omitted during token
+      issuance at this or an earlier hop, or during introspection
+      filtering.  When absent, the chain SHOULD be treated as complete
+      unless local policy or deployment context indicates otherwise.
 
    *  Change Controller: IETF
 
