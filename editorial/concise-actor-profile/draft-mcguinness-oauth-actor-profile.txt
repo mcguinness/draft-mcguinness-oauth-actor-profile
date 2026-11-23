@@ -1154,12 +1154,12 @@ Table of Contents
    workload, or client as actor SHOULD use one of the direct credentials
    in Actor Tokens (Section 6.4).
 
-   The AS MUST reject a delegated request that meets neither transition
-   with invalid_request.  If a request supplies an actor_token or
-   carries inbound delegation, the AS MUST reject invalid actor
-   information with invalid_request and a prohibited or unconfirmed
-   required delegation relationship with actor_unauthorized.  It MUST
-   NOT issue a non-delegated token on failure.  Error Responses
+   The AS or TTS MUST reject a delegated request that meets no
+   transition with invalid_request.  If a request supplies an
+   actor_token or carries inbound delegation, the AS MUST reject invalid
+   actor information with invalid_request and a prohibited or
+   unconfirmed required delegation relationship with actor_unauthorized.
+   It MUST NOT issue a non-delegated token on failure.  Error Responses
    (Section 9) specifies proof and client-authentication error
    precedence.
 
@@ -1647,12 +1647,14 @@ Table of Contents
    *  Set top-level sub_profile according to Actor Object Structure
       (Section 3.4).  The issuer MUST validate inbound sub_profile
       values, at the top level and in inherited actor objects, against
-      the syntax requirements of this document, the applicable registry
-      or deployment-specific allowed set where such checks are part of
-      local policy, and the local policy applicable to the token it is
-      issuing.  It MUST preserve unrecognized but syntactically valid
-      values that it carries forward and MUST reject values that are
-      malformed or disallowed by local policy.
+      the syntax requirements of this document and MUST reject malformed
+      values.  It MUST also reject a value at the top level or in the
+      outermost actor that the applicable registry, a deployment-
+      specific allowed set, or the local policy applicable to the token
+      it is issuing disallows; inner actors' values are prior-actor
+      context (Delegation Chain Validation and Construction
+      (Section 3.6)).  It MUST preserve unrecognized but syntactically
+      valid values that it carries forward.
 
    *  For a sender-constrained delegated Token Exchange output, set top-
       level cnf according to Presenter Transition Model (Section 6.1).
@@ -2075,54 +2077,53 @@ Table of Contents
    (Section 3.1 of [RFC7523]).  This distinction also applies to missing
    required claims, invalid actor structure, excessive inbound chain
    depth, and a failed identifier reconciliation that processing
-   requires.
+   requires, except the may_act (Section 6.5) match.
 
    Client-authentication and proof-mechanism errors take precedence over
-   these generic input-validation errors.  Failed client authentication
-   uses the invalid_client error code per [RFC6749] or [RFC7523].  A
-   supplied invalid DPoP proof uses the invalid_dpop_proof error code; a
-   nonce challenge uses the use_dpop_nonce error code, per Sections 5
-   and 8 of [RFC9449].  A missing required grant proof is an input-
-   validation failure and uses the grant-type-specific error above.
-   Actor-authorization denials use the actor_unauthorized error code, an
+   these generic input-validation errors, which in turn take precedence
+   over invalid_target.  Failed client authentication uses the
+   invalid_client error code per [RFC6749] or [RFC7523].  A supplied
+   invalid DPoP proof uses the invalid_dpop_proof error code; a nonce
+   challenge uses the use_dpop_nonce error code, per Sections 5 and 8 of
+   [RFC9449].  A missing required grant proof is an input-validation
+   failure and uses the grant-type-specific error above.  Actor-
+   authorization denials use the actor_unauthorized error code, an
    extension error permitted by Section 2.2.2 of [RFC8693].
 
    The following error codes apply to both AS and TTS endpoints:
 
-   +====================+==============================================+
-   | Error              | Condition                                    |
-   +====================+==============================================+
-   | invalid_request    | Malformed request, missing required          |
-   |                    | request parameter, or an actor               |
-   |                    | addition that would exceed the depth         |
-   |                    | limit; on a Token Exchange request,          |
-   |                    | also input-validation failures               |
-   +--------------------+----------------------------------------------+
-   | invalid_grant      | On a JWT bearer grant request: input-        |
-   |                    | validation failures, including an            |
-   |                    | invalid assertion, untrusted issuer,         |
-   |                    | or failed grant binding                      |
-   +--------------------+----------------------------------------------+
-   | invalid_scope      | No effective scope remains for reasons       |
-   |                    | other than categorical actor denial,         |
-   |                    | or a Transaction Token's scope               |
-   |                    | authority cannot be determined               |
-   +--------------------+----------------------------------------------+
-   | actor_unauthorized | Actor policy prohibits the request,          |
-   |                    | rejects the actor type, or cannot            |
-   |                    | confirm the required delegation              |
-   |                    | relationship                                 |
-   +--------------------+----------------------------------------------+
-   | invalid_target     | On a Token Exchange request, the AS          |
-   |                    | cannot issue for every requested             |
-   |                    | audience and resource (Common Issuance       |
-   |                    | Rules (Section 6.6)), or the AS cannot       |
-   |                    | satisfy a resource's delegated-token         |
-   |                    | requirement (Protected Resource              |
-   |                    | Metadata (Section 10.2))                     |
-   +--------------------+----------------------------------------------+
+    +====================+===========================================+
+    | Error              | Condition                                 |
+    +====================+===========================================+
+    | invalid_request    | Malformed request, missing required       |
+    |                    | request parameter, or an actor addition   |
+    |                    | that would exceed the depth limit; on a   |
+    |                    | Token Exchange request, also input-       |
+    |                    | validation failures                       |
+    +--------------------+-------------------------------------------+
+    | invalid_grant      | On a JWT bearer grant request: input-     |
+    |                    | validation failures, including an invalid |
+    |                    | assertion, untrusted issuer, or failed    |
+    |                    | grant binding                             |
+    +--------------------+-------------------------------------------+
+    | invalid_scope      | No effective scope remains for reasons    |
+    |                    | other than categorical actor denial, or a |
+    |                    | Transaction Token's scope authority       |
+    |                    | cannot be determined                      |
+    +--------------------+-------------------------------------------+
+    | actor_unauthorized | Actor policy prohibits the request,       |
+    |                    | rejects the actor type, or cannot confirm |
+    |                    | the required delegation relationship      |
+    +--------------------+-------------------------------------------+
+    | invalid_target     | The AS cannot satisfy a resource's        |
+    |                    | delegated-token requirement (Protected    |
+    |                    | Resource Metadata (Section 10.2)), or, on |
+    |                    | a Token Exchange request, cannot issue    |
+    |                    | for every requested audience and resource |
+    |                    | (Common Issuance Rules (Section 6.6))     |
+    +--------------------+-------------------------------------------+
 
-                                  Table 7
+                                 Table 7
 
    TTS failures to preserve the subject or to trust inbound actor
    identifiers use the invalid_request error code.
@@ -2260,7 +2261,7 @@ Table of Contents
    An AS or TTS that publishes actor_profile_token_exchange and can
    issue delegated Transaction Tokens through Token Exchange under this
    profile MUST include urn:ietf:params:oauth:token-type:txn_token in
-   requested_token_types_supported.
+   actor_profile_token_exchange.requested_token_types_supported.
 
    The following is an example of an AS metadata fragment:
 
@@ -3115,11 +3116,13 @@ Appendix A.  Cross-Domain Delegation Example
 
                                   Table 9
 
-   The examples directory of the draft's repository
-   (https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile
-   (https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile))
-   includes the full cross-domain requests and tokens and a service-to-
-   service payroll example.
+   At the TTS, the booking tool presents its WIMSE workload identity
+   credential ([I-D.ietf-wimse-workload-creds]) as actor_token with a
+   Workload Proof Token ([I-D.ietf-wimse-wpt]).  The examples directory
+   of the draft's repository (https://github.com/mcguinness/draft-
+   mcguinness-oauth-actor-profile (https://github.com/mcguinness/draft-
+   mcguinness-oauth-actor-profile)) includes the full cross-domain
+   requests and tokens and a service-to-service payroll example.
 
 Acknowledgments
 
@@ -3131,12 +3134,6 @@ Document History
    [[ To be removed from the final specification ]]
 
    -02
-
-   *  Specified invalid_target when the AS cannot satisfy a resource's
-      delegated-token requirement.  Prohibited inferring delegation
-      authority solely from initiation of a JWT assertion grant request.
-      Required a locally authorized input audience for JWT access tokens
-      used as subject tokens.
 
    *  Added Omitting Prior Actors: by default an issuer keeps the
       complete chain or rejects the request; a profile can define
@@ -3154,9 +3151,16 @@ Document History
       the full worked examples moved to the repository.  JWT assertion
       grant actor checks now apply the chain algorithm, processing
       requirements in the Considerations sections moved to the sections
-      they govern, two untestable Security Considerations MUSTs became
-      descriptive, and a self-issued grant, an untrusted grant issuer,
-      and an unaccepted pre-chained grant now name invalid_grant.
+      they govern, an untestable cross-domain requirement was removed
+      and another became descriptive, the recommendation to advertise
+      introspection_endpoint was removed, a self-issued grant, an
+      untrusted grant issuer, and an unaccepted pre-chained grant now
+      name invalid_grant, an unmet resource delegated-token requirement
+      names invalid_target, inferring delegation authority solely from a
+      client initiating a JWT assertion grant request is now prohibited,
+      a JWT access token subject_token needs an aud the requester is
+      locally authorized to use, and policy rejection of sub_profile
+      values applies only to the subject and outermost actor.
 
    -01
 
