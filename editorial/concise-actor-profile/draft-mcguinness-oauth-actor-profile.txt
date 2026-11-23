@@ -82,9 +82,7 @@ Table of Contents
      3.1.  Applicability
      3.2.  Profile Invariants
      3.3.  Profile Scope
-       3.3.1.  Representation and Policy
-       3.3.2.  Token Format Scope
-       3.3.3.  Supported Token Types and Request Semantics
+       3.3.1.  Supported Token Types and Request Semantics
      3.4.  Actor Object Structure
      3.5.  Delegation Chains
      3.6.  Delegation Chain Validation and Construction
@@ -133,8 +131,7 @@ Table of Contents
    10. Metadata and Discovery
      10.1.  Authorization Server Metadata
      10.2.  Protected Resource Metadata
-     10.3.  Transaction Token Capability Signaling
-     10.4.  Capability Signaling Usage
+     10.3.  Capability Signaling Usage
    11. Companion Profiles and Extension Points
    12. Deployment Considerations
      12.1.  Migration and Adoption
@@ -394,38 +391,22 @@ Table of Contents
 
    When (act.iss, act.sub) identifies the same entity as the token's
    (iss, sub), consumers MUST NOT infer a delegation relationship.
-   Comparing act.sub with sub alone is insufficient; the identifier
-   contexts are part of the comparison.
 
 3.3.  Profile Scope
 
-3.3.1.  Representation and Policy
+   Delegation approval, trust frameworks, identifier mappings, and
+   acceptance of incomplete chains depend on deployment policy.  Cross-
+   domain deployments require agreements on permitted delegation
+   relationships and namespaces.  Actor Authorization (Section 8.2)
+   defines when an RS enforces actor authorization.
 
-   This profile standardizes actor representation, propagation,
-   validation, and discovery.  Delegation approval, trust frameworks,
-   identifier mappings, and whether a recipient accepts an incomplete
-   delegation chain remain deployment-specific.  Cross-domain
-   deployments require agreements that cover permitted delegation
-   relationships and identifier namespaces.
+   Only the JWT outputs listed below conform to this profile.  Token
+   Introspection (Section 8.3) optionally supports equivalent claims for
+   delegated opaque access tokens.  Opaque access tokens as Token
+   Exchange inputs are outside the interoperable scope.  An AS MAY
+   translate their introspection results under local rules.
 
-   Actor Authorization (Section 8.2) describes when an RS enforces
-   authorization of the (sub, outermost act.sub) pair; this document
-   does not require it on every request.
-
-3.3.2.  Token Format Scope
-
-   Conforming outputs are JWT assertion grants, JWT access tokens, and
-   Transaction Tokens.  Token Introspection (Section 8.3) defines
-   optional equivalent response members for delegated opaque access
-   tokens; this compatibility path does not make the opaque token itself
-   conformant.
-
-   Opaque access tokens used as Token Exchange inputs are outside the
-   interoperable scope of this document.  An AS MAY translate their
-   introspection results into local inputs under deployment-specific
-   rules.
-
-3.3.3.  Supported Token Types and Request Semantics
+3.3.1.  Supported Token Types and Request Semantics
 
       +================+===========================================+
       | Role           | Supported credentials                     |
@@ -600,27 +581,6 @@ Table of Contents
    act), which delegated to the booking tool (outermost act).  The
    booking tool is the current presenter.
 
-   Delegation depth is the number of act objects in the chain, counting
-   from the outermost.  Depth is counted on the resulting chain,
-   including any new outermost act.
-
-   Depth 1 is the minimum interoperable depth.  Implementations for
-   cross-domain multi-hop use SHOULD support at least depth 4.  Same-
-   domain deployments can use a shallower maximum when it is sufficient
-   for their architecture.
-
-   Implementations MUST define and enforce a local maximum delegation
-   depth.  Implementations that receive a token exceeding their
-   configured local maximum MUST reject it as an invalid input under the
-   applicable token-processing rules; AS and TTS errors follow Error
-   Responses (Section 9).  When a request would add an actor beyond that
-   limit, the AS MUST reject the request with the invalid_request error
-   code; it MUST NOT silently truncate the chain.  The local maximum
-   applies to the visible chain.  An implementation that also limits
-   total delegation depth MUST reject an incomplete chain (Omitting
-   Prior Actors (Section 3.6.6)) unless it can establish that the total
-   depth, counting every actor hidden from it, is within that limit.
-
    A token represents delegation when a distinct actor is authorized to
    act for the subject.  Such a token MUST carry a conforming actor
    object (Section 3.4).  Otherwise the issuer MUST omit act.  A
@@ -725,18 +685,26 @@ Table of Contents
    In both the first and second cases, the AS MUST preserve every
    inherited actor and field unchanged, adding, removing, or rewriting
    no member, except as Omitting Prior Actors (Section 3.6.6) permits.
-   If it cannot produce the required chain, including within the depth
-   limit (Section 3.6.5), it MUST reject the request under Error
-   Responses (Section 9).
+   If it cannot produce the required chain, it MUST reject the request
+   under Error Responses (Section 9).
 
 3.6.5.  Enforce Depth Limit
 
-   Compute the depth of the resulting chain, including any new outermost
-   actor added by Construct the Chain (Section 3.6.4).  If that depth
-   exceeds the locally configured maximum (Delegation Chains
-   (Section 3.5)), reject under Error Responses (Section 9),
-   distinguishing an excessive inbound chain from an extension that
-   would exceed the limit.
+   Implementations MUST set and enforce a local maximum on the number of
+   visible act objects.  Depth 1 is the interoperable minimum.  Cross-
+   domain multi-hop implementations SHOULD support depth 4 or greater.
+   Same-domain deployments can use a shallower limit when sufficient.
+
+   Recipients MUST reject an over-limit inbound token as invalid under
+   the applicable token-processing rules.  If adding the new outermost
+   actor would exceed the limit, the AS MUST reject with invalid_request
+   and MUST NOT silently truncate the chain (Error Responses
+   (Section 9)).
+
+   An implementation that also limits total depth MUST reject an
+   incomplete chain unless it can establish that the total, including
+   every hidden actor, is within its limit (Omitting Prior Actors
+   (Section 3.6.6)).
 
 3.6.6.  Omitting Prior Actors
 
@@ -1050,17 +1018,13 @@ Table of Contents
       constraining mechanism such as DPoP or mTLS is used.
 
    client_id (REQUIRED):  Identifies the OAuth client that requested the
-      token, per [RFC9068].  It does not substitute for act; see Client
-      Identity and Delegation (Section 13.7).
+      token, per [RFC9068].
 
    azp (OPTIONAL):  An additional client identifier used by some
-      deployments.  It does not substitute for act; see Client Identity
-      and Delegation (Section 13.7).
+      deployments.
 
-   If an issuer uses azp and act.sub to identify the same party, Client
-   Identity and Delegation (Section 13.7) defines their reconciliation,
-   along with the other common rules; Migrating from Implicit to
-   Explicit Delegation (Section 12.1.2) describes rollout.
+   For client identifier reconciliation, see Client Identity and
+   Delegation (Section 13.7).
 
    The following is an example of a JWT access token with actor-profile
    claims:
@@ -1355,15 +1319,11 @@ Table of Contents
    access token or a JWT assertion grant, and for a Transaction Token
    output, Transaction Token Output Rules (Section 7.2) apply instead.
 
-   Validation per [I-D.ietf-oauth-transaction-tokens] covers the
-   signature, aud, exp, and issuer identity:
-
-   *  The AS MUST identify and validate the issuer as Transaction Tokens
-      (Section 7.1) specifies for iss.
-
-   *  If validation fails, iss is missing from a token that carries act,
-      or the issuer cannot be established, the AS MUST reject the
-      request with invalid_request.
+   The AS MUST validate the signature, aud, and exp under
+   [I-D.ietf-oauth-transaction-tokens] and identify and validate the
+   issuer under Transaction Tokens (Section 7.1).  The AS MUST reject
+   with invalid_request if validation fails or the issuer cannot be
+   established.
 
    In step 3, the AS uses the presenter-proof mechanism defined by the
    deployment profile; [I-D.ietf-oauth-transaction-tokens] defines none.
@@ -1766,23 +1726,16 @@ Table of Contents
 
 7.1.  Transaction Tokens
 
-   Transaction Tokens [I-D.ietf-oauth-transaction-tokens] are short-
-   lived JWTs that capture the workload identity and request context for
-   a series of related service calls within a single business
-   transaction.  A TTS, which is a specialized authorization server,
-   issues them.
+   A TTS is a specialized authorization server that issues short-lived
+   Transaction Tokens under [I-D.ietf-oauth-transaction-tokens].  This
+   profile applies the following claim rules.
 
-   Transaction Token claims are defined in
-   [I-D.ietf-oauth-transaction-tokens].  This profile modifies or adds
-   the following claims:
-
-   iss (OPTIONAL in [I-D.ietf-oauth-transaction-tokens]; REQUIRED by
-   this profile when the token carries act):  Identifies the Transaction
-      Token issuer.  It MUST be present when the token carries act.  It
-      MAY be omitted only when the token carries no act and all
-      recipients know the issuer out of band.  In that case, recipients
-      MUST identify the issuer using [I-D.ietf-oauth-transaction-tokens]
-      and local configuration.
+   iss:  Identifies the TTS.  A token carrying act MUST carry iss, and
+      recipients MUST reject it if iss is missing.  A TTS MAY omit iss
+      only if the token carries no act and all recipients know the
+      issuer out of band.  In that case, recipients MUST identify the
+      issuer using the Transaction Token specification and local
+      configuration.
 
    req_wl:  This claim provides TTS-level workload context and MUST NOT
       be treated as a substitute for act.sub; see Actor Claim in
@@ -1797,41 +1750,20 @@ Table of Contents
 
 7.1.1.  Actor Claim in Transaction Tokens
 
-   Under this profile, a Transaction Token represents delegation as
-   Delegation Chains (Section 3.5) defines, that is, when an actor_token
-   or an inbound act chain establishes that the workload acts for sub.
-   When no such condition holds, including when a workload acts under
-   its own grant without any delegation basis, the token omits act.  The
-   TTS MUST NOT infer delegation solely because sub and req_wl differ.
+   The TTS MUST NOT infer delegation solely because sub and req_wl
+   differ.  The subject is the original initiator.  The outermost actor
+   identifies the immediate acting party for authorization.  Inner
+   actors identify prior presenters, each classified by its own
+   act.sub_profile when present.
 
-   The req_wl claim identifies the workload that requested the token
-   from the TTS.  The act.sub claim identifies the immediate acting
-   party in the subject identifier namespace used by this profile.  The
-   outermost act.sub is the authoritative actor identifier for
-   authorization decisions under this document; req_wl is supporting
-   workload context.
-
-   Claim semantics under this profile:
-
-   *  sub: identifies the original initiator.  A replacement Transaction
-      Token keeps sub unchanged (Section 13.15 of
-      [I-D.ietf-oauth-transaction-tokens]).
-
-   *  act.sub (outermost): identifies the immediate acting party.  When
-      a TTS sets both req_wl and the new outermost act.sub in a single
-      token issuance (presenter-rebind mode), it MUST ensure that they
-      identify the same entity under local policy.  In presenter-
-      continuation mode, req_wl identifies the requesting workload
-      (Section 9.2 of [I-D.ietf-oauth-transaction-tokens]), which
-      Transaction Token Output Rules (Section 7.2) requires to
-      correspond to the outermost actor.  A recipient that relies on
-      both to identify the current presenter requires them to identify
-      the same entity and therefore rejects the token when it cannot
-      reconcile them (Conventions and Definitions (Section 2)).
-
-   *  Inner act objects: identify prior presenters in the delegation
-      path.  At each level, act.sub_profile classifies the entity type
-      of that presenter.
+   The req_wl claim identifies the requesting workload (Section 9.2 of
+   [I-D.ietf-oauth-transaction-tokens]).  On rebind, a TTS setting both
+   req_wl and the new outermost act.sub MUST ensure they identify the
+   same entity under local policy.  On continuation, Transaction Token
+   Output Rules (Section 7.2) requires the requester to correspond to
+   the outermost actor when present.  A recipient relying on both
+   identifiers to identify the presenter rejects the token if it cannot
+   reconcile them (Conventions and Definitions (Section 2)).
 
    The following example shows a Transaction Token after two hops:
 
@@ -1931,7 +1863,7 @@ Table of Contents
        token-specific rules below, and verify that the token issuer is
        trusted to convey the claims it carries.
 
-   2.  Reject a visible chain exceeding the depth limit (Section 3.5).
+   2.  Reject a visible chain exceeding the depth limit (Section 3.6.5).
        On a path requiring profile conformance, including through
        actor_profile_required: true, require act and require iss in
        every visible actor object.  A non-delegated token need not carry
@@ -1998,8 +1930,7 @@ Table of Contents
    The RS MUST validate a Transaction Token's signature, audience,
    temporal claims, and issuer under [I-D.ietf-oauth-transaction-tokens]
    and its deployment profile, identifying the issuer as Transaction
-   Tokens (Section 7.1) specifies for iss.  It MUST reject a token that
-   carries act without iss.
+   Tokens (Section 7.1) specifies for iss.
 
    The RS MUST validate any top-level presenter binding using the
    deployment's proof mechanism.  The reconciliation check above applies
@@ -2122,12 +2053,9 @@ Table of Contents
    indicate delegation.  Otherwise, the RS MAY treat an active response
    without act as non-delegated.
 
-   Introspection endpoints for delegated tokens SHOULD be advertised
-   using the introspection_endpoint parameter in AS metadata
-   ([RFC8414]).  When revocation is integrated, the introspection
-   response for a revoked delegated token returns "active": false per
-   Section 2.2 of [RFC7662] and MUST NOT include the act or sub_profile
-   members.
+   When revocation is integrated, the introspection response for a
+   revoked delegated token returns "active": false per Section 2.2 of
+   [RFC7662] and MUST NOT include the act or sub_profile members.
 
    Resource servers that cache introspection responses for delegated
    tokens should use short cache lifetimes consistent with revocation
@@ -2196,11 +2124,8 @@ Table of Contents
 
                                   Table 7
 
-   Missing required claims include act.sub, act.iss, the binding claim
-   of a sender-constrained JWT assertion grant, and the top-level iss
-   claim on a delegated Transaction Token.  TTS failures to preserve the
-   subject or to trust inbound actor identifiers use the invalid_request
-   error code.
+   TTS failures to preserve the subject or to trust inbound actor
+   identifiers use the invalid_request error code.
 
    The error_description parameter SHOULD be included and SHOULD
    describe which aspect of actor-profile processing failed, to the
@@ -2332,6 +2257,11 @@ Table of Contents
          -  urn:ietf:params:oauth:token-type:txn_token: Transaction
             Tokens (Transaction Tokens (Section 7.1))
 
+   An AS or TTS that publishes actor_profile_token_exchange and can
+   issue delegated Transaction Tokens through Token Exchange under this
+   profile MUST include urn:ietf:params:oauth:token-type:txn_token in
+   requested_token_types_supported.
+
    The following is an example of an AS metadata fragment:
 
    {
@@ -2417,20 +2347,7 @@ Table of Contents
      "actor_profile_required": true
    }
 
-10.3.  Transaction Token Capability Signaling
-
-   An AS or TTS advertises Transaction Token support for Token Exchange
-   under this profile through
-   actor_profile_token_exchange.requested_token_types_supported.  When
-   an AS or TTS that can issue Transaction Tokens as delegated Token
-   Exchange outputs under this profile publishes
-   actor_profile_token_exchange, it MUST list
-   urn:ietf:params:oauth:token-type:txn_token in
-   actor_profile_token_exchange.requested_token_types_supported.  This
-   document does not define a separate Transaction Token discovery
-   parameter.
-
-10.4.  Capability Signaling Usage
+10.3.  Capability Signaling Usage
 
    Clients consult the resource's Protected Resource Metadata
    ([RFC9728]) and the associated AS metadata ([RFC8414]) for the
@@ -2632,11 +2549,6 @@ Table of Contents
 
 13.  Security Considerations
 
-   This document defines no trust framework for actor identifier
-   contexts, delegation approval, or subject-identifier translation; the
-   security of those decisions depends on deployment policy and
-   agreements (Representation and Policy (Section 3.3.1)).
-
 13.1.  Delegation Chain Integrity and Trust
 
    An attacker who can inject or forge act claims can impersonate an
@@ -2714,18 +2626,12 @@ Table of Contents
 
 13.3.  Assertion Replay Prevention
 
-   An attacker who replays a delegated assertion can obtain tokens that
-   exercise the subject's authorization and can establish an
-   unauthorized delegation chain.  Step 1 of Authorization Grant
-   Processing (Section 4.2) defines replay prevention; short assertion
-   lifetimes bound how long replay records are retained.  Presenter
-   rebind supersedes a sender-constrained grant's binding (JWT Assertion
-   Grant as subject_token (Section 6.3.1)), so a party that obtains such
-   a grant but not its key can redeem it once, as a Token Exchange
-   subject_token, with any actor credential that local policy authorizes
-   to act for sub.  Actor authorization policy, mandatory single use of
-   the grant, and short grant lifetimes remain the mitigations for this
-   case.
+   On rebind, a party holding a sender-constrained assertion grant can
+   redeem it once without the original key if it presents an actor
+   credential authorized to act for sub.  JWT Assertion Grant as
+   subject_token (Section 6.3.1) applies the single-use check in
+   Authorization Grant Processing (Section 4.2).  Short lifetimes limit
+   exposure and replay-record retention.
 
 13.4.  Token Substitution
 
@@ -2755,40 +2661,25 @@ Table of Contents
 
 13.7.  Client Identity and Delegation
 
-   Client identity (client_id, azp, or authenticated client context)
-   remains an auxiliary signal under this profile, and the outermost
-   act.sub, when present, is the explicit delegated-actor signal.  The
-   following rules apply:
-
    *  When act is present, implementations MUST NOT substitute
-      client_id, azp, or other client-identity signals for it as the
-      delegated-actor signal.  A trusted local mapping can establish
-      that a client identifier and act.sub identify the same entity
-      without changing the meaning of either claim.
+      client_id, azp, or another client-identity signal for it.  A
+      trusted mapping can identify the client and actor as the same
+      entity.
 
-   *  When a single client_id registration serves multiple distinct
-      acting entities (for example, an agent orchestration platform
-      executing requests on behalf of different agent instances),
-      client_id alone does not identify the runtime actor.  Each such
-      request SHOULD carry act.sub identifying the specific acting
-      principal.
+   *  When several actors share a client registration, each request
+      SHOULD carry act.sub identifying the specific actor.
 
-   *  During token issuance, client_id and azp MUST NOT be rewritten to
-      represent delegation state that belongs in act; see Common
-      Issuance Rules (Section 6.6).
+   *  Issuers MUST NOT rewrite client_id or azp to represent delegation
+      (Common Issuance Rules (Section 6.6)).
 
-   *  When both explicit (act.sub) and implicit (client_id, azp) signals
-      are present and local policy expects them to identify the same
-      party, implementations SHOULD perform identifier reconciliation;
-      if it fails, the identifiers are treated as distinct, and an
-      operation that requires them to identify the same party is
-      rejected, as defined for Identifier Reconciliation in Conventions
-      and Definitions (Section 2).
+   *  If local policy expects the client and explicit actor identifiers
+      to identify the same party, implementations SHOULD apply
+      Identifier Reconciliation (Section 2).  That rule requires
+      rejection when equivalence is necessary and cannot be established.
 
-   *  When a protected resource or authorization path enforces explicit
-      delegation under this profile, implementations MUST NOT downgrade
-      to non-act processing solely because another token-acquisition
-      path or legacy policy input remains available.
+   *  A resource or authorization path enforcing explicit delegation
+      MUST NOT downgrade to processing without act solely because
+      another acquisition path or legacy policy input is available.
 
 13.8.  sub_profile Trust
 
@@ -2815,9 +2706,6 @@ Table of Contents
    explicit trust agreement.  If required evidence is unavailable, it
    SHOULD reject the token.
 
-   This profile provides neither portable subject-equivalence proofs nor
-   a general mechanism for correlating subjects across domains.
-
 13.10.  Presenter Binding
 
    Without top-level presenter proof of possession, any party can replay
@@ -2839,21 +2727,9 @@ Table of Contents
 
 13.11.  Delegation Depth Limits
 
-   Unbounded delegation chains increase the attack surface, complicate
-   policy evaluation, and enable denial of service through chain
-   parsing; the local maximum depth that Delegation Chains (Section 3.5)
-   requires bounds them.
-
-   After an issuer omits prior actors (Omitting Prior Actors
-   (Section 3.6.6)), a party that detects the omission knows only that
-   the delegation depth exceeds the visible depth.  For example, a
-   recipient with a maximum depth of 2 that receives one visible actor
-   cannot tell whether the chain is within its limit.  A recipient that
-   limits total delegation depth therefore rejects such a chain unless
-   it can count every actor hidden from it (Delegation Chains
-   (Section 3.5)).  A count that covers only the issuer's omission
-   understates the depth once introspection filtering removes further
-   actors.
+   The depth limit (Section 3.6.5) bounds parsing work.  A count of
+   actors omitted by the issuer can understate total depth if
+   introspection filters additional actors.
 
    Extensions that attach per-hop signed material grow token size in
    proportion to chain depth.  Deployments that combine the reference
