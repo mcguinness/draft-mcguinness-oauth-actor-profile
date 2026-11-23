@@ -339,9 +339,9 @@ Table of Contents
 
    Delegation Chain:  The sequence of actors representing how
       authorization has passed from the subject principal (sub) to the
-      first actor (innermost act) and through any intermediate parties
-      to the immediate actor (outermost act.sub).  The chain is conveyed
-      by the nested structure of the act claim.
+      first actor (innermost act in a complete chain) and through any
+      intermediate parties to the immediate actor (outermost act.sub).
+      The chain is conveyed by the nested structure of the act claim.
 
    Outermost Actor:  The act object at the top level of the delegation
       chain (the one not nested inside any other act object).  The
@@ -832,30 +832,33 @@ Table of Contents
 
    By default, an issuer that preserves or extends a delegation chain
    includes the complete chain or rejects the request.  An issuer MAY
-   omit inner actor objects when a profile defines how and that profile
-   or a trust agreement covers every recipient that relies on the chain,
-   including recipients of tokens derived from it.  A recipient that
-   implements only this document cannot detect an omission.  Such a
-   profile MUST NOT permit omitting the outermost actor object or the
-   act claim, and MUST define a marking that the recipients it covers
-   can detect.  A recipient that detects such an omission MUST NOT treat
-   the chain as complete delegation history and MUST reject the token
-   unless its trust agreement or an applicable profile permits
-   incomplete chains.
+   omit inner actor objects when a profile defines how to omit them and
+   how to mark the omission, and that profile or a trust agreement binds
+   every party that trusts the issuer to assert delegation chains to
+   recognize the profile's marking and carry it into tokens derived from
+   the chain.  A party that implements only this document cannot
+   recognize that marking.  An issuer that omits actors MUST NOT omit
+   the outermost actor object or the act claim, and MUST include the
+   profile's marking in the issued token.  It omits whole actor objects
+   and keeps the remaining actor objects in order, with their members
+   other than the nested act unchanged.  A recipient that detects an
+   omission through the profile's marking MUST NOT treat the chain as
+   complete delegation history and MUST reject the token unless its
+   trust agreement or an applicable profile permits incomplete chains.
 
    The issuer applies Delegation Chain Validation and Construction
    (Section 3.6), including Enforce Depth Limit (Section 3.6.1.4), to
-   the complete chain before omitting any actor object.  Later issuers
-   and recipients can enforce depth limits only on the visible chain
-   unless the profile conveys how many actors were omitted.  In a chain
-   with omitted actors, the innermost visible actor need not be the
-   first actor the subject authorized, and adjacent visible actors need
-   not have delegated directly to each other.
+   the chain as it stands before its own omission.  Later issuers and
+   recipients can enforce depth limits only on the visible chain unless
+   the profile conveys how many actors were omitted.  In a chain with
+   omitted actors, the innermost visible actor need not be the first
+   actor the subject authorized, and adjacent visible actors need not
+   have delegated directly to each other.
 
-   A TTS and an AS processing the refresh_token grant do not omit
-   actors; they carry the chain unchanged, with any marking the
-   applicable profile defines (Transaction Token Output Rules
-   (Section 7.4), Delegated Token Issuance (Section 5.2)).
+   A TTS and an AS processing the refresh_token grant MUST NOT omit
+   actors.  They carry any marking they recognize with the chain
+   (Transaction Token Output Rules (Section 7.4), Delegated Token
+   Issuance (Section 5.2)).
 
 3.7.  Sender Constraint and Proof-of-Possession Validation
 
@@ -1105,10 +1108,11 @@ Table of Contents
        object (indicating that the asserted actor is itself a
        delegatee), the AS MUST handle the inner chain as follows:
 
-       *  *Propagation decision*: The AS SHOULD propagate the inner
-          chain by preserving its nested structure, provided the
-          resulting chain depth does not exceed the limit in Delegation
-          Chains (Section 3.5).  If the AS does not accept pre-chained
+       *  *Propagation decision*: Except as Omitting Prior Actors
+          (Section 3.6.3) permits, the AS MUST propagate the inner chain
+          by preserving its nested structure, provided the resulting
+          chain depth does not exceed the limit in Delegation Chains
+          (Section 3.5).  If the AS does not accept pre-chained
           assertions, it MUST reject the request.
 
        *  *Prior-actor context*: For inner act objects, Carry
@@ -1196,8 +1200,9 @@ Table of Contents
        Output (Section 6.6.2).  For Transaction Tokens, see Transaction
        Token Output Rules (Section 7.4).  When the output is another JWT
        assertion grant profile, the resulting assertion MUST preserve
-       the validated actor information subject to local policy and the
-       chain-depth limit in Delegation Chains (Section 3.5).
+       the validated actor information, except as Omitting Prior Actors
+       (Section 3.6.3) permits, subject to the chain-depth limit in
+       Delegation Chains (Section 3.5).
 
 5.  JWT Access Tokens
 
@@ -1686,7 +1691,8 @@ Table of Contents
    request is delegated, an identity-only input cannot use presenter
    continuation, so the request requires presenter rebind (Presenter
    Transition Model (Section 6.1)), and the AS MUST NOT issue a token
-   without that chain.
+   without that chain and any marking recorded with it (Omitting Prior
+   Actors (Section 3.6.3)).
 
 6.4.  Actor Tokens
 
@@ -2420,7 +2426,9 @@ Table of Contents
        ([RFC8705]) tokens, or DPoP per Section 7.1 of [RFC9449] for
        DPoP-bound tokens.
 
-       *  If signature, iss, aud, temporal, or depth validation fails:
+       *  If signature, iss, aud, temporal, or depth validation fails,
+          or the chain is incomplete and the RS does not accept
+          incomplete chains (Omitting Prior Actors (Section 3.6.3)):
           HTTP 401 with error="invalid_token".
 
        *  If identifier reconciliation that the authorization decision
@@ -2544,7 +2552,7 @@ Table of Contents
       indicates otherwise.
 
    The AS MUST return actor claims from the token's authorization
-   context, including the complete nested chain, except for the
+   context, including the nested chain as issued, except for the
    following privacy-filtering allowance.
 
    If local privacy policy requires omitting inner actors, the AS MAY
@@ -2935,7 +2943,8 @@ Table of Contents
 
    *  if it defines data that aligns to the visible act chain, MUST
       specify the alignment rules, the behavior when coverage is
-      partial, and the behavior when introspection or privacy filtering
+      partial, and the behavior when introspection or privacy filtering,
+      or omission under Omitting Prior Actors (Section 3.6.3),
       suppresses part of the visible chain.
 
    A companion profile can define authorization based on independently
@@ -3316,6 +3325,13 @@ Table of Contents
    parsing; the local maximum depth that Delegation Chains (Section 3.5)
    requires bounds them.
 
+   After an issuer omits prior actors (Omitting Prior Actors
+   (Section 3.6.3)), the visible depth is only a lower bound on the
+   delegation depth.  A later issuer or recipient that relies on a depth
+   limit, such as a maximum of 1 to refuse sub-delegation, cannot
+   enforce it on such a chain unless the profile conveys how many actors
+   were omitted.
+
    Extensions that attach per-hop signed material grow token size in
    proportion to chain depth.  Deployments that combine the reference
    chain depth with one or more such per-hop mechanisms SHOULD measure
@@ -3480,10 +3496,10 @@ Table of Contents
 
    *  Description: Boolean indicating whether the act delegation chain
       in the introspection response is complete.  When false, one or
-      more inner act chain entries have been omitted from the response
-      for privacy reasons.  When absent, the chain SHOULD be treated as
-      complete unless local policy or deployment context indicates
-      otherwise.
+      more inner act chain entries have been omitted, either from the
+      response for privacy reasons or by the token's issuer.  When
+      absent, the chain SHOULD be treated as complete unless local
+      policy or deployment context indicates otherwise.
 
    *  Change Controller: IETF
 
