@@ -174,7 +174,7 @@ Actor Authorization at the Resource Server:
 : An authorization policy evaluation that considers both the subject and the actor, and the relationship between them, as policy inputs.  Under this profile, the relevant actor is ordinarily the outermost actor.
 
 Delegation Chain:
-: The sequence of actors representing how authorization has passed from the subject principal (`sub`) to the first actor (innermost `act`) and through any intermediate parties to the immediate actor (outermost `act.sub`).  The chain is conveyed by the nested structure of the `act` claim.
+: The sequence of actors representing how authorization has passed from the subject principal (`sub`) to the first actor (innermost `act` in a complete chain) and through any intermediate parties to the immediate actor (outermost `act.sub`).  The chain is conveyed by the nested structure of the `act` claim.
 
 Outermost Actor:
 : The `act` object at the top level of the delegation chain (the one not nested inside any other `act` object).  The outermost actor identifies the current presenter of the token.
@@ -214,7 +214,7 @@ When (`act.iss`, `act.sub`) identifies the same entity as the token's (`iss`, `s
 
 ### Representation and Policy {#representation-and-policy}
 
-This profile standardizes actor representation, propagation, validation, and discovery.  Delegation approval, trust frameworks, and identifier mappings remain deployment-specific.  Cross-domain deployments require agreements that cover permitted delegation relationships and identifier namespaces.
+This profile standardizes actor representation, propagation, validation, and discovery.  Delegation approval, trust frameworks, identifier mappings, and whether a recipient accepts an incomplete delegation chain remain deployment-specific.  Cross-domain deployments require agreements that cover permitted delegation relationships and identifier namespaces.
 
 [Actor Authorization](#actor-authorization) describes when an RS enforces authorization of the (`sub`, outermost `act.sub`) pair; this document does not require it on every request.
 
@@ -280,13 +280,13 @@ When an `act` object contains extension members beyond those defined in this doc
 
 ## Delegation Chains {#delegation-chains}
 
-Delegation chains MUST use nested `act` objects as specified in {{Section 4.1 of RFC8693}}.  The outermost object identifies the immediate actor; the innermost object identifies the first actor authorized by the subject.  The chain records prior actors under the conveying issuer's trust, without independently proving each hop.  This profile defines one linear chain per token; concurrent delegations use separate tokens.
+Delegation chains MUST use nested `act` objects as specified in {{Section 4.1 of RFC8693}}.  The outermost object identifies the immediate actor; in a complete chain, the innermost object identifies the first actor authorized by the subject.  The chain records prior actors under the conveying issuer's trust, without independently proving each hop.  This profile defines one linear chain per token; concurrent delegations use separate tokens.
 
 This document uses the following terms:
 
 *  A **hop** is a single `act` object in a delegation chain.  The number of hops in a chain equals the chain's delegation depth.
-*  A **visible hop** is a hop that appears in the token's `act` chain as received by a recipient, after any filtering by an introspection server.
-*  A **single-hop actor object** is an `act` object with no nested `act`; it represents delegation depth 1.
+*  A **visible hop** is a hop that appears in the token's `act` chain as received by a recipient, after any omission under [Omitting Prior Actors](#omit-prior-actors) or filtering by an introspection server.
+*  A **single-hop actor object** is an `act` object with no nested `act`; it represents delegation depth 1, or a visible depth of 1 in a chain with omitted actors ([Omitting Prior Actors](#omit-prior-actors)).
 *  An **inbound delegation chain** is the complete `act` structure received in an inbound token, whether depth 1 or greater.
 *  A **preserved delegation chain** is an inbound delegation chain that an issuer has validated and copied into a newly issued token without rewriting inherited actor entries.
 *  A **new outermost actor** is the actor object created by the current issuer to represent the newly identified outermost actor for the token it is issuing.
@@ -315,7 +315,7 @@ Delegation depth is the number of `act` objects in the chain, counting from the 
 
 Depth 1 is the minimum interoperable depth.  Implementations for cross-domain multi-hop use SHOULD support at least depth 4, and should document their maximum.  Same-domain deployments can use a shallower maximum when it is sufficient for their architecture.
 
-Implementations MUST define and enforce a local maximum delegation depth.  Implementations that receive a token exceeding their configured local maximum MUST reject it as an invalid input under the applicable token-processing rules; AS and TTS errors follow [Error Responses](#actor-profile-error-responses).  When a request would add an actor beyond that limit, the AS MUST reject the request with the `invalid_request` error code; it MUST NOT silently truncate the chain.
+Implementations MUST define and enforce a local maximum delegation depth.  Implementations that receive a token exceeding their configured local maximum MUST reject it as an invalid input under the applicable token-processing rules; AS and TTS errors follow [Error Responses](#actor-profile-error-responses).  When a request would add an actor beyond that limit, the AS MUST reject the request with the `invalid_request` error code; it MUST NOT silently truncate the chain.  The local maximum applies to the visible chain.  An implementation that also limits total delegation depth MUST reject an incomplete chain ([Omitting Prior Actors](#omit-prior-actors)) unless it can establish that the total depth, counting every actor hidden from it, is within that limit.
 
 A token represents delegation when the party exercising the token's authorization at runtime (the actor) is distinct from the token subject (`sub`) and the subject has authorized the actor to do so.  The following conditions establish this:
 
@@ -395,7 +395,7 @@ AddOutermostActor(inbound_chain, new_actor):
   return outermost
 ~~~
 
-The AS MUST set the new actor's `act.iss` and MUST NOT change any inherited actor field.  It MUST preserve the entire inbound chain; [Enforce Depth Limit](#enforce-depth-limit) rejects a resulting chain that exceeds the local maximum.
+The AS MUST set the new actor's `act.iss`.  Except as [Omitting Prior Actors](#omit-prior-actors) permits, it MUST NOT change any inherited actor field and MUST preserve the entire inbound chain; [Enforce Depth Limit](#enforce-depth-limit) rejects a resulting chain that exceeds the local maximum.
 
 If the new actor has the same (`act.iss`, `act.sub`) pair as the inbound outermost actor, the AS MAY instead apply [Preserve Inbound Chain](#preserve-inbound-chain) to avoid a duplicate entry.
 
@@ -410,11 +410,24 @@ PreserveChain(inbound_chain):
   return inbound_chain  // copy without modification
 ~~~
 
-The AS MUST copy the validated inbound chain exactly into the issued token.  The AS MUST NOT add, remove, or rewrite any field in any actor object of a preserved delegation chain.
+Except as [Omitting Prior Actors](#omit-prior-actors) permits, the AS MUST copy the validated inbound chain exactly into the issued token and MUST NOT add, remove, or rewrite any field in any actor object of a preserved delegation chain.
 
 #### Omit `act` {#omit-act}
 
 When no delegation is present and no actor information should appear in the issued token, the AS omits `act`, as required by [Delegation Chains](#delegation-chains).  The AS MUST NOT silently drop an inbound `act` claim; if it cannot preserve or extend the chain, it MUST reject the request per [Error Responses](#actor-profile-error-responses).
+
+### Omitting Prior Actors {#omit-prior-actors}
+
+By default, an issuer that preserves or extends a delegation chain includes all of it or rejects the request.  An issuer MAY omit inner actor objects under a profile that defines how to omit them and how to mark the omission in tokens and introspection responses.  An issuer that omits actors:
+
+*  MUST first apply [Delegation Chain Validation and Construction](#delegation-chain-algorithm), including [Enforce Depth Limit](#enforce-depth-limit);
+*  MUST NOT omit the outermost actor object or the `act` claim;
+*  MUST omit only whole actor objects and keep the remaining ones in order, with their members other than the nested `act` unchanged; and
+*  MUST include the profile's marking in the issued token.
+
+An issuer that omits actors, or that preserves, extends, or refreshes a chain it knows to be incomplete, MUST reject the request unless the profile or a trust agreement binds every party that trusts the issuer to assert delegation chains to recognize the marking and carry it into derived tokens.  A party that implements only this document cannot recognize the marking.  A TTS and an AS processing the `refresh_token` grant MUST NOT omit actors.  Each MUST carry forward any omission marking it recognizes ([Transaction Token Output Rules](#transaction-token-output-rules), [Delegated Token Issuance](#delegated-token-issuance)).  Token Exchange with a refresh token as `subject_token` follows this section like any other Token Exchange.
+
+A recipient that detects an omission through the profile's marking MUST NOT treat the chain as complete delegation history and MUST reject the token unless its trust agreement or an applicable profile permits incomplete chains.  It knows only that the delegation depth exceeds the visible depth, unless the profile conveys how many actors are hidden from it.  The innermost visible actor need not be the first actor the subject authorized, and adjacent visible actors need not have delegated directly to each other.
 
 ## Sender Constraint and Proof-of-Possession Validation {#delegated-pop-validation}
 
@@ -533,9 +546,9 @@ When an AS receives a JWT assertion grant containing an `act` claim:
 
     *  If the delegation relationship is prohibited by AS policy or cannot be confirmed: reject with `actor_unauthorized`.
 
-5.  If the inbound assertion's `act` object contains a nested `act` object (indicating that the asserted actor is itself a delegatee), the AS MUST handle the inner chain as follows:
+5.  The assertion is pre-chained when its `act` object contains a nested `act` object or an omission marking the AS recognizes ([Omitting Prior Actors](#omit-prior-actors)) shows that prior actors were omitted; either indicates that the asserted actor is itself a delegatee.  If the assertion is pre-chained and the AS does not accept pre-chained assertions, the AS MUST reject the request.  When a nested `act` object is present, the AS MUST handle the inner chain as follows:
 
-    *  **Propagation decision**: The AS SHOULD propagate the inner chain by preserving its nested structure, provided the resulting chain depth does not exceed the limit in [Delegation Chains](#delegation-chains).  If the AS does not accept pre-chained assertions, it MUST reject the request.
+    *  **Propagation decision**: Except as [Omitting Prior Actors](#omit-prior-actors) permits, the AS MUST propagate the inner chain by preserving its nested structure, provided the resulting chain depth does not exceed the limit in [Delegation Chains](#delegation-chains).
 
     *  **Prior-actor context**: For inner `act` objects, [Carry Prior-Actor Context](#carry-prior-actor-context) applies.
 
@@ -562,7 +575,7 @@ When an AS receives a JWT assertion grant containing an `act` claim:
     *  The AS SHOULD NOT infer that the client is authorized to act on behalf of the subject solely because the client initiated the request.
     *  When local policy maps the client identity to an actor identifier expected to match `act.sub`, the AS SHOULD perform identifier reconciliation before issuing a token.  If reconciliation cannot be established, the AS treats the identifiers as distinct and rejects the request when issuance requires them to identify the same entity, as defined for Identifier Reconciliation in [Conventions and Definitions](#conventions).
 
-8.  If the AS accepts the assertion, it MUST propagate the actor information into the issued token according to the rules for the output token type.  For JWT access tokens, see [JWT Access Token Output](#jwt-access-token-propagation).  For Transaction Tokens, see [Transaction Token Output Rules](#transaction-token-output-rules).  When the output is another JWT assertion grant profile, the resulting assertion MUST preserve the validated actor information subject to local policy and the chain-depth limit in [Delegation Chains](#delegation-chains).
+8.  If the AS accepts the assertion, it MUST propagate the actor information into the issued token according to the rules for the output token type.  For JWT access tokens, see [JWT Access Token Output](#jwt-access-token-propagation).  For Transaction Tokens, see [Transaction Token Output Rules](#transaction-token-output-rules).  When the output is another JWT assertion grant profile, the resulting assertion MUST preserve the validated actor information, except as [Omitting Prior Actors](#omit-prior-actors) permits, subject to the chain-depth limit in [Delegation Chains](#delegation-chains).
 
 # JWT Access Tokens {#jwt-access-tokens}
 
@@ -630,7 +643,7 @@ A client registration MAY supply that basis only if it uniquely identifies one a
 
 For the authorization code grant, the AS MAY include the `act` claim when an independent delegation basis, such as authorization state, registration, consent, or local policy, establishes that the OAuth client is acting as a distinct actor for the resource owner.  The actor identity MUST derive from that delegation basis.  Without such a basis, the AS MUST NOT include `act`.
 
-An AS that issues a refresh token together with a token carrying `act` MUST record that chain for the grant.  For the `refresh_token` grant ({{Section 6 of RFC6749}}), the AS MUST carry the `act` chain recorded for the grant into the refreshed token unchanged or reject the request; it MUST NOT issue a refreshed token without that chain.
+An AS that issues a refresh token together with a token carrying `act` MUST record that chain for the grant as issued, with any marking of omitted actors ([Omitting Prior Actors](#omit-prior-actors)).  For the `refresh_token` grant ({{Section 6 of RFC6749}}), the AS MUST carry the `act` chain recorded for the grant, with any recorded marking, into the refreshed token unchanged or reject the request; it MUST NOT issue a refreshed token without that chain.
 
 This document defines no actor-selection or actor-proof parameter for the authorization code grant; actor determination there is deployment-specific.
 
@@ -767,13 +780,13 @@ A refresh token presented as `subject_token` (`subject_token_type=urn:ietf:param
 
 ##### Processing {#refresh-token-as-subject-token}
 
-The AS validates the refresh token through its token store or a trusted back-channel to its issuer; signature validation alone is insufficient, and an expired, revoked, or otherwise invalid token fails validation.  For a token issued by another AS, the AS MUST NOT accept it unless that back-channel provides the subject, client binding, authorized scope, revocation state, and any `act` chain recorded for the grant.
+The AS validates the refresh token through its token store or a trusted back-channel to its issuer; signature validation alone is insufficient, and an expired, revoked, or otherwise invalid token fails validation.  For a token issued by another AS, the AS MUST NOT accept it unless that back-channel provides the subject, client binding, authorized scope, revocation state, any `act` chain recorded for the grant, and any omission marking recorded with that chain.
 
 The AS MUST verify that the requesting client or authenticated presenter is authorized to use the refresh token under the refresh token's client-binding, sender-constraint, rotation, and cross-client presentation policy.  If the requester is not authorized to use the refresh token, the AS MUST reject the request with `invalid_request`.
 
 The AS MUST extract the subject identity and authorized scope associated with the refresh token from its token store or other trusted refresh-token state.  The `sub` of the user associated with the refresh token becomes `sub` in the issued token.
 
-Whether an AS issues refresh tokens for delegated JWT assertion grant requests, how it revokes them, and whether their later use requires re-presenting upstream delegation artifacts remain deployment-specific.  On Token Exchange, a refresh token `subject_token` establishes no new actor.  When the refresh token's state records an `act` chain, the AS MUST treat that chain as inbound `act` state: the request is delegated, an identity-only input cannot use presenter continuation, so the request requires presenter rebind ([Presenter Transition Model](#token-exchange-presenter-model)), and the AS MUST NOT issue a token without that chain.
+Whether an AS issues refresh tokens for delegated JWT assertion grant requests, how it revokes them, and whether their later use requires re-presenting upstream delegation artifacts remain deployment-specific.  On Token Exchange, a refresh token `subject_token` establishes no new actor.  When the refresh token's state records an `act` chain, the AS MUST treat that chain as inbound `act` state: the request is delegated, an identity-only input cannot use presenter continuation, so the request requires presenter rebind ([Presenter Transition Model](#token-exchange-presenter-model)), and the AS MUST NOT issue a token without that chain and any marking recorded with it, except as [Omitting Prior Actors](#omit-prior-actors) permits.
 
 ## Actor Tokens {#actor-tokens}
 
@@ -882,7 +895,7 @@ If a Token Exchange request explicitly seeks a delegated output, for example by 
 
 3.  The AS MUST construct the `act` claim using the construction decision order in [Delegation Chain Validation and Construction](#delegation-chain-algorithm): extend with a new actor, preserve an existing chain, or omit `act`, in that order.  An actor derived from `actor_token` is asserted by the issuing AS; consumers MUST NOT infer that it was present in the `subject_token` or endorsed by its issuer.
 
-4.  The AS MUST reject the request if actor validation fails or the resulting chain exceeds the depth limit, using [Error Responses](#actor-profile-error-responses).  It MUST NOT issue a partially preserved chain.
+4.  The AS MUST reject the request if actor validation fails or the resulting chain exceeds the depth limit, using [Error Responses](#actor-profile-error-responses).  It MUST NOT issue a partially preserved chain except as [Omitting Prior Actors](#omit-prior-actors) permits.
 
 5.  Top-level `sub_profile` follows [Actor Object Structure](#actor-object-structure), which recommends it when the AS can authoritatively classify the token's `sub` entity type.  When the AS carries a trusted inbound top-level `sub_profile` into the issued token, it MUST preserve its unrecognized but syntactically valid values.
 
@@ -1074,7 +1087,7 @@ When the resource server evaluates a JWT access token as a delegated token under
 
 7.  If any of the above steps fail, return an appropriate error response.  The HTTP authentication scheme used in the `WWW-Authenticate` challenge follows the token's binding mechanism: `Bearer` per {{Section 3.1 of RFC6750}} for bearer or mTLS-bound ({{RFC8705}}) tokens, or `DPoP` per {{Section 7.1 of RFC9449}} for DPoP-bound tokens.
 
-    *  If signature, `iss`, `aud`, temporal, or depth validation fails: HTTP 401 with `error="invalid_token"`.
+    *  If signature, `iss`, `aud`, temporal, or depth validation fails, or the chain is incomplete and the RS does not accept incomplete chains ([Omitting Prior Actors](#omit-prior-actors)): HTTP 401 with `error="invalid_token"`.
     *  If identifier reconciliation that the authorization decision requires fails (step 4): HTTP 403 with `error="actor_unauthorized"`.
     *  If DPoP proof validation for `cnf.jkt` fails: HTTP 401 per {{Section 7 of RFC9449}}.
     *  If the client certificate does not match `cnf.x5t#S256`: HTTP 401 with `error="invalid_token"`, per {{Section 3 of RFC8705}}.
@@ -1100,7 +1113,7 @@ When the resource server evaluates a Transaction Token as a delegated token unde
 
 4.  Apply actor authorization per [Actor Authorization](#actor-authorization) when required by local policy or when the token is accepted as satisfying a delegated-access requirement for the request path.
 
-5.  Optionally traverse inner `act` objects to audit the full delegation chain.  They are not inputs to access-control decisions ({{Section 4.1 of RFC8693}}) and have the trust properties in [Carry Prior-Actor Context](#carry-prior-actor-context).
+5.  Optionally traverse inner `act` objects to audit the visible delegation chain.  They are not inputs to access-control decisions ({{Section 4.1 of RFC8693}}) and have the trust properties in [Carry Prior-Actor Context](#carry-prior-actor-context).
 
 6.  If any of the above steps fail, the RS MUST reject the request through the deployment's Transaction Token handling, because {{I-D.ietf-oauth-transaction-tokens}} defines no error response.  Validation or presenter-proof failures are token-validation failures; failures of actor authorization required by local policy are authorization failures.  The RS MUST NOT include actor-specific rejection details in error responses exposed outside the trust domain.
 
@@ -1116,9 +1129,9 @@ When token introspection ({{RFC7662}}) is used for delegated tokens, an AS MUST 
 *  `iss`: REQUIRED when the AS has a stable issuer identifier.
 *  `chain_complete`: OPTIONAL.  When absent, the RS SHOULD treat the chain as complete unless local policy or deployment context indicates otherwise.
 
-The AS MUST return actor claims from the token's authorization context, including the complete nested chain, except for the following privacy-filtering allowance.
+The AS MUST return actor claims from the token's authorization context, including the nested chain as issued, except for the following privacy-filtering allowance.
 
-If local privacy policy requires omitting inner actors, the AS MAY filter them but MUST include `"chain_complete": false`.
+If local privacy policy requires omitting inner actors, the AS MAY filter them but MUST include `"chain_complete": false`.  When it knows that the token's chain omits actors under [Omitting Prior Actors](#omit-prior-actors), it MUST also include `"chain_complete": false` and the profile's marking, so that the RS can distinguish issuer omission from introspection filtering.
 
 When `chain_complete` is `false`, the subject and the outermost actor remain available for authorization, and the RS records the incompleteness in any audit of the chain.
 
@@ -1301,7 +1314,7 @@ A companion profile that builds on this profile:
 *  MUST preserve the meanings of the token's top-level `sub`, the outermost `act.sub`, the (`act.iss`, `act.sub`) actor identifier pair, the nested `act` chain ordering, and the top-level `cnf` claim for the current presenter;
 *  MUST NOT reinterpret `act.iss`, nested `act` objects, or the top-level `cnf` claim as independently trusted prior-hop provenance artifacts;
 *  SHOULD define any supplementary provenance, receipt, or chain-wide state in separate top-level claims or equivalent companion mechanisms rather than by overloading members inside inherited `act` objects;
-*  if it defines data that aligns to the visible `act` chain, MUST specify the alignment rules, the behavior when coverage is partial, and the behavior when introspection or privacy filtering suppresses part of the visible chain.
+*  if it defines data that aligns to the visible `act` chain, MUST specify the alignment rules, the behavior when coverage is partial, and the behavior when introspection or privacy filtering, or omission under [Omitting Prior Actors](#omit-prior-actors), suppresses part of the visible chain.
 
 A companion profile can define authorization based on independently verifiable per-hop evidence that it carries in its own top-level claims.  Nested `act` objects remain informational for access control ({{Section 4.1 of RFC8693}}).
 
@@ -1470,6 +1483,8 @@ This document does not define per-hop actor-key provenance within the delegation
 
 Unbounded delegation chains increase the attack surface, complicate policy evaluation, and enable denial of service through chain parsing; the local maximum depth that [Delegation Chains](#delegation-chains) requires bounds them.
 
+After an issuer omits prior actors ([Omitting Prior Actors](#omit-prior-actors)), a party that detects the omission knows only that the delegation depth exceeds the visible depth.  For example, a recipient with a maximum depth of 2 that receives one visible actor cannot tell whether the chain is within its limit.  A recipient that limits total delegation depth therefore rejects such a chain unless it can count every actor hidden from it ([Delegation Chains](#delegation-chains)).  A count that covers only the issuer's omission understates the depth once introspection filtering removes further actors.
+
 Extensions that attach per-hop signed material grow token size in proportion to chain depth.  Deployments that combine the reference chain depth with one or more such per-hop mechanisms SHOULD measure realistic token sizes against their transport limits (HTTP header limits are often 8 KB) and consider using token introspection ({{RFC7662}}) where inline carriage exceeds those limits.
 
 ## Actor Identity Rotation {#actor-identity-rotation}
@@ -1494,7 +1509,7 @@ Cross-domain deployments SHOULD prefer stable but non-reassigned identifiers and
 
 When the same logical entity can appear in different identifier namespaces, such as `azp`, `req_wl`, and `act.sub`, issuers and relying parties SHOULD use explicit issuer scoping and locally trusted mapping rules rather than string equality alone to determine whether those identifiers refer to the same entity.
 
-Issuers SHOULD minimize disclosure of prior actors through audience and token-design decisions made before issuance.  Once an issuer preserves a delegation chain, [Preserve Inbound Chain](#preserve-inbound-chain) requires copying it intact.  If local privacy requirements would require omitting a chain element, the issuer rejects the request rather than truncating the chain.
+Issuers SHOULD minimize disclosure of prior actors through audience and token-design decisions made before issuance.  Once an issuer preserves a delegation chain, [Preserve Inbound Chain](#preserve-inbound-chain) requires copying it intact.  Unless [Omitting Prior Actors](#omit-prior-actors) permits omission, an issuer whose local privacy requirements would require omitting a chain element rejects the request rather than truncating the chain.
 
 A Transaction Token's `txn` value links service calls in the same transaction and can enable correlation across organizations.  Deployments SHOULD follow the privacy guidance in {{I-D.ietf-oauth-transaction-tokens}} when propagating it across trust domains.
 
@@ -1551,7 +1566,7 @@ This document requests IANA to register the following value in the "OAuth Extens
 This document requests IANA to register the following value in the "OAuth Token Introspection Response" registry ({{Section 3.1 of RFC7662}}):
 
 *  Name: `chain_complete`
-*  Description: Boolean indicating whether the `act` delegation chain in the introspection response is complete.  When `false`, one or more inner `act` chain entries have been omitted from the response for privacy reasons.  When absent, the chain SHOULD be treated as complete unless local policy or deployment context indicates otherwise.
+*  Description: Boolean indicating whether the `act` delegation chain in the introspection response is complete.  When `false`, one or more inner `act` chain entries have been omitted during token issuance at this or an earlier hop, or during introspection filtering.  When absent, the chain SHOULD be treated as complete unless local policy or deployment context indicates otherwise.
 *  Change Controller: IETF
 *  Reference: [Token Introspection](#token-introspection) of this document
 
