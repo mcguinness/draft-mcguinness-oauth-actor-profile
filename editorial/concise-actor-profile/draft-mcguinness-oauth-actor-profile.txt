@@ -92,7 +92,7 @@ Table of Contents
      3.7.  Sender Constraint and Proof-of-Possession Validation
    4.  JWT Assertion Grants
      4.1.  Validate the Assertion
-     4.2.  Validate Delegation When act Is Present
+     4.2.  Validate Delegation When an Actor Is Present
      4.3.  Verify Grant Binding and Prevent Replay
    5.  Token Exchange Processing
      5.1.  Presenter Transition Model
@@ -107,7 +107,7 @@ Table of Contents
        5.4.1.  JWT Client Assertion
        5.4.2.  Workload Identity Credential
        5.4.3.  JWT Access Token
-     5.5.  may_act
+     5.5.  Authorized Actor Claim
    6.  Token Issuance
      6.1.  Common Issuance Rules
      6.2.  Effective Scope
@@ -144,7 +144,7 @@ Table of Contents
      13.5.  Confused Deputy
      13.6.  Actor-Authorization Bypass
      13.7.  Client Identity and Delegation
-     13.8.  sub_profile Trust
+     13.8.  Entity Profile Trust
      13.9.  Subject Namespace Translation
      13.10. Presenter Binding
      13.11. Delegation Depth Limits
@@ -432,8 +432,8 @@ Table of Contents
    Points (Section 11)).
 
    The may_act claim is an optional delegation-authorization input, with
-   the restrictions in may_act (Section 5.5).  It neither establishes
-   actor identity nor propagates to the output token.
+   the restrictions in Authorized Actor Claim (Section 5.5).  It neither
+   establishes actor identity nor propagates to the output token.
 
 3.4.  Actor Object Structure
 
@@ -640,7 +640,7 @@ Table of Contents
    by the outer token issuer's signature, not by independent
    verification at each prior hop.
 
-   Validate Delegation When act Is Present (Section 4.2) adds
+   Validate Delegation When an Actor Is Present (Section 4.2) adds
    requirements for JWT assertion grants.
 
 3.6.2.  Determine the Output Chain
@@ -783,15 +783,15 @@ Table of Contents
 
    Validate the Assertion (Section 4.1) and Verify Grant Binding and
    Prevent Replay (Section 4.3) apply to every such grant, and Validate
-   Delegation When act Is Present (Section 4.2) applies only when the
-   grant carries act.  On Token Exchange, a rule in this section stated
-   with invalid_grant uses invalid_request instead; Error Responses
-   (Section 9) gives the codes for proof-mechanism errors and actor-
-   policy denials.  A token the AS issues on direct redemption follows
-   the rules for its type (JWT Assertion Grant Output (Section 6.3) or
-   JWT Access Token Output (Section 6.4)); on Token Exchange, processing
-   continues under Token Exchange Processing (Section 5) or, at a TTS,
-   TTS Request Processing (Section 7.2).
+   Delegation When an Actor Is Present (Section 4.2) applies only when
+   the grant carries act.  On Token Exchange, a rule in this section
+   stated with invalid_grant uses invalid_request instead; Error
+   Responses (Section 9) gives the codes for proof-mechanism errors and
+   actor-policy denials.  A token the AS issues on direct redemption
+   follows the rules for its type (JWT Assertion Grant Output
+   (Section 6.3) or JWT Access Token Output (Section 6.4)); on Token
+   Exchange, processing continues under Token Exchange Processing
+   (Section 5) or, at a TTS, TTS Request Processing (Section 7.2).
 
 4.1.  Validate the Assertion
 
@@ -799,7 +799,7 @@ Table of Contents
    signature and its iss, sub, aud, exp, and jti claims.  The jti claim
    is REQUIRED, although Section 3 of [RFC7523] makes it optional.
 
-4.2.  Validate Delegation When act Is Present
+4.2.  Validate Delegation When an Actor Is Present
 
    When the grant carries act:
 
@@ -1413,7 +1413,7 @@ Table of Contents
    Constraint and Proof-of-Possession Validation (Section 3.7), whether
    or not the output token is sender-constrained.
 
-5.5.  may_act
+5.5.  Authorized Actor Claim
 
    The may_act claim (Section 4.4 of [RFC8693]) pre-authorizes a
    specific party to act on behalf of the subject in a subsequent Token
@@ -2553,10 +2553,10 @@ Table of Contents
    In a self-issued assertion grant, the acting entity is itself the
    grant's iss and directly asserts delegation to itself without any
    upstream AS having authenticated the actor or pre-validated the
-   delegation relationship.  Validate Delegation When act Is Present
-   (Section 4.2) requires rejecting such grants by default; this section
-   gives the controls a deployment needs when another specification or
-   local policy enables them.
+   delegation relationship.  Validate Delegation When an Actor Is
+   Present (Section 4.2) requires rejecting such grants by default; this
+   section gives the controls a deployment needs when another
+   specification or local policy enables them.
 
    This section does not apply to client assertions used as actor_token
    (JWT Client Assertion (Section 5.4.1)), for which iss = sub =
@@ -2652,7 +2652,7 @@ Table of Contents
       MUST NOT downgrade to processing without act solely because
       another acquisition path or legacy policy input is available.
 
-13.8.  sub_profile Trust
+13.8.  Entity Profile Trust
 
    The token issuer asserts the sub_profile claim, so the claim is only
    as trustworthy as that issuer.  Resource servers MUST NOT trust
