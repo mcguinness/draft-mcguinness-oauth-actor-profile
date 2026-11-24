@@ -440,21 +440,8 @@ Table of Contents
 
 3.4.  Actor Object Structure
 
-   An actor object conforming to this profile is a JSON object that is
-   the value of the act claim.  In addition to the sub claim required by
-   [RFC8693], a profile-conformant actor object MUST contain an iss
-   claim and MAY contain a sub_profile claim classifying the actor's
-   entity type.  An act object that omits the iss claim conforms to
-   [RFC8693] but does not conform to this profile.  Implementations MUST
-   treat it as nonconforming and MUST NOT infer semantics for absent
-   claims.  When local policy or advertised metadata requires profile
-   conformance for a token or assertion, recipients MUST reject such
-   actor objects.  Otherwise, an AS MAY apply local rules for non-
-   profile processing; it MUST NOT add iss to an inherited actor,
-   silently drop the inbound act, or carry the nonconforming chain into
-   a profile-conforming output, and it MUST reject a request requiring
-   that output.  Migration and Adoption (Section 12.1) describes a
-   staged rollout.
+   An actor object conforming to this profile is a JSON object, the
+   value of an act claim, with the members defined below.
 
    act-object = {
      "sub"           : StringOrURI,        ; REQUIRED
@@ -463,15 +450,13 @@ Table of Contents
      * StringOrURI => any                  ; extension claims
    }
 
-   sub:  REQUIRED.  The subject identifier of the actor, as defined in
-      Section 4.1 of [RFC8693].  It is a StringOrURI as defined in
-      [RFC7519].
+   sub:  REQUIRED.  The subject identifier of the actor (Section 4.1 of
+      [RFC8693]), a StringOrURI [RFC7519].
 
-   iss:  REQUIRED.  The issuer or namespace context for act.sub,
-      expressed as a StringOrURI [RFC7519].  Together, (act.iss,
-      act.sub) form the canonical actor identifier.  For any actor
-      identifier scheme, act.iss MUST identify the context used when
-      assigning or asserting that identifier.
+   iss:  REQUIRED.  For any actor identifier scheme, act.iss MUST
+      identify the issuer or namespace context used when assigning or
+      asserting act.sub.  Together, (act.iss, act.sub) form the
+      canonical actor identifier.
 
       Implementations MUST NOT interpret act.iss as the current token
       issuer, credential issuer, or hop-provenance marker.  These
@@ -486,18 +471,14 @@ Table of Contents
       AS supplies the namespace for the tool's identifier.
 
    sub_profile:  OPTIONAL.  A space-delimited list of entity profile
-      values classifying the actor identified by act.sub.
-      [I-D.mora-oauth-entity-profiles] defines its syntax, its values
-      (such as user, service, and ai_agent), and their registry.
-      Organizations defining private sub_profile values SHOULD use a
-      collision-resistant name, such as com.example.agent for a value
-      defined by the controller of example.com.  An implementation that
-      does not process actor classification handles act.sub_profile like
-      any other unrecognized actor member, including copying it
-      unchanged when it preserves a chain.
-
-      [I-D.mora-oauth-entity-profiles] also defines multi-value strings
-      such as "service ai_agent".
+      values classifying the actor identified by act.sub, such as
+      "service ai_agent".  [I-D.mora-oauth-entity-profiles] defines its
+      syntax, its values, and their registry.  Organizations defining
+      private sub_profile values SHOULD use a collision-resistant name,
+      such as com.example.agent for a value defined by the controller of
+      example.com.  An implementation that does not process actor
+      classification handles act.sub_profile like any other unrecognized
+      actor member.
 
       A recipient MUST NOT assume an entity type for an actor whose
       sub_profile is absent or unrecognized.  A resource that requires a
@@ -505,28 +486,32 @@ Table of Contents
       unrecognized value; it needs a classification from an issuer it
       trusts to assert it.
 
-      The sub_profile claim MAY also appear as a top-level JWT claim
-      outside any act object to classify the entity type of the token's
-      sub; it applies exclusively to sub and does not affect sub_profile
-      values within act objects.
-
-   The top-level cnf claim ([RFC7800]) carries the current presenter's
-   binding; see Sender Constraint and Proof-of-Possession Validation
-   (Section 3.8).
+      A top-level sub_profile claim (Section 4.2 of
+      [I-D.mora-oauth-entity-profiles]) classifies only the token's sub;
+      it does not affect sub_profile values within act objects.
 
    The client_profile claim defined in [I-D.mora-oauth-entity-profiles]
    classifies the OAuth client and MUST NOT appear within an act object.
-   Client classification belongs at the top level of the token.  An AS
-   or RS that encounters a client_profile member inside an act object
-   MAY reject the token or ignore the offending member; it MUST NOT
-   treat that member as a valid actor classification.
+   An AS or RS that encounters one there MAY reject the token or ignore
+   that member; it MUST NOT treat the member as a valid actor
+   classification.
 
-   When an act object contains extension members beyond those defined in
-   this document, issuers and consumers MUST ignore unrecognized members
-   unless another specification or local policy defines their meaning.
-   An issuer that preserves a validated delegation chain copies
-   unrecognized extension members in inherited act objects unchanged, as
-   Construct the Chain (Section 3.7.4) requires.
+   Issuers and consumers MUST ignore unrecognized act members unless
+   another specification or local policy defines their meaning.  An
+   issuer that preserves a validated delegation chain copies them in
+   inherited act objects unchanged, as Construct the Chain
+   (Section 3.7.4) requires.
+
+   An act object that omits the iss claim conforms to [RFC8693] but does
+   not conform to this profile.  Implementations MUST NOT infer
+   semantics for absent claims.  When local policy or advertised
+   metadata requires profile conformance for a token or assertion,
+   recipients MUST reject such actor objects.  Otherwise, an AS MAY
+   apply local rules for non-profile processing; it MUST NOT add iss to
+   an inherited actor, silently drop the inbound act, or carry the
+   nonconforming chain into a profile-conforming output, and it MUST
+   reject a request requiring that output.  Migration and Adoption
+   (Section 12.1) describes a staged rollout.
 
 3.5.  Identifier Reconciliation
 
@@ -766,8 +751,8 @@ Table of Contents
    outside the scope of this document; see Companion Profiles and
    Extension Points (Section 11).
 
-   The top-level cnf claim, when present, identifies the key or
-   certificate of the current presenter.  When delegation is present,
+   The top-level cnf claim ([RFC7800]), when present, identifies the key
+   or certificate of the current presenter.  When delegation is present,
    that current presenter is the party identified by the outermost act
    claim: when DPoP ([RFC9449]) is used, the top-level cnf.jkt MUST
    identify that party's key; when mTLS ([RFC8705]) is used, the top-
