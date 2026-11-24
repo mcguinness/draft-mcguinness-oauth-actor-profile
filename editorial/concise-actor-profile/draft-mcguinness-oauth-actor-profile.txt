@@ -1067,9 +1067,11 @@ Table of Contents
           handle any inbound chain as specified in Actor Tokens
           (Section 5.4).
 
-   4.  The AS MUST select one transition for the request under Presenter
-       Transition Model (Section 5.1) and apply the proof requirements
-       of its input types.
+   4.  For a delegated request, the AS MUST select one transition under
+       Presenter Transition Model (Section 5.1); otherwise, it applies
+       that section's rules for a non-delegated exchange.  In either
+       case, the AS MUST apply the proof requirements of the request's
+       input types.
 
    5.  The AS can reduce scope under local policy.  The effective scope
        of the issued token MUST NOT exceed the subject_token's "Scope
@@ -1113,39 +1115,36 @@ Table of Contents
    allows presenter continuation (Presenter Transition Model
    (Section 5.1)), and its scope ceiling:
 
-    +=============+==============+==============+=====================+
-    | Input       | Establishes  | Continuation | Scope ceiling       |
-    +=============+==============+==============+=====================+
-    | JWT         | sub,         | Allowed      | Its scope claim     |
-    | assertion   | sub_profile, |              | when present,       |
-    | grant       | top-level    |              | otherwise what      |
-    |             | cnf, act     |              | direct redemption   |
-    |             |              |              | under Authorization |
-    |             |              |              | Grant Processing    |
-    |             |              |              | (Section 4.1) would |
-    |             |              |              | authorize           |
-    +-------------+--------------+--------------+---------------------+
-    | JWT access  | sub,         | Allowed      | Its effective scope |
-    | token       | sub_profile, |              |                     |
-    |             | top-level    |              |                     |
-    |             | cnf, act     |              |                     |
-    +-------------+--------------+--------------+---------------------+
-    | Transaction | sub,         | Allowed      | The authority it    |
-    | Token       | sub_profile, |              | represents          |
-    |             | top-level    |              |                     |
-    |             | presenter    |              |                     |
-    |             | binding, act |              |                     |
-    +-------------+--------------+--------------+---------------------+
-    | ID Token    | sub only; no | Not allowed  | None; scope comes   |
-    |             | chain        |              | from the            |
-    |             |              |              | actor_token (if     |
-    |             |              |              | any), [RFC8693],    |
-    |             |              |              | and local policy    |
-    +-------------+--------------+--------------+---------------------+
-    | Refresh     | sub,         | Not allowed  | Its authorized      |
-    | token       | recorded     |              | scope               |
-    |             | chain        |              |                     |
-    +-------------+--------------+--------------+---------------------+
+     +=============+==============+==============+===================+
+     | Input       | Establishes  | Continuation | Scope ceiling     |
+     +=============+==============+==============+===================+
+     | JWT         | sub,         | Allowed      | Its scope claim   |
+     | assertion   | sub_profile, |              | when present,     |
+     | grant       | top-level    |              | otherwise what    |
+     |             | cnf, act     |              | direct redemption |
+     |             |              |              | would authorize   |
+     +-------------+--------------+--------------+-------------------+
+     | JWT access  | sub,         | Allowed      | Its effective     |
+     | token       | sub_profile, |              | scope             |
+     |             | top-level    |              |                   |
+     |             | cnf, act     |              |                   |
+     +-------------+--------------+--------------+-------------------+
+     | Transaction | sub,         | Allowed      | The authority it  |
+     | Token       | sub_profile, |              | represents        |
+     |             | top-level    |              |                   |
+     |             | presenter    |              |                   |
+     |             | binding, act |              |                   |
+     +-------------+--------------+--------------+-------------------+
+     | ID Token    | sub only; no | Not allowed  | None; scope comes |
+     |             | chain        |              | from the          |
+     |             |              |              | actor_token (if   |
+     |             |              |              | any), [RFC8693],  |
+     |             |              |              | and local policy  |
+     +-------------+--------------+--------------+-------------------+
+     | Refresh     | sub,         | Not allowed  | Its authorized    |
+     | token       | recorded     |              | scope             |
+     |             | chain        |              |                   |
+     +-------------+--------------+--------------+-------------------+
 
                                   Table 6
 
@@ -1183,9 +1182,14 @@ Table of Contents
    of the request's proof against the grant's top-level cnf, and it
    treats the grant as having no enforced grant-level sender constraint,
    so the (iss, jti) single-use rule in step 1 of Authorization Grant
-   Processing (Section 4.1) applies.  The AS still validates any proof
-   that the new presenter's credential profile or the deployment
-   requires, as the rebind rules specify.
+   Processing (Section 4.1) applies.  When local policy permits such
+   rebind, the AS MUST record each (iss, jti) pair from that issuer that
+   it accepts, on any path, so that the single-use rule also rejects a
+   rebind of a grant already redeemed with its original key, and it MUST
+   reject any later redemption of a pair it has accepted on rebind,
+   including one that proves the original key.  The AS still validates
+   any proof that the new presenter's credential profile or the
+   deployment requires, as the rebind rules specify.
 
 5.3.2.  JWT Access Token
 
@@ -3140,8 +3144,11 @@ Document History
       outermost actor keeps the chain; a workload credential's proven
       key binds a JWT access token or assertion grant output with
       cnf.jkt; a grant's (iss, jti) is consumed only when a token is
-      issued; and a chain_complete of false without a recognized
-      omission marking does not by itself require rejection.
+      issued, and where rebind is enabled for its issuer, a grant
+      redeemed with its original key cannot later be rebound and a
+      rebound grant cannot be redeemed again; and a chain_complete of
+      false without a recognized omission marking does not by itself
+      require rejection.
 
    -01
 
