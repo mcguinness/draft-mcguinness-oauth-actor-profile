@@ -86,12 +86,9 @@ Table of Contents
      3.4.  Actor Object Structure
      3.5.  Identifier Reconciliation
      3.6.  Delegation Chains
-       3.6.1.  Validate Carrier Token
-       3.6.2.  Validate Outermost Actor
-       3.6.3.  Carry Prior-Actor Context
-       3.6.4.  Construct the Chain
-       3.6.5.  Enforce Depth Limit
-       3.6.6.  Omitting Prior Actors
+       3.6.1.  Validate the Inbound Chain
+       3.6.2.  Determine the Output Chain
+       3.6.3.  Omitting Prior Actors
      3.7.  Sender Constraint and Proof-of-Possession Validation
    4.  JWT Assertion Grants
      4.1.  Authorization Grant Processing
@@ -380,8 +377,8 @@ Table of Contents
 
                                   Table 2
 
-   Inner actors have the trust properties described in Carry Prior-Actor
-   Context (Section 3.6.3).
+   Inner actors have the trust properties described in Validate the
+   Inbound Chain (Section 3.6.1).
 
    When (act.iss, act.sub) identifies the same entity as the token's
    (iss, sub), consumers MUST NOT infer a delegation relationship.
@@ -497,8 +494,8 @@ Table of Contents
    Issuers and consumers MUST ignore unrecognized act members unless
    another specification or local policy defines their meaning.  An
    issuer that preserves a validated delegation chain copies them in
-   inherited act objects unchanged, as Construct the Chain
-   (Section 3.6.4) requires.
+   inherited act objects unchanged, as Determine the Output Chain
+   (Section 3.6.2) requires.
 
    An act object that omits the iss claim conforms to [RFC8693] but does
    not conform to this profile.  For such an object:
@@ -535,31 +532,20 @@ Table of Contents
    proving each hop.  This profile defines one linear chain per token;
    concurrent delegations use separate tokens.
 
-   This document uses the following terms:
-
-   *  A *hop* is one act object in a delegation chain; a chain's
-      delegation depth is its number of hops.
-
-   *  A hop is *visible* to a recipient when it appears in the token's
-      act chain as received, after any omission under Omitting Prior
-      Actors (Section 3.6.6) or filtering by an introspection server.
-
-   *  The *inbound chain* is the complete act structure that an inbound
-      token carries, of any depth.
+   A *hop* is one act object in a delegation chain; a chain's delegation
+   depth is its number of hops.  The *inbound chain* is the complete act
+   structure that an inbound token carries, of any depth.
 
    The following example shows a delegation chain of depth 2:
 
    {
      "sub": "https://idp.enterprise.example/users/alice",
-     "sub_profile": "user",
      "act": {
        "sub": "https://tools.travel-provider.example/booking-tool",
        "iss": "https://as.travel-provider.example",
-       "sub_profile": "service",
        "act": {
          "sub": "https://agents.enterprise.example/travel-assistant",
-         "iss": "https://as.enterprise.example",
-         "sub_profile": "ai_agent"
+         "iss": "https://as.enterprise.example"
        }
      }
    }
@@ -597,30 +583,20 @@ Table of Contents
    Refresh Tokens (Section 6.5) specifies when an independent delegation
    basis identifies the actor.
 
-   An AS or TTS MUST apply the steps below on paths that require or
-   claim actor-profile conformance.  The invoking grant, Token Exchange,
-   or TTS rules supply token-specific preconditions and delegation-
-   authorization requirements.  Nonconforming actor objects, including
-   those missing iss, MUST NOT enter these steps; Actor Object Structure
-   (Section 3.4) defines their handling.
+   An AS or TTS MUST apply Validate the Inbound Chain (Section 3.6.1)
+   and then Determine the Output Chain (Section 3.6.2) on paths that
+   require or claim actor-profile conformance.  The invoking grant,
+   Token Exchange, or TTS rules supply token-specific preconditions and
+   delegation-authorization requirements.  Nonconforming actor objects,
+   including those missing iss, MUST NOT enter these steps; Actor Object
+   Structure (Section 3.4) defines their handling.  The steps say "the
+   AS"; they apply equally to a TTS.
 
-   The steps, applied in order, are Validate Carrier Token
-   (Section 3.6.1), Validate Outermost Actor (Section 3.6.2), Carry
-   Prior-Actor Context (Section 3.6.3), Construct the Chain
-   (Section 3.6.4), and Enforce Depth Limit (Section 3.6.5).  They say
-   "the AS"; they apply equally to a TTS.  Omitting Prior Actors
-   (Section 3.6.6) defines when an issuer can leave inner actors out of
-   the chain it issues.
-
-3.6.1.  Validate Carrier Token
+3.6.1.  Validate the Inbound Chain
 
    The AS MUST validate the token carrying the inbound chain per the
    type-specific rules applicable to that token before extracting actor
-   claims.
-
-3.6.2.  Validate Outermost Actor
-
-   For the outermost act object, the AS MUST:
+   claims.  For the outermost act object, the AS MUST:
 
    1.  Verify that act.sub is present.  If it is absent, reject the
        input under Error Responses (Section 9).
@@ -631,27 +607,18 @@ Table of Contents
        (Section 12.2) gives examples of this deployment-specific trust
        decision.
 
-   3.  Evaluate delegation under local policy:
-
-       *  When a new actor is established (rule 1 of Construct the Chain
-          (Section 3.6.4)), as on presenter rebind, the AS MUST confirm
-          that the new actor is authorized to act for sub, for example
-          through a grant, consent record, or policy rule, including
-          when rule 1 copies the inbound chain unchanged.
-
-       *  When preserving a validated chain from a trusted issuer
-          without a new actor (rule 2 of Construct the Chain
-          (Section 3.6.4)), the AS SHOULD evaluate the preserved
-          relationship.
-
-       *  If the relationship is prohibited, or a required relationship
-          cannot be confirmed, reject the input with the
-          actor_unauthorized error code.
-
-   Authorization Grant Processing (Section 4.1) adds requirements for
-   JWT assertion grants.
-
-3.6.3.  Carry Prior-Actor Context
+   Implementations MUST set and enforce a local maximum on the number of
+   visible act objects.  A hop is *visible* to a recipient when it
+   appears in the token's act chain as received, after any omission
+   under Omitting Prior Actors (Section 3.6.3) or filtering by an
+   introspection server.  Depth 1 is the interoperable minimum.  Cross-
+   domain multi-hop implementations SHOULD support depth 4 or greater.
+   Same-domain deployments can use a shallower limit when sufficient.
+   Recipients MUST reject an over-limit inbound token as invalid under
+   the applicable token-processing rules.  An implementation that also
+   limits total depth MUST reject an incomplete chain unless it can
+   establish that the total, including every hidden actor, is within its
+   limit (Omitting Prior Actors (Section 3.6.3)).
 
    Interoperable processing under this profile is defined around sub and
    the outermost actor.  Inner actors are *prior-actor context*:
@@ -660,60 +627,71 @@ Table of Contents
    determination, because prior actors identified by nested act objects
    are informational only (Section 4.1 of [RFC8693]).  Structural rules,
    such as the depth limit and the actor object requirements, still
-   apply to every actor object.
+   apply to every actor object.  For inner act objects, the AS MAY rely
+   on trust in the outer token issuer established by validating the
+   carrier token rather than independently validating each hop.  The AS
+   MUST NOT treat preserved prior-actor context as independently
+   authenticated; an inner act entry carried in a token is endorsed only
+   by the outer token issuer's signature, not by independent
+   verification at each prior hop.
 
-   For inner act objects, the AS MAY rely on trust in the outer token
-   issuer established by Validate Carrier Token (Section 3.6.1) rather
-   than independently validating each hop.  The AS MUST NOT treat
-   preserved prior-actor context as independently authenticated; an
-   inner act entry carried in a token is endorsed only by the outer
-   token issuer's signature, not by independent verification at each
-   prior hop.
+   Authorization Grant Processing (Section 4.1) adds requirements for
+   JWT assertion grants.
 
-3.6.4.  Construct the Chain
+3.6.2.  Determine the Output Chain
 
-   The AS MUST apply the first matching rule:
+   The AS MUST apply the first row that matches the request:
 
-   1.  If a new actor is established, create an outermost actor object
-       (Section 3.4) and nest any validated inbound chain beneath it.
-       If the new actor has exactly the same (act.iss, act.sub) as the
-       inbound outermost actor, the AS MUST instead copy the inbound
-       chain unchanged, as in rule 2; the request remains a rebind for
-       its binding (Presenter Transition Model (Section 5.1)).  A pair
-       that only a local mapping relates to the outermost actor's is a
-       new actor.  Local policy governs repeated identifiers deeper in
-       the chain.
+   +===========================+===============+=======================+
+   | Request                   | Delegation    | Issued act            |
+   |                           | check         |                       |
+   +===========================+===============+=======================+
+   | Establishes a new         | MUST confirm  | The inbound chain,    |
+   | actor whose (act.iss,     | that the      | unchanged             |
+   | act.sub) exactly          | actor is      |                       |
+   | matches the inbound       | authorized to |                       |
+   | outermost actor's         | act for sub   |                       |
+   +---------------------------+---------------+-----------------------+
+   | Establishes any other     | MUST confirm  | A new outermost actor |
+   | new actor                 | that the      | object (Section 3.4), |
+   |                           | actor is      | with any validated    |
+   |                           | authorized to | inbound chain nested  |
+   |                           | act for sub   | beneath it            |
+   +---------------------------+---------------+-----------------------+
+   | Establishes no new        | SHOULD        | The inbound chain,    |
+   | actor and carries a       | evaluate the  | unchanged             |
+   | validated inbound         | preserved     |                       |
+   | chain                     | relationship  |                       |
+   +---------------------------+---------------+-----------------------+
+   | Establishes no new        | None          | No act claim          |
+   | actor and carries no      |               |                       |
+   | chain                     |               |                       |
+   +---------------------------+---------------+-----------------------+
 
-   2.  Otherwise, if a validated inbound chain exists, copy it into the
-       issued token.
+                                  Table 4
 
-   3.  Otherwise, omit act.
+   A request in the first row remains a rebind for its binding
+   (Presenter Transition Model (Section 5.1)).  A pair that only a local
+   mapping relates to the inbound outermost actor's is not an exact
+   match and takes the second row.  Local policy governs repeated
+   identifiers deeper in the chain.  The AS confirms or evaluates the
+   relationship under local policy, for example through a grant, consent
+   record, or policy rule.  If the relationship is prohibited, or a
+   required relationship cannot be confirmed, the AS MUST reject the
+   request with the actor_unauthorized error code.
 
-   In both the first and second cases, the AS MUST preserve every
-   inherited actor and field unchanged, adding, removing, or rewriting
-   no member, except as Omitting Prior Actors (Section 3.6.6) permits.
-   If it cannot produce the required chain, it MUST reject the request
-   under Error Responses (Section 9).
+   In the first three rows, the AS MUST preserve every inherited actor
+   and field unchanged, adding, removing, or rewriting no member, except
+   as Omitting Prior Actors (Section 3.6.3) permits.  If it cannot
+   produce the required chain, it MUST reject the request under Error
+   Responses (Section 9).
 
-3.6.5.  Enforce Depth Limit
+   If adding the new outermost actor would exceed the depth limit
+   (Validate the Inbound Chain (Section 3.6.1)), the AS MUST reject with
+   invalid_request and MUST NOT silently truncate the chain (Error
+   Responses (Section 9)).
 
-   Implementations MUST set and enforce a local maximum on the number of
-   visible act objects.  Depth 1 is the interoperable minimum.  Cross-
-   domain multi-hop implementations SHOULD support depth 4 or greater.
-   Same-domain deployments can use a shallower limit when sufficient.
-
-   Recipients MUST reject an over-limit inbound token as invalid under
-   the applicable token-processing rules.  If adding the new outermost
-   actor would exceed the limit, the AS MUST reject with invalid_request
-   and MUST NOT silently truncate the chain (Error Responses
-   (Section 9)).
-
-   An implementation that also limits total depth MUST reject an
-   incomplete chain unless it can establish that the total, including
-   every hidden actor, is within its limit (Omitting Prior Actors
-   (Section 3.6.6)).
-
-3.6.6.  Omitting Prior Actors
+3.6.3.  Omitting Prior Actors
 
    By default, an issuer that preserves or extends a delegation chain
    includes all of it or rejects the request.  An issuer MAY omit inner
@@ -721,8 +699,9 @@ Table of Contents
    to mark the omission in tokens and introspection responses.  An
    issuer that omits actors:
 
-   *  MUST first apply Validate Carrier Token (Section 3.6.1) through
-      Enforce Depth Limit (Section 3.6.5);
+   *  MUST first apply Validate the Inbound Chain (Section 3.6.1) and
+      Determine the Output Chain (Section 3.6.2), including their depth
+      checks;
 
    *  MUST NOT omit the outermost actor object or the act claim;
 
@@ -779,10 +758,10 @@ Table of Contents
    A confirmation member such as act.cnf is permitted as extension data
    under Actor Object Structure (Section 3.4) and has no proof-of-
    possession semantics under this profile.  It remains unchanged in an
-   inherited actor object under Construct the Chain (Section 3.6.4).
-   After further delegation, an inherited confirmation value can
-   therefore differ from the current token's top-level cnf claim; this
-   profile imposes no equality check between them.
+   inherited actor object under Determine the Output Chain
+   (Section 3.6.2).  After further delegation, an inherited confirmation
+   value can therefore differ from the current token's top-level cnf
+   claim; this profile imposes no equality check between them.
 
 4.  JWT Assertion Grants
 
@@ -845,34 +824,35 @@ Table of Contents
        as an authority to assert delegation from sub to the actor
        identified by act.sub; otherwise, it MUST reject with
        invalid_grant.  This step concerns only the issuer's authority;
-       step 3 decides, under Validate Outermost Actor (Section 3.6.2),
-       whether local policy permits that delegation.  An assertion grant
-       is self-issued when its iss identifies the entity that its
-       outermost (act.iss, act.sub) pair identifies; an iss equal to
-       act.iss alone does not make a grant self-issued.  The AS MUST
-       reject a self-issued assertion grant, with invalid_grant or, for
-       a Token Exchange subject_token, invalid_request, unless another
-       specification or local policy enables it.  Accepting one is
-       outside the interoperable scope of this document; Self-Issued
-       Authorization Grants (Section 13.2) gives the security controls
-       such a deployment needs to establish independently.
+       step 3 decides, with the delegation check in Determine the Output
+       Chain (Section 3.6.2), whether local policy permits that
+       delegation.  An assertion grant is self-issued when its iss
+       identifies the entity that its outermost (act.iss, act.sub) pair
+       identifies; an iss equal to act.iss alone does not make a grant
+       self-issued.  The AS MUST reject a self-issued assertion grant,
+       with invalid_grant or, for a Token Exchange subject_token,
+       invalid_request, unless another specification or local policy
+       enables it.  Accepting one is outside the interoperable scope of
+       this document; Self-Issued Authorization Grants (Section 13.2)
+       gives the security controls such a deployment needs to establish
+       independently.
 
-   3.  The AS MUST validate the assertion's act claim under Validate
-       Outermost Actor (Section 3.6.2), Carry Prior-Actor Context
-       (Section 3.6.3), and Enforce Depth Limit (Section 3.6.5),
-       treating the assertion as the carrier token and rejecting input-
-       validation failures with invalid_grant; an act object without iss
-       is handled under Actor Object Structure (Section 3.4) instead.
+   3.  The AS MUST validate the assertion's act claim under Validate the
+       Inbound Chain (Section 3.6.1) and the delegation check in
+       Determine the Output Chain (Section 3.6.2), treating the
+       assertion as the carrier token and rejecting input-validation
+       failures with invalid_grant; an act object without iss is handled
+       under Actor Object Structure (Section 3.4) instead.
 
    4.  The assertion is pre-chained when its act object contains a
        nested act object or an omission marking the AS recognizes
-       (Omitting Prior Actors (Section 3.6.6)) shows that prior actors
+       (Omitting Prior Actors (Section 3.6.3)) shows that prior actors
        were omitted; either indicates that the asserted actor is itself
        a delegatee.  If the assertion is pre-chained and the AS does not
        accept pre-chained assertions, the AS MUST reject the request
        with invalid_grant.  When a nested act object is present, the AS
-       MUST propagate the inner chain under Construct the Chain
-       (Section 3.6.4).
+       MUST propagate the inner chain under Determine the Output Chain
+       (Section 3.6.2).
 
    5.  The AS MUST verify proof of possession according to the token-
        endpoint mechanism in use and the top-level cnf semantics in
@@ -948,45 +928,47 @@ Table of Contents
    and only when no source of a new actor (Section 3.6) establishes a
    new presenter.
 
-    +==============+==================+===============================+
-    | Transition   | Required         | Output presenter and binding  |
-    |              | evidence         |                               |
-    +==============+==================+===============================+
-    | Presenter    | Requester MUST   | Same presenter; inbound chain |
-    | continuation | prove possession | copied.  A sender-constrained |
-    | (bound)      | of the subject   | output retains the binding.   |
-    |              | token's top-     |                               |
-    |              | level binding.   |                               |
-    +--------------+------------------+-------------------------------+
-    | Presenter    | Subject token    | Same presenter; inbound chain |
-    | continuation | has no top-level | copied; bearer output.        |
-    | (bearer)     | binding, and the |                               |
-    |              | authenticated    |                               |
-    |              | requester        |                               |
-    |              | matches the      |                               |
-    |              | outermost        |                               |
-    |              | (act.iss,        |                               |
-    |              | act.sub) under   |                               |
-    |              | Identifier       |                               |
-    |              | Reconciliation   |                               |
-    |              | (Section 3.5).   |                               |
-    +--------------+------------------+-------------------------------+
-    | Presenter    | A source of a    | New presenter as the new      |
-    | rebind       | new actor        | outermost actor over any      |
-    |              | (Section 3.6)    | inbound chain, or the inbound |
-    |              | establishes the  | chain unchanged when the new  |
-    |              | new presenter.   | actor has the outermost       |
-    |              |                  | actor's exact (act.iss,       |
-    |              |                  | act.sub) (rule 1 of Construct |
-    |              |                  | the Chain (Section 3.6.4)).   |
-    |              |                  | For a sender-constrained      |
-    |              |                  | output, the issuer MUST       |
-    |              |                  | verify the new presenter's    |
-    |              |                  | proof and bind the output to  |
-    |              |                  | that key or certificate.      |
-    +--------------+------------------+-------------------------------+
+   +==============+==================+=================================+
+   | Transition   | Required         | Output presenter and binding    |
+   |              | evidence         |                                 |
+   +==============+==================+=================================+
+   | Presenter    | Requester MUST   | Same presenter; inbound chain   |
+   | continuation | prove            | copied.  A sender-constrained   |
+   | (bound)      | possession of    | output retains the binding.     |
+   |              | the subject      |                                 |
+   |              | token's top-     |                                 |
+   |              | level binding.   |                                 |
+   +--------------+------------------+---------------------------------+
+   | Presenter    | Subject token    | Same presenter; inbound chain   |
+   | continuation | has no top-      | copied; bearer output.          |
+   | (bearer)     | level binding,   |                                 |
+   |              | and the          |                                 |
+   |              | authenticated    |                                 |
+   |              | requester        |                                 |
+   |              | matches the      |                                 |
+   |              | outermost        |                                 |
+   |              | (act.iss,        |                                 |
+   |              | act.sub) under   |                                 |
+   |              | Identifier       |                                 |
+   |              | Reconciliation   |                                 |
+   |              | (Section 3.5).   |                                 |
+   +--------------+------------------+---------------------------------+
+   | Presenter    | A source of a    | New presenter as the new        |
+   | rebind       | new actor        | outermost actor over any        |
+   |              | (Section 3.6)    | inbound chain, or the inbound   |
+   |              | establishes      | chain unchanged when the new    |
+   |              | the new          | actor has the outermost actor's |
+   |              | presenter.       | exact (act.iss, act.sub) (the   |
+   |              |                  | first row of Determine the      |
+   |              |                  | Output Chain (Section 3.6.2)).  |
+   |              |                  | For a sender-constrained        |
+   |              |                  | output, the issuer MUST verify  |
+   |              |                  | the new presenter's proof and   |
+   |              |                  | bind the output to that key or  |
+   |              |                  | certificate.                    |
+   +--------------+------------------+---------------------------------+
 
-                                  Table 4
+                                  Table 5
 
    On rebind the issuer MUST validate any proof required by the actor
    credential or deployment, including for a bearer output.  The subject
@@ -1048,7 +1030,7 @@ Table of Contents
           token's grant is inbound act state like a chain carried in
           act, and the AS MUST carry any omission marking recorded with
           that chain into the issued token, except as Omitting Prior
-          Actors (Section 3.6.6) permits.
+          Actors (Section 3.6.3) permits.
 
        *  For an actor_token, the AS MUST derive the outermost actor and
           handle any inbound chain as specified in Actor Tokens
@@ -1096,7 +1078,7 @@ Table of Contents
    |token      |                                      | check          |
    +-----------+--------------------------------------+----------------+
 
-                                  Table 5
+                                  Table 6
 
    For each subject_token input, the state it establishes, whether it
    allows presenter continuation (Presenter Transition Model
@@ -1134,7 +1116,7 @@ Table of Contents
    |             | chain        |              |                       |
    +-------------+--------------+--------------+-----------------------+
 
-                                  Table 6
+                                  Table 7
 
    For actor_token inputs, each of which establishes the outermost
    actor:
@@ -1151,7 +1133,7 @@ Table of Contents
      |                      | aud relaxed   | party's identity       |
      +----------------------+---------------+------------------------+
 
-                                  Table 7
+                                  Table 8
 
 5.3.  Subject Tokens
 
@@ -1423,10 +1405,10 @@ Table of Contents
    Exchange.  This document defines limited use of may_act as a
    delegation-authorization input when actor identity is established by
    other means: when present in a validated subject_token, it MAY
-   satisfy the delegation-authorization check in step 3 of Validate
-   Outermost Actor (Section 3.6.2) without a separately pre-registered
-   grant.  The may_act claim is never itself the source of actor
-   identity, and it MUST NOT be propagated into any output token.
+   satisfy the delegation-authorization check in Determine the Output
+   Chain (Section 3.6.2) without a separately pre-registered grant.  The
+   may_act claim is never itself the source of actor identity, and it
+   MUST NOT be propagated into any output token.
 
    Two preconditions apply regardless of how the Token Exchange request
    is structured:
@@ -1506,7 +1488,7 @@ Table of Contents
       in the outermost actor that the applicable registry, a deployment-
       specific allowed set, or the local policy applicable to the token
       it is issuing disallows; inner actors' values are prior-actor
-      context (Carry Prior-Actor Context (Section 3.6.3)).  It MUST
+      context (Validate the Inbound Chain (Section 3.6.1)).  It MUST
       preserve unrecognized but syntactically valid values that it
       carries forward.  An issuer that does not process actor
       classification handles act.sub_profile as an unrecognized actor
@@ -1574,7 +1556,8 @@ Table of Contents
    *  Is signed per Section 3 of [RFC7523].
 
    Issuing such a grant is subject to AS configuration and, when the
-   grant carries act, to Validate Outermost Actor (Section 3.6.2).
+   grant carries act, to the delegation check in Determine the Output
+   Chain (Section 3.6.2).
 
    The following example shows an AS-issued assertion grant, which is
    the recommended pattern.  The Enterprise IdP AS performed Token
@@ -1672,7 +1655,7 @@ Table of Contents
 
    An AS that issues a refresh token together with a token carrying act
    MUST record that chain for the grant as issued, with any marking of
-   omitted actors (Omitting Prior Actors (Section 3.6.6)).  For the
+   omitted actors (Omitting Prior Actors (Section 3.6.3)).  For the
    refresh_token grant (Section 6 of [RFC6749]), the AS MUST carry the
    act chain recorded for the grant, with any recorded marking, into the
    refreshed token unchanged or reject the request; it MUST NOT issue a
@@ -1790,7 +1773,7 @@ Table of Contents
       whether a new outermost act is created.
 
    The TTS MUST NOT omit prior actors and MUST carry forward any
-   recognized omission marking (Omitting Prior Actors (Section 3.6.6)).
+   recognized omission marking (Omitting Prior Actors (Section 3.6.3)).
    For a replacement Transaction Token, the TTS MUST keep sub unchanged,
    and it maintains the requesting workload call chain (Section 13.15 of
    [I-D.ietf-oauth-transaction-tokens]).  The output's req_wl identifies
@@ -1823,7 +1806,7 @@ Table of Contents
        trusted to convey the claims it carries.
 
    2.  Reject a token without act, and reject a visible chain exceeding
-       the depth limit (Section 3.6.5).  Where local policy or
+       the depth limit (Section 3.6.1).  Where local policy or
        actor_profile_required: true requires profile conformance,
        require iss in every visible actor object; otherwise, the RS MAY
        process a nonconforming act under local rules, without inferring
@@ -1841,8 +1824,8 @@ Table of Contents
        access requirement, and reject the request if required actor
        authorization cannot be completed.  Only the subject and current
        actor are principals in the authorization decision; the RS MAY
-       use inner actors, which are prior-actor context (Carry
-       Prior-Actor Context (Section 3.6.3)), for audit.
+       use inner actors, which are prior-actor context (Validate the
+       Inbound Chain (Section 3.6.1)), for audit.
 
    The RS MUST reject failed requests according to the token type and
    MUST NOT expose actor-specific rejection details beyond the error
@@ -1879,7 +1862,7 @@ Table of Contents
     |                                 | policy denial.                |
     +---------------------------------+-------------------------------+
 
-                                  Table 8
+                                  Table 9
 
    The RS MUST use the Bearer challenge for bearer and mTLS-bound tokens
    (Section 3.1 of [RFC6750], [RFC8705]) and DPoP for DPoP-bound tokens
@@ -1983,7 +1966,7 @@ Table of Contents
    If local privacy policy requires omitting inner actors, the AS MAY
    filter them but MUST include "chain_complete": false.  When it knows
    that the token's chain omits actors under Omitting Prior Actors
-   (Section 3.6.6), it MUST also include "chain_complete": false and the
+   (Section 3.6.3), it MUST also include "chain_complete": false and the
    profile's marking, so that the RS can distinguish issuer omission
    from introspection filtering.
 
@@ -1991,9 +1974,9 @@ Table of Contents
    remain available for authorization, and the RS records the
    incompleteness in any audit of the chain.  A chain_complete of false
    without an omission marking that the RS recognizes does not by itself
-   require rejection under this profile, except as Enforce Depth Limit
-   (Section 3.6.5) requires of an RS that limits total depth; the
-   rejection in Omitting Prior Actors (Section 3.6.6) applies when the
+   require rejection under this profile, except as Validate the Inbound
+   Chain (Section 3.6.1) requires of an RS that limits total depth; the
+   rejection in Omitting Prior Actors (Section 3.6.3) applies when the
    RS detects issuer omission through a profile's marking.
 
    The RS MUST NOT treat a partial chain as complete delegation history.
@@ -2090,7 +2073,7 @@ Table of Contents
     |                    | (Common Issuance Rules (Section 6.1))     |
     +--------------------+-------------------------------------------+
 
-                                 Table 9
+                                 Table 10
 
    TTS failures to preserve the subject or to trust inbound actor
    identifiers use the invalid_request error code.
@@ -2138,7 +2121,7 @@ Table of Contents
    |                                      |             |requests      |
    +--------------------------------------+-------------+--------------+
 
-                                  Table 10
+                                  Table 11
 
    [I-D.ietf-oauth-identity-assertion-authz-grant] defines
    authorization_grant_profiles_supported, and
@@ -2382,13 +2365,13 @@ Table of Contents
    *  if it defines data that aligns to the visible act chain, MUST
       specify the alignment rules, the behavior when coverage is
       partial, and the behavior when introspection or privacy filtering,
-      or omission under Omitting Prior Actors (Section 3.6.6),
+      or omission under Omitting Prior Actors (Section 3.6.3),
       suppresses part of the visible chain.
 
    A companion profile can define authorization based on independently
    verifiable per-hop evidence that it carries in its own top-level
    claims, but not on nested act objects, which remain prior-actor
-   context (Carry Prior-Actor Context (Section 3.6.3)).
+   context (Validate the Inbound Chain (Section 3.6.1)).
 
    An implementation that conforms only to this core profile MUST ignore
    unrecognized companion-profile claims, metadata parameters, and
@@ -2474,8 +2457,8 @@ Table of Contents
 
 12.2.  Trusting Actor Identifier Pairs
 
-   Validate Outermost Actor (Section 3.6.2) requires trust in the token
-   issuer's authority to assert the (act.iss, act.sub) pair.
+   Validate the Inbound Chain (Section 3.6.1) requires trust in the
+   token issuer's authority to assert the (act.iss, act.sub) pair.
    Deployment-specific mechanisms for establishing that trust include:
 
    *  federation metadata or trust-framework configuration that
@@ -2542,8 +2525,8 @@ Table of Contents
    Section 4.1.4 of [RFC7519] regardless of chain depth.
 
    Inner actors are not access-control inputs because only the outer
-   token issuer's signature endorses them (Carry Prior-Actor Context
-   (Section 3.6.3)).  Companion Profiles and Extension Points
+   token issuer's signature endorses them (Validate the Inbound Chain
+   (Section 3.6.1)).  Companion Profiles and Extension Points
    (Section 11) describes how independently verifiable per-hop evidence
    can support authorization.
 
@@ -2707,7 +2690,7 @@ Table of Contents
 
 13.11.  Delegation Depth Limits
 
-   The depth limit (Section 3.6.5) bounds parsing work.  A count of
+   The depth limit (Section 3.6.1) bounds parsing work.  A count of
    actors omitted by the issuer can understate total depth if
    introspection filters additional actors.
 
@@ -2775,11 +2758,11 @@ Table of Contents
 
    Issuers SHOULD minimize disclosure of prior actors through audience
    and token-design decisions made before issuance.  Once an issuer
-   preserves a delegation chain, Construct the Chain (Section 3.6.4)
-   requires copying it intact.  Unless Omitting Prior Actors
-   (Section 3.6.6) permits omission, an issuer whose local privacy
-   requirements would require omitting a chain element rejects the
-   request rather than truncating the chain.
+   preserves a delegation chain, Determine the Output Chain
+   (Section 3.6.2) requires copying it intact.  Unless Omitting Prior
+   Actors (Section 3.6.3) permits omission, an issuer whose local
+   privacy requirements would require omitting a chain element rejects
+   the request rather than truncating the chain.
 
    A Transaction Token's txn value links service calls in the same
    transaction and can enable correlation across organizations.
@@ -2794,7 +2777,7 @@ Table of Contents
    Issuers SHOULD consider audience-specific disclosure constraints and
    SHOULD omit unnecessary entity classifications when constructing new
    actor objects.  Inherited actors remain subject to the preservation
-   rules in Construct the Chain (Section 3.6.4).
+   rules in Determine the Output Chain (Section 3.6.2).
 
    The req_wl claim can reveal internal workload topology.  A TTS SHOULD
    disclose it only where needed for authorization, audit, or policy
@@ -3103,14 +3086,15 @@ Document History
 
    *  Consolidated processing: one presenter-transition table for Token
       Exchange and the TTS, Common Issuance Rules for every output, one
-      resource server validation procedure, and ordered chain-
-      construction rules; the TTS scope rule is now a MUST, as in
-      Sections 13.6 and 13.14 of [I-D.ietf-oauth-transaction-tokens];
-      the full worked examples moved to the repository.  JWT assertion
-      grant actor checks now apply the chain algorithm, processing
-      requirements in the Considerations sections moved to the sections
-      they govern, an untestable cross-domain requirement was removed
-      and another became descriptive, the recommendation to advertise
+      resource server validation procedure, and one table that gives the
+      issued act and its delegation check; the TTS scope rule is now a
+      MUST, as in Sections 13.6 and 13.14 of
+      [I-D.ietf-oauth-transaction-tokens]; the full worked examples
+      moved to the repository.  JWT assertion grant actor checks now
+      apply the chain algorithm, processing requirements in the
+      Considerations sections moved to the sections they govern, an
+      untestable cross-domain requirement was removed and another became
+      descriptive, the recommendation to advertise
       introspection_endpoint was removed, a self-issued grant, an
       untrusted grant issuer, and an unaccepted pre-chained grant now
       name invalid_grant, an unmet actor_profile_required names
