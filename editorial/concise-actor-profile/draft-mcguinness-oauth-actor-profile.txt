@@ -512,10 +512,13 @@ Table of Contents
    sub_profile:  OPTIONAL.  A space-delimited list of entity profile
       values classifying the actor identified by act.sub.
       [I-D.mora-oauth-entity-profiles] defines its syntax, its values
-      (such as user, service, and ai_agent), and their registry.  An
-      implementation that does not process actor classification handles
-      act.sub_profile like any other unrecognized actor member,
-      including copying it unchanged when it preserves a chain.
+      (such as user, service, and ai_agent), and their registry.
+      Organizations defining private sub_profile values SHOULD use a
+      collision-resistant name, such as com.example.agent for a value
+      defined by the controller of example.com.  An implementation that
+      does not process actor classification handles act.sub_profile like
+      any other unrecognized actor member, including copying it
+      unchanged when it preserves a chain.
 
       [I-D.mora-oauth-entity-profiles] also defines multi-value strings
       such as "service ai_agent".
@@ -692,14 +695,13 @@ Table of Contents
 
    1.  If a new actor is established, create an outermost actor object
        (Section 3.4) and nest any validated inbound chain beneath it.
-       If the new actor has the same (act.iss, act.sub) as the inbound
-       outermost actor, or a pair that Identifier Reconciliation
-       (Section 2) maps to it, the AS MUST instead copy the inbound
-       chain unchanged, as in rule 2, keeping the inbound identifiers in
-       place of those that the source of the new actor (Section 3.5)
-       would otherwise set; the request remains a rebind for its binding
-       (Presenter Transition Model (Section 5.1)).  Local policy governs
-       repeated identifiers deeper in the chain.
+       If the new actor has exactly the same (act.iss, act.sub) as the
+       inbound outermost actor, the AS MUST instead copy the inbound
+       chain unchanged, as in rule 2; the request remains a rebind for
+       its binding (Presenter Transition Model (Section 5.1)).  A pair
+       that only a local mapping relates to the outermost actor's is a
+       new actor.  Local policy governs repeated identifiers deeper in
+       the chain.
 
    2.  Otherwise, if a validated inbound chain exists, copy it into the
        issued token.
@@ -822,7 +824,9 @@ Table of Contents
    carries an act claim and to any JWT assertion grant presented as a
    Token Exchange subject_token.  Steps 2 through 4 and 6 apply only
    when the grant carries act, and step 7 does not apply to a
-   subject_token.
+   subject_token.  JWT Assertion Grant as subject_token (Section 5.3.1)
+   adds a redemption record, on every path, for grants from an issuer
+   for which local policy permits rebind of bound grants.
 
    1.  The AS MUST validate the assertion per [RFC7523], including its
        signature and its iss, sub, aud, exp, and jti claims.  The jti
@@ -852,7 +856,8 @@ Table of Contents
           jti) pair as defense in depth.  Any permitted reuse requires
           validation of that binding on each redemption and remains
           subject to the single-use requirements in Self-Issued
-          Authorization Grants (Section 13.2) or the applicable grant
+          Authorization Grants (Section 13.2), JWT Assertion Grant as
+          subject_token (Section 5.3.1), or the applicable grant
           profile.
 
    2.  The AS MUST verify that local policy trusts the assertion's iss
@@ -963,42 +968,43 @@ Table of Contents
    and only when no source of a new actor (Section 3.5) establishes a
    new presenter.
 
-   +==============+===================+================================+
-   | Transition   | Required          | Output presenter and binding   |
-   |              | evidence          |                                |
-   +==============+===================+================================+
-   | Presenter    | Requester MUST    | Same presenter; inbound chain  |
-   | continuation | prove possession  | copied.  A sender-constrained  |
-   | (bound)      | of the subject    | output retains the binding.    |
-   |              | token's top-      |                                |
-   |              | level binding.    |                                |
-   +--------------+-------------------+--------------------------------+
-   | Presenter    | Subject token     | Same presenter; inbound chain  |
-   | continuation | has no top-level  | copied; bearer output.         |
-   | (bearer)     | binding, and the  |                                |
-   |              | authenticated     |                                |
-   |              | requester         |                                |
-   |              | matches the       |                                |
-   |              | outermost         |                                |
-   |              | (act.iss,         |                                |
-   |              | act.sub) under    |                                |
-   |              | Identifier        |                                |
-   |              | Reconciliation    |                                |
-   |              | (Section 2).      |                                |
-   +--------------+-------------------+--------------------------------+
-   | Presenter    | A source of a     | New presenter as the new       |
-   | rebind       | new actor         | outermost actor over any       |
-   |              | (Section 3.5)     | inbound chain, or the inbound  |
-   |              | establishes the   | chain unchanged when the new   |
-   |              | new presenter.    | actor is already the outermost |
-   |              |                   | actor (rule 1 of Construct the |
-   |              |                   | Chain (Section 3.6.4)).  For a |
-   |              |                   | sender-constrained output, the |
-   |              |                   | issuer MUST verify the new     |
-   |              |                   | presenter's proof and bind the |
-   |              |                   | output to that key or          |
-   |              |                   | certificate.                   |
-   +--------------+-------------------+--------------------------------+
+    +==============+==================+===============================+
+    | Transition   | Required         | Output presenter and binding  |
+    |              | evidence         |                               |
+    +==============+==================+===============================+
+    | Presenter    | Requester MUST   | Same presenter; inbound chain |
+    | continuation | prove possession | copied.  A sender-constrained |
+    | (bound)      | of the subject   | output retains the binding.   |
+    |              | token's top-     |                               |
+    |              | level binding.   |                               |
+    +--------------+------------------+-------------------------------+
+    | Presenter    | Subject token    | Same presenter; inbound chain |
+    | continuation | has no top-level | copied; bearer output.        |
+    | (bearer)     | binding, and the |                               |
+    |              | authenticated    |                               |
+    |              | requester        |                               |
+    |              | matches the      |                               |
+    |              | outermost        |                               |
+    |              | (act.iss,        |                               |
+    |              | act.sub) under   |                               |
+    |              | Identifier       |                               |
+    |              | Reconciliation   |                               |
+    |              | (Section 2).     |                               |
+    +--------------+------------------+-------------------------------+
+    | Presenter    | A source of a    | New presenter as the new      |
+    | rebind       | new actor        | outermost actor over any      |
+    |              | (Section 3.5)    | inbound chain, or the inbound |
+    |              | establishes the  | chain unchanged when the new  |
+    |              | new presenter.   | actor has the outermost       |
+    |              |                  | actor's exact (act.iss,       |
+    |              |                  | act.sub) (rule 1 of Construct |
+    |              |                  | the Chain (Section 3.6.4)).   |
+    |              |                  | For a sender-constrained      |
+    |              |                  | output, the issuer MUST       |
+    |              |                  | verify the new presenter's    |
+    |              |                  | proof and bind the output to  |
+    |              |                  | that key or certificate.      |
+    +--------------+------------------+-------------------------------+
 
                                   Table 4
 
@@ -1006,11 +1012,11 @@ Table of Contents
    credential or deployment, including for a bearer output.  The subject
    token's prior binding alone does not require proof from the prior
    presenter.  JWT Assertion Grant (Section 5.3.1) restricts rebind of
-   bound grants by issuer.  With a validated actor_token, the issuer MAY
-   upgrade a bearer input, an ID Token, or a refresh token to a sender-
-   constrained output.  To change presenters while retaining a chain,
-   deployments SHOULD supply the delegated credential as subject_token
-   and the direct credential as actor_token.
+   bound grants by grant profile and issuer.  With a validated
+   actor_token, the issuer MAY upgrade a bearer input, an ID Token, or a
+   refresh token to a sender-constrained output.  To change presenters
+   while retaining a chain, deployments SHOULD supply the delegated
+   credential as subject_token and the direct credential as actor_token.
 
    JWT assertion grants identify the subject of delegation and are
    unsuitable as actor credentials.  A requester establishing an agent,
@@ -1027,9 +1033,10 @@ Table of Contents
 
    For a non-delegated exchange, the AS applies [RFC8693] and local
    policy.  The requester MUST prove possession of any top-level binding
-   on the subject token.  The AS omits act on issuance and MAY reject
-   the request with actor_unauthorized when policy requires explicit
-   delegation.
+   on the subject token.  The AS omits act on issuance.  The AS MAY
+   reject a non-delegated exchange with actor_unauthorized when actor
+   policy prohibits it, for example when the client or resource requires
+   explicit delegation.
 
 5.2.  Input Processing
 
@@ -1115,36 +1122,37 @@ Table of Contents
    allows presenter continuation (Presenter Transition Model
    (Section 5.1)), and its scope ceiling:
 
-     +=============+==============+==============+===================+
-     | Input       | Establishes  | Continuation | Scope ceiling     |
-     +=============+==============+==============+===================+
-     | JWT         | sub,         | Allowed      | Its scope claim   |
-     | assertion   | sub_profile, |              | when present,     |
-     | grant       | top-level    |              | otherwise what    |
-     |             | cnf, act     |              | direct redemption |
-     |             |              |              | would authorize   |
-     +-------------+--------------+--------------+-------------------+
-     | JWT access  | sub,         | Allowed      | Its effective     |
-     | token       | sub_profile, |              | scope             |
-     |             | top-level    |              |                   |
-     |             | cnf, act     |              |                   |
-     +-------------+--------------+--------------+-------------------+
-     | Transaction | sub,         | Allowed      | The authority it  |
-     | Token       | sub_profile, |              | represents        |
-     |             | top-level    |              |                   |
-     |             | presenter    |              |                   |
-     |             | binding, act |              |                   |
-     +-------------+--------------+--------------+-------------------+
-     | ID Token    | sub only; no | Not allowed  | None; scope comes |
-     |             | chain        |              | from the          |
-     |             |              |              | actor_token (if   |
-     |             |              |              | any), [RFC8693],  |
-     |             |              |              | and local policy  |
-     +-------------+--------------+--------------+-------------------+
-     | Refresh     | sub,         | Not allowed  | Its authorized    |
-     | token       | recorded     |              | scope             |
-     |             | chain        |              |                   |
-     +-------------+--------------+--------------+-------------------+
+   +=============+==============+==============+=======================+
+   | Input       | Establishes  | Continuation | Scope ceiling         |
+   +=============+==============+==============+=======================+
+   | JWT         | sub,         | Allowed      | Its scope claim       |
+   | assertion   | sub_profile, |              | when present,         |
+   | grant       | top-level    |              | otherwise what its    |
+   |             | cnf, act     |              | redemption as a       |
+   |             |              |              | JWT bearer grant      |
+   |             |              |              | would authorize       |
+   +-------------+--------------+--------------+-----------------------+
+   | JWT access  | sub,         | Allowed      | Its effective         |
+   | token       | sub_profile, |              | scope                 |
+   |             | top-level    |              |                       |
+   |             | cnf, act     |              |                       |
+   +-------------+--------------+--------------+-----------------------+
+   | Transaction | sub,         | Allowed      | The authority it      |
+   | Token       | sub_profile, |              | represents            |
+   |             | top-level    |              |                       |
+   |             | presenter    |              |                       |
+   |             | binding, act |              |                       |
+   +-------------+--------------+--------------+-----------------------+
+   | ID Token    | sub only; no | Not allowed  | None; scope comes     |
+   |             | chain        |              | from the              |
+   |             |              |              | actor_token (if       |
+   |             |              |              | any), [RFC8693],      |
+   |             |              |              | and local policy      |
+   +-------------+--------------+--------------+-----------------------+
+   | Refresh     | sub,         | Not allowed  | Its authorized        |
+   | token       | recorded     |              | scope                 |
+   |             | chain        |              |                       |
+   +-------------+--------------+--------------+-----------------------+
 
                                   Table 6
 
@@ -1177,19 +1185,27 @@ Table of Contents
    In presenter continuation, step 5 of Authorization Grant Processing
    (Section 4.1) applies.  For presenter rebind of a DPoP- or mTLS-bound
    assertion grant, the AS MUST reject the request with invalid_request
-   unless local policy explicitly permits rebind for the grant's
-   validated issuer.  On rebind, the AS does not perform step 5's match
-   of the request's proof against the grant's top-level cnf, and it
-   treats the grant as having no enforced grant-level sender constraint,
-   so the (iss, jti) single-use rule in step 1 of Authorization Grant
-   Processing (Section 4.1) applies.  When local policy permits such
-   rebind, the AS MUST record each (iss, jti) pair from that issuer that
-   it accepts, on any path, so that the single-use rule also rejects a
-   rebind of a grant already redeemed with its original key, and it MUST
+   unless the grant profile explicitly permits rebind without proof of
+   the grant's key and local policy permits rebind for the grant's
+   validated issuer.  Section 9.8.1 of
+   [I-D.ietf-oauth-identity-assertion-authz-grant] requires that proof
+   whenever an ID-JAG carrying cnf.jkt is used, so a DPoP-bound ID-JAG
+   cannot be rebound.  This document does not itself give that
+   permission.  On rebind, the AS does not perform step 5's match of the
+   request's proof against the grant's top-level cnf, and it treats the
+   grant as having no enforced grant-level sender constraint, so the
+   (iss, jti) single-use rule in step 1 of Authorization Grant
+   Processing (Section 4.1) applies.  When local policy permits rebind
+   of bound grants from an issuer, the AS MUST record each (iss, jti)
+   pair from that issuer that it accepts, on any path, and whether it
+   accepted it on rebind, so that the single-use rule also rejects a
+   rebind of a grant already redeemed with its original key.  It MUST
    reject any later redemption of a pair it has accepted on rebind,
-   including one that proves the original key.  The AS still validates
-   any proof that the new presenter's credential profile or the
-   deployment requires, as the rebind rules specify.
+   including one that proves the original key, with invalid_grant or, on
+   Token Exchange, invalid_request, and of concurrent continuation and
+   rebind requests for one pair, it MUST accept at most one.  The AS
+   still validates any proof that the new presenter's credential profile
+   or the deployment requires, as the rebind rules specify.
 
 5.3.2.  JWT Access Token
 
@@ -1389,13 +1405,15 @@ Table of Contents
    [I-D.ietf-wimse-wpt]) per its specification, whether or not the
    output token is sender-constrained.  When the request uses this
    credential to establish a sender-constrained output token in
-   presenter-rebind mode, the AS MUST also validate proof for the new
-   presenter binding: the WPT, or a DPoP proof ([RFC9449]) over the
-   token endpoint URI whose key is the confirmation key in the
-   credential's cnf claim (cnf.jwk for a WIMSE credential).  For such an
-   output that is a JWT access token or JWT assertion grant, the AS MUST
-   bind it to that key with a top-level cnf.jkt (Section 6.1 of
-   [RFC9449]), including when the proof was a WPT.  If a required proof
+   presenter-rebind mode, the AS MUST also validate the proof that the
+   output's binding requires, made with the confirmation key in the
+   credential's cnf claim (cnf.jwk for a WIMSE credential).  For a DPoP-
+   bound JWT access token or JWT assertion grant, that proof is a DPoP
+   proof over the token endpoint URI (Section 5 of [RFC9449]), and the
+   AS binds the output with a top-level cnf.jkt for that key
+   (Section 6.1 of [RFC9449]); a WPT validates the credential but does
+   not establish that binding.  For a Transaction Token, the deployment
+   profile defines the proof, which can be the WPT.  If a required proof
    is absent or invalid, the AS MUST reject under Error Responses
    (Section 9), using the proof mechanism's error when specified and
    invalid_request otherwise.
@@ -2045,21 +2063,19 @@ Table of Contents
    a rule that this document states with invalid_grant for a JWT
    assertion grant uses invalid_request instead.
 
-   When more than one error applies, the AS or TTS returns the first in
-   this order, whatever order it makes the checks in: client-
-   authentication errors, proof-mechanism errors, the input-validation
-   errors above and other invalid_request errors, invalid_target,
-   actor_unauthorized other than from scope determination, and then the
-   error that scope determination produces, where Effective Scope
-   (Section 6.2) chooses between invalid_scope and actor_unauthorized.
-   Failed client authentication uses the invalid_client error code per
-   [RFC6749] or [RFC7523].  A supplied invalid DPoP proof uses the
-   invalid_dpop_proof error code; a nonce challenge uses the
-   use_dpop_nonce error code, per Sections 5 and 8 of [RFC9449].  A
-   missing required grant proof is an input-validation failure and uses
-   the grant-type-specific error above.  Actor-authorization denials use
-   the actor_unauthorized error code, an extension error permitted by
-   Section 2.2.2 of [RFC8693].
+   Whatever order it makes the checks in, the AS or TTS gives client-
+   authentication and proof-mechanism errors precedence over the input-
+   validation errors above and other invalid_request errors, and gives
+   input-validation and other invalid_request errors precedence over
+   invalid_target, actor_unauthorized, and invalid_scope, among which it
+   can return any that applies.  Failed client authentication uses the
+   invalid_client error code per [RFC6749] or [RFC7523].  A supplied
+   invalid DPoP proof uses the invalid_dpop_proof error code; a nonce
+   challenge uses the use_dpop_nonce error code, per Sections 5 and 8 of
+   [RFC9449].  A missing required grant proof is an input-validation
+   failure and uses the grant-type-specific error above.  Actor-
+   authorization denials use the actor_unauthorized error code, an
+   extension error permitted by Section 2.2.2 of [RFC8693].
 
    The following error codes apply to both AS and TTS endpoints:
 
@@ -2603,9 +2619,10 @@ Table of Contents
 
 13.3.  Assertion Replay Prevention
 
-   Enabling rebind for a grant issuer permits redemption of a bound
-   assertion grant once without proof of its original key by a requester
-   that establishes an authorized new presenter.  JWT Assertion Grant as
+   Where a grant profile permits rebind of a bound assertion grant and
+   local policy permits it for the grant's issuer, a requester that
+   establishes an authorized new presenter can redeem the grant once
+   without proof of its original key.  JWT Assertion Grant as
    subject_token (Section 5.3.1) applies the single-use check in
    Authorization Grant Processing (Section 4.1).  Short lifetimes limit
    exposure and replay-record retention.
@@ -3125,30 +3142,31 @@ Document History
       applies only to the subject and outermost actor, a rebind that
       names the current outermost actor keeps the chain unchanged,
       sub_profile is optional with Entity Profiles as an informative
-      reference, a delegated-access requirement is defined, rebind of a
-      DPoP- or mTLS-bound assertion grant needs explicit issuer-specific
-      policy, delegated JWT access token issuance outside Token Exchange
-      applies the common rules and scopes a registration-derived actor
-      identifier to the registering AS, the Illustrative Use Case shows
-      the token sequence as a table, Input Processing tables state what
-      each Token Exchange input establishes and whether it allows
-      continuation, a companion profile can define further input and
-      output token types and sources of a new actor, and one Token
-      Issuance section gives Common Issuance Rules and each output
-      token's own claims.
+      reference and collision-resistant private values recommended, a
+      delegated-access requirement is defined, rebind of a DPoP- or
+      mTLS-bound assertion grant needs a grant profile that explicitly
+      permits it and issuer-specific policy, delegated JWT access token
+      issuance outside Token Exchange applies the common rules and
+      scopes a registration-derived actor identifier to the registering
+      AS, the Illustrative Use Case shows the token sequence as a table,
+      Input Processing tables state what each Token Exchange input
+      establishes and whether it allows continuation, a companion
+      profile can define further input and output token types and
+      sources of a new actor, and one Token Issuance section gives
+      Common Issuance Rules and each output token's own claims.
 
    *  Pinned behavior that -01 left open: grant validation applies to
-      every JWT assertion grant subject_token; errors are ordered
-      through invalid_target, actor_unauthorized, and scope errors; a
-      rebind naming an actor that Identifier Reconciliation maps to the
-      outermost actor keeps the chain; a workload credential's proven
-      key binds a JWT access token or assertion grant output with
-      cnf.jkt; a grant's (iss, jti) is consumed only when a token is
-      issued, and where rebind is enabled for its issuer, a grant
-      redeemed with its original key cannot later be rebound and a
-      rebound grant cannot be redeemed again; and a chain_complete of
-      false without a recognized omission marking does not by itself
-      require rejection.
+      every JWT assertion grant subject_token; input-validation errors
+      take precedence over invalid_target, actor_unauthorized, and
+      invalid_scope whatever order the checks run in; a DPoP-bound
+      output from a workload credential needs a DPoP proof made with the
+      credential's key; a resource server rejects a token without act
+      whenever a delegated-access requirement applies; a grant's (iss,
+      jti) is consumed only when a token is issued, and where rebind of
+      bound grants is permitted for its issuer, a grant redeemed with
+      its original key cannot later be rebound and a rebound grant
+      cannot be redeemed again; and a chain_complete of false without a
+      recognized omission marking does not by itself require rejection.
 
    -01
 
