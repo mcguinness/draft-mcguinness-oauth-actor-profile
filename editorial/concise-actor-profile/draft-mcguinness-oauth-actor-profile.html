@@ -1150,15 +1150,12 @@ svg {
             <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
-                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-illustrative-use-case" class="internal xref">Illustrative Use Case</a></p>
-</li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
-                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-relationship-to-related-wor" class="internal xref">Relationship to Related Work</a></p>
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-relationship-to-related-wor" class="internal xref">Relationship to Related Work</a></p>
 </li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
-            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
+            <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
             <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-actor-profile-for-delegatio" class="internal xref">Actor Profile for Delegation</a></p>
@@ -1481,114 +1478,115 @@ svg {
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
 <p id="section-1-1">Delegated requests can pass through several services and trust domains.  Each recipient needs to distinguish the subject whose authorization is exercised, the actor exercising it, and the OAuth client requesting the token: <code>sub</code> identifies the authorizing principal, <code>act.sub</code> the actor, and <code>client_id</code> the client registration.  This profile makes the actor explicit in the token rather than leaving it to be inferred from client registration, without redefining client identity or subject semantics.<a href="#section-1-1" class="pilcrow">¶</a></p>
-<p id="section-1-2">OAuth 2.0 Token Exchange <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines the <code>act</code> claim for the current actor and prior actors, but leaves "the specifics of representing a composite token" to implementations (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-1.1" class="relref">Section 1.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>).  It notes that the <code>iss</code> and <code>sub</code> claims together "might be necessary" to identify an actor (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>), but it does not require an identifier context or classify actors.  Its delegation example derives the <code>act</code> claim from the subject of the <code>actor_token</code> (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#appendix-A.2.5" class="relref">Appendix A.2.5</a></span>), but it does not specify actor validation and derivation rules for each token type, how <code>act</code> propagates across JWT assertion grants, JWT access tokens, and Transaction Tokens, or how the actor relates to a sender-constrained presenter.  Without a common profile, deployments face four interoperability gaps:<a href="#section-1-2" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-1-3.1">
-          <p id="section-1-3.1.1"><strong>No standard entity classification.</strong> The <code>sub</code> claim is overloaded across end-users, service accounts, AI agents, and workloads, with no classification that supports deterministic cross-domain policy.<a href="#section-1-3.1.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-1-3.2">
-          <p id="section-1-3.2.1"><strong>Inconsistent actor representation across token types.</strong> Actor context, including actor key material, has no representation that survives transformation among JWT assertion grants, JWT access tokens, and Transaction Tokens.<a href="#section-1-3.2.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-1-3.3">
-          <p id="section-1-3.3.1"><strong>Implicit delegation via client identity.</strong> A client registration alone might not identify the actor, particularly when one registration serves several agents or workloads, when requests pass through intermediaries, or when tokens cross trust domains.<a href="#section-1-3.3.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-1-3.4">
-          <p id="section-1-3.4.1"><strong>No discovery for actor-profile support.</strong> Neither AS metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> nor Protected Resource Metadata <span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span> defines parameters for advertising actor-profile support.<a href="#section-1-3.4.1" class="pilcrow">¶</a></p>
-</li>
-      </ul>
-<p id="section-1-4">This document profiles <code>act</code> to close those gaps.  It defines:<a href="#section-1-4" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-1-5.1">
-          <p id="section-1-5.1.1">Issuer-scoped actor identifiers and entity classification using <code>sub_profile</code>.<a href="#section-1-5.1.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-1-5.2">
-          <p id="section-1-5.2.1">Rules for validating, extending, and preserving actor information when tokens are exchanged or reissued.<a href="#section-1-5.2.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-1-5.3">
-          <p id="section-1-5.3.1">Presenter continuation and rebind rules for sender-constrained tokens, including upgrades from bearer tokens.<a href="#section-1-5.3.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-1-5.4">
-          <p id="section-1-5.4.1">Resource server processing based on the (<code>sub</code>, outermost <code>act.sub</code>) pair, and metadata for advertising profile support.<a href="#section-1-5.4.1" class="pilcrow">¶</a></p>
-</li>
-        <li class="normal" id="section-1-5.5">
-          <p id="section-1-5.5.1">Extension points for companion profiles that provide additional delegation evidence.<a href="#section-1-5.5.1" class="pilcrow">¶</a></p>
-</li>
-      </ul>
-<p id="section-1-6">This profile applies to human, service, workload, and AI agent delegation.  The requirements of the underlying specifications, including <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>, <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>, and <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>, continue to apply unless this document states otherwise.  <span><a href="#profile-scope" class="internal xref">Profile Scope</a> (<a href="#profile-scope" class="auto internal xref">Section 3.3</a>)</span> describes the supported token paths and the boundary between representation and authorization policy.<a href="#section-1-6" class="pilcrow">¶</a></p>
-<div id="illustrative-use-case">
-<section id="section-1.1">
-        <h3 id="name-illustrative-use-case">
-<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-illustrative-use-case" class="section-name selfRef">Illustrative Use Case</a>
-        </h3>
-<p id="section-1.1-1">Alice authorizes an AI travel assistant to book a trip.  The enterprise AS issues an ID-JAG naming the assistant as actor, the assistant redeems it at the travel provider for an access token, and the provider's booking tool exchanges that token for a Transaction Token.  Each trust domain issues a new token under its own policy, and the outermost actor changes only when a new presenter is established:<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">Alice authorizes an AI travel assistant to book a trip.  The enterprise AS issues an Identity Assertion JWT Authorization Grant (ID-JAG) naming the assistant as actor, the assistant redeems it at the travel provider for an access token, and the provider's booking tool exchanges that token for a Transaction Token.  Each trust domain issues a new token under its own policy, and the outermost actor changes only when a new presenter is established:<a href="#section-1-2" class="pilcrow">¶</a></p>
+<span id="name-tokens-in-the-travel-bookin"></span><div id="illustrative-use-case">
 <table class="center" id="table-1">
-          <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+        <caption>
+<a href="#table-1" class="selfRef">Table 1</a>:
+<a href="#name-tokens-in-the-travel-bookin" class="selfRef">Tokens in the Travel-Booking Flow</a>
+        </caption>
 <thead>
-            <tr>
-              <th class="text-left" rowspan="1" colspan="1">Token</th>
-              <th class="text-left" rowspan="1" colspan="1">Subject</th>
-              <th class="text-left" rowspan="1" colspan="1">Outermost actor</th>
-              <th class="text-left" rowspan="1" colspan="1">Prior actor</th>
-              <th class="text-left" rowspan="1" colspan="1">Presenter key</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">ID Token</td>
-              <td class="text-left" rowspan="1" colspan="1">Alice</td>
-              <td class="text-left" rowspan="1" colspan="1"> </td>
-              <td class="text-left" rowspan="1" colspan="1"> </td>
-              <td class="text-left" rowspan="1" colspan="1"> </td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">ID-JAG</td>
-              <td class="text-left" rowspan="1" colspan="1">Alice</td>
-              <td class="text-left" rowspan="1" colspan="1">Assistant</td>
-              <td class="text-left" rowspan="1" colspan="1"> </td>
-              <td class="text-left" rowspan="1" colspan="1">AgentJKT</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Access token</td>
-              <td class="text-left" rowspan="1" colspan="1">Alice</td>
-              <td class="text-left" rowspan="1" colspan="1">Assistant</td>
-              <td class="text-left" rowspan="1" colspan="1"> </td>
-              <td class="text-left" rowspan="1" colspan="1">AgentJKT</td>
-            </tr>
-            <tr>
-              <td class="text-left" rowspan="1" colspan="1">Transaction Token</td>
-              <td class="text-left" rowspan="1" colspan="1">Alice</td>
-              <td class="text-left" rowspan="1" colspan="1">Booking tool</td>
-              <td class="text-left" rowspan="1" colspan="1">Assistant</td>
-              <td class="text-left" rowspan="1" colspan="1">ToolJKT</td>
-            </tr>
-          </tbody>
-        </table>
-<p id="section-1.1-3"><span><a href="#appendix-cross-domain" class="internal xref">The cross-domain example</a> (<a href="#appendix-cross-domain" class="auto internal xref">Appendix A</a>)</span> gives the requests and tokens.<a href="#section-1.1-3" class="pilcrow">¶</a></p>
-</section>
+          <tr>
+            <th class="text-left" rowspan="1" colspan="1">Token</th>
+            <th class="text-left" rowspan="1" colspan="1">Subject</th>
+            <th class="text-left" rowspan="1" colspan="1">Outermost actor</th>
+            <th class="text-left" rowspan="1" colspan="1">Prior actor</th>
+            <th class="text-left" rowspan="1" colspan="1">Presenter key</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">ID Token</td>
+            <td class="text-left" rowspan="1" colspan="1">Alice</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">ID-JAG</td>
+            <td class="text-left" rowspan="1" colspan="1">Alice</td>
+            <td class="text-left" rowspan="1" colspan="1">Assistant</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+            <td class="text-left" rowspan="1" colspan="1">AgentJKT</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Access token</td>
+            <td class="text-left" rowspan="1" colspan="1">Alice</td>
+            <td class="text-left" rowspan="1" colspan="1">Assistant</td>
+            <td class="text-left" rowspan="1" colspan="1"> </td>
+            <td class="text-left" rowspan="1" colspan="1">AgentJKT</td>
+          </tr>
+          <tr>
+            <td class="text-left" rowspan="1" colspan="1">Transaction Token</td>
+            <td class="text-left" rowspan="1" colspan="1">Alice</td>
+            <td class="text-left" rowspan="1" colspan="1">Booking tool</td>
+            <td class="text-left" rowspan="1" colspan="1">Assistant</td>
+            <td class="text-left" rowspan="1" colspan="1">ToolJKT</td>
+          </tr>
+        </tbody>
+      </table>
 </div>
+<p id="section-1-4"><span><a href="#appendix-cross-domain" class="internal xref">The cross-domain example</a> (<a href="#appendix-cross-domain" class="auto internal xref">Appendix A</a>)</span> gives the requests and tokens.<a href="#section-1-4" class="pilcrow">¶</a></p>
+<p id="section-1-5">OAuth 2.0 Token Exchange <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span> defines the <code>act</code> claim for the current actor and prior actors, but leaves "the specifics of representing a composite token" to implementations (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-1.1" class="relref">Section 1.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>).  It notes that the <code>iss</code> and <code>sub</code> claims together "might be necessary" to identify an actor (<span><a href="https://rfc-editor.org/rfc/rfc8693#section-4.1" class="relref">Section 4.1</a> of [<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>), but it does not require an identifier context or classify actors.  Its delegation example derives the <code>act</code> claim from the subject of the <code>actor_token</code> (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>], <a href="https://rfc-editor.org/rfc/rfc8693#appendix-A.2.5" class="relref">Appendix A.2.5</a></span>), but it does not specify actor validation and derivation rules for each token type, how <code>act</code> propagates across JWT assertion grants, JWT access tokens, and Transaction Tokens, or how the actor relates to a sender-constrained presenter.  Without a common profile, deployments face five interoperability gaps:<a href="#section-1-5" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1-6.1">
+          <p id="section-1-6.1.1"><strong>No issuer-scoped actor identity.</strong> Without an identifier context for <code>act.sub</code>, a recipient cannot tell which namespace an actor identifier belongs to or which issuer may assert it.<a href="#section-1-6.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-6.2">
+          <p id="section-1-6.2.1"><strong>Inconsistent actor representation across token types.</strong> Actor context has no representation that survives transformation among JWT assertion grants, JWT access tokens, and Transaction Tokens, or that ties the outermost actor to the sender-constrained presenter's key.<a href="#section-1-6.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-6.3">
+          <p id="section-1-6.3.1"><strong>Implicit delegation via client identity.</strong> A client registration alone might not identify the actor, particularly when one registration serves several agents or workloads, when requests pass through intermediaries, or when tokens cross trust domains.<a href="#section-1-6.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-6.4">
+          <p id="section-1-6.4.1"><strong>No discovery for actor-profile support.</strong> Neither AS metadata <span>[<a href="#RFC8414" class="cite xref">RFC8414</a>]</span> nor Protected Resource Metadata <span>[<a href="#RFC9728" class="cite xref">RFC9728</a>]</span> defines parameters for advertising actor-profile support.<a href="#section-1-6.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-6.5">
+          <p id="section-1-6.5.1"><strong>No actor classification rules.</strong> <span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span> defines entity profile values for <code>sub</code> and within <code>act</code>, but not how issuers carry an actor's classification across exchanges or how recipients treat an absent or unrecognized value.<a href="#section-1-6.5.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-1-7">This document profiles <code>act</code> to close those gaps.  It defines:<a href="#section-1-7" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1-8.1">
+          <p id="section-1-8.1.1">Issuer-scoped actor identifiers and entity classification using <code>sub_profile</code>.<a href="#section-1-8.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-8.2">
+          <p id="section-1-8.2.1">Rules for validating, extending, and preserving actor information when tokens are exchanged or reissued.<a href="#section-1-8.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-8.3">
+          <p id="section-1-8.3.1">Presenter continuation and rebind rules for sender-constrained tokens, including upgrades from bearer tokens.<a href="#section-1-8.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-8.4">
+          <p id="section-1-8.4.1">Resource server processing based on the (<code>sub</code>, outermost <code>act.sub</code>) pair, and metadata for advertising profile support.<a href="#section-1-8.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-8.5">
+          <p id="section-1-8.5.1">Extension points for companion profiles that provide additional delegation evidence.<a href="#section-1-8.5.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-1-9">This profile applies to human, service, workload, and AI agent delegation.  The requirements of the underlying specifications, including <span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>, <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>, <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>, and <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>, continue to apply unless this document states otherwise.  <span><a href="#profile-scope" class="internal xref">Profile Scope</a> (<a href="#profile-scope" class="auto internal xref">Section 3.3</a>)</span> describes the supported token paths and the boundary between representation and authorization policy.<a href="#section-1-9" class="pilcrow">¶</a></p>
 <div id="relationship-to-related-work">
-<section id="section-1.2">
+<section id="section-1.1">
         <h3 id="name-relationship-to-related-wor">
-<a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-relationship-to-related-wor" class="section-name selfRef">Relationship to Related Work</a>
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-relationship-to-related-wor" class="section-name selfRef">Relationship to Related Work</a>
         </h3>
 <ul class="normal">
-<li class="normal" id="section-1.2-1.1">
-            <p id="section-1.2-1.1.1"><strong>OAuth Token Exchange (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>)</strong> defines the <code>act</code> claim and exchange mechanism profiled here.<a href="#section-1.2-1.1.1" class="pilcrow">¶</a></p>
+<li class="normal" id="section-1.1-1.1">
+            <p id="section-1.1-1.1.1"><strong>OAuth Token Exchange (<span>[<a href="#RFC8693" class="cite xref">RFC8693</a>]</span>)</strong> defines the <code>act</code> claim and exchange mechanism profiled here.<a href="#section-1.1-1.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-1.2-1.2">
-            <p id="section-1.2-1.2.1"><strong>Identity Chaining (<span>[<a href="#I-D.ietf-oauth-identity-chaining" class="cite xref">I-D.ietf-oauth-identity-chaining</a>]</span>)</strong> propagates subject identity across domains and can be combined with this profile's actor representation.<a href="#section-1.2-1.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-1.1-1.2">
+            <p id="section-1.1-1.2.1"><strong>Identity Chaining (<span>[<a href="#I-D.ietf-oauth-identity-chaining" class="cite xref">I-D.ietf-oauth-identity-chaining</a>]</span>)</strong> propagates subject identity across domains and can be combined with this profile's actor representation.<a href="#section-1.1-1.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-1.2-1.3">
-            <p id="section-1.2-1.3.1"><strong>Identity Assertion JWT Authorization Grant (ID-JAG, <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>)</strong> defines the issuance and consumption of JWT authorization grants.  It permits <code>actor_token</code> inputs but leaves their processing, and whether the issued grant carries the <code>act</code> claim, to future profiles or extensions; this document is one such profile, through its Token Exchange and JWT assertion-grant rules.<a href="#section-1.2-1.3.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-1.1-1.3">
+            <p id="section-1.1-1.3.1"><strong>Identity Assertion JWT Authorization Grant (ID-JAG, <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>)</strong> defines the issuance and consumption of JWT authorization grants.  It permits <code>actor_token</code> inputs but leaves their processing, and whether the issued grant carries the <code>act</code> claim, to future profiles or extensions; this document is one such profile, through its Token Exchange and JWT assertion-grant rules.<a href="#section-1.1-1.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-1.2-1.4">
-            <p id="section-1.2-1.4.1"><strong>OAuth Entity Profiles (<span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>)</strong> defines the classification claims, metadata, and registry used by this profile.<a href="#section-1.2-1.4.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-1.1-1.4">
+            <p id="section-1.1-1.4.1"><strong>OAuth Entity Profiles (<span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>)</strong> defines the classification claims, metadata, and registry used by this profile.<a href="#section-1.1-1.4.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-1.2-1.5">
-            <p id="section-1.2-1.5.1"><strong>Transaction Tokens (<span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>)</strong> defines the token and service model extended here with actor claims and processing rules.<a href="#section-1.2-1.5.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-1.1-1.5">
+            <p id="section-1.1-1.5.1"><strong>Transaction Tokens (<span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>)</strong> defines the token and service model extended here with actor claims and processing rules.<a href="#section-1.1-1.5.1" class="pilcrow">¶</a></p>
 </li>
-          <li class="normal" id="section-1.2-1.6">
-            <p id="section-1.2-1.6.1"><strong>WIMSE Workload Identity (<span>[<a href="#I-D.ietf-wimse-workload-creds" class="cite xref">I-D.ietf-wimse-workload-creds</a>]</span>, <span>[<a href="#I-D.ietf-wimse-wpt" class="cite xref">I-D.ietf-wimse-wpt</a>]</span>)</strong> defines workload credentials and proofs used in <span><a href="#appendix-cross-domain" class="internal xref">the cross-domain example</a> (<a href="#appendix-cross-domain" class="auto internal xref">Appendix A</a>)</span>.  This profile also supports other presenter-authentication mechanisms.<a href="#section-1.2-1.6.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-1.1-1.6">
+            <p id="section-1.1-1.6.1"><strong>WIMSE Workload Identity (<span>[<a href="#I-D.ietf-wimse-workload-creds" class="cite xref">I-D.ietf-wimse-workload-creds</a>]</span>, <span>[<a href="#I-D.ietf-wimse-wpt" class="cite xref">I-D.ietf-wimse-wpt</a>]</span>)</strong> defines workload credentials and proofs used in <span><a href="#appendix-cross-domain" class="internal xref">the cross-domain example</a> (<a href="#appendix-cross-domain" class="auto internal xref">Appendix A</a>)</span>.  This profile also supports other presenter-authentication mechanisms.<a href="#section-1.1-1.6.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1767,7 +1765,8 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
             </tbody>
           </table>
 <p id="section-3.3.1-2">An implementation <span class="bcp14">MAY</span> issue any token type in the Issued token row from any supported input, as endpoint policy and the grant type allow; it need not support every combination.  The issued token's own rules govern its actor information: <span><a href="#jwt-assertion-grant-issuance" class="internal xref">JWT Assertion Grant Output</a> (<a href="#jwt-assertion-grant-issuance" class="auto internal xref">Section 6.3</a>)</span>, <span><a href="#jwt-access-token-propagation" class="internal xref">JWT Access Token Output</a> (<a href="#jwt-access-token-propagation" class="auto internal xref">Section 6.4</a>)</span>, <span><a href="#transaction-token-output-rules" class="internal xref">TTS Request Processing</a> (<a href="#transaction-token-output-rules" class="auto internal xref">Section 7.2</a>)</span>, or, for a token type that a companion profile defines, that profile (<span><a href="#companion-profile-extensibility" class="internal xref">Companion Profiles and Extension Points</a> (<a href="#companion-profile-extensibility" class="auto internal xref">Section 11</a>)</span>).<a href="#section-3.3.1-2" class="pilcrow">¶</a></p>
-<p id="section-3.3.1-3">The <code>may_act</code> claim is an optional delegation-authorization input, with the restrictions in <span><a href="#may-act" class="internal xref">Authorized Actor Claim</a> (<a href="#may-act" class="auto internal xref">Section 5.3</a>)</span>.  It neither establishes actor identity nor propagates to the output token.<a href="#section-3.3.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.3.1-3">An AS that issues tokens uses <span><a href="#actor-profile" class="internal xref">Actor Profile for Delegation</a> (<a href="#actor-profile" class="auto internal xref">Section 3</a>)</span>, <span><a href="#jwt-assertion-grants" class="internal xref">JWT Assertion Grants</a> (<a href="#jwt-assertion-grants" class="auto internal xref">Section 4</a>)</span> or <span><a href="#token-exchange-processing" class="internal xref">Token Exchange Processing</a> (<a href="#token-exchange-processing" class="auto internal xref">Section 5</a>)</span> for its inputs, and <span><a href="#token-issuance" class="internal xref">Token Issuance</a> (<a href="#token-issuance" class="auto internal xref">Section 6</a>)</span>.  A TTS uses <span><a href="#token-exchange-processing" class="internal xref">Token Exchange Processing</a> (<a href="#token-exchange-processing" class="auto internal xref">Section 5</a>)</span> for its inputs and <span><a href="#transaction-token-service" class="internal xref">Transaction Token Service Processing</a> (<a href="#transaction-token-service" class="auto internal xref">Section 7</a>)</span> for issuance.  A resource server uses <span><a href="#resource-server-processing" class="internal xref">Resource Server Processing</a> (<a href="#resource-server-processing" class="auto internal xref">Section 8</a>)</span> and the rules of <span><a href="#actor-profile" class="internal xref">Actor Profile for Delegation</a> (<a href="#actor-profile" class="auto internal xref">Section 3</a>)</span> that it cites.  Each needs only the paths it supports.<a href="#section-3.3.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.3.1-4">The <code>may_act</code> claim is an optional delegation-authorization input, with the restrictions in <span><a href="#may-act" class="internal xref">Authorized Actor Claim</a> (<a href="#may-act" class="auto internal xref">Section 5.3</a>)</span>.  It neither establishes actor identity nor propagates to the output token.<a href="#section-3.3.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1949,23 +1948,8 @@ act-object = {
           <h4 id="name-omitting-prior-actors">
 <a href="#section-3.6.3" class="section-number selfRef">3.6.3. </a><a href="#name-omitting-prior-actors" class="section-name selfRef">Omitting Prior Actors</a>
           </h4>
-<p id="section-3.6.3-1">By default, an issuer that preserves or extends a delegation chain includes all of it or rejects the request.  An issuer <span class="bcp14">MAY</span> omit inner actor objects under a profile that defines how to omit them and how to mark the omission in tokens and introspection responses.  An issuer that omits actors:<a href="#section-3.6.3-1" class="pilcrow">¶</a></p>
-<ul class="normal">
-<li class="normal" id="section-3.6.3-2.1">
-              <p id="section-3.6.3-2.1.1"><span class="bcp14">MUST</span> first apply <span><a href="#validate-inbound-chain" class="internal xref">Validate the Inbound Chain</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span> and <span><a href="#determine-output-chain" class="internal xref">Determine the Output Chain</a> (<a href="#determine-output-chain" class="auto internal xref">Section 3.6.2</a>)</span>, including their depth checks;<a href="#section-3.6.3-2.1.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-3.6.3-2.2">
-              <p id="section-3.6.3-2.2.1"><span class="bcp14">MUST NOT</span> omit the outermost actor object or the <code>act</code> claim;<a href="#section-3.6.3-2.2.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-3.6.3-2.3">
-              <p id="section-3.6.3-2.3.1"><span class="bcp14">MUST</span> omit only whole actor objects and keep the remaining ones in order, with their members other than the nested <code>act</code> unchanged; and<a href="#section-3.6.3-2.3.1" class="pilcrow">¶</a></p>
-</li>
-            <li class="normal" id="section-3.6.3-2.4">
-              <p id="section-3.6.3-2.4.1"><span class="bcp14">MUST</span> include the profile's marking in the issued token.<a href="#section-3.6.3-2.4.1" class="pilcrow">¶</a></p>
-</li>
-          </ul>
-<p id="section-3.6.3-3">An issuer that omits actors, or that preserves, extends, or refreshes a chain it knows to be incomplete, <span class="bcp14">MUST</span> reject the request unless the profile or a trust agreement binds every party that trusts the issuer to assert delegation chains to recognize the marking and carry it into derived tokens.  A party that implements only this document cannot recognize the marking.  A TTS and an AS processing the <code>refresh_token</code> grant <span class="bcp14">MUST NOT</span> omit actors.  Each <span class="bcp14">MUST</span> carry forward any omission marking it recognizes (<span><a href="#transaction-token-output-rules" class="internal xref">TTS Request Processing</a> (<a href="#transaction-token-output-rules" class="auto internal xref">Section 7.2</a>)</span>, <span><a href="#delegated-token-issuance" class="internal xref">Other Grants and Refresh Tokens</a> (<a href="#delegated-token-issuance" class="auto internal xref">Section 6.5</a>)</span>).  Token Exchange with a refresh token as <code>subject_token</code> follows this section like any other Token Exchange.<a href="#section-3.6.3-3" class="pilcrow">¶</a></p>
-<p id="section-3.6.3-4">A recipient that detects an omission through the profile's marking <span class="bcp14">MUST NOT</span> treat the chain as complete delegation history and <span class="bcp14">MUST</span> reject the token unless its trust agreement or an applicable profile permits incomplete chains.  It knows only that the delegation depth exceeds the visible depth, unless the profile conveys how many actors are hidden from it.  The innermost visible actor need not be the first actor the subject authorized, and adjacent visible actors need not have delegated directly to each other.<a href="#section-3.6.3-4" class="pilcrow">¶</a></p>
+<p id="section-3.6.3-1">By default, an issuer that preserves or extends a delegation chain includes all of it or rejects the request.  An issuer <span class="bcp14">MAY</span> omit inner actor objects only when a profile or the trust configuration permits it and binds every party that relies on the issuer's chains, including recipients of derived tokens, to recognize the omission and carry its marking forward; a party that implements only this document cannot recognize the marking.  Such an issuer <span class="bcp14">MUST</span> first apply <span><a href="#validate-inbound-chain" class="internal xref">Validate the Inbound Chain</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span> and <span><a href="#determine-output-chain" class="internal xref">Determine the Output Chain</a> (<a href="#determine-output-chain" class="auto internal xref">Section 3.6.2</a>)</span>, including their depth checks, <span class="bcp14">MUST</span> omit only whole inner actor objects, keeping the remaining ones in order with their members other than the nested <code>act</code> unchanged, and <span class="bcp14">MUST NOT</span> omit the outermost actor object or the <code>act</code> claim.  The profile or trust configuration that permits omission defines how the omission is marked in tokens and introspection responses and how recipients process an incomplete chain.<a href="#section-3.6.3-1" class="pilcrow">¶</a></p>
+<p id="section-3.6.3-2">An issuer that preserves, extends, or refreshes a chain it knows to be incomplete <span class="bcp14">MUST</span> reject the request unless such a profile or trust configuration applies.  A TTS and an AS processing the <code>refresh_token</code> grant <span class="bcp14">MUST NOT</span> omit actors.  Each <span class="bcp14">MUST</span> carry forward any omission marking it recognizes (<span><a href="#transaction-token-output-rules" class="internal xref">TTS Request Processing</a> (<a href="#transaction-token-output-rules" class="auto internal xref">Section 7.2</a>)</span>, <span><a href="#delegated-token-issuance" class="internal xref">Other Grants and Refresh Tokens</a> (<a href="#delegated-token-issuance" class="auto internal xref">Section 6.5</a>)</span>).  Token Exchange with a refresh token as <code>subject_token</code> follows this section like any other Token Exchange.<a href="#section-3.6.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1977,7 +1961,7 @@ act-object = {
         </h3>
 <p id="section-3.7-1">The rules in this section apply to all supported token types, in addition to their type-specific proof-of-possession (PoP) requirements.  <span><a href="#token-exchange-presenter-model" class="internal xref">Determine the Presenter and Binding</a> (<a href="#token-exchange-presenter-model" class="auto internal xref">Section 5.4</a>)</span> defines continuation and rebind for Token Exchange.  DPoP nonce handling follows <span><a href="https://rfc-editor.org/rfc/rfc9449#section-8" class="relref">Section 8</a> of [<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> unchanged.<a href="#section-3.7-1" class="pilcrow">¶</a></p>
 <p id="section-3.7-2">Per-actor confirmation members and prior-hop key provenance are outside the scope of this document; see <span><a href="#companion-profile-extensibility" class="internal xref">Companion Profiles and Extension Points</a> (<a href="#companion-profile-extensibility" class="auto internal xref">Section 11</a>)</span>.<a href="#section-3.7-2" class="pilcrow">¶</a></p>
-<p id="section-3.7-3">The top-level <code>cnf</code> claim (<span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>), when present, identifies the key or certificate of the current presenter.  When delegation is present, that current presenter is the party identified by the outermost <code>act</code> claim: when DPoP (<span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>) is used, the top-level <code>cnf.jkt</code> <span class="bcp14">MUST</span> identify that party's key; when mTLS (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>) is used, the top-level <code>cnf.x5t#S256</code> <span class="bcp14">MUST</span> identify that party's certificate.  The AS or RS <span class="bcp14">MUST</span> validate proof of possession against the top-level <code>cnf</code>, except that presenter rebind supersedes the binding of a Token Exchange <code>subject_token</code> (<span><a href="#token-exchange-presenter-model" class="internal xref">Determine the Presenter and Binding</a> (<a href="#token-exchange-presenter-model" class="auto internal xref">Section 5.4</a>)</span>); <span><a href="#validating-delegated-requests" class="internal xref">Validating Delegated Requests</a> (<a href="#validating-delegated-requests" class="auto internal xref">Section 8.1</a>)</span> gives the RS checks for each token type.<a href="#section-3.7-3" class="pilcrow">¶</a></p>
+<p id="section-3.7-3">The top-level <code>cnf</code> claim (<span>[<a href="#RFC7800" class="cite xref">RFC7800</a>]</span>), when present, identifies the key or certificate of the current presenter.  When delegation is present, that current presenter is the party identified by the outermost <code>act</code> claim: when DPoP (<span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>) is used, the top-level <code>cnf.jkt</code> <span class="bcp14">MUST</span> identify that party's key; when mTLS (<span>[<a href="#RFC8705" class="cite xref">RFC8705</a>]</span>) is used, the top-level <code>cnf.x5t#S256</code> <span class="bcp14">MUST</span> identify that party's certificate.  The AS or RS <span class="bcp14">MUST</span> validate proof of possession against the top-level <code>cnf</code>, except that presenter rebind supersedes the binding of a Token Exchange <code>subject_token</code> other than a bound assertion grant (<span><a href="#token-exchange-presenter-model" class="internal xref">Determine the Presenter and Binding</a> (<a href="#token-exchange-presenter-model" class="auto internal xref">Section 5.4</a>)</span>, <span><a href="#jwt-assertion-grant-as-subject-token" class="internal xref">JWT Assertion Grant</a> (<a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 5.1.1</a>)</span>); <span><a href="#validating-delegated-requests" class="internal xref">Validating Delegated Requests</a> (<a href="#validating-delegated-requests" class="auto internal xref">Section 8.1</a>)</span> gives the RS checks for each token type.<a href="#section-3.7-3" class="pilcrow">¶</a></p>
 <p id="section-3.7-4">A confirmation member such as <code>act.cnf</code> is permitted as extension data under <span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span> and has no proof-of-possession semantics under this profile.  It remains unchanged in an inherited actor object under <span><a href="#determine-output-chain" class="internal xref">Determine the Output Chain</a> (<a href="#determine-output-chain" class="auto internal xref">Section 3.6.2</a>)</span>.  After further delegation, an inherited confirmation value can therefore differ from the current token's top-level <code>cnf</code> claim; this profile imposes no equality check between them.<a href="#section-3.7-4" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2040,7 +2024,7 @@ An assertion grant is self-issued when its <code>iss</code> identifies the entit
         </h3>
 <p id="section-4.3-1">The AS <span class="bcp14">MUST</span> verify proof of possession according to the token-endpoint mechanism in use and the top-level <code>cnf</code> semantics in <span><a href="#delegated-pop-validation" class="internal xref">Sender Constraint and Proof-of-Possession Validation</a> (<a href="#delegated-pop-validation" class="auto internal xref">Section 3.7</a>)</span>.<a href="#section-4.3-1" class="pilcrow">¶</a></p>
 <p id="section-4.3-2">When the grant profile or local policy requires a DPoP- or mTLS-bound grant, the assertion <span class="bcp14">MUST</span> carry the matching top-level <code>cnf</code> member: <code>cnf.jkt</code> for DPoP or <code>cnf.x5t#S256</code> for mTLS.  If that member is absent, the AS rejects the request with <code>invalid_grant</code>.<a href="#section-4.3-2" class="pilcrow">¶</a></p>
-<p id="section-4.3-3">When the grant carries a top-level <code>cnf.jkt</code> or <code>cnf.x5t#S256</code>, the AS <span class="bcp14">MUST</span> verify the request's proof against that member as the upstream issuer set it, and <span class="bcp14">MUST NOT</span> substitute a locally registered key or certificate.  If the required proof is absent, or a valid proof does not match that member, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>; <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-06#section-9.11.1.2.2" class="relref">Section 9.11.1.2.2</a> of [<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span> specifies this for an absent DPoP proof on an ID-JAG.  On a Token Exchange presenter rebind that the grant profile and local policy permit, the AS does not verify the request's proof against the grant's top-level <code>cnf</code>, and the grant has no enforced grant-level sender constraint (<span><a href="#jwt-assertion-grant-as-subject-token" class="internal xref">JWT Assertion Grant</a> (<a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 5.1.1</a>)</span>).<a href="#section-4.3-3" class="pilcrow">¶</a></p>
+<p id="section-4.3-3">When the grant carries a top-level <code>cnf.jkt</code> or <code>cnf.x5t#S256</code>, the AS <span class="bcp14">MUST</span> verify the request's proof against that member as the upstream issuer set it, and <span class="bcp14">MUST NOT</span> substitute a locally registered key or certificate.  If the required proof is absent, or a valid proof does not match that member, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_grant</code>; <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-06#section-9.11.1.2.2" class="relref">Section 9.11.1.2.2</a> of [<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span> specifies this for an absent DPoP proof on an ID-JAG.<a href="#section-4.3-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-4.3-4.1">
             <p id="section-4.3-4.1.1"><strong>DPoP</strong>: For a grant that carries <code>cnf.jkt</code>, the proof <span class="bcp14">MUST</span> be valid per <span>[<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>, with <code>htm</code> equal to <code>POST</code> and <code>htu</code> equal to the AS token endpoint URI.  The <code>ath</code> claim does not apply at the token endpoint, so the AS <span class="bcp14">MUST</span> accept a proof without it.  The AS compares the JWK SHA-256 thumbprint of the proof's public key with <code>cnf.jkt</code> (<span><a href="https://rfc-editor.org/rfc/rfc9449#section-6.1" class="relref">Section 6.1</a> of [<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>), as <span><a href="https://rfc-editor.org/rfc/rfc9449#section-4.3" class="relref">Section 4.3</a> of [<a href="#RFC9449" class="cite xref">RFC9449</a>]</span> checks the proof's key against an access token's binding.  If the request carries an invalid DPoP proof, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_dpop_proof</code>, subject to the nonce challenge rules of <span><a href="https://rfc-editor.org/rfc/rfc9449#section-8" class="relref">Section 8</a> of [<a href="#RFC9449" class="cite xref">RFC9449</a>]</span>.  <span>[<a href="#I-D.parecki-oauth-jwt-dpop-grant" class="cite xref">I-D.parecki-oauth-jwt-dpop-grant</a>]</span> defines the <code>jwt-dpop</code> grant type for such grants.<a href="#section-4.3-4.1.1" class="pilcrow">¶</a></p>
@@ -2060,7 +2044,7 @@ An assertion grant is self-issued when its <code>iss</code> identifies the entit
           </thead>
           <tbody>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">No enforced grant-level sender constraint, including on a permitted presenter rebind</td>
+              <td class="text-left" rowspan="1" colspan="1">No enforced grant-level sender constraint</td>
               <td class="text-left" rowspan="1" colspan="1">The AS <span class="bcp14">MUST</span> reject with <code>invalid_grant</code> an assertion whose validated (<code>iss</code>, <code>jti</code>) pair it has already accepted, for as long as the assertion remains acceptable, including any allowed clock skew.</td>
             </tr>
             <tr>
@@ -2069,8 +2053,7 @@ An assertion grant is self-issued when its <code>iss</code> identifies the entit
             </tr>
           </tbody>
         </table>
-<p id="section-4.3-7">A grant in the first row is therefore single-use under this profile, including an ID-JAG that <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-06#section-4.4.4" class="relref">Section 4.4.4</a> of [<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span> would let a client re-submit.  A proof used only for client authentication or to bind the issued token is not a grant-level sender constraint.  Reuse of a grant in the second row remains subject to the single-use requirements in <span><a href="#security-self-issued-grants" class="internal xref">Self-Issued Authorization Grants</a> (<a href="#security-self-issued-grants" class="auto internal xref">Section 13.2</a>)</span>, <span><a href="#jwt-assertion-grant-as-subject-token" class="internal xref">JWT Assertion Grant</a> (<a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 5.1.1</a>)</span>, or the applicable grant profile.<a href="#section-4.3-7" class="pilcrow">¶</a></p>
-<p id="section-4.3-8"><span><a href="#jwt-assertion-grant-as-subject-token" class="internal xref">JWT Assertion Grant</a> (<a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 5.1.1</a>)</span> adds a redemption record, on every path, for bound grants whose grant profile permits rebind.<a href="#section-4.3-8" class="pilcrow">¶</a></p>
+<p id="section-4.3-7">A grant in the first row is therefore single-use under this profile, including an ID-JAG that <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-06#section-4.4.4" class="relref">Section 4.4.4</a> of [<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span> would let a client re-submit.  A proof used only for client authentication or to bind the issued token is not a grant-level sender constraint.  Reuse of a grant in the second row remains subject to the single-use requirements in <span><a href="#security-self-issued-grants" class="internal xref">Self-Issued Authorization Grants</a> (<a href="#security-self-issued-grants" class="auto internal xref">Section 13.2</a>)</span> or the applicable grant profile.<a href="#section-4.3-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2167,9 +2150,7 @@ An assertion grant is self-issued when its <code>iss</code> identifies the entit
 <a href="#section-5.1.1" class="section-number selfRef">5.1.1. </a><a href="#name-jwt-assertion-grant" class="section-name selfRef">JWT Assertion Grant</a>
           </h4>
 <p id="section-5.1.1-1">A JWT assertion grant <code>subject_token</code> is validated under <span><a href="#jwt-assertion-grants" class="internal xref">JWT Assertion Grants</a> (<a href="#jwt-assertion-grants" class="auto internal xref">Section 4</a>)</span>, as that section's lead specifies, with the error codes that <span><a href="#actor-profile-error-responses" class="internal xref">Error Responses</a> (<a href="#actor-profile-error-responses" class="auto internal xref">Section 9</a>)</span> gives on this path.  That validation includes its issuer trust check.  In presenter continuation, the proof checks in <span><a href="#grant-binding-replay" class="internal xref">Verify Grant Binding and Prevent Replay</a> (<a href="#grant-binding-replay" class="auto internal xref">Section 4.3</a>)</span> apply.<a href="#section-5.1.1-1" class="pilcrow">¶</a></p>
-<p id="section-5.1.1-2">For presenter rebind of a DPoP- or mTLS-bound assertion grant, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_request</code> unless the grant profile explicitly permits rebind without proof of the grant's key and local policy permits rebind for the grant's validated issuer.  This document does not itself give that permission.  <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-06#section-9.11.1" class="relref">Section 9.11.1</a> of [<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span> requires that proof whenever an ID-JAG carrying <code>cnf.jkt</code> is used, so a DPoP-bound ID-JAG cannot be rebound.  On rebind, the (<code>iss</code>, <code>jti</code>) single-use rule in <span><a href="#grant-binding-replay" class="internal xref">Verify Grant Binding and Prevent Replay</a> (<a href="#grant-binding-replay" class="auto internal xref">Section 4.3</a>)</span> applies, and the AS still validates any proof that the new presenter's credential profile or the deployment requires, as <span><a href="#token-exchange-presenter-model" class="internal xref">Determine the Presenter and Binding</a> (<a href="#token-exchange-presenter-model" class="auto internal xref">Section 5.4</a>)</span> specifies.<a href="#section-5.1.1-2" class="pilcrow">¶</a></p>
-<p id="section-5.1.1-3">For a bound grant whose grant profile permits rebind without proof of its key, the AS <span class="bcp14">MUST</span> record each (<code>iss</code>, <code>jti</code>) pair it accepts, on any path, and whether it accepted it on rebind, so that the single-use rule also rejects a rebind of a grant already redeemed with its original key, including one redeemed before local policy permitted rebind for its issuer.  Recording therefore starts once the grant profile permits rebind, not once local policy first permits it for the grant's issuer.<a href="#section-5.1.1-3" class="pilcrow">¶</a></p>
-<p id="section-5.1.1-4">For such a grant, the AS <span class="bcp14">MUST</span> reject any later redemption of a pair it has accepted on rebind, including one that proves the original key, with <code>invalid_grant</code> or, on Token Exchange, <code>invalid_request</code>.  Of concurrent continuation and rebind requests for one (<code>iss</code>, <code>jti</code>) pair of such a grant, it <span class="bcp14">MUST</span> accept at most one.<a href="#section-5.1.1-4" class="pilcrow">¶</a></p>
+<p id="section-5.1.1-2">The AS <span class="bcp14">MUST</span> reject presenter rebind of a DPoP- or mTLS-bound assertion grant with <code>invalid_request</code>; <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-06#section-9.11.1" class="relref">Section 9.11.1</a> of [<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span> likewise requires proof of a DPoP-bound ID-JAG's key whenever the ID-JAG is used.  A grant profile that permitted such rebind would have to define the replay protections it needs.  A grant without an enforced grant-level sender constraint is single-use under <span><a href="#grant-binding-replay" class="internal xref">Verify Grant Binding and Prevent Replay</a> (<a href="#grant-binding-replay" class="auto internal xref">Section 4.3</a>)</span>, including on rebind.<a href="#section-5.1.1-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="jwt-access-token-as-subject-token">
@@ -2204,8 +2185,8 @@ An assertion grant is self-issued when its <code>iss</code> identifies the entit
           <h4 id="name-refresh-token">
 <a href="#section-5.1.5" class="section-number selfRef">5.1.5. </a><a href="#name-refresh-token" class="section-name selfRef">Refresh Token</a>
           </h4>
-<p id="section-5.1.5-1">A refresh token <code>subject_token</code> uses <code>subject_token_type=urn:ietf:params:oauth:token-type:refresh_token</code>.  The AS <span class="bcp14">MUST</span> obtain its subject, authorized scope, and any <code>act</code> chain recorded for its grant from its token store or other trusted refresh-token state, not by extracting claims from the token; that subject becomes <code>sub</code> in the issued token.  A refresh token <span class="bcp14">MUST NOT</span> be treated as a portable cross-domain delegation artifact or used as <code>actor_token</code>.  Client binding, cross-client presentation, and cross-AS acceptance policies remain deployment-specific.<a href="#section-5.1.5-1" class="pilcrow">¶</a></p>
-<p id="section-5.1.5-2">The AS <span class="bcp14">MUST</span> validate the refresh token through its token store or a trusted back-channel to its issuer; signature validation alone is insufficient, and an expired, revoked, or otherwise invalid token fails validation.  For a token issued by another AS, the AS <span class="bcp14">MUST NOT</span> accept it unless that back-channel provides the subject, client binding, authorized scope, revocation state, any <code>act</code> chain recorded for the grant, and any omission marking recorded with that chain.<a href="#section-5.1.5-2" class="pilcrow">¶</a></p>
+<p id="section-5.1.5-1">A refresh token <code>subject_token</code> uses <code>subject_token_type=urn:ietf:params:oauth:token-type:refresh_token</code>.  The AS <span class="bcp14">MUST</span> obtain its subject, authorized scope, and any <code>act</code> chain recorded for its grant from its token store or other trusted refresh-token state, not by extracting claims from the token; that subject becomes <code>sub</code> in the issued token.  A refresh token <span class="bcp14">MUST NOT</span> be treated as a portable cross-domain delegation artifact or used as <code>actor_token</code>.  Client binding and cross-client presentation policies remain deployment-specific.<a href="#section-5.1.5-1" class="pilcrow">¶</a></p>
+<p id="section-5.1.5-2">The AS <span class="bcp14">MUST</span> validate the refresh token through its token store or other trusted refresh-token state; signature validation alone is insufficient, and an expired, revoked, or otherwise invalid token fails validation.  The AS <span class="bcp14">MUST NOT</span> accept a refresh token that another AS issued; a companion profile can define cross-AS refresh-token exchange (<span><a href="#companion-profile-extensibility" class="internal xref">Companion Profiles and Extension Points</a> (<a href="#companion-profile-extensibility" class="auto internal xref">Section 11</a>)</span>).<a href="#section-5.1.5-2" class="pilcrow">¶</a></p>
 <p id="section-5.1.5-3">The AS <span class="bcp14">MUST</span> verify that the requesting client or authenticated presenter is authorized to use the refresh token under the refresh token's client-binding, sender-constraint, rotation, and cross-client presentation policy.  If the requester is not authorized to use the refresh token, the AS <span class="bcp14">MUST</span> reject the request with <code>invalid_request</code>.<a href="#section-5.1.5-3" class="pilcrow">¶</a></p>
 <p id="section-5.1.5-4">Whether an AS issues refresh tokens for delegated JWT assertion grant requests, how it revokes them, and whether their later use requires re-presenting upstream delegation artifacts remain deployment-specific.<a href="#section-5.1.5-4" class="pilcrow">¶</a></p>
 </section>
@@ -2339,7 +2320,7 @@ An assertion grant is self-issued when its <code>iss</code> identifies the entit
           </tbody>
         </table>
 <p id="section-5.4-6"><span><a href="#determine-output-chain" class="internal xref">Determine the Output Chain</a> (<a href="#determine-output-chain" class="auto internal xref">Section 3.6.2</a>)</span> gives the issued <code>act</code> for each transition.<a href="#section-5.4-6" class="pilcrow">¶</a></p>
-<p id="section-5.4-7">On rebind the issuer <span class="bcp14">MUST</span> validate any proof required by the actor credential or deployment, including for a bearer output. The subject token's prior binding alone does not require proof from the prior presenter. <span><a href="#jwt-assertion-grant-as-subject-token" class="internal xref">JWT Assertion Grant</a> (<a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 5.1.1</a>)</span> restricts rebind of bound grants by grant profile and issuer. With a validated <code>actor_token</code>, the issuer <span class="bcp14">MAY</span> upgrade a bearer input, an ID Token, or a refresh token to a sender-constrained output. To change presenters while retaining a chain, deployments <span class="bcp14">SHOULD</span> supply the delegated credential as <code>subject_token</code> and the direct credential as <code>actor_token</code>.<a href="#section-5.4-7" class="pilcrow">¶</a></p>
+<p id="section-5.4-7">On rebind the issuer <span class="bcp14">MUST</span> validate any proof required by the actor credential or deployment, including for a bearer output. The subject token's prior binding alone does not require proof from the prior presenter. <span><a href="#jwt-assertion-grant-as-subject-token" class="internal xref">JWT Assertion Grant</a> (<a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 5.1.1</a>)</span> rejects rebind of a bound assertion grant. With a validated <code>actor_token</code>, the issuer <span class="bcp14">MAY</span> upgrade a bearer input, an ID Token, or a refresh token to a sender-constrained output. To change presenters while retaining a chain, deployments <span class="bcp14">SHOULD</span> supply the delegated credential as <code>subject_token</code> and the direct credential as <code>actor_token</code>.<a href="#section-5.4-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2364,7 +2345,7 @@ An assertion grant is self-issued when its <code>iss</code> identifies the entit
             <p id="section-6.1-2.2.1">Apply the steps in <span><a href="#delegation-chains" class="internal xref">Delegation Chains</a> (<a href="#delegation-chains" class="auto internal xref">Section 3.6</a>)</span> to determine <code>act</code>. The issuing AS asserts any actor it derives from an <code>actor_token</code>. Consumers <span class="bcp14">MUST NOT</span> infer that the subject token contained that actor or that its issuer endorsed the actor.<a href="#section-6.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.1-2.3">
-            <p id="section-6.1-2.3.1">Set top-level <code>sub_profile</code> per <span><a href="https://datatracker.ietf.org/doc/html/draft-mora-oauth-entity-profiles-01#section-4.2" class="relref">Section 4.2</a> of [<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>; it classifies only <code>sub</code> (<span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span>). An issuer that processes actor classification (<span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>) <span class="bcp14">MUST</span> validate inbound <code>sub_profile</code> values, at the top level and in inherited actor objects, against that specification's syntax and <span class="bcp14">MUST</span> reject malformed values. It <span class="bcp14">MUST</span> also reject a value at the top level or in the outermost actor that the applicable registry, a deployment-specific allowed set, or the local policy applicable to the token it is issuing disallows; inner actors' values are prior-actor context (<span><a href="#validate-inbound-chain" class="internal xref">Validate the Inbound Chain</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span>). It <span class="bcp14">MUST</span> preserve unrecognized but syntactically valid values that it carries forward.  An issuer that does not process actor classification handles <code>act.sub_profile</code> as an unrecognized actor member (<span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span>).<a href="#section-6.1-2.3.1" class="pilcrow">¶</a></p>
+            <p id="section-6.1-2.3.1">If the issuer includes a top-level <code>sub_profile</code>, set it per <span><a href="https://datatracker.ietf.org/doc/html/draft-mora-oauth-entity-profiles-01#section-4.2" class="relref">Section 4.2</a> of [<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>; it classifies only <code>sub</code> (<span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span>). An issuer that processes actor classification (<span>[<a href="#I-D.mora-oauth-entity-profiles" class="cite xref">I-D.mora-oauth-entity-profiles</a>]</span>) <span class="bcp14">MUST</span> validate inbound <code>sub_profile</code> values, at the top level and in inherited actor objects, against that specification's syntax and <span class="bcp14">MUST</span> reject malformed values. It <span class="bcp14">MUST</span> also reject a value at the top level or in the outermost actor that the applicable registry, a deployment-specific allowed set, or the local policy applicable to the token it is issuing disallows; inner actors' values are prior-actor context (<span><a href="#validate-inbound-chain" class="internal xref">Validate the Inbound Chain</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span>). It <span class="bcp14">MUST</span> preserve unrecognized but syntactically valid values that it carries forward.  An issuer that does not process actor classification handles <code>act.sub_profile</code> as an unrecognized actor member (<span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span>).<a href="#section-6.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-6.1-2.4">
             <p id="section-6.1-2.4.1">For a sender-constrained delegated Token Exchange output, set top-level <code>cnf</code> according to <span><a href="#token-exchange-presenter-model" class="internal xref">Determine the Presenter and Binding</a> (<a href="#token-exchange-presenter-model" class="auto internal xref">Section 5.4</a>)</span>. In all other cases, apply the grant or token specification and its proof mechanism (for example, <span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-identity-assertion-authz-grant-06#section-9.11.1.1" class="relref">Section 9.11.1.1</a> of [<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span> for an ID-JAG).<a href="#section-6.1-2.4.1" class="pilcrow">¶</a></p>
@@ -2405,28 +2386,7 @@ An assertion grant is self-issued when its <code>iss</code> identifies the entit
 </li>
         </ul>
 <p id="section-6.3-3">Issuing such a grant is subject to AS configuration and, when the grant carries <code>act</code>, to the delegation check in <span><a href="#determine-output-chain" class="internal xref">Determine the Output Chain</a> (<a href="#determine-output-chain" class="auto internal xref">Section 3.6.2</a>)</span>.<a href="#section-6.3-3" class="pilcrow">¶</a></p>
-<p id="section-6.3-4">The following example shows an AS-issued assertion grant, which is the recommended pattern.  The Enterprise IdP AS performed Token Exchange, authenticated the agent, which presented its client assertion as <code>actor_token</code>, confirmed the delegation relationship under local policy, and signed the assertion.  Here, <code>act.iss</code> equals the assertion's <code>iss</code> because the enterprise AS's issuer identifier is also the actor identifier context for the agent:<a href="#section-6.3-4" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-6.3-5">
-<pre>
-{
-  "iss": "https://as.enterprise.example",
-  "sub": "https://idp.enterprise.example/users/alice",
-  "aud": "https://as.travel-provider.example",
-  "jti": "a1b2c3d4-...",
-  "exp": 1711820400,
-  "iat": 1711816800,
-  "sub_profile": "user",
-  "cnf": { "jkt": "NzbLsXh8uDCcd7MN..." },
-  "act": {
-    "sub": "https://agents.enterprise.example/travel-assistant",
-    "iss": "https://as.enterprise.example",
-    "sub_profile": "ai_agent"
-  }
-}
-</pre><a href="#section-6.3-5" class="pilcrow">¶</a>
-</div>
-<p id="section-6.3-6">The top-level <code>sub_profile</code> classifies the assertion's <code>sub</code>; the <code>sub_profile</code> within <code>act</code> classifies the actor.  The top-level <code>cnf.jkt</code> binds the assertion to the agent's DPoP key.<a href="#section-6.3-6" class="pilcrow">¶</a></p>
-<p id="section-6.3-7">In this example, the receiving AS trusts the enterprise AS both to issue the grant and to assert the actor identifier pair.<a href="#section-6.3-7" class="pilcrow">¶</a></p>
+<p id="section-6.3-4"><span><a href="#example-id-jag" class="internal xref">ID-JAG from the Enterprise AS</a> (<a href="#example-id-jag" class="auto internal xref">Appendix A.1</a>)</span> shows an AS-issued assertion grant, which is the recommended pattern: an ID-JAG that the enterprise AS issued after the agent presented its client assertion as <code>actor_token</code>.  There, <code>act.iss</code> equals the grant's <code>iss</code> because the enterprise AS's issuer identifier is also the actor identifier context for the agent, and the receiving AS trusts the enterprise AS both to issue the grant and to assert the actor identifier pair.<a href="#section-6.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="jwt-access-token-propagation">
@@ -2435,32 +2395,7 @@ An assertion grant is self-issued when its <code>iss</code> identifies the entit
 <a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-jwt-access-token-output" class="section-name selfRef">JWT Access Token Output</a>
         </h3>
 <p id="section-6.4-1">A delegated JWT access token is a JWT access token <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span> that carries an <code>act</code> claim conforming to <span><a href="#actor-profile" class="internal xref">Actor Profile for Delegation</a> (<a href="#actor-profile" class="auto internal xref">Section 3</a>)</span>.  The AS <span class="bcp14">MUST</span> apply <span><a href="#common-issuance" class="internal xref">Common Issuance Rules</a> (<a href="#common-issuance" class="auto internal xref">Section 6.1</a>)</span>, which set <code>sub</code>, <code>sub_profile</code>, and <code>act</code> and govern top-level <code>cnf</code>, and <span><a href="#effective-scope" class="internal xref">Effective Scope</a> (<a href="#effective-scope" class="auto internal xref">Section 6.2</a>)</span>, and <span class="bcp14">MUST</span> issue a JWT access token per <span>[<a href="#RFC9068" class="cite xref">RFC9068</a>]</span>, including the <code>client_id</code> it requires.  The token <span class="bcp14">MAY</span> also carry <code>azp</code> as an additional client identifier; <span><a href="#client-identity-delegation" class="internal xref">Client Identity and Delegation</a> (<a href="#client-identity-delegation" class="auto internal xref">Section 13.7</a>)</span> covers client identifier reconciliation.<a href="#section-6.4-1" class="pilcrow">¶</a></p>
-<p id="section-6.4-2">The following is an example of a JWT access token with actor-profile claims:<a href="#section-6.4-2" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-6.4-3">
-<pre>
-{
-  "iss": "https://as.travel-provider.example",
-  "sub": "https://idp.enterprise.example/users/alice",
-  "client_id": "travel-assistant-client-id",
-  "azp": "travel-assistant-client-id",
-  "aud": "https://api.travel-provider.example",
-  "jti": "xyz987",
-  "exp": 1711820400,
-  "iat": 1711816800,
-  "scope": "booking:create",
-  "sub_profile": "user",
-  "cnf": {
-    "jkt": "NzbLsXh8uDCcd7MN..."
-  },
-  "act": {
-    "sub": "https://agents.enterprise.example/travel-assistant",
-    "iss": "https://as.enterprise.example",
-    "sub_profile": "ai_agent"
-  }
-}
-</pre><a href="#section-6.4-3" class="pilcrow">¶</a>
-</div>
-<p id="section-6.4-4">The top-level <code>cnf.jkt</code> binds this token to the actor's DPoP key.  The client and actor identifiers illustrate different namespaces; any equivalence depends on trusted local mappings.<a href="#section-6.4-4" class="pilcrow">¶</a></p>
+<p id="section-6.4-2"><span><a href="#example-access-token" class="internal xref">Access Token from the Travel Provider AS</a> (<a href="#example-access-token" class="auto internal xref">Appendix A.2</a>)</span> shows a delegated JWT access token, bound to the actor's DPoP key.  Its <code>client_id</code> and <code>act.sub</code> identify the assistant in different namespaces; any equivalence depends on trusted local mappings.<a href="#section-6.4-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="delegated-token-issuance">
@@ -2514,42 +2449,7 @@ An assertion grant is self-issued when its <code>iss</code> identifies the entit
           </h4>
 <p id="section-7.1.1-1">The TTS <span class="bcp14">MUST NOT</span> infer delegation solely because <code>sub</code> and <code>req_wl</code> differ. The subject is the original initiator. The outermost actor identifies the immediate acting party for authorization. Inner actors identify prior presenters, each classified by its own <code>act.sub_profile</code> when present.<a href="#section-7.1.1-1" class="pilcrow">¶</a></p>
 <p id="section-7.1.1-2">The <code>req_wl</code> claim identifies the requesting workload (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11#section-9.2" class="relref">Section 9.2</a> of [<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>). On rebind, a TTS setting both <code>req_wl</code> and the new outermost <code>act.sub</code> <span class="bcp14">MUST</span> ensure they identify the same entity under local policy. On continuation, <span><a href="#transaction-token-output-rules" class="internal xref">TTS Request Processing</a> (<a href="#transaction-token-output-rules" class="auto internal xref">Section 7.2</a>)</span> requires the requester to correspond to the outermost actor when present. A recipient that relies on both identifiers to identify the presenter applies <span><a href="#identifier-reconciliation" class="internal xref">Identifier Reconciliation</a> (<a href="#identifier-reconciliation" class="auto internal xref">Section 3.5</a>)</span>, which requires rejecting the token when they cannot be reconciled.<a href="#section-7.1.1-2" class="pilcrow">¶</a></p>
-<p id="section-7.1.1-3">The following example shows a Transaction Token after two hops:<a href="#section-7.1.1-3" class="pilcrow">¶</a></p>
-<div class="lang-json sourcecode" id="section-7.1.1-4">
-<pre>
-{
-  "iss": "https://tts.travel-provider.example",
-  "sub": "https://idp.enterprise.example/users/alice",
-  "sub_profile": "user",
-  "scope": "inventory:check",
-  "req_wl": "https://tools.travel-provider.example/booking-tool",
-  "aud": "https://api.travel-provider.example",
-  "txn": "550e8400-e29b-41d4-a716-446655440000",
-  "exp": 1711816900,
-  "iat": 1711816800,
-  "tctx": {
-    "action": "check-availability"
-  },
-  "rctx": {
-    "req_ip": "203.0.113.42"
-  },
-  "cnf": {
-    "jkt": "0ZcOCORZNYy9ZhHiZN..."
-  },
-  "act": {
-    "sub": "https://tools.travel-provider.example/booking-tool",
-    "iss": "https://as.travel-provider.example",
-    "sub_profile": "service",
-    "act": {
-      "sub": "https://agents.enterprise.example/travel-assistant",
-      "iss": "https://as.enterprise.example",
-      "sub_profile": "ai_agent"
-    }
-  }
-}
-</pre><a href="#section-7.1.1-4" class="pilcrow">¶</a>
-</div>
-<p id="section-7.1.1-5">The booking tool is the current presenter, identified by <code>req_wl</code> and the outermost <code>act.sub</code> and bound to the top-level <code>cnf.jkt</code>.  The inner actor records the travel assistant's prior participation.<a href="#section-7.1.1-5" class="pilcrow">¶</a></p>
+<p id="section-7.1.1-3"><span><a href="#example-txn-token" class="internal xref">Transaction Token from the TTS</a> (<a href="#example-txn-token" class="auto internal xref">Appendix A.3</a>)</span> shows a Transaction Token after two hops.  The booking tool is the current presenter, identified by <code>req_wl</code> and the outermost <code>act.sub</code> and bound to the top-level <code>cnf.jkt</code>; the inner actor records the travel assistant's prior participation.<a href="#section-7.1.1-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2585,22 +2485,34 @@ An assertion grant is self-issued when its <code>iss</code> identifies the entit
         <h3 id="name-validating-delegated-reques">
 <a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-validating-delegated-reques" class="section-name selfRef">Validating Delegated Requests</a>
         </h3>
-<p id="section-8.1-1">An RS evaluates a JWT access token or Transaction Token as delegated when the token carries <code>act</code> or the request is subject to a delegated-access requirement (<span><a href="#conventions" class="internal xref">Conventions and Definitions</a> (<a href="#conventions" class="auto internal xref">Section 2</a>)</span>).  A token without <code>act</code> can serve a request that has no delegated-access requirement as a non-delegated request, even at a resource that advertises <code>actor_profile_required: true</code> (<span><a href="#protected-resource-metadata" class="internal xref">Protected Resource Metadata</a> (<a href="#protected-resource-metadata" class="auto internal xref">Section 10.2</a>)</span>).  When the RS evaluates a token as delegated, it <span class="bcp14">MUST</span>:<a href="#section-8.1-1" class="pilcrow">¶</a></p>
-<ol start="1" type="1" class="normal type-1" id="section-8.1-2">
-<li id="section-8.1-2.1">
-            <p id="section-8.1-2.1.1">Validate the token and any presenter proof according to the token-specific rules below, and verify that the token issuer is trusted to convey the claims it carries.<a href="#section-8.1-2.1.1" class="pilcrow">¶</a></p>
+<p id="section-8.1-1">An RS decides how to evaluate a JWT access token or Transaction Token as follows:<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-8.1-2.1">
+            <p id="section-8.1-2.1.1">A token that carries <code>act</code> is evaluated as delegated.<a href="#section-8.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-8.1-2.2">
-            <p id="section-8.1-2.2.1">Reject a token without <code>act</code>, and reject a visible chain exceeding the <span><a href="#validate-inbound-chain" class="internal xref">depth limit</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span>. Where local policy or <code>actor_profile_required: true</code> requires profile conformance, require <code>iss</code> in every visible actor object; otherwise, the RS <span class="bcp14">MAY</span> process a nonconforming <code>act</code> under local rules, without inferring semantics for absent claims (<span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span>).<a href="#section-8.1-2.2.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-8.1-2.2">
+            <p id="section-8.1-2.2.1">A request subject to a delegated-access requirement (<span><a href="#conventions" class="internal xref">Conventions and Definitions</a> (<a href="#conventions" class="auto internal xref">Section 2</a>)</span>) is evaluated as delegated, so a token without <code>act</code> fails step 2 below.<a href="#section-8.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-8.1-2.3">
-            <p id="section-8.1-2.3.1">Identify the subject and the outermost actor. When local policy expects a token-specific identifier below to identify that actor, the RS <span class="bcp14">SHOULD</span> apply <span><a href="#identifier-reconciliation" class="internal xref">Identifier Reconciliation</a> (<a href="#identifier-reconciliation" class="auto internal xref">Section 3.5</a>)</span>. Reject the request if the authorization decision requires equivalence and the identifiers cannot be reconciled.<a href="#section-8.1-2.3.1" class="pilcrow">¶</a></p>
+          <li class="normal" id="section-8.1-2.3">
+            <p id="section-8.1-2.3.1">A token without <code>act</code> can serve a request that has no delegated-access requirement as a non-delegated request, even at a resource that advertises <code>actor_profile_required: true</code> (<span><a href="#protected-resource-metadata" class="internal xref">Protected Resource Metadata</a> (<a href="#protected-resource-metadata" class="auto internal xref">Section 10.2</a>)</span>).<a href="#section-8.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
-          <li id="section-8.1-2.4">
-            <p id="section-8.1-2.4.1">Apply <span><a href="#actor-authorization" class="internal xref">Actor Authorization</a> (<a href="#actor-authorization" class="auto internal xref">Section 8.2</a>)</span> whenever local policy requires it or the RS accepts the token to satisfy a delegated-access requirement, and reject the request if required actor authorization cannot be completed. Only the subject and current actor are principals in the authorization decision; the RS <span class="bcp14">MAY</span> use inner actors, which are prior-actor context (<span><a href="#validate-inbound-chain" class="internal xref">Validate the Inbound Chain</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span>), for audit.<a href="#section-8.1-2.4.1" class="pilcrow">¶</a></p>
+        </ul>
+<p id="section-8.1-3">When the RS evaluates a token as delegated, it <span class="bcp14">MUST</span>:<a href="#section-8.1-3" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-8.1-4">
+<li id="section-8.1-4.1">
+            <p id="section-8.1-4.1.1">Validate the token and any presenter proof according to the token-specific rules below, and verify that the token issuer is trusted to convey the claims it carries.<a href="#section-8.1-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-8.1-4.2">
+            <p id="section-8.1-4.2.1">Reject a token without <code>act</code>, and reject a visible chain exceeding the <span><a href="#validate-inbound-chain" class="internal xref">depth limit</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span>. Where local policy or <code>actor_profile_required: true</code> requires profile conformance, require <code>iss</code> in every visible actor object; otherwise, the RS <span class="bcp14">MAY</span> process a nonconforming <code>act</code> under local rules, without inferring semantics for absent claims (<span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span>).<a href="#section-8.1-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-8.1-4.3">
+            <p id="section-8.1-4.3.1">Identify the subject and the outermost actor. When local policy expects a token-specific identifier below to identify that actor, the RS <span class="bcp14">SHOULD</span> apply <span><a href="#identifier-reconciliation" class="internal xref">Identifier Reconciliation</a> (<a href="#identifier-reconciliation" class="auto internal xref">Section 3.5</a>)</span>. Reject the request if the authorization decision requires equivalence and the identifiers cannot be reconciled.<a href="#section-8.1-4.3.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-8.1-4.4">
+            <p id="section-8.1-4.4.1">Apply <span><a href="#actor-authorization" class="internal xref">Actor Authorization</a> (<a href="#actor-authorization" class="auto internal xref">Section 8.2</a>)</span> whenever local policy requires it or the RS accepts the token to satisfy a delegated-access requirement, and reject the request if required actor authorization cannot be completed. Only the subject and current actor are principals in the authorization decision; the RS <span class="bcp14">MAY</span> use inner actors, which are prior-actor context (<span><a href="#validate-inbound-chain" class="internal xref">Validate the Inbound Chain</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span>), for audit.<a href="#section-8.1-4.4.1" class="pilcrow">¶</a></p>
 </li>
         </ol>
-<p id="section-8.1-3">The RS <span class="bcp14">MUST</span> reject failed requests according to the token type and <span class="bcp14">MUST NOT</span> expose actor-specific rejection details beyond the error code outside its trust domain, including in <code>error_description</code>.<a href="#section-8.1-3" class="pilcrow">¶</a></p>
+<p id="section-8.1-5">The RS <span class="bcp14">MUST</span> reject failed requests according to the token type and <span class="bcp14">MUST NOT</span> expose actor-specific rejection details beyond the error code outside its trust domain, including in <code>error_description</code>.<a href="#section-8.1-5" class="pilcrow">¶</a></p>
 <div id="jwt-access-token-rs-processing">
 <section id="section-8.1.1">
           <h4 id="name-jwt-access-token-processing">
@@ -2713,8 +2625,8 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 </li>
         </ul>
 <p id="section-8.3-3">The AS <span class="bcp14">MUST</span> return actor claims from the token's authorization context, including the nested chain as issued, except for the following privacy-filtering allowance.<a href="#section-8.3-3" class="pilcrow">¶</a></p>
-<p id="section-8.3-4">If local privacy policy requires omitting inner actors, the AS <span class="bcp14">MAY</span> filter them but <span class="bcp14">MUST</span> include <code>"chain_complete": false</code>.  When it knows that the token's chain omits actors under <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span>, it <span class="bcp14">MUST</span> also include <code>"chain_complete": false</code> and the profile's marking, so that the RS can distinguish issuer omission from introspection filtering.<a href="#section-8.3-4" class="pilcrow">¶</a></p>
-<p id="section-8.3-5">When <code>chain_complete</code> is <code>false</code>, the subject and the outermost actor remain available for authorization, and the RS records the incompleteness in any audit of the chain.  A <code>chain_complete</code> of <code>false</code> without an omission marking that the RS recognizes does not by itself require rejection under this profile, except as <span><a href="#validate-inbound-chain" class="internal xref">Validate the Inbound Chain</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span> requires of an RS that limits total depth; the rejection in <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span> applies when the RS detects issuer omission through a profile's marking.<a href="#section-8.3-5" class="pilcrow">¶</a></p>
+<p id="section-8.3-4">If local privacy policy requires omitting inner actors, the AS <span class="bcp14">MAY</span> filter them but <span class="bcp14">MUST</span> include <code>"chain_complete": false</code>.  When it knows that the token's chain omits actors under <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span>, it <span class="bcp14">MUST</span> also include <code>"chain_complete": false</code> and the marking that the permitting profile or trust configuration defines, so that the RS can distinguish issuer omission from introspection filtering.<a href="#section-8.3-4" class="pilcrow">¶</a></p>
+<p id="section-8.3-5">When <code>chain_complete</code> is <code>false</code>, the subject and the outermost actor remain available for authorization, and the RS records the incompleteness in any audit of the chain.  A <code>chain_complete</code> of <code>false</code> without an omission marking that the RS recognizes does not by itself require rejection under this profile, except as <span><a href="#validate-inbound-chain" class="internal xref">Validate the Inbound Chain</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span> requires of an RS that limits total depth; an RS that detects issuer omission through its marking processes the chain as the profile or trust configuration that permits omission defines (<span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span>).<a href="#section-8.3-5" class="pilcrow">¶</a></p>
 <p id="section-8.3-6">The RS <span class="bcp14">MUST NOT</span> treat a partial chain as complete delegation history.  Companion profiles with data aligned to <code>act</code> define their filtering behavior as required by <span><a href="#companion-profile-extensibility" class="internal xref">Companion Profiles and Extension Points</a> (<a href="#companion-profile-extensibility" class="auto internal xref">Section 11</a>)</span>.<a href="#section-8.3-6" class="pilcrow">¶</a></p>
 <p id="section-8.3-7">When an AS supports delegated opaque access tokens through introspection, it <span class="bcp14">MUST</span> return the members listed above, as each member's label requires, for active delegated tokens.  Support for this compatibility path <span class="bcp14">MUST NOT</span> be inferred solely from <code>actor_profile_required</code> metadata; see <span><a href="#profile-scope" class="internal xref">Profile Scope</a> (<a href="#profile-scope" class="auto internal xref">Section 3.3</a>)</span>.<a href="#section-8.3-7" class="pilcrow">¶</a></p>
 <p id="section-8.3-8">An introspecting RS <span class="bcp14">MUST</span> apply the same processing (<span><a href="#validating-delegated-requests" class="internal xref">Validating Delegated Requests</a> (<a href="#validating-delegated-requests" class="auto internal xref">Section 8.1</a>)</span>) as for equivalent locally validated JWT claims, including actor authorization when required by local policy.<a href="#section-8.3-8" class="pilcrow">¶</a></p>
@@ -2847,7 +2759,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
           <dt id="section-10.1-2.1">
 <code>authorization_grant_profiles_supported</code>:</dt>
           <dd style="margin-left: 1.5em" id="section-10.1-2.2">
-            <p id="section-10.1-2.2.1"><span class="bcp14">OPTIONAL</span>.  A JSON array defined by <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>.  An AS that processes JWT authorization grants carrying actor-profile claims <span class="bcp14">SHOULD</span> include <code>urn:ietf:params:oauth:grant-profile:actor-profile</code>.  Including this value advertises the processing rules for all JWT authorization-grant paths defined in this document.  An AS advertising this value <span class="bcp14">MUST</span> also list <code>urn:ietf:params:oauth:grant-type:jwt-bearer</code> in <code>grant_types_supported</code>.<a href="#section-10.1-2.2.1" class="pilcrow">¶</a></p>
+            <p id="section-10.1-2.2.1"><span class="bcp14">OPTIONAL</span>.  A JSON array defined by <span>[<a href="#I-D.ietf-oauth-identity-assertion-authz-grant" class="cite xref">I-D.ietf-oauth-identity-assertion-authz-grant</a>]</span>.  An AS that processes JWT authorization grants carrying actor-profile claims <span class="bcp14">SHOULD</span> include <code>urn:ietf:params:oauth:grant-profile:actor-profile</code>.  Including this value advertises the processing rules for all JWT authorization-grant paths defined in this document, not the grant types the AS accepts.  <code>grant_types_supported</code> lists those, and <span><a href="https://datatracker.ietf.org/doc/html/draft-parecki-oauth-jwt-dpop-grant-02#section-5.2" class="relref">Section 5.2</a> of [<a href="#I-D.parecki-oauth-jwt-dpop-grant" class="cite xref">I-D.parecki-oauth-jwt-dpop-grant</a>]</span> recommends listing <code>urn:ietf:params:oauth:grant-type:jwt-dpop</code> there when the AS supports that grant type.  An AS advertising this value <span class="bcp14">MUST</span> also list <code>urn:ietf:params:oauth:grant-type:jwt-bearer</code> in <code>grant_types_supported</code>.<a href="#section-10.1-2.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-10.1-2.3">
@@ -3045,10 +2957,10 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
               <p id="section-12.1.1-2.1.1">Issuers emit <code>act.iss</code> for every actor in newly issued profile tokens, as <span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span> requires.  Existing consumers can ignore the additional claim.<a href="#section-12.1.1-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-12.1.1-2.2">
-              <p id="section-12.1.1-2.2.1">Consumers <span class="bcp14">SHOULD</span> begin validating the actor identifier context once issuers support it.<a href="#section-12.1.1-2.2.1" class="pilcrow">¶</a></p>
+              <p id="section-12.1.1-2.2.1">Consumers begin validating the actor identifier context once issuers support it.<a href="#section-12.1.1-2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-12.1.1-2.3">
-              <p id="section-12.1.1-2.3.1">Once all token issuers and consumers on a path have been updated, resources <span class="bcp14">SHOULD</span> enforce conformance through local policy and <code>actor_profile_required: true</code>.  ASes can also require conformance on updated inbound paths.<a href="#section-12.1.1-2.3.1" class="pilcrow">¶</a></p>
+              <p id="section-12.1.1-2.3.1">Once all token issuers and consumers on a path have been updated, resources enforce conformance through local policy and <code>actor_profile_required: true</code>.  ASes can also require conformance on updated inbound paths.<a href="#section-12.1.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
           </ol>
 </section>
@@ -3061,13 +2973,13 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <p id="section-12.1.2-1">Deployments that infer actors from <code>client_id</code>, <code>azp</code>, or request context can migrate incrementally:<a href="#section-12.1.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-12.1.2-2.1">
-              <p id="section-12.1.2-2.1.1">Clients <span class="bcp14">SHOULD</span> prefer tokens with explicit actor claims when available.<a href="#section-12.1.2-2.1.1" class="pilcrow">¶</a></p>
+              <p id="section-12.1.2-2.1.1">Clients prefer tokens with explicit actor claims when available.<a href="#section-12.1.2-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-12.1.2-2.2">
-              <p id="section-12.1.2-2.2.1">Issuers <span class="bcp14">SHOULD</span> emit both legacy client identifiers and actor claims during the transition when feasible.<a href="#section-12.1.2-2.2.1" class="pilcrow">¶</a></p>
+              <p id="section-12.1.2-2.2.1">Issuers emit both legacy client identifiers and actor claims during the transition when feasible.<a href="#section-12.1.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-12.1.2-2.3">
-              <p id="section-12.1.2-2.3.1">Without <code>act</code>, deployments <span class="bcp14">MAY</span> retain legacy client-based policy.<a href="#section-12.1.2-2.3.1" class="pilcrow">¶</a></p>
+              <p id="section-12.1.2-2.3.1">Without <code>act</code>, deployments can retain legacy client-based policy.<a href="#section-12.1.2-2.3.1" class="pilcrow">¶</a></p>
 </li>
             <li class="normal" id="section-12.1.2-2.4">
               <p id="section-12.1.2-2.4.1">When both forms are present, deployments apply <span><a href="#client-identity-delegation" class="internal xref">Client Identity and Delegation</a> (<a href="#client-identity-delegation" class="auto internal xref">Section 13.7</a>)</span> and record mismatches.<a href="#section-12.1.2-2.4.1" class="pilcrow">¶</a></p>
@@ -3145,8 +3057,8 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
         <h3 id="name-token-lifetime-for-delegati">
 <a href="#section-12.3" class="section-number selfRef">12.3. </a><a href="#name-token-lifetime-for-delegati" class="section-name selfRef">Token Lifetime for Delegation Chains</a>
         </h3>
-<p id="section-12.3-1">Deployments <span class="bcp14">SHOULD</span> use shorter lifetimes for delegated tokens than for non-delegated tokens of equivalent scope.  JWT access tokens and assertion grants in multi-hop chains <span class="bcp14">SHOULD</span> last no longer than needed for the authorized task.  The lifetime of an upstream artifact also limits how long a downstream actor can request tokens without renewing that artifact.<a href="#section-12.3-1" class="pilcrow">¶</a></p>
-<p id="section-12.3-2">Deployments with three or more actors <span class="bcp14">SHOULD</span> account for delayed revocation across hops.  Where revocation risk is significant, for example where a user can withdraw consent at any time, deployments <span class="bcp14">SHOULD</span> combine short lifetimes with introspection at sensitive resources rather than relying solely on the <code>exp</code> claim.  <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> provides general guidance.<a href="#section-12.3-2" class="pilcrow">¶</a></p>
+<p id="section-12.3-1">Shorter lifetimes for delegated tokens than for non-delegated tokens of equivalent scope, and JWT access tokens and assertion grants in multi-hop chains that last no longer than the authorized task, limit exposure.  The lifetime of an upstream artifact also limits how long a downstream actor can request tokens without renewing that artifact.<a href="#section-12.3-1" class="pilcrow">¶</a></p>
+<p id="section-12.3-2">Revocation can take effect late across several hops.  Where revocation risk is significant, for example where a user can withdraw consent at any time, short lifetimes combined with introspection at sensitive resources limit that delay better than the <code>exp</code> claim alone.  <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> provides general guidance.<a href="#section-12.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3162,7 +3074,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <a href="#section-13.1" class="section-number selfRef">13.1. </a><a href="#name-delegation-chain-integrity-" class="section-name selfRef">Delegation Chain Integrity and Trust</a>
         </h3>
 <p id="section-13.1-1">An attacker who can inject or forge <code>act</code> claims can impersonate an arbitrary actor and exercise a subject's permissions without authorization.  RS implementations validate the token signature and the issuer's trust before extracting actor claims (<span><a href="#validating-delegated-requests" class="internal xref">Validating Delegated Requests</a> (<a href="#validating-delegated-requests" class="auto internal xref">Section 8.1</a>)</span>).<a href="#section-13.1-1" class="pilcrow">¶</a></p>
-<p id="section-13.1-2">Because inner <code>act</code> objects are set by upstream ASes and not re-signed at each hop, the integrity of the entire delegation chain depends on the signature of the token that carries it.  Implementations <span class="bcp14">SHOULD</span> use short token lifetimes, and an expired token is rejected per <span><a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.4" class="relref">Section 4.1.4</a> of [<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> regardless of chain depth.<a href="#section-13.1-2" class="pilcrow">¶</a></p>
+<p id="section-13.1-2">Because inner <code>act</code> objects are set by upstream ASes and not re-signed at each hop, the integrity of the entire delegation chain depends on the signature of the token that carries it.  Short token lifetimes limit how long a compromised chain stays usable, and an expired token is rejected per <span><a href="https://rfc-editor.org/rfc/rfc7519#section-4.1.4" class="relref">Section 4.1.4</a> of [<a href="#RFC7519" class="cite xref">RFC7519</a>]</span> regardless of chain depth.<a href="#section-13.1-2" class="pilcrow">¶</a></p>
 <p id="section-13.1-3">Inner actors are not access-control inputs because only the outer token issuer's signature endorses them (<span><a href="#validate-inbound-chain" class="internal xref">Validate the Inbound Chain</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span>).  <span><a href="#companion-profile-extensibility" class="internal xref">Companion Profiles and Extension Points</a> (<a href="#companion-profile-extensibility" class="auto internal xref">Section 11</a>)</span> describes how independently verifiable per-hop evidence can support authorization.<a href="#section-13.1-3" class="pilcrow">¶</a></p>
 <p id="section-13.1-4">ASes performing Token Exchange <span class="bcp14">SHOULD NOT</span> grant cross-domain actors the same rights as same-domain actors absent an explicit trust decision that makes them equivalent.<a href="#section-13.1-4" class="pilcrow">¶</a></p>
 </section>
@@ -3200,7 +3112,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
         <h3 id="name-assertion-replay-prevention">
 <a href="#section-13.3" class="section-number selfRef">13.3. </a><a href="#name-assertion-replay-prevention" class="section-name selfRef">Assertion Replay Prevention</a>
         </h3>
-<p id="section-13.3-1">Where a grant profile permits rebind of a bound assertion grant and local policy permits it for the grant's issuer, a requester that establishes an authorized new presenter can redeem the grant once without proof of its original key. <span><a href="#jwt-assertion-grant-as-subject-token" class="internal xref">JWT Assertion Grant</a> (<a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 5.1.1</a>)</span> applies the single-use check in <span><a href="#grant-binding-replay" class="internal xref">Verify Grant Binding and Prevent Replay</a> (<a href="#grant-binding-replay" class="auto internal xref">Section 4.3</a>)</span>. Short lifetimes limit exposure and replay-record retention.<a href="#section-13.3-1" class="pilcrow">¶</a></p>
+<p id="section-13.3-1">A bound assertion grant cannot be rebound (<span><a href="#jwt-assertion-grant-as-subject-token" class="internal xref">JWT Assertion Grant</a> (<a href="#jwt-assertion-grant-as-subject-token" class="auto internal xref">Section 5.1.1</a>)</span>), so redeeming it requires proof of its key, and a grant without an enforced grant-level sender constraint is single-use (<span><a href="#grant-binding-replay" class="internal xref">Verify Grant Binding and Prevent Replay</a> (<a href="#grant-binding-replay" class="auto internal xref">Section 4.3</a>)</span>). Short lifetimes limit exposure and replay-record retention.<a href="#section-13.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="token-substitution">
@@ -3224,7 +3136,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
         <h3 id="name-actor-authorization-bypass">
 <a href="#section-13.6" class="section-number selfRef">13.6. </a><a href="#name-actor-authorization-bypass" class="section-name selfRef">Actor-Authorization Bypass</a>
         </h3>
-<p id="section-13.6-1">A resource server that requires actor authorization but does not enforce it on every request path where it accepts delegated access, including introspection-based paths (<span><a href="#token-introspection" class="internal xref">Token Introspection</a> (<a href="#token-introspection" class="auto internal xref">Section 8.3</a>)</span>), lets an attacker bypass that policy.  Deployments that set <code>actor_profile_required: true</code> <span class="bcp14">SHOULD</span> ensure that the documented request paths requiring delegated access align with their actual enforcement behavior so that clients do not overinterpret the signal.<a href="#section-13.6-1" class="pilcrow">¶</a></p>
+<p id="section-13.6-1">A resource server that requires actor authorization but does not enforce it on every request path where it accepts delegated access, including introspection-based paths (<span><a href="#token-introspection" class="internal xref">Token Introspection</a> (<a href="#token-introspection" class="auto internal xref">Section 8.3</a>)</span>), lets an attacker bypass that policy.  Clients can overinterpret <code>actor_profile_required: true</code> when the request paths a deployment documents as requiring delegated access differ from those it enforces.<a href="#section-13.6-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="client-identity-delegation">
@@ -3256,7 +3168,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
         <h3 id="name-entity-profile-trust">
 <a href="#section-13.8" class="section-number selfRef">13.8. </a><a href="#name-entity-profile-trust" class="section-name selfRef">Entity Profile Trust</a>
         </h3>
-<p id="section-13.8-1">The token issuer asserts the <code>sub_profile</code> claim, so the claim is only as trustworthy as that issuer.  Resource servers <span class="bcp14">MUST NOT</span> trust <code>sub_profile</code> values in tokens issued by untrusted parties.  Resource server operators <span class="bcp14">SHOULD</span> configure a list of accepted entity-type profiles per trust domain.<a href="#section-13.8-1" class="pilcrow">¶</a></p>
+<p id="section-13.8-1">The token issuer asserts the <code>sub_profile</code> claim, so the claim is only as trustworthy as that issuer.  Resource servers <span class="bcp14">MUST NOT</span> trust <code>sub_profile</code> values in tokens issued by untrusted parties.  A resource server can configure the entity-type profiles it accepts per trust domain.<a href="#section-13.8-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="subject-namespace-translation">
@@ -3283,7 +3195,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <a href="#section-13.11" class="section-number selfRef">13.11. </a><a href="#name-delegation-depth-limits" class="section-name selfRef">Delegation Depth Limits</a>
         </h3>
 <p id="section-13.11-1">The <span><a href="#validate-inbound-chain" class="internal xref">depth limit</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span> bounds parsing work. A count of actors omitted by the issuer can understate total depth if introspection filters additional actors.<a href="#section-13.11-1" class="pilcrow">¶</a></p>
-<p id="section-13.11-2">Extensions that attach per-hop signed material grow token size in proportion to chain depth.  Deployments that combine the reference chain depth with one or more such per-hop mechanisms <span class="bcp14">SHOULD</span> measure realistic token sizes against their transport limits (HTTP header limits are often 8 KB) and consider using token introspection (<span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>) where inline carriage exceeds those limits.<a href="#section-13.11-2" class="pilcrow">¶</a></p>
+<p id="section-13.11-2">Extensions that attach per-hop signed material grow token size in proportion to chain depth.  Combined with the depth of 4 that cross-domain implementations support (<span><a href="#validate-inbound-chain" class="internal xref">Validate the Inbound Chain</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span>), such mechanisms can exceed transport limits (HTTP header limits are often 8 KB); token introspection (<span>[<a href="#RFC7662" class="cite xref">RFC7662</a>]</span>) avoids carrying them inline.<a href="#section-13.11-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="actor-identity-rotation">
@@ -3312,13 +3224,12 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
       <h2 id="name-privacy-considerations">
 <a href="#section-14" class="section-number selfRef">14. </a><a href="#name-privacy-considerations" class="section-name selfRef">Privacy Considerations</a>
       </h2>
-<p id="section-14-1">Delegation chains can reveal sensitive information about user behavior, enterprise topology, software suppliers, and internal tool composition.  Issuers therefore <span class="bcp14">SHOULD</span> disclose only the actor information needed by the relying party for authorization, audit, or policy enforcement.<a href="#section-14-1" class="pilcrow">¶</a></p>
-<p id="section-14-2">Cross-domain deployments <span class="bcp14">SHOULD</span> prefer stable but non-reassigned identifiers and <span class="bcp14">SHOULD</span> consider pairwise identifiers for human subjects when a globally correlatable identifier is not required by the use case.<a href="#section-14-2" class="pilcrow">¶</a></p>
-<p id="section-14-3">When the same logical entity can appear in different identifier namespaces, such as <code>azp</code>, <code>req_wl</code>, and <code>act.sub</code>, issuers and relying parties <span class="bcp14">SHOULD</span> use explicit issuer scoping and locally trusted mapping rules rather than string equality alone to determine whether those identifiers refer to the same entity.<a href="#section-14-3" class="pilcrow">¶</a></p>
-<p id="section-14-4">Issuers <span class="bcp14">SHOULD</span> minimize disclosure of prior actors through audience and token-design decisions made before issuance.  Once an issuer preserves a delegation chain, <span><a href="#determine-output-chain" class="internal xref">Determine the Output Chain</a> (<a href="#determine-output-chain" class="auto internal xref">Section 3.6.2</a>)</span> requires copying it intact.  Unless <span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span> permits omission, an issuer whose local privacy requirements would require omitting a chain element rejects the request rather than truncating the chain.<a href="#section-14-4" class="pilcrow">¶</a></p>
-<p id="section-14-5">A Transaction Token's <code>txn</code> value links service calls in the same transaction and can enable correlation across organizations.  Deployments <span class="bcp14">SHOULD</span> follow the privacy guidance in <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> when propagating it across trust domains.<a href="#section-14-5" class="pilcrow">¶</a></p>
-<p id="section-14-6">The <code>act.sub_profile</code> claim reveals the actor's entity type, including whether it is an AI agent.  In some jurisdictions or deployment contexts, this disclosure can be legally significant or can reveal sensitive information about user behavior and tool composition.  Issuers <span class="bcp14">SHOULD</span> consider audience-specific disclosure constraints and <span class="bcp14">SHOULD</span> omit unnecessary entity classifications when constructing new actor objects.  Inherited actors remain subject to the preservation rules in <span><a href="#determine-output-chain" class="internal xref">Determine the Output Chain</a> (<a href="#determine-output-chain" class="auto internal xref">Section 3.6.2</a>)</span>.<a href="#section-14-6" class="pilcrow">¶</a></p>
-<p id="section-14-7">The <code>req_wl</code> claim can reveal internal workload topology.  A TTS <span class="bcp14">SHOULD</span> disclose it only where needed for authorization, audit, or policy enforcement, and <span class="bcp14">SHOULD</span> avoid exposing internal workload identifiers across domains unless the deployment requires it.<a href="#section-14-7" class="pilcrow">¶</a></p>
+<p id="section-14-1">Delegation chains can reveal sensitive information about user behavior, enterprise topology, software suppliers, and internal tool composition.  An issuer controls that disclosure where it makes the choice: which audiences receive a delegated token, and which optional members, such as <code>act.sub_profile</code> and extension members, it puts in an actor object it creates.  Issuers <span class="bcp14">SHOULD</span> include only the optional actor information that the token's recipients need, bearing in mind that a recipient requiring an actor type rejects a token without one (<span><a href="#actor-object-structure" class="internal xref">Actor Object Structure</a> (<a href="#actor-object-structure" class="auto internal xref">Section 3.4</a>)</span>).  Inherited actor objects are copied intact (<span><a href="#determine-output-chain" class="internal xref">Determine the Output Chain</a> (<a href="#determine-output-chain" class="auto internal xref">Section 3.6.2</a>)</span>); an issuer whose local privacy requirements would require omitting one rejects the request rather than truncating the chain, unless omission is permitted (<span><a href="#omit-prior-actors" class="internal xref">Omitting Prior Actors</a> (<a href="#omit-prior-actors" class="auto internal xref">Section 3.6.3</a>)</span>).  Introspection can filter inner actors for a particular recipient, marking the response with <code>chain_complete: false</code> (<span><a href="#token-introspection" class="internal xref">Token Introspection</a> (<a href="#token-introspection" class="auto internal xref">Section 8.3</a>)</span>).<a href="#section-14-1" class="pilcrow">¶</a></p>
+<p id="section-14-2">Stable but non-reassigned identifiers, and pairwise identifiers for human subjects where the use case does not need a globally correlatable identifier, reduce cross-domain correlation.<a href="#section-14-2" class="pilcrow">¶</a></p>
+<p id="section-14-3">The same logical entity can appear in different identifier namespaces, such as <code>azp</code>, <code>req_wl</code>, and <code>act.sub</code>; <span><a href="#identifier-reconciliation" class="internal xref">Identifier Reconciliation</a> (<a href="#identifier-reconciliation" class="auto internal xref">Section 3.5</a>)</span> relates them only through configured mapping rules, not string equality.<a href="#section-14-3" class="pilcrow">¶</a></p>
+<p id="section-14-4">A Transaction Token's <code>txn</code> value links service calls in the same transaction and can enable correlation across organizations.  <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span> gives privacy guidance for propagating it across trust domains.<a href="#section-14-4" class="pilcrow">¶</a></p>
+<p id="section-14-5">The <code>act.sub_profile</code> claim reveals the actor's entity type, including whether it is an AI agent.  In some jurisdictions or deployment contexts, this disclosure can be legally significant or can reveal sensitive information about user behavior and tool composition.<a href="#section-14-5" class="pilcrow">¶</a></p>
+<p id="section-14-6">The <code>req_wl</code> claim, which every Transaction Token carries (<span><a href="https://datatracker.ietf.org/doc/html/draft-ietf-oauth-transaction-tokens-11#section-9.2" class="relref">Section 9.2</a> of [<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>), can reveal internal workload topology; limiting which recipients outside the trust domain receive Transaction Tokens limits that exposure.<a href="#section-14-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="iana-considerations">
@@ -3608,7 +3519,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-cross-domain-delegation-exa" class="section-name selfRef">Cross-Domain Delegation Example</a>
       </h2>
 <p id="appendix-A-1">Alice authorizes a travel assistant to book a trip. The enterprise AS issues an ID-JAG naming the assistant as actor. The assistant redeems it at the travel provider for an access token. When the booking tool exchanges that token for a Transaction Token, the TTS authenticates the tool, authorizes it to act for Alice, and adds it as the outermost actor.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
-<p id="appendix-A-2">The examples show only the members relevant to this profile and omit others, such as <code>exp</code>, <code>iat</code>, and the Transaction Token context claims.  Request parameters are shown one per line without URL encoding.  AgentJKT and ToolJKT, as in the <span><a href="#illustrative-use-case" class="internal xref">Illustrative Use Case</a> (<a href="#illustrative-use-case" class="auto internal xref">Section 1.1</a>)</span>, name the assistant's and the booking tool's keys; <code>cnf.jkt</code> carries their thumbprints.  The <code>examples</code> directory of the <a href="https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile">draft's repository</a> has a fuller variant of this flow, a metadata preflight, and a service-to-service example.<a href="#appendix-A-2" class="pilcrow">¶</a></p>
+<p id="appendix-A-2">The examples show only the members relevant to this profile and omit others, such as <code>exp</code>, <code>iat</code>, and the Transaction Token context claims.  Request parameters are shown one per line without URL encoding.  AgentJKT and ToolJKT, as in <span><a href="#illustrative-use-case" class="internal xref">the Introduction's table</a> (<a href="#illustrative-use-case" class="auto internal xref">Table 1</a>)</span>, name the assistant's and the booking tool's keys; <code>cnf.jkt</code> carries their thumbprints.  The <code>examples</code> directory of the <a href="https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile">draft's repository</a> has a fuller variant of this flow, a metadata preflight, and a service-to-service example.<a href="#appendix-A-2" class="pilcrow">¶</a></p>
 <table class="center" id="table-11">
         <caption><a href="#table-11" class="selfRef">Table 11</a></caption>
 <thead>
@@ -3656,7 +3567,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
           </tr>
         </tbody>
       </table>
-<div id="id-jag-from-the-enterprise-as">
+<div id="example-id-jag">
 <section id="appendix-A.1">
         <h3 id="name-id-jag-from-the-enterprise-">
 <a href="#appendix-A.1" class="section-number selfRef">A.1. </a><a href="#name-id-jag-from-the-enterprise-" class="section-name selfRef">ID-JAG from the Enterprise AS</a>
@@ -3708,7 +3619,7 @@ grant_type=urn:ietf:params:oauth:grant-type:token-exchange
 <p id="appendix-A.1-5"><code>client_id</code> names the assistant's client registration at the travel provider, which ID-JAG requires.  <code>act.sub</code> is the <code>sub</code> of the assistant's client assertion, its <code>client_id</code> at the enterprise AS, and <code>act.iss</code> is the enterprise AS (<span><a href="#actor-tokens" class="internal xref">Validate the Actor Token</a> (<a href="#actor-tokens" class="auto internal xref">Section 5.2</a>)</span>).<a href="#appendix-A.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="access-token-from-the-travel-provider-as">
+<div id="example-access-token">
 <section id="appendix-A.2">
         <h3 id="name-access-token-from-the-trave">
 <a href="#appendix-A.2" class="section-number selfRef">A.2. </a><a href="#name-access-token-from-the-trave" class="section-name selfRef">Access Token from the Travel Provider AS</a>
@@ -3753,7 +3664,7 @@ grant_type=urn:ietf:params:oauth:grant-type:jwt-dpop
 <p id="appendix-A.2-5">The assistant calls the booking tool's API with this token and a DPoP proof for AgentJKT.  The booking tool validates both and authorizes Alice and the assistant as the (subject, actor) pair (<span><a href="#actor-authorization" class="internal xref">Actor Authorization</a> (<a href="#actor-authorization" class="auto internal xref">Section 8.2</a>)</span>).<a href="#appendix-A.2-5" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="transaction-token-from-the-tts">
+<div id="example-txn-token">
 <section id="appendix-A.3">
         <h3 id="name-transaction-token-from-the-">
 <a href="#appendix-A.3" class="section-number selfRef">A.3. </a><a href="#name-transaction-token-from-the-" class="section-name selfRef">Transaction Token from the TTS</a>
@@ -3775,7 +3686,7 @@ grant_type=urn:ietf:params:oauth:grant-type:token-exchange
 &amp;scope=inventory:check
 </pre><a href="#appendix-A.3-2" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.3-3">This is a presenter rebind (<span><a href="#token-exchange-presenter-model" class="internal xref">Determine the Presenter and Binding</a> (<a href="#token-exchange-presenter-model" class="auto internal xref">Section 5.4</a>)</span>).  The TTS validates the credential and proof, confirms that the booking tool may act for Alice, adds the tool as the outermost actor over the inbound chain, and, as this deployment's profile specifies, binds the Transaction Token to ToolJKT, the key in the credential's <code>cnf.jwk</code>:<a href="#appendix-A.3-3" class="pilcrow">¶</a></p>
+<p id="appendix-A.3-3">This is a presenter rebind (<span><a href="#token-exchange-presenter-model" class="internal xref">Determine the Presenter and Binding</a> (<a href="#token-exchange-presenter-model" class="auto internal xref">Section 5.4</a>)</span>).  The TTS validates the credential and proof, confirms that the booking tool may act for Alice, adds the tool as the outermost actor over the inbound chain, and, as this deployment's profile specifies, binds the Transaction Token to ToolJKT, the key in the credential's <code>cnf.jwk</code>.  This deployment authorizes an inventory check as part of creating a booking, so <code>inventory:check</code> stays within the authority of the access token's <code>booking:create</code> (<span><a href="#transaction-token-output-rules" class="internal xref">TTS Request Processing</a> (<a href="#transaction-token-output-rules" class="auto internal xref">Section 7.2</a>)</span>):<a href="#appendix-A.3-3" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="appendix-A.3-4">
 <pre>
 {
@@ -3822,13 +3733,13 @@ grant_type=urn:ietf:params:oauth:grant-type:token-exchange
 <p id="appendix-C-2">-02<a href="#appendix-C-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-C-3.1">
-          <p id="appendix-C-3.1.1">Added Omitting Prior Actors: by default an issuer keeps the complete chain or rejects the request; a profile can define omission of inner actors, never the outermost actor or <code>act</code>, when it or a trust agreement binds every party that trusts the issuer to recognize and carry its marking.  Recipients reject incomplete chains they do not accept, introspection reports issuer omission, and a limit on total delegation depth counts every hidden actor.<a href="#appendix-C-3.1.1" class="pilcrow">¶</a></p>
+          <p id="appendix-C-3.1.1">Added Omitting Prior Actors: by default an issuer keeps the complete chain or rejects the request; a profile or the trust configuration can permit omission of inner actors, never the outermost actor or <code>act</code>, when it binds every party that relies on the issuer's chains to recognize and carry its marking, and it defines that marking and how recipients treat an incomplete chain.  Introspection reports issuer omission, and a limit on total delegation depth counts every hidden actor.<a href="#appendix-C-3.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-C-3.2">
-          <p id="appendix-C-3.2.1">Consolidated processing: one presenter-transition table for Token Exchange and the TTS, Common Issuance Rules for every output, one resource server validation procedure, and one table that gives the issued <code>act</code> and its delegation check; JWT assertion grant processing is split into assertion validation, delegation validation, and grant binding with replay prevention; ID-JAG is cited at -06, including its <code>jwt-dpop</code> grant type for a DPoP-bound grant; presenter continuation, presenter rebind, grant profile, and carrier token are defined; Token Exchange Processing opens with a four-step procedure, each input's subsection gives its validation and issuer trust check, and the presenter decision follows the inputs; the TTS scope rule is now a <span class="bcp14">MUST</span>, as in Sections 13.6 and 13.14 of <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>; the full worked examples moved to the repository, and the appendix gives a concise cross-domain example with its requests and tokens.  JWT assertion grant actor checks now apply the Delegation Chains steps, most processing requirements in the Considerations sections moved to the sections they govern, an untestable cross-domain requirement was removed and another became descriptive, the recommendation to advertise <code>introspection_endpoint</code> was removed, a self-issued grant, an untrusted grant issuer, and an unaccepted pre-chained grant now name <code>invalid_grant</code>, an unmet <code>actor_profile_required</code> names <code>invalid_target</code>, inferring delegation authority solely from a client initiating a JWT assertion grant request is now prohibited, a JWT access token <code>subject_token</code> needs an <code>aud</code> the requester is locally authorized to use, policy rejection of <code>sub_profile</code> values applies only to the subject and outermost actor, a rebind that names the current outermost actor keeps the chain unchanged, <code>sub_profile</code> is optional and collision-resistant private values are recommended, a delegated-access requirement is defined, rebind of a DPoP- or mTLS-bound assertion grant needs a grant profile that explicitly permits it and issuer-specific policy, delegated JWT access token issuance outside Token Exchange applies the common rules and scopes a registration-derived actor identifier to the registering AS, the Illustrative Use Case shows the token sequence as a table, one table states what each Token Exchange subject token establishes and whether it allows continuation, a companion profile can define further input and output token types and sources of a new actor, and one Token Issuance section gives Common Issuance Rules and each output token's own claims.  Definitions hold no requirements, the Identifier Reconciliation rules have their own section, and unused definitions were removed.<a href="#appendix-C-3.2.1" class="pilcrow">¶</a></p>
+          <p id="appendix-C-3.2.1">Consolidated processing: one presenter-transition table for Token Exchange and the TTS, Common Issuance Rules for every output, one resource server validation procedure, and one table that gives the issued <code>act</code> and its delegation check; JWT assertion grant processing is split into assertion validation, delegation validation, and grant binding with replay prevention; ID-JAG is cited at -06, including its <code>jwt-dpop</code> grant type for a DPoP-bound grant; presenter continuation, presenter rebind, grant profile, and carrier token are defined; Token Exchange Processing opens with a four-step procedure, each input's subsection gives its validation and issuer trust check, and the presenter decision follows the inputs; the TTS scope rule is now a <span class="bcp14">MUST</span>, as in Sections 13.6 and 13.14 of <span>[<a href="#I-D.ietf-oauth-transaction-tokens" class="cite xref">I-D.ietf-oauth-transaction-tokens</a>]</span>; the full worked examples moved to the repository, and the appendix gives a concise cross-domain example with its requests and tokens, to which the output sections point; a reading guide names the sections each role needs.  JWT assertion grant actor checks now apply the Delegation Chains steps, most processing requirements in the Considerations sections moved to the sections they govern, an untestable cross-domain requirement was removed and another became descriptive, lifetime, migration, operator-configuration, and most privacy guidance is descriptive rather than BCP 14 text, the recommendation to advertise <code>introspection_endpoint</code> was removed, a self-issued grant, an untrusted grant issuer, and an unaccepted pre-chained grant now name <code>invalid_grant</code>, an unmet <code>actor_profile_required</code> names <code>invalid_target</code>, inferring delegation authority solely from a client initiating a JWT assertion grant request is now prohibited, a JWT access token <code>subject_token</code> needs an <code>aud</code> the requester is locally authorized to use, policy rejection of <code>sub_profile</code> values applies only to the subject and outermost actor, a rebind that names the current outermost actor keeps the chain unchanged, <code>sub_profile</code> is optional and collision-resistant private values are recommended, a delegated-access requirement is defined, rebind of a DPoP- or mTLS-bound assertion grant is rejected, a refresh token issued by another AS is rejected, delegated JWT access token issuance outside Token Exchange applies the common rules and scopes a registration-derived actor identifier to the registering AS, the Illustrative Use Case shows the token sequence as a table, one table states what each Token Exchange subject token establishes and whether it allows continuation, a companion profile can define further input and output token types and sources of a new actor, and one Token Issuance section gives Common Issuance Rules and each output token's own claims.  Definitions hold no requirements, the Identifier Reconciliation rules have their own section, and unused definitions were removed.<a href="#appendix-C-3.2.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="appendix-C-3.3">
-          <p id="appendix-C-3.3.1">Pinned behavior that -01 left open: grant validation applies to every JWT assertion grant <code>subject_token</code>; input-validation errors take precedence over <code>invalid_target</code>, <code>actor_unauthorized</code>, and <code>invalid_scope</code> whatever order the checks run in; a DPoP-bound output from a workload credential needs a DPoP proof made with the credential's key; a resource server rejects a token without <code>act</code> whenever a delegated-access requirement applies; a grant's (<code>iss</code>, <code>jti</code>) is consumed only when a token is issued, and for a bound grant whose grant profile permits rebind, a grant redeemed with its original key cannot later be rebound, even after a policy change, and a rebound grant cannot be redeemed again; every presenter rebind confirms that the actor may act for the subject, even when the chain is kept; and a <code>chain_complete</code> of <code>false</code> without a recognized omission marking does not by itself require rejection.<a href="#appendix-C-3.3.1" class="pilcrow">¶</a></p>
+          <p id="appendix-C-3.3.1">Pinned behavior that -01 left open: grant validation applies to every JWT assertion grant <code>subject_token</code>; input-validation errors take precedence over <code>invalid_target</code>, <code>actor_unauthorized</code>, and <code>invalid_scope</code> whatever order the checks run in; a DPoP-bound output from a workload credential needs a DPoP proof made with the credential's key; a resource server rejects a token without <code>act</code> whenever a delegated-access requirement applies; a grant's (<code>iss</code>, <code>jti</code>) is consumed only when a token is issued; every presenter rebind confirms that the actor may act for the subject, even when the chain is kept; and a <code>chain_complete</code> of <code>false</code> without a recognized omission marking does not by itself require rejection.<a href="#appendix-C-3.3.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="appendix-C-4">-01<a href="#appendix-C-4" class="pilcrow">¶</a></p>
