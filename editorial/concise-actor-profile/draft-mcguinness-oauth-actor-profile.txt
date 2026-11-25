@@ -626,19 +626,18 @@ Table of Contents
    limit (Omitting Prior Actors (Section 3.6.3)).
 
    Interoperable processing under this profile is defined around sub and
-   the outermost actor.  Inner actors are *prior-actor context*:
-   preserved for audit and downstream use, and not inputs to access-
-   control decisions by an AS, TTS, or RS, including scope
-   determination, because prior actors identified by nested act objects
-   are informational only (Section 4.1 of [RFC8693]).  Structural rules,
-   such as the depth limit and the actor object requirements, still
-   apply to every actor object.  For inner act objects, the AS MAY rely
-   on trust in the outer token issuer established by validating the
-   carrier token rather than independently validating each hop.  The AS
-   MUST NOT treat preserved prior-actor context as independently
-   authenticated; an inner act entry carried in a token is endorsed only
-   by the outer token issuer's signature, not by independent
-   verification at each prior hop.
+   the outermost actor.  Inner actors are *prior-actor context*: kept
+   for audit and downstream use, and, as Section 4.1 of [RFC8693]
+   specifies, informational only.  No AS, TTS, or RS uses them in an
+   access-control decision, including scope determination.  Structural
+   rules, such as the depth limit and the actor object requirements,
+   still apply to every actor object.
+
+   Only the outer token issuer's signature endorses an inner act object;
+   no prior hop verifies it independently.  For inner act objects, the
+   AS MAY rely on its trust in that issuer, established by validating
+   the carrier token, instead of validating each hop.  The AS MUST NOT
+   treat prior-actor context as independently authenticated.
 
    Validate Delegation When an Actor Is Present (Section 4.2) adds
    requirements for JWT assertion grants.
@@ -857,31 +856,35 @@ Table of Contents
    Constraint and Proof-of-Possession Validation (Section 3.7).
 
    When the grant profile or local policy requires a DPoP- or mTLS-bound
-   grant, the assertion MUST carry the matching top-level cnf member,
-   cnf.jkt for DPoP or cnf.x5t#S256 for mTLS; reject with invalid_grant
-   if it is absent.  For a grant that carries a top-level cnf.jkt or
-   cnf.x5t#S256, the AS MUST verify the request's proof against that
-   member as set by the upstream issuer, MUST NOT substitute a locally
-   registered key or certificate, and MUST reject with invalid_grant if
-   the required proof is absent or a valid proof does not match that
-   member (Section 9.8.1.2.2 of
+   grant, the assertion MUST carry the matching top-level cnf member:
+   cnf.jkt for DPoP or cnf.x5t#S256 for mTLS.  If that member is absent,
+   the AS rejects the request with invalid_grant.
+
+   When the grant carries a top-level cnf.jkt or cnf.x5t#S256, the AS
+   MUST verify the request's proof against that member as the upstream
+   issuer set it, and MUST NOT substitute a locally registered key or
+   certificate.  If the required proof is absent, or a valid proof does
+   not match that member, the AS MUST reject the request with
+   invalid_grant; Section 9.8.1.2.2 of
    [I-D.ietf-oauth-identity-assertion-authz-grant] specifies this for an
-   absent DPoP proof on an ID-JAG).  On Token Exchange, the AS does not
-   match the request's proof against the grant's top-level cnf on a
-   presenter rebind that the grant profile and local policy permit (JWT
-   Assertion Grant as subject_token (Section 5.3.1)); the grant then has
-   no enforced grant-level sender constraint.
+   absent DPoP proof on an ID-JAG.  On a Token Exchange presenter rebind
+   that the grant profile and local policy permit, the AS does not
+   verify the request's proof against the grant's top-level cnf, and the
+   grant has no enforced grant-level sender constraint (JWT Assertion
+   Grant as subject_token (Section 5.3.1)).
 
    *  *DPoP*: For a grant that carries cnf.jkt, the proof MUST be valid
-      per [RFC9449] with htm="POST" and htu equal to the AS token
-      endpoint URI, and the JWK SHA-256 thumbprint of its public key is
-      compared with cnf.jkt (Section 6.1 of [RFC9449]), as in the proof
-      checks of Section 4.3 of [RFC9449].  The AS MUST reject a supplied
-      invalid proof with invalid_dpop_proof, subject to the nonce
-      challenge rules of Section 8 of [RFC9449], and MUST accept a proof
-      without the ath claim, which does not apply at the token endpoint
-      ([I-D.parecki-oauth-jwt-dpop-grant] describes related work on
-      DPoP-bound JWT grants).
+      per [RFC9449], with htm equal to POST and htu equal to the AS
+      token endpoint URI.  The ath claim does not apply at the token
+      endpoint, so the AS MUST accept a proof without it.  The AS
+      compares the JWK SHA-256 thumbprint of the proof's public key with
+      cnf.jkt (Section 6.1 of [RFC9449]), as Section 4.3 of [RFC9449]
+      checks the proof's key against an access token's binding.  If the
+      request carries an invalid DPoP proof, the AS MUST reject the
+      request with invalid_dpop_proof, subject to the nonce challenge
+      rules of Section 8 of [RFC9449].
+      [I-D.parecki-oauth-jwt-dpop-grant] describes related work on DPoP-
+      bound JWT grants.
 
    *  *mTLS*: For a grant that carries cnf.x5t#S256, the AS MUST
       validate the client certificate presented at the token endpoint
