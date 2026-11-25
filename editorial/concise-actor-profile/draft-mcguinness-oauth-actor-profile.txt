@@ -163,6 +163,9 @@ Table of Contents
      16.1.  Normative References
      16.2.  Informative References
    Appendix A.  Cross-Domain Delegation Example
+     A.1.  ID-JAG from the Enterprise AS
+     A.2.  Access Token from the Travel Provider AS
+     A.3.  Transaction Token from the TTS
    Acknowledgments
    Document History
    Author's Address
@@ -262,8 +265,7 @@ Table of Contents
 
                                   Table 1
 
-   The cross-domain example (Appendix A) names the credentials used and
-   points to the complete requests and tokens.
+   The cross-domain example (Appendix A) gives the requests and tokens.
 
 1.2.  Relationship to Related Work
 
@@ -337,6 +339,19 @@ Table of Contents
       for a delegated token, the outermost actor.  The party requesting
       a Token Exchange can differ from the presenter of its
       subject_token.
+
+   Presenter Continuation:  A delegated Token Exchange in which no
+      source of a new actor establishes the presenter, so the issued
+      token keeps the subject_token's presenter (Determine the Presenter
+      and Binding (Section 5.4)).
+
+   Presenter Rebind:  A Token Exchange in which a source of a new actor
+      (Delegation Chains (Section 3.6)) establishes the presenter of the
+      issued token (Determine the Presenter and Binding (Section 5.4)).
+
+   Grant Profile:  A specification that defines how a JWT authorization
+      grant is issued and redeemed, such as ID-JAG
+      [I-D.ietf-oauth-identity-assertion-authz-grant].
 
    Identifier Reconciliation:  Deciding, with configured mapping rules,
       whether identifiers from different claims or namespaces refer to
@@ -599,9 +614,10 @@ Table of Contents
 
 3.6.1.  Validate the Inbound Chain
 
-   The AS MUST validate the token carrying the inbound chain per the
-   type-specific rules applicable to that token before extracting actor
-   claims.  For the outermost act object, the AS MUST:
+   The AS MUST validate the token carrying the inbound chain (the
+   _carrier token_) per the type-specific rules applicable to that token
+   before extracting actor claims.  For the outermost act object, the AS
+   MUST:
 
    1.  Verify that act.sub is present.  If it is absent, reject the
        input under Error Responses (Section 9).
@@ -676,14 +692,14 @@ Table of Contents
                                   Table 4
 
    A request in the first row remains a rebind for its binding
-   (Determine the Presenter and Binding (Section 5.4)).  A pair that
-   only a local mapping relates to the inbound outermost actor's is not
-   an exact match and takes the second row.  Local policy governs
-   repeated identifiers deeper in the chain.  The AS confirms or
-   evaluates the relationship under local policy, for example through a
-   grant, consent record, or policy rule.  If the relationship is
-   prohibited, or a required relationship cannot be confirmed, the AS
-   MUST reject the request with the actor_unauthorized error code.
+   (Determine the Presenter and Binding (Section 5.4)).  If the new
+   actor's pair matches the inbound outermost actor's only through a
+   local mapping, the second row applies.  Local policy governs repeated
+   identifiers deeper in the chain.  The AS confirms or evaluates the
+   relationship under local policy, for example through a grant, consent
+   record, or policy rule.  If the relationship is prohibited, or a
+   required relationship cannot be confirmed, the AS MUST reject the
+   request with the actor_unauthorized error code.
 
    In the first three rows, the AS MUST preserve every inherited actor
    and field unchanged, adding, removing, or rewriting no member, except
@@ -774,10 +790,14 @@ Table of Contents
    grant that carries an act claim, or receives any JWT assertion grant
    as a Token Exchange subject_token.  These requirements apply to JWT
    authorization grants under [RFC7521] and [RFC7523], including ID-JAG
-   [I-D.ietf-oauth-identity-assertion-authz-grant].  The grant profile
-   defines issuance and exchange; this document defines actor
-   representation and delegation processing.  Actor claims in JWT client
-   authentication assertions are outside the scope of this document.
+   [I-D.ietf-oauth-identity-assertion-authz-grant].  Direct redemption
+   uses the jwt-bearer grant type ([RFC7523]) or, for a DPoP-bound
+   grant, the jwt-dpop grant type ([I-D.parecki-oauth-jwt-dpop-grant]),
+   which Section 4.4 of [I-D.ietf-oauth-identity-assertion-authz-grant]
+   requires for a DPoP-bound ID-JAG.  The grant profile defines issuance
+   and exchange; this document defines actor representation and
+   delegation processing.  Actor claims in JWT client authentication
+   assertions are outside the scope of this document.
 
    The subsections below apply to every such grant, except that Validate
    Delegation When an Actor Is Present (Section 4.2) applies only when
@@ -866,13 +886,13 @@ Table of Contents
    issuer set it, and MUST NOT substitute a locally registered key or
    certificate.  If the required proof is absent, or a valid proof does
    not match that member, the AS MUST reject the request with
-   invalid_grant; Section 9.8.1.2.2 of
+   invalid_grant; Section 9.11.1.2.2 of
    [I-D.ietf-oauth-identity-assertion-authz-grant] specifies this for an
    absent DPoP proof on an ID-JAG.  On a Token Exchange presenter rebind
    that the grant profile and local policy permit, the AS does not
    verify the request's proof against the grant's top-level cnf, and the
    grant has no enforced grant-level sender constraint (JWT Assertion
-   Grant as subject_token (Section 5.1.1)).
+   Grant (Section 5.1.1)).
 
    *  *DPoP*: For a grant that carries cnf.jkt, the proof MUST be valid
       per [RFC9449], with htm equal to POST and htu equal to the AS
@@ -884,8 +904,8 @@ Table of Contents
       request carries an invalid DPoP proof, the AS MUST reject the
       request with invalid_dpop_proof, subject to the nonce challenge
       rules of Section 8 of [RFC9449].
-      [I-D.parecki-oauth-jwt-dpop-grant] describes related work on DPoP-
-      bound JWT grants.
+      [I-D.parecki-oauth-jwt-dpop-grant] defines the jwt-dpop grant type
+      for such grants.
 
    *  *mTLS*: For a grant that carries cnf.x5t#S256, the AS MUST
       validate the client certificate presented at the token endpoint
@@ -918,18 +938,16 @@ Table of Contents
                                   Table 5
 
    A grant in the first row is therefore single-use under this profile,
-   including an ID-JAG that Section 4.4.3 of
+   including an ID-JAG that Section 4.4.4 of
    [I-D.ietf-oauth-identity-assertion-authz-grant] would let a client
    re-submit.  A proof used only for client authentication or to bind
    the issued token is not a grant-level sender constraint.  Reuse of a
    grant in the second row remains subject to the single-use
    requirements in Self-Issued Authorization Grants (Section 13.2), JWT
-   Assertion Grant as subject_token (Section 5.1.1), or the applicable
-   grant profile.
+   Assertion Grant (Section 5.1.1), or the applicable grant profile.
 
-   JWT Assertion Grant as subject_token (Section 5.1.1) adds a
-   redemption record, on every path, for bound grants whose grant
-   profile permits rebind.
+   JWT Assertion Grant (Section 5.1.1) adds a redemption record, on
+   every path, for bound grants whose grant profile permits rebind.
 
 5.  Token Exchange Processing
 
@@ -965,9 +983,9 @@ Table of Contents
           that chain into the issued token, except as Omitting Prior
           Actors (Section 3.6.3) permits.
 
-       *  For an actor_token, the AS MUST derive the outermost actor and
-          handle any inbound chain as specified in Validate the Actor
-          Token (Section 5.2).
+       *  For an actor_token, the AS MUST derive the new outermost
+          actor, and relate it to any subject_token chain, as specified
+          in Validate the Actor Token (Section 5.2).
 
    3.  *Determine the presenter.* For a delegated request, the AS MUST
        select one transition under Determine the Presenter and Binding
@@ -991,39 +1009,38 @@ Table of Contents
    presenter continuation (Determine the Presenter and Binding
    (Section 5.4)), and its scope ceiling:
 
-   +=============+==============+==============+=======================+
-   | Input       | Establishes  | Continuation | Scope ceiling         |
-   +=============+==============+==============+=======================+
-   | JWT         | sub,         | Allowed      | Its scope claim       |
-   | assertion   | sub_profile, |              | when present,         |
-   | grant       | top-level    |              | otherwise what its    |
-   |             | cnf, act     |              | redemption as a       |
-   |             |              |              | JWT bearer grant      |
-   |             |              |              | would authorize       |
-   +-------------+--------------+--------------+-----------------------+
-   | JWT access  | sub,         | Allowed      | Its effective         |
-   | token       | sub_profile, |              | scope                 |
-   |             | top-level    |              |                       |
-   |             | cnf, act     |              |                       |
-   +-------------+--------------+--------------+-----------------------+
-   | Transaction | sub,         | Allowed      | The authority it      |
-   | Token       | sub_profile, |              | represents            |
-   |             | top-level    |              |                       |
-   |             | presenter    |              |                       |
-   |             | binding, act |              |                       |
-   +-------------+--------------+--------------+-----------------------+
-   | ID Token    | sub only; no | Not allowed  | None; scope comes     |
-   |             | chain        |              | from the              |
-   |             |              |              | actor_token (if       |
-   |             |              |              | any), [RFC8693],      |
-   |             |              |              | and local policy      |
-   +-------------+--------------+--------------+-----------------------+
-   | Refresh     | sub,         | Not allowed  | Its authorized        |
-   | token       | recorded     |              | scope                 |
-   |             | chain        |              |                       |
-   +-------------+--------------+--------------+-----------------------+
+    +=============+==============+==============+====================+
+    | Input       | Establishes  | Continuation | Scope ceiling      |
+    +=============+==============+==============+====================+
+    | JWT         | sub,         | Allowed      | Its scope claim    |
+    | assertion   | sub_profile, |              | when present,      |
+    | grant       | top-level    |              | otherwise what its |
+    |             | cnf, act     |              | direct redemption  |
+    |             |              |              | would authorize    |
+    +-------------+--------------+--------------+--------------------+
+    | JWT access  | sub,         | Allowed      | Its effective      |
+    | token       | sub_profile, |              | scope              |
+    |             | top-level    |              |                    |
+    |             | cnf, act     |              |                    |
+    +-------------+--------------+--------------+--------------------+
+    | Transaction | sub,         | Allowed      | The authority it   |
+    | Token       | sub_profile, |              | represents         |
+    |             | top-level    |              |                    |
+    |             | presenter    |              |                    |
+    |             | binding, act |              |                    |
+    +-------------+--------------+--------------+--------------------+
+    | ID Token    | sub only; no | Not allowed  | None; scope comes  |
+    |             | chain        |              | from the           |
+    |             |              |              | actor_token (if    |
+    |             |              |              | any), [RFC8693],   |
+    |             |              |              | and local policy   |
+    +-------------+--------------+--------------+--------------------+
+    | Refresh     | sub,         | Not allowed  | Its authorized     |
+    | token       | recorded     |              | scope              |
+    |             | chain        |              |                    |
+    +-------------+--------------+--------------+--------------------+
 
-                                  Table 6
+                                 Table 6
 
 5.1.1.  JWT Assertion Grant
 
@@ -1038,13 +1055,14 @@ Table of Contents
    MUST reject the request with invalid_request unless the grant profile
    explicitly permits rebind without proof of the grant's key and local
    policy permits rebind for the grant's validated issuer.  This
-   document does not itself give that permission.  Section 9.8.1 of
+   document does not itself give that permission.  Section 9.11.1 of
    [I-D.ietf-oauth-identity-assertion-authz-grant] requires that proof
    whenever an ID-JAG carrying cnf.jkt is used, so a DPoP-bound ID-JAG
    cannot be rebound.  On rebind, the (iss, jti) single-use rule in
    Verify Grant Binding and Prevent Replay (Section 4.3) applies, and
    the AS still validates any proof that the new presenter's credential
-   profile or the deployment requires, as the rebind rules specify.
+   profile or the deployment requires, as Determine the Presenter and
+   Binding (Section 5.4) specifies.
 
    For a bound grant whose grant profile permits rebind without proof of
    its key, the AS MUST record each (iss, jti) pair it accepts, on any
@@ -1184,10 +1202,10 @@ Table of Contents
    subject_token chain.
 
    JWT access tokens use actor_token_type=urn:ietf:params:oauth:token-
-   type:access_token (JWT Access Token as actor_token (Section 5.2.3)).
-   Client assertions per [RFC7523] (JWT Client Assertion
-   (Section 5.2.1)) and workload identity credentials (Workload Identity
-   Credential (Section 5.2.2)) both use
+   type:access_token (JWT Access Token (Section 5.2.3)).  Client
+   assertions per [RFC7523] (JWT Client Assertion (Section 5.2.1)) and
+   workload identity credentials (Workload Identity Credential
+   (Section 5.2.2)) both use
    actor_token_type=urn:ietf:params:oauth:token-type:jwt.  A JWT
    actor_token (actor_token_type=urn:ietf:params:oauth:token-type:jwt)
    is a client assertion when it is also presented as a client_assertion
@@ -1213,13 +1231,12 @@ Table of Contents
    A JWT client assertion per [RFC7523] presented as actor_token
    establishes an OAuth client's own identity as the acting party.  Its
    sub is the client's client_id (Section 3 of [RFC7523]), and this
-   profile requires the self-issued form, in which iss is also the
-   client_id (Section 5.2 of [RFC7521]) and the client signs the
-   assertion with its private key.  To establish a principal distinct
-   from the OAuth client_id as the actor, the request MUST use a
-   different actor credential type, such as a workload identity
-   credential (Workload Identity Credential (Section 5.2.2)), whose sub
-   names that distinct principal.
+   profile requires that its iss also be the client_id (Section 5.2 of
+   [RFC7521]) and that the client sign the assertion with its private
+   key.  To establish a principal distinct from the OAuth client_id as
+   the actor, the request MUST use a different actor credential type,
+   such as a workload identity credential (Workload Identity Credential
+   (Section 5.2.2)), whose sub names that distinct principal.
 
    The AS validates the client assertion per [RFC7523].  The AS MUST
    verify that the client assertion's iss is a client registered with
@@ -1340,10 +1357,10 @@ Table of Contents
       canonical may_act identifier.  The may_act claim MUST NOT override
       the derived actor.
 
-   *  *Without actor_token*: the requesting client MUST be a
-      confidential client that has authenticated in the request; public
-      clients MUST NOT use this path.  The AS reconciles the
-      authenticated client with the canonical may_act identifier and
+   *  *Without actor_token*, at an AS other than a TTS: the requesting
+      client MUST be a confidential client that has authenticated in the
+      request; public clients MUST NOT use this path.  The AS reconciles
+      the authenticated client with the canonical may_act identifier and
       sets act.sub to the client's canonical identifier.  The AS MUST
       set act.iss to the issuer or namespace context that locally
       registered the client, typically the AS's own issuer URI.  The
@@ -1354,12 +1371,12 @@ Table of Contents
 
    When an actor_token establishes the actor and may_act is absent or
    the conditions above are not met, the AS MUST satisfy the delegation-
-   authorization check through another recognized basis (a pre-
-   registered grant, a consent record, or an applicable policy rule).
-   Without an actor_token, such a basis establishes no actor (Delegation
-   Chains (Section 3.6)).  The AS MUST NOT treat the presence of may_act
-   alone as authorization for any actor other than the one whose
-   canonical identity matches it.
+   authorization check through another independent delegation basis (a
+   pre-registered grant, a consent record, or an applicable policy
+   rule).  Without an actor_token, such a basis establishes no actor
+   (Delegation Chains (Section 3.6)).  The AS MUST NOT treat the
+   presence of may_act alone as authorization for any actor other than
+   the one whose canonical identity matches it.
 
 5.4.  Determine the Presenter and Binding
 
@@ -1373,12 +1390,12 @@ Table of Contents
    policy prohibits it, for example when the client or resource requires
    explicit delegation.
 
-   The AS or TTS MUST reject a delegated request that meets no
-   transition with invalid_request.  If a request supplies an
-   actor_token or carries inbound delegation, the AS MUST reject invalid
-   actor information with invalid_request and a prohibited or
-   unconfirmed required delegation relationship with actor_unauthorized.
-   It MUST NOT issue a non-delegated token on failure.  Error Responses
+   If a delegated request meets no transition, the AS or TTS MUST reject
+   it with invalid_request.  If a request supplies an actor_token or
+   carries inbound delegation, the AS MUST reject invalid actor
+   information with invalid_request and a prohibited or unconfirmed
+   required delegation relationship with actor_unauthorized.  It MUST
+   NOT issue a non-delegated token on failure.  Error Responses
    (Section 9) specifies error precedence.
 
    For a delegated request, the AS MUST apply exactly one transition
@@ -1442,20 +1459,22 @@ Table of Contents
    apply the following rules to the output:
 
    *  Preserve the subject; the issuer MUST NOT substitute a different
-      subject.  The issuer MAY translate sub into a different namespace
-      only under a trusted mapping to the same subject (Subject
-      Namespace Translation (Section 13.9)).
+      subject.  The issuer MUST NOT translate sub into a different
+      namespace unless local policy establishes that both identifiers
+      refer to the same subject (Subject Namespace Translation
+      (Section 13.9)).
 
    *  Apply the steps in Delegation Chains (Section 3.6) to determine
       act.  The issuing AS asserts any actor it derives from an
       actor_token.  Consumers MUST NOT infer that the subject token
       contained that actor or that its issuer endorsed the actor.
 
-   *  Set top-level sub_profile according to Actor Object Structure
-      (Section 3.4).  An issuer that processes actor classification
-      ([I-D.mora-oauth-entity-profiles]) MUST validate inbound
-      sub_profile values, at the top level and in inherited actor
-      objects, against that specification's syntax and MUST reject
+   *  Set top-level sub_profile per Section 4.2 of
+      [I-D.mora-oauth-entity-profiles]; it classifies only sub (Actor
+      Object Structure (Section 3.4)).  An issuer that processes actor
+      classification ([I-D.mora-oauth-entity-profiles]) MUST validate
+      inbound sub_profile values, at the top level and in inherited
+      actor objects, against that specification's syntax and MUST reject
       malformed values.  It MUST also reject a value at the top level or
       in the outermost actor that the applicable registry, a deployment-
       specific allowed set, or the local policy applicable to the token
@@ -1470,8 +1489,8 @@ Table of Contents
       level cnf according to Determine the Presenter and Binding
       (Section 5.4).  In all other cases, apply the grant or token
       specification and its proof mechanism (for example,
-      Section 9.8.1.1 of [I-D.ietf-oauth-identity-assertion-authz-grant]
-      for an ID-JAG).
+      Section 9.11.1.1 of
+      [I-D.ietf-oauth-identity-assertion-authz-grant] for an ID-JAG).
 
    *  The issuer MAY preserve inbound client identifiers as the output
       profile or local policy permits.  They MUST retain their client-
@@ -1581,7 +1600,7 @@ Table of Contents
      "iss": "https://as.travel-provider.example",
      "sub": "https://idp.enterprise.example/users/alice",
      "client_id": "travel-assistant-client-id",
-     "azp": "https://agents.enterprise.example/travel-assistant",
+     "azp": "travel-assistant-client-id",
      "aud": "https://api.travel-provider.example",
      "jti": "xyz987",
      "exp": 1711820400,
@@ -1747,10 +1766,10 @@ Table of Contents
       validation, presenter authentication, or the rules that govern
       whether a new outermost act is created.
 
-   The TTS MUST NOT omit prior actors and MUST carry forward any
-   recognized omission marking (Omitting Prior Actors (Section 3.6.3)).
-   For a replacement Transaction Token, the TTS MUST keep sub unchanged,
-   and it maintains the requesting workload call chain (Section 13.15 of
+   The TTS does not omit prior actors and carries forward any recognized
+   omission marking (Omitting Prior Actors (Section 3.6.3)).  For a
+   replacement Transaction Token, the TTS MUST keep sub unchanged, and
+   it maintains the requesting workload call chain (Section 13.15 of
    [I-D.ietf-oauth-transaction-tokens]).  The output's req_wl identifies
    the requesting workload as described in Actor Claim in Transaction
    Tokens (Section 7.1.1).
@@ -1911,7 +1930,7 @@ Table of Contents
    AS MUST expose actor-profile information needed for equivalent RS
    processing.  For an active delegated token whose authorization
    context includes actor-profile claims, the introspection response
-   MUST include:
+   contains the following members:
 
    *  active: true, per Section 2.2 of [RFC7662].
 
@@ -1960,10 +1979,10 @@ Table of Contents
    (Section 11).
 
    When an AS supports delegated opaque access tokens through
-   introspection, it MUST return the members listed above for active
-   delegated tokens.  Support for this compatibility path MUST NOT be
-   inferred solely from actor_profile_required metadata; see Profile
-   Scope (Section 3.3).
+   introspection, it MUST return the members listed above, as each
+   member's label requires, for active delegated tokens.  Support for
+   this compatibility path MUST NOT be inferred solely from
+   actor_profile_required metadata; see Profile Scope (Section 3.3).
 
    An introspecting RS MUST apply the same processing (Validating
    Delegated Requests (Section 8.1)) as for equivalent locally validated
@@ -1992,14 +2011,16 @@ Table of Contents
    Input-validation errors depend on the request's grant type.  On Token
    Exchange requests, including TTS requests, an invalid or policy-
    unacceptable subject_token or actor_token uses the invalid_request
-   error code (Section 2.2.2 of [RFC8693]).  On JWT bearer grant
-   requests, an invalid assertion uses the invalid_grant error code
-   (Section 3.1 of [RFC7523]).  This distinction also applies to missing
-   required claims, invalid actor structure, excessive inbound chain
-   depth, and a failed identifier reconciliation that processing
-   requires, except the may_act (Section 5.3) match.  On Token Exchange,
-   a rule that this document states with invalid_grant for a JWT
-   assertion grant uses invalid_request instead.
+   error code (Section 2.2.2 of [RFC8693]).  On JWT assertion grant
+   requests, with the jwt-bearer or jwt-dpop grant type, an invalid
+   assertion uses the invalid_grant error code (Section 3.1 of [RFC7523]
+   and, for jwt-dpop, Section 5 of [I-D.parecki-oauth-jwt-dpop-grant]).
+   This distinction also applies to missing required claims, invalid
+   actor structure, excessive inbound chain depth, and a failed
+   identifier reconciliation that processing requires, except the
+   may_act (Section 5.3) match.  On Token Exchange, a rule that this
+   document states with invalid_grant for a JWT assertion grant uses
+   invalid_request instead.
 
    Whatever order it makes the checks in, the AS or TTS gives client-
    authentication and proof-mechanism errors precedence over the input-
@@ -2026,7 +2047,7 @@ Table of Contents
     |                    | Token Exchange request, also input-       |
     |                    | validation failures                       |
     +--------------------+-------------------------------------------+
-    | invalid_grant      | On a JWT bearer grant request: input-     |
+    | invalid_grant      | On a JWT assertion grant request: input-  |
     |                    | validation failures, including an invalid |
     |                    | assertion, untrusted issuer, or failed    |
     |                    | grant binding                             |
@@ -2161,7 +2182,7 @@ Table of Contents
             which Validate the Actor Token (Section 5.2) distinguishes
 
          -  urn:ietf:params:oauth:token-type:access_token: JWT access
-            tokens (JWT Access Token as actor_token (Section 5.2.3))
+            tokens (JWT Access Token (Section 5.2.3))
 
       *  requested_token_types_supported: OPTIONAL.  A JSON array of
          token-type URI strings indicating the requested_token_type
@@ -2213,9 +2234,9 @@ Table of Contents
          "urn:ietf:params:oauth:token-type:access_token"
        ],
        "requested_token_types_supported": [
+         "urn:ietf:params:oauth:token-type:id-jag",
          "urn:ietf:params:oauth:token-type:access_token",
-         "urn:ietf:params:oauth:token-type:jwt",
-         "urn:ietf:params:oauth:token-type:txn_token"
+         "urn:ietf:params:oauth:token-type:jwt"
        ]
      },
      "entity_profiles_supported": {
@@ -2544,8 +2565,8 @@ Table of Contents
       requirements in JWT Assertion Grants (Section 4).
 
    *  Establish the delegation relationship from an independent
-      authorization basis such as a pre-registered grant, explicit
-      consent record, or equivalent deployment-specific artifact.
+      delegation basis such as a pre-registered grant, explicit consent
+      record, or equivalent deployment-specific artifact.
 
    In the absence of these controls, an attacker can self-assert an
    arbitrary (sub, act.sub) pair and bypass actor-profile authorization
@@ -2559,10 +2580,10 @@ Table of Contents
    Where a grant profile permits rebind of a bound assertion grant and
    local policy permits it for the grant's issuer, a requester that
    establishes an authorized new presenter can redeem the grant once
-   without proof of its original key.  JWT Assertion Grant as
-   subject_token (Section 5.1.1) applies the single-use check in Verify
-   Grant Binding and Prevent Replay (Section 4.3).  Short lifetimes
-   limit exposure and replay-record retention.
+   without proof of its original key.  JWT Assertion Grant
+   (Section 5.1.1) applies the single-use check in Verify Grant Binding
+   and Prevent Replay (Section 4.3).  Short lifetimes limit exposure and
+   replay-record retention.
 
 13.4.  Token Substitution
 
@@ -2623,11 +2644,10 @@ Table of Contents
 
 13.9.  Subject Namespace Translation
 
-   An AS or TTS can translate sub when crossing identifier namespaces,
-   but MUST NOT do so unless local policy establishes that both
-   identifiers refer to the same subject.  Trust to perform that mapping
-   is separate from trust to sign tokens and SHOULD be established
-   explicitly.
+   An AS or TTS can translate sub when crossing identifier namespaces
+   only as Common Issuance Rules (Section 6.1) permits.  Trust to
+   perform that mapping is separate from trust to sign tokens and SHOULD
+   be established explicitly.
 
    A translated sub is authoritative only within the trust context of
    the issuer that performed the translation.  A recipient that relies
@@ -2836,8 +2856,7 @@ Table of Contents
       in the introspection response is complete.  When false, one or
       more inner act chain entries have been omitted during token
       issuance at this or an earlier hop, or during introspection
-      filtering.  When absent, the chain SHOULD be treated as complete
-      unless local policy or deployment context indicates otherwise.
+      filtering.
 
    *  Change Controller: IETF
 
@@ -2974,8 +2993,9 @@ Table of Contents
               Parecki, A., McGuinness, K., and B. Campbell, "Identity
               Assertion JWT Authorization Grant", Work in Progress,
               Internet-Draft, draft-ietf-oauth-identity-assertion-authz-
-              grant-04, 21 May 2026, <https://www.ietf.org/archive/id/
-              draft-ietf-oauth-identity-assertion-authz-grant-04.txt>.
+              grant-06, 31 October 2026,
+              <https://www.ietf.org/archive/id/draft-ietf-oauth-
+              identity-assertion-authz-grant-06.txt>.
 
    [OpenID.Core]
               OpenID Foundation, "OpenID Connect Core 1.0", 8 November
@@ -3006,11 +3026,11 @@ Table of Contents
               <https://www.rfc-editor.org/info/rfc9700>.
 
    [I-D.parecki-oauth-jwt-dpop-grant]
-              Parecki, A., "JWT Authorization Grants with DPoP", Work in
-              Progress, Internet-Draft, draft-parecki-oauth-jwt-dpop-
-              grant-01, 30 January 2026,
+              Parecki, A., "OAuth 2.0 JWT Authorization Grant with DPoP
+              Binding", Work in Progress, Internet-Draft, draft-parecki-
+              oauth-jwt-dpop-grant-02, 30 October 2026,
               <https://datatracker.ietf.org/doc/html/draft-parecki-
-              oauth-jwt-dpop-grant-01>.
+              oauth-jwt-dpop-grant-02>.
 
    [I-D.ietf-oauth-identity-chaining]
               Schwenkschuster, A., Kasselman, P., Burgin, K., Jenkins,
@@ -3033,13 +3053,183 @@ Appendix A.  Cross-Domain Delegation Example
    authenticates the tool, authorizes it to act for Alice, and adds it
    as the outermost actor.
 
-   At the TTS, the booking tool presents its WIMSE workload identity
-   credential ([I-D.ietf-wimse-workload-creds]) as actor_token with a
-   Workload Proof Token ([I-D.ietf-wimse-wpt]).  The examples directory
-   of the draft's repository (https://github.com/mcguinness/draft-
-   mcguinness-oauth-actor-profile (https://github.com/mcguinness/draft-
-   mcguinness-oauth-actor-profile)) includes the full cross-domain
-   requests and tokens and a service-to-service payroll example.
+   The examples show only the members relevant to this profile; exp,
+   iat, and the Transaction Token context claims are omitted.  Request
+   parameters are shown one per line without URL encoding.  AgentJKT and
+   ToolJKT, as in the Illustrative Use Case (Section 1.1), name the
+   assistant's and the booking tool's keys; cnf.jkt carries their
+   thumbprints.  The examples directory of the draft's repository
+   (https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile)
+   has the complete requests and tokens, a metadata preflight, and a
+   service-to-service example.
+
+     +==================+============================================+
+     | Party            | Identifier                                 |
+     +==================+============================================+
+     | Alice            | https://idp.enterprise.example/users/alice |
+     +------------------+--------------------------------------------+
+     | Enterprise AS    | https://as.enterprise.example              |
+     +------------------+--------------------------------------------+
+     | Travel assistant | https://agents.enterprise.example/travel-  |
+     |                  | assistant                                  |
+     +------------------+--------------------------------------------+
+     | Travel provider  | https://as.travel-provider.example         |
+     | AS               |                                            |
+     +------------------+--------------------------------------------+
+     | TTS              | https://tts.travel-provider.example        |
+     +------------------+--------------------------------------------+
+     | Booking tool     | https://tools.travel-provider.example/     |
+     |                  | booking-tool                               |
+     +------------------+--------------------------------------------+
+
+                                  Table 11
+
+A.1.  ID-JAG from the Enterprise AS
+
+   The assistant presents Alice's ID Token as subject_token.  Its client
+   assertion serves as both client_assertion and actor_token (JWT Client
+   Assertion (Section 5.2.1)), and its DPoP proof shows the key
+   (AgentJKT) that the ID-JAG will bind:
+
+   NOTE: '\' line wrapping per RFC 8792
+
+   POST /token HTTP/1.1
+   Host: as.enterprise.example
+   DPoP: <proof for AgentJKT>
+
+   grant_type=urn:ietf:params:oauth:grant-type:token-exchange
+   &subject_token=<Alice's ID Token>
+   &subject_token_type=urn:ietf:params:oauth:token-type:id_token
+   &actor_token=<assistant's client assertion>
+   &actor_token_type=urn:ietf:params:oauth:token-type:jwt
+   &client_assertion=<assistant's client assertion>
+   &client_assertion_type=urn:ietf:params:oauth:\
+     client-assertion-type:jwt-bearer
+   &requested_token_type=urn:ietf:params:oauth:token-type:id-jag
+   &audience=https://as.travel-provider.example
+   &scope=booking:create
+
+   The enterprise AS confirms that Alice permits the assistant to act
+   for her (Determine the Output Chain (Section 3.6.2)) and issues an
+   ID-JAG that names the assistant as actor and is bound to AgentJKT:
+
+   {
+     "iss": "https://as.enterprise.example",
+     "sub": "https://idp.enterprise.example/users/alice",
+     "sub_profile": "user",
+     "aud": "https://as.travel-provider.example",
+     "client_id": "travel-assistant-client-id",
+     "jti": "a1b2c3d4-...",
+     "scope": "booking:create",
+     "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" },
+     "act": {
+       "sub": "https://agents.enterprise.example/travel-assistant",
+       "iss": "https://as.enterprise.example",
+       "sub_profile": "ai_agent"
+     }
+   }
+
+   client_id names the assistant's client registration at the travel
+   provider, which ID-JAG requires; act names the assistant as actor in
+   the namespace of the AS at which it is registered as a client
+   (Validate the Actor Token (Section 5.2)).
+
+A.2.  Access Token from the Travel Provider AS
+
+   The assistant redeems the ID-JAG with the jwt-dpop grant type and a
+   DPoP proof for AgentJKT, and authenticates with its client
+   registration at the travel provider:
+
+   NOTE: '\' line wrapping per RFC 8792
+
+   POST /token HTTP/1.1
+   Host: as.travel-provider.example
+   DPoP: <proof for AgentJKT>
+
+   grant_type=urn:ietf:params:oauth:grant-type:jwt-dpop
+   &assertion=<ID-JAG>
+   &client_assertion=<assistant's client assertion for this AS>
+   &client_assertion_type=urn:ietf:params:oauth:\
+     client-assertion-type:jwt-bearer
+
+   Under JWT Assertion Grants (Section 4), the travel provider AS
+   validates the ID-JAG and its jti, verifies that it trusts the
+   enterprise AS to assert this delegation and the assistant's (act.iss,
+   act.sub) pair, and verifies the DPoP proof against cnf.jkt.  It
+   carries the chain unchanged into an access token that is still bound
+   to AgentJKT:
+
+   {
+     "iss": "https://as.travel-provider.example",
+     "sub": "https://idp.enterprise.example/users/alice",
+     "sub_profile": "user",
+     "aud": "https://api.travel-provider.example",
+     "client_id": "travel-assistant-client-id",
+     "scope": "booking:create",
+     "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" },
+     "act": {
+       "sub": "https://agents.enterprise.example/travel-assistant",
+       "iss": "https://as.enterprise.example",
+       "sub_profile": "ai_agent"
+     }
+   }
+
+   The assistant calls the booking tool's API with this token and a DPoP
+   proof for AgentJKT.  The booking tool validates both and authorizes
+   Alice and the assistant as the (subject, actor) pair (Actor
+   Authorization (Section 8.2)).
+
+A.3.  Transaction Token from the TTS
+
+   The booking tool cannot present the access token downstream, because
+   that token is bound to AgentJKT.  It exchanges the token at the TTS,
+   presenting its WIMSE workload identity credential
+   ([I-D.ietf-wimse-workload-creds]) as actor_token and a Workload Proof
+   Token ([I-D.ietf-wimse-wpt]) for its own key (ToolJKT):
+
+   POST /token HTTP/1.1
+   Host: tts.travel-provider.example
+   Workload-Proof-Token: <WPT for ToolJKT>
+
+   grant_type=urn:ietf:params:oauth:grant-type:token-exchange
+   &subject_token=<access token>
+   &subject_token_type=urn:ietf:params:oauth:token-type:access_token
+   &actor_token=<booking tool's workload identity credential>
+   &actor_token_type=urn:ietf:params:oauth:token-type:jwt
+   &requested_token_type=urn:ietf:params:oauth:token-type:txn_token
+   &scope=inventory:check
+
+   This is a presenter rebind (Determine the Presenter and Binding
+   (Section 5.4)).  The TTS validates the credential and proof, confirms
+   that the booking tool may act for Alice, adds the tool as the
+   outermost actor over the inbound chain, and binds the Transaction
+   Token to ToolJKT:
+
+   {
+     "iss": "https://tts.travel-provider.example",
+     "sub": "https://idp.enterprise.example/users/alice",
+     "sub_profile": "user",
+     "aud": "https://api.travel-provider.example",
+     "txn": "550e8400-e29b-41d4-a716-446655440000",
+     "scope": "inventory:check",
+     "req_wl": "https://tools.travel-provider.example/booking-tool",
+     "cnf": { "jkt": "0ZcOCORZNYy9ZhHiZN..." },
+     "act": {
+       "sub": "https://tools.travel-provider.example/booking-tool",
+       "iss": "https://as.travel-provider.example",
+       "sub_profile": "service",
+       "act": {
+         "sub": "https://agents.enterprise.example/travel-assistant",
+         "iss": "https://as.enterprise.example",
+         "sub_profile": "ai_agent"
+       }
+     }
+   }
+
+   The outermost act.iss is the issuer of the tool's workload identity
+   credential.  The inventory service authorizes Alice and the booking
+   tool; the assistant is prior-actor context, kept for audit (Validate
+   the Inbound Chain (Section 3.6.1)).
 
 Acknowledgments
 
@@ -3065,40 +3255,44 @@ Document History
       resource server validation procedure, and one table that gives the
       issued act and its delegation check; JWT assertion grant
       processing is split into assertion validation, delegation
-      validation, and grant binding with replay prevention; Token
-      Exchange Processing opens with a four-step procedure, each input's
-      subsection gives its validation and issuer trust check, and the
-      presenter decision follows the inputs; the TTS scope rule is now a
-      MUST, as in Sections 13.6 and 13.14 of
-      [I-D.ietf-oauth-transaction-tokens]; the full worked examples
-      moved to the repository.  JWT assertion grant actor checks now
-      apply the chain algorithm, processing requirements in the
-      Considerations sections moved to the sections they govern, an
-      untestable cross-domain requirement was removed and another became
-      descriptive, the recommendation to advertise
-      introspection_endpoint was removed, a self-issued grant, an
-      untrusted grant issuer, and an unaccepted pre-chained grant now
-      name invalid_grant, an unmet actor_profile_required names
-      invalid_target, inferring delegation authority solely from a
-      client initiating a JWT assertion grant request is now prohibited,
-      a JWT access token subject_token needs an aud the requester is
-      locally authorized to use, policy rejection of sub_profile values
-      applies only to the subject and outermost actor, a rebind that
-      names the current outermost actor keeps the chain unchanged,
-      sub_profile is optional and collision-resistant private values are
-      recommended, a delegated-access requirement is defined, rebind of
-      a DPoP- or mTLS-bound assertion grant needs a grant profile that
-      explicitly permits it and issuer-specific policy, delegated JWT
-      access token issuance outside Token Exchange applies the common
-      rules and scopes a registration-derived actor identifier to the
-      registering AS, the Illustrative Use Case shows the token sequence
-      as a table, Input Processing tables state what each Token Exchange
-      input establishes and whether it allows continuation, a companion
-      profile can define further input and output token types and
-      sources of a new actor, and one Token Issuance section gives
-      Common Issuance Rules and each output token's own claims.
-      Definitions hold no requirements, the Identifier Reconciliation
-      rules have their own section, and unused definitions were removed.
+      validation, and grant binding with replay prevention; ID-JAG is
+      cited at -06, including its jwt-dpop grant type for a DPoP-bound
+      grant; presenter continuation, presenter rebind, grant profile,
+      and carrier token are defined; Token Exchange Processing opens
+      with a four-step procedure, each input's subsection gives its
+      validation and issuer trust check, and the presenter decision
+      follows the inputs; the TTS scope rule is now a MUST, as in
+      Sections 13.6 and 13.14 of [I-D.ietf-oauth-transaction-tokens];
+      the full worked examples moved to the repository, and the appendix
+      gives a concise cross-domain example with its requests and tokens.
+      JWT assertion grant actor checks now apply the Delegation Chains
+      steps, most processing requirements in the Considerations sections
+      moved to the sections they govern, an untestable cross-domain
+      requirement was removed and another became descriptive, the
+      recommendation to advertise introspection_endpoint was removed, a
+      self-issued grant, an untrusted grant issuer, and an unaccepted
+      pre-chained grant now name invalid_grant, an unmet
+      actor_profile_required names invalid_target, inferring delegation
+      authority solely from a client initiating a JWT assertion grant
+      request is now prohibited, a JWT access token subject_token needs
+      an aud the requester is locally authorized to use, policy
+      rejection of sub_profile values applies only to the subject and
+      outermost actor, a rebind that names the current outermost actor
+      keeps the chain unchanged, sub_profile is optional and collision-
+      resistant private values are recommended, a delegated-access
+      requirement is defined, rebind of a DPoP- or mTLS-bound assertion
+      grant needs a grant profile that explicitly permits it and issuer-
+      specific policy, delegated JWT access token issuance outside Token
+      Exchange applies the common rules and scopes a registration-
+      derived actor identifier to the registering AS, the Illustrative
+      Use Case shows the token sequence as a table, one table states
+      what each Token Exchange subject token establishes and whether it
+      allows continuation, a companion profile can define further input
+      and output token types and sources of a new actor, and one Token
+      Issuance section gives Common Issuance Rules and each output
+      token's own claims.  Definitions hold no requirements, the
+      Identifier Reconciliation rules have their own section, and unused
+      definitions were removed.
 
    *  Pinned behavior that -01 left open: grant validation applies to
       every JWT assertion grant subject_token; input-validation errors
