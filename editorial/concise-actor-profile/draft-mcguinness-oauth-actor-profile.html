@@ -2416,7 +2416,7 @@ An assertion grant is self-issued when its <code>iss</code> identifies the entit
   "exp": 1711820400,
   "iat": 1711816800,
   "sub_profile": "user",
-  "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" },
+  "cnf": { "jkt": "NzbLsXh8uDCcd7MN..." },
   "act": {
     "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
@@ -2447,10 +2447,10 @@ An assertion grant is self-issued when its <code>iss</code> identifies the entit
   "jti": "xyz987",
   "exp": 1711820400,
   "iat": 1711816800,
-  "scope": "travel:book",
+  "scope": "booking:create",
   "sub_profile": "user",
   "cnf": {
-    "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ"
+    "jkt": "NzbLsXh8uDCcd7MN..."
   },
   "act": {
     "sub": "https://agents.enterprise.example/travel-assistant",
@@ -3608,7 +3608,7 @@ For Transaction Tokens, the RS <span class="bcp14">SHOULD</span> evaluate <code>
 <a href="#appendix-A" class="section-number selfRef">Appendix A. </a><a href="#name-cross-domain-delegation-exa" class="section-name selfRef">Cross-Domain Delegation Example</a>
       </h2>
 <p id="appendix-A-1">Alice authorizes a travel assistant to book a trip. The enterprise AS issues an ID-JAG naming the assistant as actor. The assistant redeems it at the travel provider for an access token. When the booking tool exchanges that token for a Transaction Token, the TTS authenticates the tool, authorizes it to act for Alice, and adds it as the outermost actor.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
-<p id="appendix-A-2">The examples show only the members relevant to this profile; <code>exp</code>, <code>iat</code>, and the Transaction Token context claims are omitted.  Request parameters are shown one per line without URL encoding.  AgentJKT and ToolJKT, as in the <span><a href="#illustrative-use-case" class="internal xref">Illustrative Use Case</a> (<a href="#illustrative-use-case" class="auto internal xref">Section 1.1</a>)</span>, name the assistant's and the booking tool's keys; <code>cnf.jkt</code> carries their thumbprints.  The <code>examples</code> directory of the <a href="https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile">draft's repository</a> has the complete requests and tokens, a metadata preflight, and a service-to-service example.<a href="#appendix-A-2" class="pilcrow">¶</a></p>
+<p id="appendix-A-2">The examples show only the members relevant to this profile and omit others, such as <code>exp</code>, <code>iat</code>, and the Transaction Token context claims.  Request parameters are shown one per line without URL encoding.  AgentJKT and ToolJKT, as in the <span><a href="#illustrative-use-case" class="internal xref">Illustrative Use Case</a> (<a href="#illustrative-use-case" class="auto internal xref">Section 1.1</a>)</span>, name the assistant's and the booking tool's keys; <code>cnf.jkt</code> carries their thumbprints.  The <code>examples</code> directory of the <a href="https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile">draft's repository</a> has a fuller variant of this flow, a metadata preflight, and a service-to-service example.<a href="#appendix-A-2" class="pilcrow">¶</a></p>
 <table class="center" id="table-11">
         <caption><a href="#table-11" class="selfRef">Table 11</a></caption>
 <thead>
@@ -3668,6 +3668,7 @@ NOTE: '\' line wrapping per RFC 8792
 
 POST /token HTTP/1.1
 Host: as.enterprise.example
+Content-Type: application/x-www-form-urlencoded
 DPoP: &lt;proof for AgentJKT&gt;
 
 grant_type=urn:ietf:params:oauth:grant-type:token-exchange
@@ -3680,6 +3681,7 @@ grant_type=urn:ietf:params:oauth:grant-type:token-exchange
   client-assertion-type:jwt-bearer
 &amp;requested_token_type=urn:ietf:params:oauth:token-type:id-jag
 &amp;audience=https://as.travel-provider.example
+&amp;resource=https://api.travel-provider.example
 &amp;scope=booking:create
 </pre><a href="#appendix-A.1-2" class="pilcrow">¶</a>
 </div>
@@ -3694,7 +3696,7 @@ grant_type=urn:ietf:params:oauth:grant-type:token-exchange
   "client_id": "travel-assistant-client-id",
   "jti": "a1b2c3d4-...",
   "scope": "booking:create",
-  "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" },
+  "cnf": { "jkt": "NzbLsXh8uDCcd7MN..." },
   "act": {
     "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
@@ -3703,7 +3705,7 @@ grant_type=urn:ietf:params:oauth:grant-type:token-exchange
 }
 </pre><a href="#appendix-A.1-4" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.1-5"><code>client_id</code> names the assistant's client registration at the travel provider, which ID-JAG requires; <code>act</code> names the assistant as actor in the namespace of the AS at which it is registered as a client (<span><a href="#actor-tokens" class="internal xref">Validate the Actor Token</a> (<a href="#actor-tokens" class="auto internal xref">Section 5.2</a>)</span>).<a href="#appendix-A.1-5" class="pilcrow">¶</a></p>
+<p id="appendix-A.1-5"><code>client_id</code> names the assistant's client registration at the travel provider, which ID-JAG requires.  <code>act.sub</code> is the <code>sub</code> of the assistant's client assertion, its <code>client_id</code> at the enterprise AS, and <code>act.iss</code> is the enterprise AS (<span><a href="#actor-tokens" class="internal xref">Validate the Actor Token</a> (<a href="#actor-tokens" class="auto internal xref">Section 5.2</a>)</span>).<a href="#appendix-A.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="access-token-from-the-travel-provider-as">
@@ -3718,6 +3720,7 @@ NOTE: '\' line wrapping per RFC 8792
 
 POST /token HTTP/1.1
 Host: as.travel-provider.example
+Content-Type: application/x-www-form-urlencoded
 DPoP: &lt;proof for AgentJKT&gt;
 
 grant_type=urn:ietf:params:oauth:grant-type:jwt-dpop
@@ -3736,8 +3739,9 @@ grant_type=urn:ietf:params:oauth:grant-type:jwt-dpop
   "sub_profile": "user",
   "aud": "https://api.travel-provider.example",
   "client_id": "travel-assistant-client-id",
+  "jti": "xyz987",
   "scope": "booking:create",
-  "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" },
+  "cnf": { "jkt": "NzbLsXh8uDCcd7MN..." },
   "act": {
     "sub": "https://agents.enterprise.example/travel-assistant",
     "iss": "https://as.enterprise.example",
@@ -3754,11 +3758,12 @@ grant_type=urn:ietf:params:oauth:grant-type:jwt-dpop
         <h3 id="name-transaction-token-from-the-">
 <a href="#appendix-A.3" class="section-number selfRef">A.3. </a><a href="#name-transaction-token-from-the-" class="section-name selfRef">Transaction Token from the TTS</a>
         </h3>
-<p id="appendix-A.3-1">The booking tool cannot present the access token downstream, because that token is bound to AgentJKT.  It exchanges the token at the TTS, presenting its WIMSE workload identity credential (<span>[<a href="#I-D.ietf-wimse-workload-creds" class="cite xref">I-D.ietf-wimse-workload-creds</a>]</span>) as <code>actor_token</code> and a Workload Proof Token (<span>[<a href="#I-D.ietf-wimse-wpt" class="cite xref">I-D.ietf-wimse-wpt</a>]</span>) for its own key (ToolJKT):<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.3-1">The booking tool cannot present the access token to the inventory service, because that token is bound to AgentJKT.  It exchanges the token at the TTS, presenting its WIMSE workload identity credential (<span>[<a href="#I-D.ietf-wimse-workload-creds" class="cite xref">I-D.ietf-wimse-workload-creds</a>]</span>) as <code>actor_token</code> and a Workload Proof Token (<span>[<a href="#I-D.ietf-wimse-wpt" class="cite xref">I-D.ietf-wimse-wpt</a>]</span>) for its own key (ToolJKT):<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="appendix-A.3-2">
 <pre>
 POST /token HTTP/1.1
 Host: tts.travel-provider.example
+Content-Type: application/x-www-form-urlencoded
 Workload-Proof-Token: &lt;WPT for ToolJKT&gt;
 
 grant_type=urn:ietf:params:oauth:grant-type:token-exchange
@@ -3770,7 +3775,7 @@ grant_type=urn:ietf:params:oauth:grant-type:token-exchange
 &amp;scope=inventory:check
 </pre><a href="#appendix-A.3-2" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.3-3">This is a presenter rebind (<span><a href="#token-exchange-presenter-model" class="internal xref">Determine the Presenter and Binding</a> (<a href="#token-exchange-presenter-model" class="auto internal xref">Section 5.4</a>)</span>).  The TTS validates the credential and proof, confirms that the booking tool may act for Alice, adds the tool as the outermost actor over the inbound chain, and binds the Transaction Token to ToolJKT:<a href="#appendix-A.3-3" class="pilcrow">¶</a></p>
+<p id="appendix-A.3-3">This is a presenter rebind (<span><a href="#token-exchange-presenter-model" class="internal xref">Determine the Presenter and Binding</a> (<a href="#token-exchange-presenter-model" class="auto internal xref">Section 5.4</a>)</span>).  The TTS validates the credential and proof, confirms that the booking tool may act for Alice, adds the tool as the outermost actor over the inbound chain, and, as this deployment's profile specifies, binds the Transaction Token to ToolJKT, the key in the credential's <code>cnf.jwk</code>:<a href="#appendix-A.3-3" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="appendix-A.3-4">
 <pre>
 {
@@ -3795,7 +3800,7 @@ grant_type=urn:ietf:params:oauth:grant-type:token-exchange
 }
 </pre><a href="#appendix-A.3-4" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.3-5">The outermost <code>act.iss</code> is the issuer of the tool's workload identity credential.  The inventory service authorizes Alice and the booking tool; the assistant is prior-actor context, kept for audit (<span><a href="#validate-inbound-chain" class="internal xref">Validate the Inbound Chain</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span>).<a href="#appendix-A.3-5" class="pilcrow">¶</a></p>
+<p id="appendix-A.3-5">The outermost <code>act.iss</code> is the namespace context for the tool's identifier, here the issuer of its workload identity credential (<span><a href="#actor-tokens" class="internal xref">Validate the Actor Token</a> (<a href="#actor-tokens" class="auto internal xref">Section 5.2</a>)</span>).  The inventory service authorizes Alice and the booking tool; the assistant is prior-actor context, kept for audit (<span><a href="#validate-inbound-chain" class="internal xref">Validate the Inbound Chain</a> (<a href="#validate-inbound-chain" class="auto internal xref">Section 3.6.1</a>)</span>).<a href="#appendix-A.3-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>

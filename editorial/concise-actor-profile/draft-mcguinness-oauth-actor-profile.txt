@@ -1567,7 +1567,7 @@ Table of Contents
      "exp": 1711820400,
      "iat": 1711816800,
      "sub_profile": "user",
-     "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" },
+     "cnf": { "jkt": "NzbLsXh8uDCcd7MN..." },
      "act": {
        "sub": "https://agents.enterprise.example/travel-assistant",
        "iss": "https://as.enterprise.example",
@@ -1605,10 +1605,10 @@ Table of Contents
      "jti": "xyz987",
      "exp": 1711820400,
      "iat": 1711816800,
-     "scope": "travel:book",
+     "scope": "booking:create",
      "sub_profile": "user",
      "cnf": {
-       "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ"
+       "jkt": "NzbLsXh8uDCcd7MN..."
      },
      "act": {
        "sub": "https://agents.enterprise.example/travel-assistant",
@@ -3053,14 +3053,14 @@ Appendix A.  Cross-Domain Delegation Example
    authenticates the tool, authorizes it to act for Alice, and adds it
    as the outermost actor.
 
-   The examples show only the members relevant to this profile; exp,
-   iat, and the Transaction Token context claims are omitted.  Request
-   parameters are shown one per line without URL encoding.  AgentJKT and
-   ToolJKT, as in the Illustrative Use Case (Section 1.1), name the
-   assistant's and the booking tool's keys; cnf.jkt carries their
-   thumbprints.  The examples directory of the draft's repository
+   The examples show only the members relevant to this profile and omit
+   others, such as exp, iat, and the Transaction Token context claims.
+   Request parameters are shown one per line without URL encoding.
+   AgentJKT and ToolJKT, as in the Illustrative Use Case (Section 1.1),
+   name the assistant's and the booking tool's keys; cnf.jkt carries
+   their thumbprints.  The examples directory of the draft's repository
    (https://github.com/mcguinness/draft-mcguinness-oauth-actor-profile)
-   has the complete requests and tokens, a metadata preflight, and a
+   has a fuller variant of this flow, a metadata preflight, and a
    service-to-service example.
 
      +==================+============================================+
@@ -3095,6 +3095,7 @@ A.1.  ID-JAG from the Enterprise AS
 
    POST /token HTTP/1.1
    Host: as.enterprise.example
+   Content-Type: application/x-www-form-urlencoded
    DPoP: <proof for AgentJKT>
 
    grant_type=urn:ietf:params:oauth:grant-type:token-exchange
@@ -3107,6 +3108,7 @@ A.1.  ID-JAG from the Enterprise AS
      client-assertion-type:jwt-bearer
    &requested_token_type=urn:ietf:params:oauth:token-type:id-jag
    &audience=https://as.travel-provider.example
+   &resource=https://api.travel-provider.example
    &scope=booking:create
 
    The enterprise AS confirms that Alice permits the assistant to act
@@ -3121,7 +3123,7 @@ A.1.  ID-JAG from the Enterprise AS
      "client_id": "travel-assistant-client-id",
      "jti": "a1b2c3d4-...",
      "scope": "booking:create",
-     "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" },
+     "cnf": { "jkt": "NzbLsXh8uDCcd7MN..." },
      "act": {
        "sub": "https://agents.enterprise.example/travel-assistant",
        "iss": "https://as.enterprise.example",
@@ -3130,9 +3132,10 @@ A.1.  ID-JAG from the Enterprise AS
    }
 
    client_id names the assistant's client registration at the travel
-   provider, which ID-JAG requires; act names the assistant as actor in
-   the namespace of the AS at which it is registered as a client
-   (Validate the Actor Token (Section 5.2)).
+   provider, which ID-JAG requires.  act.sub is the sub of the
+   assistant's client assertion, its client_id at the enterprise AS, and
+   act.iss is the enterprise AS (Validate the Actor Token
+   (Section 5.2)).
 
 A.2.  Access Token from the Travel Provider AS
 
@@ -3144,6 +3147,7 @@ A.2.  Access Token from the Travel Provider AS
 
    POST /token HTTP/1.1
    Host: as.travel-provider.example
+   Content-Type: application/x-www-form-urlencoded
    DPoP: <proof for AgentJKT>
 
    grant_type=urn:ietf:params:oauth:grant-type:jwt-dpop
@@ -3165,8 +3169,9 @@ A.2.  Access Token from the Travel Provider AS
      "sub_profile": "user",
      "aud": "https://api.travel-provider.example",
      "client_id": "travel-assistant-client-id",
+     "jti": "xyz987",
      "scope": "booking:create",
-     "cnf": { "jkt": "NzbLsXh8uDCcd7MNwrnNZpX0ak8ACQ" },
+     "cnf": { "jkt": "NzbLsXh8uDCcd7MN..." },
      "act": {
        "sub": "https://agents.enterprise.example/travel-assistant",
        "iss": "https://as.enterprise.example",
@@ -3181,14 +3186,15 @@ A.2.  Access Token from the Travel Provider AS
 
 A.3.  Transaction Token from the TTS
 
-   The booking tool cannot present the access token downstream, because
-   that token is bound to AgentJKT.  It exchanges the token at the TTS,
-   presenting its WIMSE workload identity credential
+   The booking tool cannot present the access token to the inventory
+   service, because that token is bound to AgentJKT.  It exchanges the
+   token at the TTS, presenting its WIMSE workload identity credential
    ([I-D.ietf-wimse-workload-creds]) as actor_token and a Workload Proof
    Token ([I-D.ietf-wimse-wpt]) for its own key (ToolJKT):
 
    POST /token HTTP/1.1
    Host: tts.travel-provider.example
+   Content-Type: application/x-www-form-urlencoded
    Workload-Proof-Token: <WPT for ToolJKT>
 
    grant_type=urn:ietf:params:oauth:grant-type:token-exchange
@@ -3202,8 +3208,9 @@ A.3.  Transaction Token from the TTS
    This is a presenter rebind (Determine the Presenter and Binding
    (Section 5.4)).  The TTS validates the credential and proof, confirms
    that the booking tool may act for Alice, adds the tool as the
-   outermost actor over the inbound chain, and binds the Transaction
-   Token to ToolJKT:
+   outermost actor over the inbound chain, and, as this deployment's
+   profile specifies, binds the Transaction Token to ToolJKT, the key in
+   the credential's cnf.jwk:
 
    {
      "iss": "https://tts.travel-provider.example",
@@ -3226,10 +3233,11 @@ A.3.  Transaction Token from the TTS
      }
    }
 
-   The outermost act.iss is the issuer of the tool's workload identity
-   credential.  The inventory service authorizes Alice and the booking
-   tool; the assistant is prior-actor context, kept for audit (Validate
-   the Inbound Chain (Section 3.6.1)).
+   The outermost act.iss is the namespace context for the tool's
+   identifier, here the issuer of its workload identity credential
+   (Validate the Actor Token (Section 5.2)).  The inventory service
+   authorizes Alice and the booking tool; the assistant is prior-actor
+   context, kept for audit (Validate the Inbound Chain (Section 3.6.1)).
 
 Acknowledgments
 
