@@ -727,30 +727,40 @@ Table of Contents
 3.6.3.  Omitting Prior Actors
 
    By default, an issuer that preserves or extends a delegation chain
-   includes all of it or rejects the request.  An issuer MAY omit inner
-   actor objects only when a profile or the trust configuration permits
-   it and binds every party that relies on the issuer's chains,
-   including recipients of derived tokens, to recognize the omission and
-   carry its marking forward; a party that implements only this document
-   cannot recognize the marking.  Such an issuer MUST first apply
-   Validate the Inbound Chain (Section 3.6.1) and Determine the Output
-   Chain (Section 3.6.2), including their depth checks, MUST omit only
-   whole inner actor objects, keeping the remaining ones in order with
-   their members other than the nested act unchanged, MUST NOT omit the
-   outermost actor object or the act claim, and MUST mark the omission
-   in the issued token as the permitting profile or trust configuration
-   defines.  That profile or trust configuration also defines how
-   introspection responses report the omission and how recipients
-   process an incomplete chain.
+   includes all of it or rejects the request.  The following rules
+   govern omission:
 
-   An issuer that preserves, extends, or refreshes a chain it knows to
-   be incomplete MUST reject the request unless such a profile or trust
-   configuration applies.  A TTS and an AS processing the refresh_token
-   grant MUST NOT omit actors.  Each MUST carry forward any omission
-   marking it recognizes (TTS Request Processing (Section 7.2), Other
-   Grants and Refresh Tokens (Section 6.5)).  Token Exchange with a
-   refresh token as subject_token follows this section like any other
-   Token Exchange.
+   *  *When omission is allowed*: An issuer MAY omit inner actor objects
+      only when a profile or the trust configuration permits it and
+      binds every party that relies on the issuer's chains, including
+      recipients of derived tokens, to recognize the omission and carry
+      its marking forward; a party that implements only this document
+      cannot recognize the marking.
+
+   *  *How an issuer omits actors*: An issuer that omits actors MUST
+      first apply Validate the Inbound Chain (Section 3.6.1) and
+      Determine the Output Chain (Section 3.6.2), including their depth
+      checks.  It MUST omit only whole inner actor objects, keeping the
+      remaining ones in order with their members other than the nested
+      act unchanged, and MUST NOT omit the outermost actor object or the
+      act claim.
+
+   *  *How the omission is marked*: An issuer that omits actors MUST
+      mark the omission in the issued token as the permitting profile or
+      trust configuration defines.  That profile or trust configuration
+      also defines how introspection responses report the omission and
+      how recipients process an incomplete chain.
+
+   *  *Incomplete inbound chains*: An issuer that preserves, extends, or
+      refreshes a chain it knows to be incomplete MUST reject the
+      request unless omission is permitted as the first item describes.
+
+   *  *TTS and refresh tokens*: A TTS and an AS processing the
+      refresh_token grant MUST NOT omit actors, and each MUST carry
+      forward any omission marking it recognizes (TTS Request Processing
+      (Section 7.2), Other Grants and Refresh Tokens (Section 6.5)).
+      Token Exchange with a refresh token as subject_token follows this
+      section like any other Token Exchange.
 
 3.7.  Sender Constraint and Proof-of-Possession Validation
 
@@ -886,23 +896,24 @@ Table of Contents
    MUST verify the request's proof against that member as the upstream
    issuer set it, and MUST NOT substitute a locally registered key or
    certificate.  If the required proof is absent, or a valid proof does
-   not match that member, the AS MUST reject the request with
-   invalid_grant; Section 9.11.1.2.2 of
-   [I-D.ietf-oauth-identity-assertion-authz-grant] specifies this for an
-   absent DPoP proof on an ID-JAG.
+   not match that member, the AS MUST reject the request: with
+   invalid_grant for a mismatch, and for an absent proof with the
+   missing-proof error that Error Responses (Section 9) gives.
 
-   *  *DPoP*: For a grant that carries cnf.jkt, the proof MUST be valid
-      per [RFC9449], with htm equal to POST and htu equal to the AS
-      token endpoint URI.  The ath claim does not apply at the token
-      endpoint, so the AS MUST accept a proof without it.  The AS
-      compares the JWK SHA-256 thumbprint of the proof's public key with
-      cnf.jkt (Section 6.1 of [RFC9449]), as Section 4.3 of [RFC9449]
-      checks the proof's key against an access token's binding.  If the
-      request carries an invalid DPoP proof, the AS MUST reject the
-      request with invalid_dpop_proof, subject to the nonce challenge
-      rules of Section 8 of [RFC9449].
-      [I-D.parecki-oauth-jwt-dpop-grant] defines the jwt-dpop grant type
-      for such grants.
+   *  *DPoP*: An AS that supports the jwt-dpop grant type rejects, with
+      invalid_grant, a jwt-bearer request that redeems a grant carrying
+      cnf.jkt, whether or not the request carries a DPoP proof
+      (Section 5.2 of [I-D.parecki-oauth-jwt-dpop-grant]).  Otherwise,
+      for a grant that carries cnf.jkt, the proof MUST be valid per
+      [RFC9449], with htm equal to POST and htu equal to the AS token
+      endpoint URI.  The ath claim does not apply at the token endpoint,
+      so the AS MUST accept a proof without it.  The AS compares the JWK
+      SHA-256 thumbprint of the proof's public key with cnf.jkt
+      (Section 6.1 of [RFC9449]), as Section 4.3 of [RFC9449] checks the
+      proof's key against an access token's binding.  If the request
+      carries an invalid DPoP proof, the AS MUST reject the request with
+      invalid_dpop_proof, subject to the nonce challenge rules of
+      Section 8 of [RFC9449].
 
    *  *mTLS*: For a grant that carries cnf.x5t#S256, the AS MUST
       validate the client certificate presented at the token endpoint
@@ -1097,8 +1108,10 @@ Table of Contents
    subject_token_type=urn:ietf:params:oauth:token-type:id_token.  The AS
    validates it per [OpenID.Core] and local policy.  It identifies an
    authenticated user in sub and the relying party in aud (and possibly
-   azp); the acting party comes from actor_token, and aud and azp remain
-   client identifiers.
+   azp).  Neither aud nor azp by itself establishes delegation; any
+   actor comes from a source that Delegation Chains (Section 3.6) lists,
+   such as actor_token or, under Authorized Actor Claim (Section 5.3),
+   the authenticated client.
 
    The AS MUST verify that the ID Token's aud contains a value that
    identifies the authenticated client under Identifier Reconciliation
@@ -1855,6 +1868,11 @@ Table of Contents
       chain as complete unless local policy or deployment context
       indicates otherwise.
 
+   For a DPoP- or mTLS-bound token, the response also carries the top-
+   level cnf member that Section 6.2 of [RFC9449] or Section 3.2 of
+   [RFC8705] specifies, and the RS validates the presenter against it as
+   for a JWT access token (JWT Access Token Processing (Section 8.1.1)).
+
    The AS MUST return actor claims from the token's authorization
    context, including the nested chain as issued, except for the
    following privacy-filtering allowance.
@@ -1935,9 +1953,14 @@ Table of Contents
    invalid_client error code per [RFC6749] or [RFC7523].  A supplied
    invalid DPoP proof uses the invalid_dpop_proof error code; a nonce
    challenge uses the use_dpop_nonce error code, per Sections 5 and 8 of
-   [RFC9449].  A missing required grant proof is an input-validation
-   failure and uses the grant-type-specific error above.  Actor-
-   authorization denials use the actor_unauthorized error code, an
+   [RFC9449].  Under the jwt-dpop grant type, a missing DPoP proof also
+   uses invalid_dpop_proof, or use_dpop_nonce when a nonce is required
+   (Section 5 of [I-D.parecki-oauth-jwt-dpop-grant]), except that for an
+   ID-JAG carrying cnf, this document follows Section 9.11.1.2.2 of
+   [I-D.ietf-oauth-identity-assertion-authz-grant], which specifies
+   invalid_grant.  Any other missing required grant proof is an input-
+   validation failure and uses the grant-type-specific error above.
+   Actor-authorization denials use the actor_unauthorized error code, an
    extension error permitted by Section 2.2.2 of [RFC8693].
 
    The following error codes apply to both AS and TTS endpoints:
@@ -2910,6 +2933,13 @@ Table of Contents
               <https://www.ietf.org/archive/id/draft-mora-oauth-entity-
               profiles-01.txt>.
 
+   [I-D.parecki-oauth-jwt-dpop-grant]
+              Parecki, A., "OAuth 2.0 JWT Authorization Grant with DPoP
+              Binding", Work in Progress, Internet-Draft, draft-parecki-
+              oauth-jwt-dpop-grant-02, 30 October 2026,
+              <https://www.ietf.org/archive/id/draft-parecki-oauth-jwt-
+              dpop-grant-02.txt>.
+
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
               DOI 10.17487/RFC2119, March 1997,
@@ -2925,13 +2955,6 @@ Table of Contents
               "Best Current Practice for OAuth 2.0 Security", BCP 240,
               RFC 9700, DOI 10.17487/RFC9700, January 2025,
               <https://www.rfc-editor.org/info/rfc9700>.
-
-   [I-D.parecki-oauth-jwt-dpop-grant]
-              Parecki, A., "OAuth 2.0 JWT Authorization Grant with DPoP
-              Binding", Work in Progress, Internet-Draft, draft-parecki-
-              oauth-jwt-dpop-grant-02, 30 October 2026,
-              <https://datatracker.ietf.org/doc/html/draft-parecki-
-              oauth-jwt-dpop-grant-02>.
 
    [I-D.ietf-oauth-identity-chaining]
               Schwenkschuster, A., Kasselman, P., Burgin, K., Jenkins,
@@ -3169,22 +3192,27 @@ Document History
       issued act and its delegation check; JWT assertion grant
       processing is split into assertion validation, delegation
       validation, and grant binding with replay prevention; ID-JAG is
-      cited at -06, including its jwt-dpop grant type for a DPoP-bound
-      grant; presenter continuation, presenter rebind, grant profile,
-      and carrier token are defined; Token Exchange Processing opens
-      with a four-step procedure, each input's subsection gives its
-      validation and issuer trust check, and the presenter decision
-      follows the inputs; the TTS scope rule is now a MUST, as in
-      Sections 13.6 and 13.14 of [I-D.ietf-oauth-transaction-tokens];
-      the full worked examples moved to the repository, and the appendix
-      gives a concise cross-domain example with its requests and tokens,
-      to which the output sections point; a reading guide names the
-      sections each role needs.  JWT assertion grant actor checks now
-      apply the Delegation Chains steps, most processing requirements in
-      the Considerations sections moved to the sections they govern, an
-      untestable cross-domain requirement was removed and another became
-      descriptive, lifetime, migration, operator-configuration, and most
-      privacy guidance is descriptive rather than BCP 14 text, the
+      cited at -06, including the jwt-dpop grant type it uses for a
+      DPoP-bound grant, and the JWT-DPoP grant draft is a normative
+      reference: under jwt-dpop, a missing DPoP proof uses
+      invalid_dpop_proof, except for an ID-JAG carrying cnf
+      (invalid_grant), and an AS that supports jwt-dpop rejects a DPoP-
+      bound grant redeemed with jwt-bearer; presenter continuation,
+      presenter rebind, grant profile, and carrier token are defined;
+      Token Exchange Processing opens with a four-step procedure, each
+      input's subsection gives its validation and issuer trust check,
+      and the presenter decision follows the inputs; the TTS scope rule
+      is now a MUST, as in Sections 13.6 and 13.14 of
+      [I-D.ietf-oauth-transaction-tokens]; the full worked examples
+      moved to the repository, and the appendix gives a concise cross-
+      domain example with its requests and tokens, to which the output
+      sections point; a reading guide names the sections each role
+      needs.  JWT assertion grant actor checks now apply the Delegation
+      Chains steps, most processing requirements in the Considerations
+      sections moved to the sections they govern, an untestable cross-
+      domain requirement was removed and another became descriptive,
+      lifetime, migration, operator-configuration, and most privacy
+      guidance is descriptive rather than BCP 14 text, the
       recommendation to advertise introspection_endpoint was removed, a
       self-issued grant, an untrusted grant issuer, and an unaccepted
       pre-chained grant now name invalid_grant, an unmet
