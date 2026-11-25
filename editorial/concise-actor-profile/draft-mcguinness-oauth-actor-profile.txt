@@ -241,9 +241,9 @@ Table of Contents
       parameters for advertising actor-profile support.
 
    *  *No actor classification rules.* [I-D.mora-oauth-entity-profiles]
-      defines entity profile values for sub and within act, but not how
-      issuers carry an actor's classification across exchanges or how
-      recipients treat an absent or unrecognized value.
+      defines entity profile values for sub and within act, but leaves
+      to a separate specification the rules for assigning an actor's
+      classification and carrying it along a delegation chain.
 
    This document profiles act to close those gaps.  It defines:
 
@@ -736,10 +736,11 @@ Table of Contents
    Validate the Inbound Chain (Section 3.6.1) and Determine the Output
    Chain (Section 3.6.2), including their depth checks, MUST omit only
    whole inner actor objects, keeping the remaining ones in order with
-   their members other than the nested act unchanged, and MUST NOT omit
-   the outermost actor object or the act claim.  The profile or trust
-   configuration that permits omission defines how the omission is
-   marked in tokens and introspection responses and how recipients
+   their members other than the nested act unchanged, MUST NOT omit the
+   outermost actor object or the act claim, and MUST mark the omission
+   in the issued token as the permitting profile or trust configuration
+   defines.  That profile or trust configuration also defines how
+   introspection responses report the omission and how recipients
    process an incomplete chain.
 
    An issuer that preserves, extends, or refreshes a chain it knows to
@@ -1047,10 +1048,9 @@ Table of Contents
    assertion grant with invalid_request; Section 9.11.1 of
    [I-D.ietf-oauth-identity-assertion-authz-grant] likewise requires
    proof of a DPoP-bound ID-JAG's key whenever the ID-JAG is used.  A
-   grant profile that permitted such rebind would have to define the
-   replay protections it needs.  A grant without an enforced grant-level
-   sender constraint is single-use under Verify Grant Binding and
-   Prevent Replay (Section 4.3), including on rebind.
+   grant without an enforced grant-level sender constraint is single-use
+   under Verify Grant Binding and Prevent Replay (Section 4.3),
+   including on rebind.
 
 5.1.2.  JWT Access Token
 
@@ -1130,9 +1130,8 @@ Table of Contents
    other trusted refresh-token state; signature validation alone is
    insufficient, and an expired, revoked, or otherwise invalid token
    fails validation.  The AS MUST NOT accept a refresh token that
-   another AS issued; a companion profile can define cross-AS refresh-
-   token exchange (Companion Profiles and Extension Points
-   (Section 11)).
+   another AS issued; cross-AS refresh-token exchange is outside the
+   scope of this document.
 
    The AS MUST verify that the requesting client or authenticated
    presenter is authorized to use the refresh token under the refresh
@@ -2590,15 +2589,16 @@ Table of Contents
 13.11.  Delegation Depth Limits
 
    The depth limit (Section 3.6.1) bounds parsing work.  A count of
-   actors omitted by the issuer can understate total depth if
-   introspection filters additional actors.
+   omitted actors that a permitting profile or trust configuration
+   conveys can understate total depth if introspection filters
+   additional actors.
 
    Extensions that attach per-hop signed material grow token size in
-   proportion to chain depth.  Combined with the depth of 4 that cross-
-   domain implementations support (Validate the Inbound Chain
-   (Section 3.6.1)), such mechanisms can exceed transport limits (HTTP
-   header limits are often 8 KB); token introspection ([RFC7662]) avoids
-   carrying them inline.
+   proportion to chain depth.  Combined with the depth of 4 or more that
+   Validate the Inbound Chain (Section 3.6.1) recommends for cross-
+   domain multi-hop implementations, such mechanisms can exceed
+   transport limits (HTTP header limits are often 8 KB); token
+   introspection ([RFC7662]) avoids carrying them inline.
 
 13.12.  Actor Identity Rotation
 
@@ -2643,16 +2643,17 @@ Table of Contents
    composition.  An issuer controls that disclosure where it makes the
    choice: which audiences receive a delegated token, and which optional
    members, such as act.sub_profile and extension members, it puts in an
-   actor object it creates.  Issuers SHOULD include only the optional
-   actor information that the token's recipients need, bearing in mind
-   that a recipient requiring an actor type rejects a token without one
-   (Actor Object Structure (Section 3.4)).  Inherited actor objects are
-   copied intact (Determine the Output Chain (Section 3.6.2)); an issuer
-   whose local privacy requirements would require omitting one rejects
-   the request rather than truncating the chain, unless omission is
-   permitted (Omitting Prior Actors (Section 3.6.3)).  Introspection can
-   filter inner actors for a particular recipient, marking the response
-   with chain_complete: false (Token Introspection (Section 8.3)).
+   actor object it creates.  Issuers SHOULD include in an actor object
+   they create only the optional actor information that the token's
+   recipients need, bearing in mind that a recipient requiring an actor
+   type rejects a token without one (Actor Object Structure
+   (Section 3.4)).  Inherited actor objects are copied intact (Determine
+   the Output Chain (Section 3.6.2)); an issuer whose local privacy
+   requirements would require omitting one rejects the request rather
+   than truncating the chain, unless omission is permitted (Omitting
+   Prior Actors (Section 3.6.3)).  Introspection can filter inner actors
+   for a particular recipient, marking the response with chain_complete:
+   false (Token Introspection (Section 8.3)).
 
    Stable but non-reassigned identifiers, and pairwise identifiers for
    human subjects where the use case does not need a globally
@@ -2665,8 +2666,8 @@ Table of Contents
 
    A Transaction Token's txn value links service calls in the same
    transaction and can enable correlation across organizations.
-   [I-D.ietf-oauth-transaction-tokens] gives privacy guidance for
-   propagating it across trust domains.
+   Section 15 of [I-D.ietf-oauth-transaction-tokens] gives privacy
+   guidance for Transaction Token claims and logging.
 
    The act.sub_profile claim reveals the actor's entity type, including
    whether it is an AI agent.  In some jurisdictions or deployment
@@ -2675,8 +2676,10 @@ Table of Contents
 
    The req_wl claim, which every Transaction Token carries (Section 9.2
    of [I-D.ietf-oauth-transaction-tokens]), can reveal internal workload
-   topology; limiting which recipients outside the trust domain receive
-   Transaction Tokens limits that exposure.
+   topology.  A Transaction Token is accepted only within the trust
+   domain that its aud identifies (Section 9.2 of
+   [I-D.ietf-oauth-transaction-tokens]), and an AS does not carry req_wl
+   into a JWT access token (Transaction Token (Section 5.1.3)).
 
 15.  IANA Considerations
 
@@ -3197,9 +3200,10 @@ Document History
       grant is rejected, a refresh token issued by another AS is
       rejected, delegated JWT access token issuance outside Token
       Exchange applies the common rules and scopes a registration-
-      derived actor identifier to the registering AS, the Illustrative
-      Use Case shows the token sequence as a table, one table states
-      what each Token Exchange subject token establishes and whether it
+      derived actor identifier to the registering AS, the Introduction
+      shows the travel-booking token sequence as a table and names five
+      gaps, led by issuer-scoped actor identity, one table states what
+      each Token Exchange subject token establishes and whether it
       allows continuation, a companion profile can define further input
       and output token types and sources of a new actor, and one Token
       Issuance section gives Common Issuance Rules and each output
