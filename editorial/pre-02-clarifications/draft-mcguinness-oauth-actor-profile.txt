@@ -1464,9 +1464,10 @@ Table of Contents
 
                Table 7: Presenter Evidence and Output Binding
 
-   On bound continuation, the issuer MAY issue a bearer output only when
-   local policy permits removing the sender constraint and the output
-   token's specification allows a bearer token.
+   On bound continuation, after verifying the input binding, the issuer
+   MAY issue a bearer output only when local policy permits removing the
+   sender constraint and the applicable grant, request, and output-token
+   rules permit bearer issuance for this exchange.
 
    Determine the Output Chain (Section 3.6.2) gives the issued act, a
    separate decision from the transition.  When a source of a new actor
@@ -1769,10 +1770,11 @@ Table of Contents
 
    2.  Reject a token without act, and reject a visible chain exceeding
        the depth limit (Section 3.6.1).  Where profile conformance is
-       required (Section 3.1), require every visible actor object to
-       meet Actor Object Structure (Section 3.4), including iss;
-       otherwise, the RS MAY process a nonconforming act under local
-       rules, without inferring semantics for absent claims.
+       required (Section 3.1), apply the recipient rules in Actor Object
+       Structure (Section 3.4) to every visible actor object, including
+       the requirements for iss and sub; otherwise, the RS MAY process a
+       nonconforming act under local rules, without inferring semantics
+       for absent claims.
 
    3.  Identify the subject and the outermost actor.  When local policy
        expects a token-specific identifier below to identify that actor,
@@ -1897,10 +1899,11 @@ Table of Contents
       chain as complete unless local policy or deployment context
       indicates otherwise.
 
-   For a DPoP- or mTLS-bound token, the response also carries the top-
-   level cnf member that Section 6.2 of [RFC9449] or Section 3.2 of
-   [RFC8705] specifies, and the RS validates the presenter against it as
-   for a JWT access token (JWT Access Token Processing (Section 8.1.1)).
+   For a sender-constrained token, the AS MUST include the top-level cnf
+   member in an active response, as Section 6.2 of [RFC9449] and
+   Section 3.2 of [RFC8705] specify for DPoP and mTLS, and the RS
+   validates the presenter against it as for a JWT access token (JWT
+   Access Token Processing (Section 8.1.1)).
 
    The AS MUST return actor claims from the token's authorization
    context, including the nested chain as issued, except for the
@@ -3156,10 +3159,11 @@ Document History
    *  Defined when profile conformance is required, and stated resource
       server actor authorization as one conditional requirement.
 
-   *  Rejected a token whose top-level cnf uses an unsupported
-      confirmation method instead of treating it as bearer, and allowed
-      a bearer output on bound continuation only where local policy and
-      the output specification permit it.
+   *  Prevented bearer fallback when the recipient cannot validate the
+      token's confirmation method, required introspection responses to
+      carry a sender-constrained token's cnf, and allowed a bearer
+      output on bound continuation only where local policy and the rules
+      for that exchange permit it.
 
    *  Required act on an authorization code token issued under an
       independent delegation basis, and pointed act extension member
