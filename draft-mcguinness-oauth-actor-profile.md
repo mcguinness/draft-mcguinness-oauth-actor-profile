@@ -726,7 +726,7 @@ When token introspection ({{RFC7662}}) is used for delegated tokens, an AS MUST 
 *  `iss`: REQUIRED when the AS has a stable issuer identifier.
 *  `chain_complete`: OPTIONAL.  When absent, the RS SHOULD treat the chain as complete unless local policy or deployment context indicates otherwise.
 
-For a DPoP- or mTLS-bound token, the response also carries the top-level `cnf` member that {{Section 6.2 of RFC9449}} or {{Section 3.2 of RFC8705}} specifies, and the RS validates the presenter against it as for a JWT access token ([JWT Access Token Processing](#jwt-access-token-rs-processing)).
+For a sender-constrained token, the AS MUST include the top-level `cnf` member in an active response, as {{Section 6.2 of RFC9449}} and {{Section 3.2 of RFC8705}} specify for DPoP and mTLS, and the RS validates the presenter against it as for a JWT access token ([JWT Access Token Processing](#jwt-access-token-rs-processing)).
 
 The AS MUST return actor claims from the token's authorization context, including the nested chain as issued, except for the following privacy-filtering allowance.
 
