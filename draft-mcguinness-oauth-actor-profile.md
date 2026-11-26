@@ -679,7 +679,7 @@ An RS decides how to evaluate a JWT access token or Transaction Token as follows
 When the RS evaluates a token as delegated, it MUST:
 
 1. Validate the token and any presenter proof according to the token-specific rules below, and verify that the token issuer is trusted to convey the claims it carries.
-2. Reject a token without `act`, and reject a visible chain exceeding the [depth limit](#validate-inbound-chain). Where profile conformance is required ([Applicability](#applicability)), require `iss` in every visible actor object; otherwise, the RS MAY process a nonconforming `act` under local rules, without inferring semantics for absent claims ([Actor Object Structure](#actor-object-structure)).
+2. Reject a token without `act`, and reject a visible chain exceeding the [depth limit](#validate-inbound-chain). Where profile conformance is required ([Applicability](#applicability)), require every visible actor object to meet [Actor Object Structure](#actor-object-structure), including `iss`; otherwise, the RS MAY process a nonconforming `act` under local rules, without inferring semantics for absent claims.
 3. Identify the subject and the outermost actor. When local policy expects a token-specific identifier below to identify that actor, the RS SHOULD apply [Identifier Reconciliation](#identifier-reconciliation). Reject the request if the authorization decision requires equivalence and the identifiers cannot be reconciled.
 4. Apply [Actor Authorization](#actor-authorization). Only the subject and current actor are principals in the authorization decision; the RS MAY use inner actors, which are prior-actor context ([Validate the Inbound Chain](#validate-inbound-chain)), for audit.
 
