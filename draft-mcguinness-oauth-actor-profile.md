@@ -574,7 +574,7 @@ For a delegated request, the AS MUST apply exactly one transition below.  Contin
 | Presenter rebind | A [source of a new actor](#delegation-chains) establishes the new presenter. | New presenter. For a sender-constrained output, the issuer MUST verify the new presenter's proof and bind the output to that key or certificate. |
 {: #presenter-transitions title="Presenter Evidence and Output Binding"}
 
-On bound continuation, the issuer MAY issue a bearer output only when local policy permits removing the sender constraint and the output token's specification allows a bearer token.
+On bound continuation, after verifying the input binding, the issuer MAY issue a bearer output only when local policy permits removing the sender constraint and the applicable grant, request, and output-token rules permit bearer issuance for this exchange.
 
 [Determine the Output Chain](#determine-output-chain) gives the issued `act`, a separate decision from the transition.  When a source of a new actor establishes exactly the inbound outermost actor's (`act.iss`, `act.sub`) pair, the request is a presenter rebind, and the issued `act` follows the first row of that section's table rather than adding a duplicate hop.
 
