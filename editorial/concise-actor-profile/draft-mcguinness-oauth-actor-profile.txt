@@ -206,7 +206,29 @@ Table of Contents
 
                  Table 1: Tokens in the Travel-Booking Flow
 
-   The cross-domain example (Appendix A) gives the requests and tokens.
+   Each actor object identifies its actor by sub within the namespace
+   that its iss identifies.  In the Transaction Token, the booking tool
+   is the outermost actor, and the assistant is nested beneath it as the
+   prior actor:
+
+   {
+     "sub": "https://idp.enterprise.example/users/alice",
+     "act": {
+       "sub": "https://tools.travel-provider.example/booking-tool",
+       "iss": "https://as.travel-provider.example",
+       "act": {
+         "sub": "https://agents.enterprise.example/travel-assistant",
+         "iss": "https://as.enterprise.example"
+       }
+     }
+   }
+
+            Figure 1: Delegation Chain in the Transaction Token
+
+   Cross-Domain Delegation Example (Appendix A) gives the requests and
+   tokens for this flow, and Service-to-Service Delegation Example
+   (Appendix B) gives a shorter flow that ends in a resource server's
+   authorization decision.
 
    OAuth 2.0 Token Exchange [RFC8693] defines the act claim for the
    current actor and prior actors, but leaves "the specifics of
@@ -408,7 +430,7 @@ Table of Contents
      |                    | binding                                  |
      +--------------------+------------------------------------------+
 
-                                  Table 2
+                     Table 2: Meaning of Profile Claims
 
    Inner actors have the trust properties described in Validate the
    Inbound Chain (Section 3.6.1).
@@ -451,7 +473,7 @@ Table of Contents
       |                | Transaction Token                         |
       +----------------+-------------------------------------------+
 
-                                 Table 3
+                  Table 3: Supported Credentials by Role
 
    An implementation MAY issue any token type in the Issued token row
    from any supported input, as endpoint policy and the grant type
@@ -578,23 +600,10 @@ Table of Contents
    depth is its number of hops.  The *inbound chain* is the complete act
    structure that an inbound token carries, of any depth.
 
-   The following example shows a delegation chain of depth 2:
-
-   {
-     "sub": "https://idp.enterprise.example/users/alice",
-     "act": {
-       "sub": "https://tools.travel-provider.example/booking-tool",
-       "iss": "https://as.travel-provider.example",
-       "act": {
-         "sub": "https://agents.enterprise.example/travel-assistant",
-         "iss": "https://as.enterprise.example"
-       }
-     }
-   }
-
-   In this example, Alice (sub) authorized the travel assistant (inner
-   act), which delegated to the booking tool (outermost act).  The
-   booking tool is the current presenter.
+   Delegation Chain in the Transaction Token (Figure 1) shows a chain of
+   depth 2: Alice (sub) authorized the travel assistant (inner act),
+   which delegated to the booking tool (outermost act), the current
+   presenter.
 
    A token represents delegation when a distinct actor is authorized to
    act for the subject.  Such a token MUST carry a conforming actor
@@ -715,17 +724,15 @@ Table of Contents
    | chain                     |               |                       |
    +---------------------------+---------------+-----------------------+
 
-                                  Table 4
+                   Table 4: Issued Actor Chain by Request
 
-   A request in the first row remains a rebind for its binding
-   (Determine the Presenter and Binding (Section 5.4)).  If the new
-   actor's pair matches the inbound outermost actor's only through a
-   local mapping, the second row applies.  Local policy governs repeated
-   identifiers deeper in the chain.  The AS confirms or evaluates the
-   relationship under local policy, for example through a grant, consent
-   record, or policy rule.  If the relationship is prohibited, or a
-   required relationship cannot be confirmed, the AS MUST reject the
-   request with the actor_unauthorized error code.
+   If the new actor's pair matches the inbound outermost actor's only
+   through a local mapping, the second row applies.  Local policy
+   governs repeated identifiers deeper in the chain.  The AS confirms or
+   evaluates the relationship under local policy, for example through a
+   grant, consent record, or policy rule.  If the relationship is
+   prohibited, or a required relationship cannot be confirmed, the AS
+   MUST reject the request with the actor_unauthorized error code.
 
    In the first three rows, the AS MUST preserve every inherited actor
    and field unchanged, adding, removing, or rewriting no member, except
@@ -897,9 +904,10 @@ Table of Contents
 
 4.3.  Verify Grant Binding and Prevent Replay
 
-   The AS MUST verify proof of possession according to the token-
-   endpoint mechanism in use and the top-level cnf semantics in Sender
-   Constraint and Proof-of-Possession Validation (Section 3.7).
+   *Verify the grant's binding.* The AS MUST verify proof of possession
+   according to the token-endpoint mechanism in use and the top-level
+   cnf semantics in Sender Constraint and Proof-of-Possession Validation
+   (Section 3.7).
 
    When the grant profile or local policy requires a DPoP- or mTLS-bound
    grant, the assertion MUST carry the matching top-level cnf member:
@@ -933,27 +941,28 @@ Table of Contents
       validate the client certificate presented at the token endpoint
       against cnf.x5t#S256.
 
-   When the AS directly redeems a grant that carries act but no top-
-   level cnf, it MAY sender-constrain the issued token only if it
-   verifies the client's proof of possession and establishes that the
-   key or certificate belongs to the outermost actor, for example
-   because the authenticated client is that actor under Identifier
-   Reconciliation (Section 3.5) (Sender Constraint and
-   Proof-of-Possession Validation (Section 3.7)).  If the client
-   requests a sender-constrained token, by presenting a DPoP proof
-   ([RFC9449]) or by being registered for certificate-bound access
-   tokens ([RFC8705]), or local policy requires one, and the AS cannot
-   establish that association, the AS MUST reject the request with
-   invalid_grant.  Otherwise, it issues a bearer token only where local
-   policy permits one.  This narrows Sections 9.11.1.2.3 and 9.11.2.2 of
+   *Bind the output of a directly redeemed unbound grant.* When the AS
+   directly redeems a grant that carries act but no top-level cnf, it
+   MAY sender-constrain the issued token only if it verifies the
+   client's proof of possession and establishes that the key or
+   certificate belongs to the outermost actor, for example because the
+   authenticated client is that actor under Identifier Reconciliation
+   (Section 3.5) (Sender Constraint and Proof-of-Possession Validation
+   (Section 3.7)).  If the client requests a sender-constrained token,
+   by presenting a DPoP proof ([RFC9449]) or by being registered for
+   certificate-bound access tokens ([RFC8705]), or local policy requires
+   one, and the AS cannot establish that association, the AS MUST reject
+   the request with invalid_grant.  Otherwise, it issues a bearer token
+   only where local policy permits one.  This narrows Sections
+   9.11.1.2.3 and 9.11.2.2 of
    [I-D.ietf-oauth-identity-assertion-authz-grant], which let the AS
    choose either token type for an ID-JAG without cnf.
 
-   The AS has accepted a validated (iss, jti) pair once it has issued a
-   token for that assertion: a request that fails, including one whose
-   required proof is absent or does not match, does not consume the
-   pair, and where the pair is single-use, concurrent requests cannot
-   both consume it.
+   *Prevent replay.* The AS has accepted a validated (iss, jti) pair
+   once it has issued a token for that assertion: a request that fails,
+   including one whose required proof is absent or does not match, does
+   not consume the pair, and where the pair is single-use, concurrent
+   requests cannot both consume it.
 
    +======================+===========================================+
    | Grant                | Replay rule                               |
@@ -972,7 +981,7 @@ Table of Contents
    | specified above      |                                           |
    +----------------------+-------------------------------------------+
 
-                                 Table 5
+                  Table 5: Replay Rules by Grant Binding
 
    A grant in the first row is therefore single-use under this profile,
    including an ID-JAG that Section 4.4.4 of
@@ -993,9 +1002,9 @@ Table of Contents
    actor_token of a type defined in this section or, at an AS that
    implements it, by a companion profile, the AS MUST apply the
    following steps, using the rules in the input type's subsection and,
-   for a subject_token, its entries in the table in Validate the Subject
-   Token (Section 5.1), or the defining companion profile.  Steps 1 and
-   2 apply to each input; steps 3 and 4 apply to the request.
+   for a subject_token, its entries in Subject Token Rules by Type
+   (Table 6), or the defining companion profile.  Steps 1 and 2 apply to
+   each input; steps 3 and 4 apply to the request.
 
    1.  *Validate the input.* The AS MUST validate the input as its
        subsection specifies.  If validation fails, the AS MUST reject
@@ -1074,7 +1083,7 @@ Table of Contents
     |             | chain        |              |                    |
     +-------------+--------------+--------------+--------------------+
 
-                                 Table 6
+                   Table 6: Subject Token Rules by Type
 
 5.1.1.  JWT Assertion Grant
 
@@ -1374,48 +1383,48 @@ Table of Contents
    NOT use that may_act claim to authorize delegation and MUST NOT fall
    back to subject_token.iss.
 
-   Actor identity is established as follows:
+   The AS MUST NOT treat the presence of may_act alone as authorization
+   for any actor other than the one whose canonical identity matches it.
+   Without an actor_token, a pre-registered grant, consent record, or
+   policy rule establishes no actor (Delegation Chains (Section 3.6)).
 
-   *  *With actor_token*: the AS derives (act.iss, act.sub) under the
-      credential's type-specific rules and reconciles that pair with the
-      canonical may_act identifier.  The may_act claim MUST NOT override
-      the derived actor.
+   *With an actor_token.* The AS derives (act.iss, act.sub) under the
+   credential's type-specific rules and reconciles that pair with the
+   canonical may_act identifier.  The may_act claim MUST NOT override
+   the derived actor.  When may_act is absent or does not meet both
+   preconditions, the AS MUST satisfy the delegation-authorization check
+   through another independent delegation basis (a pre-registered grant,
+   a consent record, or an applicable policy rule).
 
-   *  *Without actor_token*, at an AS other than a TTS: the requesting
-      client MUST be a confidential client that has authenticated in the
-      request; public clients MUST NOT use this path.  The AS reconciles
-      the authenticated client with the canonical may_act identifier and
-      sets act.sub to the client's canonical identifier.  The AS MUST
-      set act.iss to the issuer or namespace context that locally
-      registered the client, typically the AS's own issuer URI.  The
-      authenticated client is then the new presenter in presenter-rebind
-      mode (Determine the Presenter and Binding (Section 5.4)), and a
-      sender-constrained output is bound to the key or certificate the
-      client demonstrates in the request.
-
-   At an AS other than a TTS, without an actor_token, the AS decides
-   under local policy, before evaluating may_act, whether the request
-   requires the authenticated client to become a new actor, for example
-   because local policy lets that client obtain tokens for the subject
-   only as a delegate.  A request whose subject_token allows
+   *Without an actor_token, at an AS other than a TTS.* Before
+   evaluating may_act, the AS decides under local policy whether the
+   request requires the authenticated client to become a new actor, for
+   example because local policy lets that client obtain tokens for the
+   subject only as a delegate.  A request whose subject_token allows
    continuation and that meets the required evidence of a continuation
-   row in Determine the Presenter and Binding (Section 5.4) does not
-   require a new actor.  If the request requires a new actor, the AS
-   MUST reject the request with actor_unauthorized unless the
-   subject_token carries a may_act claim that meets both preconditions
-   above.  Otherwise, the AS can still use the may_act path when may_act
-   meets both preconditions, and a may_act claim that names another
-   party does not by itself prevent an otherwise permitted exchange that
-   establishes no new actor.
+   row in Presenter Evidence and Output Binding (Table 7) does not
+   require a new actor.
 
-   When an actor_token establishes the actor and may_act is absent or
-   the conditions above are not met, the AS MUST satisfy the delegation-
-   authorization check through another independent delegation basis (a
-   pre-registered grant, a consent record, or an applicable policy
-   rule).  Without an actor_token, such a basis establishes no actor
-   (Delegation Chains (Section 3.6)).  The AS MUST NOT treat the
-   presence of may_act alone as authorization for any actor other than
-   the one whose canonical identity matches it.
+   *  If the request requires a new actor, the AS MUST reject the
+      request with actor_unauthorized unless the subject_token carries a
+      may_act claim that meets both preconditions above.
+
+   *  Otherwise, the AS can still use the may_act path when may_act
+      meets both preconditions, and a may_act claim that names another
+      party does not by itself prevent an otherwise permitted exchange
+      that establishes no new actor.
+
+   On the may_act path, the authenticated client becomes the new actor.
+   The requesting client MUST be a confidential client that has
+   authenticated in the request; public clients MUST NOT use this path.
+   The AS reconciles the authenticated client with the canonical may_act
+   identifier and sets act.sub to the client's canonical identifier.
+   The AS MUST set act.iss to the issuer or namespace context that
+   locally registered the client, typically the AS's own issuer URI.
+   The authenticated client is then the new presenter in presenter-
+   rebind mode (Determine the Presenter and Binding (Section 5.4)), and
+   a sender-constrained output is bound to the key or certificate the
+   client demonstrates in the request.
 
 5.4.  Determine the Presenter and Binding
 
@@ -1440,7 +1449,7 @@ Table of Contents
 
    For a delegated request, the AS MUST apply exactly one transition
    below.  Continuation is available only for a subject_token whose
-   "Continuation" entry in Validate the Subject Token (Section 5.1) is
+   "Continuation" entry in Subject Token Rules by Type (Table 6) is
    "Allowed", and only when no source of a new actor (Section 3.6)
    establishes a new presenter.
 
@@ -1471,10 +1480,13 @@ Table of Contents
     |              |                           | certificate.         |
     +--------------+---------------------------+----------------------+
 
-                                  Table 7
+               Table 7: Presenter Evidence and Output Binding
 
-   Determine the Output Chain (Section 3.6.2) gives the issued act for
-   each transition.
+   Issued Actor Chain by Request (Table 4) gives the issued act, a
+   separate decision from the transition.  When a source of a new actor
+   establishes exactly the inbound outermost actor's (act.iss, act.sub)
+   pair, the request is a presenter rebind, and the issued act is the
+   inbound chain unchanged, without a duplicate hop.
 
    On rebind the issuer MUST validate any proof required by the actor
    credential or deployment, including for a bearer output.  The subject
@@ -1509,24 +1521,32 @@ Table of Contents
       actor_token.  Consumers MUST NOT infer that the subject token
       contained that actor or that its issuer endorsed the actor.
 
-   *  If the issuer includes a top-level sub_profile, set it per
-      Section 4.2 of [I-D.mora-oauth-entity-profiles]; it classifies
-      only sub (Actor Object Structure (Section 3.4)).  An issuer that
-      carries a trusted inbound top-level sub_profile into the issued
-      token MUST preserve the values it does not recognize.  An issuer
-      that processes actor classification
-      ([I-D.mora-oauth-entity-profiles]) MUST validate inbound
-      sub_profile values, at the top level and in inherited actor
-      objects, against that specification's syntax and MUST reject
-      malformed values.  It MUST also reject a value at the top level or
-      in the outermost actor that the applicable registry, a deployment-
-      specific allowed set, or the local policy applicable to the token
-      it is issuing disallows; inner actors' values are prior-actor
-      context (Validate the Inbound Chain (Section 3.6.1)).  It MUST
-      preserve unrecognized but syntactically valid values that it
-      carries forward.  An issuer that does not process actor
-      classification handles act.sub_profile as an unrecognized actor
-      member (Actor Object Structure (Section 3.4)).
+   *  For sub_profile (Actor Object Structure (Section 3.4)):
+
+      -  If the issuer includes a top-level sub_profile, set it per
+         Section 4.2 of [I-D.mora-oauth-entity-profiles]; it classifies
+         only sub.  An issuer that carries a trusted inbound top-level
+         sub_profile into the issued token MUST preserve the values it
+         does not recognize.
+
+      -  An issuer that processes actor classification
+         ([I-D.mora-oauth-entity-profiles]) MUST validate inbound
+         sub_profile values, at the top level and in inherited actor
+         objects, against that specification's syntax and MUST reject
+         malformed values.
+
+      -  Such an issuer MUST also reject a top-level or outermost-actor
+         value that the applicable registry, a deployment-specific
+         allowed set, or the local policy for the issued token
+         disallows.  It does not apply this check to inner actors, which
+         are prior-actor context (Validate the Inbound Chain
+         (Section 3.6.1)).
+
+      -  Such an issuer MUST preserve unrecognized but syntactically
+         valid values that it carries forward.
+
+      -  An issuer that does not process actor classification handles
+         act.sub_profile as an unrecognized actor member.
 
    *  For a sender-constrained delegated Token Exchange output, set top-
       level cnf according to Determine the Presenter and Binding
@@ -1825,7 +1845,7 @@ Table of Contents
     |                                 | policy denial.                |
     +---------------------------------+-------------------------------+
 
-                                  Table 8
+                  Table 8: Resource Server Error Responses
 
    The RS MUST use the Bearer challenge for bearer and mTLS-bound tokens
    (Section 3.1 of [RFC6750], [RFC8705]) and DPoP for DPoP-bound tokens
@@ -1976,24 +1996,32 @@ Table of Contents
    document states with invalid_grant for a JWT assertion grant uses
    invalid_request instead.
 
-   Whatever order it makes the checks in, the AS or TTS gives client-
-   authentication and proof-mechanism errors precedence over the input-
-   validation errors above and other invalid_request errors, and gives
-   input-validation and other invalid_request errors precedence over
-   invalid_target, actor_unauthorized, and invalid_scope, among which it
-   can return any that applies.  Failed client authentication uses the
-   invalid_client error code per [RFC6749] or [RFC7523].  A supplied
-   invalid DPoP proof uses the invalid_dpop_proof error code; a nonce
-   challenge uses the use_dpop_nonce error code, per Sections 5 and 8 of
-   [RFC9449].  Under the jwt-dpop grant type, a missing DPoP proof also
-   uses invalid_dpop_proof, or use_dpop_nonce when a nonce is required
+   When more than one check fails, these groups govern which error the
+   AS or TTS returns, not the order in which it makes the checks.  It
+   returns an error from the earliest group that applies:
+
+   1.  Client-authentication and proof-mechanism errors.
+
+   2.  The input-validation errors above and other invalid_request
+       errors.
+
+   3.  invalid_target, actor_unauthorized, and invalid_scope, among
+       which it can return any that applies.
+
+   Failed client authentication uses the invalid_client error code per
+   [RFC6749] or [RFC7523].  A supplied invalid DPoP proof uses the
+   invalid_dpop_proof error code; a nonce challenge uses the
+   use_dpop_nonce error code, per Sections 5 and 8 of [RFC9449].  Actor-
+   authorization denials use the actor_unauthorized error code, an
+   extension error permitted by Section 2.2.2 of [RFC8693].
+
+   Under the jwt-dpop grant type, a missing DPoP proof also uses
+   invalid_dpop_proof, or use_dpop_nonce when a nonce is required
    (Section 5 of [I-D.parecki-oauth-jwt-dpop-grant]), except that for an
    ID-JAG carrying cnf, this document follows Section 9.11.1.2.2 of
    [I-D.ietf-oauth-identity-assertion-authz-grant], which specifies
    invalid_grant.  Any other missing required grant proof is an input-
    validation failure and uses the grant-type-specific error above.
-   Actor-authorization denials use the actor_unauthorized error code, an
-   extension error permitted by Section 2.2.2 of [RFC8693].
 
    The following error codes apply to both AS and TTS endpoints:
 
@@ -2028,7 +2056,7 @@ Table of Contents
     |                    | (Common Issuance Rules (Section 6.1))     |
     +--------------------+-------------------------------------------+
 
-                                 Table 9
+               Table 9: Error Codes for AS and TTS Requests
 
    TTS failures to preserve the subject or to trust inbound actor
    identifiers use the invalid_request error code.
@@ -2076,7 +2104,7 @@ Table of Contents
    |                                      |             |requests      |
    +--------------------------------------+-------------+--------------+
 
-                                  Table 10
+                Table 10: Actor Profile Metadata Parameters
 
    [I-D.ietf-oauth-identity-assertion-authz-grant] defines
    authorization_grant_profiles_supported, and
@@ -3052,7 +3080,7 @@ Appendix A.  Cross-Domain Delegation Example
      |                  | booking-tool                               |
      +------------------+--------------------------------------------+
 
-                                  Table 11
+               Table 11: Parties in the Cross-Domain Example
 
 A.1.  ID-JAG from the Enterprise AS
 
@@ -3233,7 +3261,7 @@ Appendix B.  Service-to-Service Delegation Example
    | Reports API           | https://reports.example.com               |
    +-----------------------+-------------------------------------------+
 
-                                  Table 12
+            Table 12: Parties in the Service-to-Service Example
 
    The billing job hands its access token for the Reports API to the
    report worker.  The worker exchanges it at the AS, presenting its
