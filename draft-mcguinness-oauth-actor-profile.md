@@ -371,7 +371,7 @@ By default, an issuer that preserves or extends a delegation chain includes all 
 
 Per-actor confirmation members and prior-hop key provenance are outside the scope of this document; see [Companion Profiles and Extension Points](#companion-profile-extensibility).
 
-The top-level `cnf` claim ({{RFC7800}}), when present, identifies the key or certificate of the current presenter.  When delegation is present, that current presenter is the party identified by the outermost `act` claim: when DPoP ({{RFC9449}}) is used, the top-level `cnf.jkt` MUST identify that party's key; when mTLS ({{RFC8705}}) is used, the top-level `cnf.x5t#S256` MUST identify that party's certificate.  The AS or RS MUST validate proof of possession against the top-level `cnf`, except that presenter rebind supersedes the binding of a Token Exchange `subject_token` other than a bound assertion grant ([Determine the Presenter and Binding](#token-exchange-presenter-model), [JWT Assertion Grant](#jwt-assertion-grant-as-subject-token)); [Validating Delegated Requests](#validating-delegated-requests) gives the RS checks for each token type.
+The top-level `cnf` claim ({{RFC7800}}), when present, identifies the key or certificate of the current presenter.  When delegation is present, that current presenter is the party identified by the outermost `act` claim: when DPoP ({{RFC9449}}) is used, the top-level `cnf.jkt` MUST identify that party's key; when mTLS ({{RFC8705}}) is used, the top-level `cnf.x5t#S256` MUST identify that party's certificate.  The AS or RS MUST validate proof of possession against the top-level `cnf`, except that presenter rebind supersedes the binding of a Token Exchange `subject_token` other than a bound assertion grant ([Determine the Presenter and Binding](#token-exchange-presenter-model), [JWT Assertion Grant](#jwt-assertion-grant-as-subject-token)); [Validating Delegated Requests](#validating-delegated-requests) gives the RS checks for each token type.  A recipient MUST NOT treat a token carrying a top-level `cnf` claim as a bearer token solely because it does not support the confirmation method.
 
 A confirmation member such as `act.cnf` is permitted as extension data under [Actor Object Structure](#actor-object-structure) and has no proof-of-possession semantics under this profile.  It remains unchanged in an inherited actor object under [Determine the Output Chain](#determine-output-chain).  After further delegation, an inherited confirmation value can therefore differ from the current token's top-level `cnf` claim; this profile imposes no equality check between them.
 
@@ -574,6 +574,8 @@ For a delegated request, the AS MUST apply exactly one transition below.  Contin
 | Presenter rebind | A [source of a new actor](#delegation-chains) establishes the new presenter. | New presenter. For a sender-constrained output, the issuer MUST verify the new presenter's proof and bind the output to that key or certificate. |
 {: #presenter-transitions title="Presenter Evidence and Output Binding"}
 
+On bound continuation, after verifying the input binding, the issuer MAY issue a bearer output only when local policy permits removing the sender constraint and the applicable grant, request, and output-token rules permit bearer issuance for this exchange.
+
 [Determine the Output Chain](#determine-output-chain) gives the issued `act`, a separate decision from the transition.  When a source of a new actor establishes exactly the inbound outermost actor's (`act.iss`, `act.sub`) pair, the request is a presenter rebind, and the issued `act` follows the first row of that section's table rather than adding a duplicate hop.
 
 On rebind the issuer MUST validate any proof required by the actor credential or deployment, including for a bearer output. The subject token's prior binding alone does not require proof from the prior presenter. [JWT Assertion Grant](#jwt-assertion-grant-as-subject-token) rejects rebind of a bound assertion grant. On a presenter rebind, including on the [`may_act`](#may-act) path, the issuer MAY upgrade a bearer input, an ID Token, or a refresh token to a sender-constrained output, with the proof and binding that the rebind row of [Presenter Evidence and Output Binding](#presenter-transitions) requires.  The presence of `may_act` alone does not enable an upgrade. To change presenters while retaining a chain, deployments SHOULD supply the delegated credential as `subject_token` and the direct credential as `actor_token`.
@@ -677,7 +679,7 @@ An RS decides how to evaluate a JWT access token or Transaction Token as follows
 When the RS evaluates a token as delegated, it MUST:
 
 1. Validate the token and any presenter proof according to the token-specific rules below, and verify that the token issuer is trusted to convey the claims it carries.
-2. Reject a token without `act`, and reject a visible chain exceeding the [depth limit](#validate-inbound-chain). Where profile conformance is required ([Applicability](#applicability)), require `iss` in every visible actor object; otherwise, the RS MAY process a nonconforming `act` under local rules, without inferring semantics for absent claims ([Actor Object Structure](#actor-object-structure)).
+2. Reject a token without `act`, and reject a visible chain exceeding the [depth limit](#validate-inbound-chain). Where profile conformance is required ([Applicability](#applicability)), apply the recipient rules in [Actor Object Structure](#actor-object-structure) to every visible actor object, including the requirements for `iss` and `sub`; otherwise, the RS MAY process a nonconforming `act` under local rules, without inferring semantics for absent claims.
 3. Identify the subject and the outermost actor. When local policy expects a token-specific identifier below to identify that actor, the RS SHOULD apply [Identifier Reconciliation](#identifier-reconciliation). Reject the request if the authorization decision requires equivalence and the identifiers cannot be reconciled.
 4. Apply [Actor Authorization](#actor-authorization). Only the subject and current actor are principals in the authorization decision; the RS MAY use inner actors, which are prior-actor context ([Validate the Inbound Chain](#validate-inbound-chain)), for audit.
 
@@ -687,7 +689,7 @@ The RS MUST reject failed requests according to the token type and MUST NOT expo
 
 Client identifiers such as `client_id` and `azp` are inputs to the reconciliation check above and do not by themselves establish delegation ([Delegation Chains](#delegation-chains)).
 
-The RS MUST validate `typ`, signature, `iss`, `aud`, and `exp` under {{RFC9068}} and other temporal claims under {{RFC7519}}. For top-level `cnf.jkt`, it MUST validate the DPoP proof under {{Section 7 of RFC9449}}; for `cnf.x5t#S256`, it MUST match the client certificate under {{Section 3 of RFC8705}}. If neither binding is present, the RS MUST treat the token as bearer even if the request contains a DPoP proof.
+The RS MUST validate `typ`, signature, `iss`, `aud`, and `exp` under {{RFC9068}} and other temporal claims under {{RFC7519}}. For top-level `cnf.jkt`, it MUST validate the DPoP proof under {{Section 7 of RFC9449}}; for `cnf.x5t#S256`, it MUST match the client certificate under {{Section 3 of RFC8705}}. If the token carries no top-level `cnf` claim, the RS MUST treat the token as bearer even if the request contains a DPoP proof; a token whose `cnf` carries only a confirmation method that the RS does not support fails validation ([Sender Constraint and Proof-of-Possession Validation](#delegated-pop-validation)).
 
 | Failure | Response |
 |---------|----------|
@@ -724,7 +726,7 @@ When token introspection ({{RFC7662}}) is used for delegated tokens, an AS MUST 
 *  `iss`: REQUIRED when the AS has a stable issuer identifier.
 *  `chain_complete`: OPTIONAL.  When absent, the RS SHOULD treat the chain as complete unless local policy or deployment context indicates otherwise.
 
-For a DPoP- or mTLS-bound token, the response also carries the top-level `cnf` member that {{Section 6.2 of RFC9449}} or {{Section 3.2 of RFC8705}} specifies, and the RS validates the presenter against it as for a JWT access token ([JWT Access Token Processing](#jwt-access-token-rs-processing)).
+For a sender-constrained token, the AS MUST include the top-level `cnf` member in an active response, as {{Section 6.2 of RFC9449}} and {{Section 3.2 of RFC8705}} specify for DPoP and mTLS, and the RS validates the presenter against it as for a JWT access token ([JWT Access Token Processing](#jwt-access-token-rs-processing)).
 
 The AS MUST return actor claims from the token's authorization context, including the nested chain as issued, except for the following privacy-filtering allowance.
 
@@ -1283,6 +1285,7 @@ The author thanks the OAuth Working Group for the specifications on which this p
 * Strengthened the TTS scope rule and the ban on inferring delegation from the requesting client.
 * Added requester checks on JWT access token and Transaction Token `subject_token`s, `may_act` rejection when the client must become the actor, and rules binding a directly redeemed unbound grant's output only to the outermost actor's key, with no bearer fallback when binding is requested or required.
 * Defined when profile conformance is required, and stated resource server actor authorization as one conditional requirement.
+* Prevented bearer fallback when the recipient cannot validate the token's confirmation method, required introspection responses to carry a sender-constrained token's `cnf`, and allowed a bearer output on bound continuation only where local policy and the rules for that exchange permit it.
 * Required `act` on an authorization code token issued under an independent delegation basis, and pointed `act` extension member naming to the JWT claim-name rules.
 * Required an accepted `aud` on a JWT access token `actor_token`, the registering AS as `act.iss` on the `may_act` path, Identifier Reconciliation of a TTS's `req_wl` with the new actor, and top-level `cnf` for a sender-constrained Transaction Token; classified self-issued grants from trusted issuer and namespace information; applied the matching row's delegation check on direct redemption; and allowed the bearer-to-bound upgrade on any presenter rebind.
 * Pinned error precedence and `invalid_target` for an unmet `actor_profile_required`; a grant's (`iss`, `jti`) is consumed only when a token is issued.
