@@ -129,25 +129,19 @@ Table of Contents
      10.3.  Capability Signaling Usage
    11. Companion Profiles and Extension Points
    12. Deployment Considerations
-     12.1.  Migration and Adoption
-       12.1.1.  RFC 8693 Backwards Compatibility
-       12.1.2.  Migrating from Implicit to Explicit Delegation
-     12.2.  Trusting Actor Identifier Pairs
-     12.3.  Token Lifetime for Delegation Chains
+     12.1.  Trusting Actor Identifier Pairs
    13. Security Considerations
      13.1.  Delegation Chain Integrity and Trust
      13.2.  Self-Issued Authorization Grants
-     13.3.  Assertion Replay Prevention
-     13.4.  Token Substitution
-     13.5.  Confused Deputy
-     13.6.  Actor-Authorization Bypass
-     13.7.  Client Identity and Delegation
-     13.8.  Entity Profile Trust
-     13.9.  Subject Namespace Translation
-     13.10. Presenter Binding
-     13.11. Delegation Depth Limits
-     13.12. Actor Identity Rotation
-     13.13. Delegation Revocation
+     13.3.  Confused Deputy
+     13.4.  Actor-Authorization Bypass
+     13.5.  Client Identity and Delegation
+     13.6.  Entity Profile Trust
+     13.7.  Subject Namespace Translation
+     13.8.  Presenter Binding
+     13.9.  Delegation Depth Limits
+     13.10. Actor Identity Rotation
+     13.11. Delegation Revocation
    14. Privacy Considerations
    15. IANA Considerations
      15.1.  OAuth URI Registration
@@ -155,9 +149,6 @@ Table of Contents
      15.3.  OAuth Protected Resource Metadata Registry
      15.4.  OAuth Error Registry
      15.5.  OAuth Token Introspection Response Registry
-     15.6.  JWT Claims Registry
-     15.7.  Transaction Token Type URI
-     15.8.  OAuth Entity Profiles Registry
    16. References
      16.1.  Normative References
      16.2.  Informative References
@@ -484,19 +475,6 @@ Table of Contents
    profile defines, that profile (Companion Profiles and Extension
    Points (Section 11)).
 
-   An AS that issues tokens uses Actor Profile for Delegation
-   (Section 3), JWT Assertion Grants (Section 4) or Token Exchange
-   Processing (Section 5) for its inputs, and Token Issuance
-   (Section 6).  A TTS uses Token Exchange Processing (Section 5) for
-   its inputs and Transaction Token Service Processing (Section 7) for
-   issuance.  A resource server uses Resource Server Processing
-   (Section 8) and the rules of Actor Profile for Delegation (Section 3)
-   that it cites.  Each needs only the paths it supports.
-
-   The may_act claim is an optional delegation-authorization input, with
-   the restrictions in Authorized Actor Claim (Section 5.3).  It neither
-   establishes actor identity nor propagates to the output token.
-
 3.4.  Actor Object Structure
 
    An actor object conforming to this profile is a JSON object, the
@@ -574,8 +552,6 @@ Table of Contents
       inbound act, or carry the nonconforming chain into a profile-
       conforming output, and it MUST reject a request requiring that
       output.
-
-   Migration and Adoption (Section 12.1) describes a staged rollout.
 
 3.5.  Identifier Reconciliation
 
@@ -660,7 +636,7 @@ Table of Contents
    2.  Verify that local policy trusts the token issuer to assert
        (act.iss, act.sub); otherwise, reject the input under Error
        Responses (Section 9).  Trusting Actor Identifier Pairs
-       (Section 12.2) gives examples of this deployment-specific trust
+       (Section 12.1) gives examples of this deployment-specific trust
        decision.
 
    Implementations MUST set and enforce a local maximum on the number of
@@ -785,12 +761,6 @@ Table of Contents
 
 3.7.  Sender Constraint and Proof-of-Possession Validation
 
-   The rules in this section apply to all supported token types, in
-   addition to their type-specific proof-of-possession (PoP)
-   requirements.  Determine the Presenter and Binding (Section 5.4)
-   defines continuation and rebind for Token Exchange.  DPoP nonce
-   handling follows Section 8 of [RFC9449] unchanged.
-
    Per-actor confirmation members and prior-hop key provenance are
    outside the scope of this document; see Companion Profiles and
    Extension Points (Section 11).
@@ -830,14 +800,6 @@ Table of Contents
    and exchange; this document defines actor representation and
    delegation processing.  Actor claims in JWT client authentication
    assertions are outside the scope of this document.
-
-   The subsections below apply to every such grant, except that Validate
-   Delegation When an Actor Is Present (Section 4.2) applies only when
-   the grant carries act.  On Token Exchange, a rule in this section
-   stated with invalid_grant uses invalid_request instead; Error
-   Responses (Section 9) gives the codes for proof-mechanism errors and
-   actor-policy denials.  Token Issuance (Section 6) gives the rules for
-   any token issued on either path.
 
 4.1.  Validate the Assertion
 
@@ -1226,10 +1188,12 @@ Table of Contents
 
    3.  If the subject_token carries a chain, the new actor takes
        precedence over its outermost actor.  Different identities are
-       permitted for presenter rebind.  Local policy MAY require
-       equivalence on paths that only confirm an existing actor; when
-       such a restriction applies and no trusted mapping establishes
-       equivalence, the AS MUST reject with invalid_request.
+       permitted for presenter rebind.  Local policy MAY require the
+       actor established by the actor_token to identify the same entity
+       as the inbound outermost actor.  When policy requires this match,
+       the AS MUST reject the request with invalid_request if it cannot
+       establish equivalence under Identifier Reconciliation
+       (Section 3.5).
 
    The steps in Delegation Chains (Section 3.6) govern nesting of the
    subject_token chain.
@@ -1517,7 +1481,7 @@ Table of Contents
       subject.  The issuer MUST NOT translate sub into a different
       namespace unless local policy establishes that both identifiers
       refer to the same subject (Subject Namespace Translation
-      (Section 13.9)).
+      (Section 13.7)).
 
    *  Apply the steps in Delegation Chains (Section 3.6) to determine
       act.  The issuing AS asserts any actor it derives from an
@@ -1626,7 +1590,7 @@ Table of Contents
    Effective Scope (Section 6.2), and MUST issue a JWT access token per
    [RFC9068], including the client_id it requires.  The token MAY also
    carry azp as an additional client identifier; Client Identity and
-   Delegation (Section 13.7) covers client identifier reconciliation.
+   Delegation (Section 13.5) covers client identifier reconciliation.
 
 6.5.  Other Grants and Refresh Tokens
 
@@ -2322,12 +2286,12 @@ Table of Contents
    *  MAY define additional input or output token types or another
       source of a new actor in Token Exchange.  For an input type, it
       MUST give its validation, its issuer trust check or that it has
-      none, and, for a subject_token type, its entries in the table in
-      Validate the Subject Token (Section 5.1).  For an output type, it
-      MUST require its issuers to apply Common Issuance Rules
-      (Section 6.1).  For a source of a new actor, it MUST state how
-      that source sets (act.iss, act.sub) and proves the new presenter,
-      and it MUST NOT make may_act a source of a new actor at a TTS;
+      none, and, for a subject_token type, its entries in Subject Token
+      Rules by Type (Table 6).  For an output type, it MUST require its
+      issuers to apply Common Issuance Rules (Section 6.1).  For a
+      source of a new actor, it MUST state how that source sets
+      (act.iss, act.sub) and proves the new presenter, and it MUST NOT
+      make may_act a source of a new actor at a TTS;
 
    *  MUST preserve the meanings of the token's top-level sub, the
       outermost act.sub, the (act.iss, act.sub) actor identifier pair,
@@ -2363,78 +2327,7 @@ Table of Contents
 
 12.  Deployment Considerations
 
-12.1.  Migration and Adoption
-
-12.1.1.  RFC 8693 Backwards Compatibility
-
-   An [RFC8693] actor object without the iss claim does not conform to
-   this profile; Actor Object Structure (Section 3.4) specifies its
-   handling.  A deployment can migrate in three stages:
-
-   1.  Issuers emit act.iss for every actor in newly issued profile
-       tokens, as Actor Object Structure (Section 3.4) requires.
-       Existing consumers can ignore the additional claim.
-
-   2.  Consumers begin validating the actor identifier context once
-       issuers support it.
-
-   3.  Once all token issuers and consumers on a path have been updated,
-       resources enforce conformance through local policy and
-       actor_profile_required: true.  ASes can also require conformance
-       on updated inbound paths.
-
-12.1.2.  Migrating from Implicit to Explicit Delegation
-
-   Deployments that infer actors from client_id, azp, or request context
-   can migrate incrementally:
-
-   *  Clients prefer tokens with explicit actor claims when available.
-
-   *  Issuers emit both legacy client identifiers and actor claims
-      during the transition when feasible.
-
-   *  Without act, deployments can retain legacy client-based policy.
-
-   *  When both forms are present, deployments apply Client Identity and
-      Delegation (Section 13.7) and record mismatches.
-
-   The legacy form carries only the client_id claim (and optionally the
-   azp claim) to identify the acting party.  The following example shows
-   the explicit form, which adds an act claim:
-
-   {
-     "iss": "https://as.enterprise.example",
-     "sub": "https://idp.enterprise.example/users/alice",
-     "client_id": "travel-assistant-client-id",
-     "azp": "travel-assistant-client-id",
-     "act": {
-       "sub": "https://agents.enterprise.example/travel-assistant",
-       "iss": "https://as.enterprise.example",
-       "sub_profile": "ai_agent"
-     },
-     "scope": "booking:create"
-   }
-
-   In this example, client_id and azp remain auxiliary client-identity
-   inputs, while act.sub carries the explicit actor identity.
-
-   The following example shows a mismatch: the OAuth client identifier
-   and the explicit actor identifier name different parties unless
-   trusted local mapping rules bind them.
-
-   {
-     "iss": "https://as.enterprise.example",
-     "sub": "https://idp.enterprise.example/users/alice",
-     "client_id": "travel-assistant-client-id",
-     "act": {
-       "sub": "https://agents.other-provider.example/concierge-bot",
-       "iss": "https://as.other-provider.example",
-       "sub_profile": "ai_agent"
-     },
-     "scope": "booking:create"
-   }
-
-12.2.  Trusting Actor Identifier Pairs
+12.1.  Trusting Actor Identifier Pairs
 
    Validate the Inbound Chain (Section 3.6.1) requires trust in the
    token issuer's authority to assert the (act.iss, act.sub) pair.
@@ -2452,39 +2345,6 @@ Table of Contents
       token issuer to carry the specific class of actor identifier used
       in act.sub.
 
-   For HTTPS identifiers, one possible local rule is URL namespace
-   containment: an explicitly configured rule that compares scheme,
-   host, port, and path boundaries.  Scheme and host comparisons follow
-   Section 3.1 of [RFC3986] and Section 3.2.2 of [RFC3986]; paths are
-   generally case-sensitive.  Subdomain relationships alone are often
-   insufficient to establish trust without explicit configuration.
-
-   For example:
-
-   *  A token issued by https://as.enterprise.example with act.iss =
-      https://as.enterprise.example and act.sub =
-      https://as.enterprise.example/agents/travel-assistant would
-      commonly satisfy a same-host local trust rule.
-
-   *  A token issued by https://as.enterprise.example with act.iss =
-      https://as.enterprise.example and act.sub =
-      https://idp.enterprise.example/users/alice would not ordinarily
-      satisfy URL containment alone, because the host differs.
-
-12.3.  Token Lifetime for Delegation Chains
-
-   Shorter lifetimes for delegated tokens than for non-delegated tokens
-   of equivalent scope, and JWT access tokens and assertion grants in
-   multi-hop chains that last no longer than the authorized task, limit
-   exposure.  The lifetime of an upstream artifact also limits how long
-   a downstream actor can request tokens without renewing that artifact.
-
-   Revocation can take effect late across several hops.  Where
-   revocation risk is significant, for example where a user can withdraw
-   consent at any time, short lifetimes combined with introspection at
-   sensitive resources limit that delay better than the exp claim alone.
-   [RFC9700] provides general guidance.
-
 13.  Security Considerations
 
 13.1.  Delegation Chain Integrity and Trust
@@ -2500,12 +2360,6 @@ Table of Contents
    the signature of the token that carries it.  Short token lifetimes
    limit how long a compromised chain stays usable, and an expired token
    is rejected per Section 4.1.4 of [RFC7519] regardless of chain depth.
-
-   Inner actors are not access-control inputs because only the outer
-   token issuer's signature endorses them (Validate the Inbound Chain
-   (Section 3.6.1)).  Companion Profiles and Extension Points
-   (Section 11) describes how independently verifiable per-hop evidence
-   can support authorization.
 
    ASes performing Token Exchange SHOULD NOT grant cross-domain actors
    the same rights as same-domain actors absent an explicit trust
@@ -2556,23 +2410,7 @@ Table of Contents
    organizational boundaries.  Discovery of their acceptance is left to
    the enabling specification or local policy.
 
-13.3.  Assertion Replay Prevention
-
-   A bound assertion grant cannot be rebound (JWT Assertion Grant
-   (Section 5.1.1)), so redeeming it requires proof of its key, and a
-   grant without an enforced grant-level sender constraint is single-use
-   (Verify Grant Binding and Prevent Replay (Section 4.3)).  Short
-   lifetimes limit exposure and replay-record retention.
-
-13.4.  Token Substitution
-
-   An attacker who can present a token with a crafted sub_profile or
-   delegation chain can attempt to escalate privileges.  Common Issuance
-   Rules (Section 6.1) requires issuers that process actor
-   classification to validate inbound sub_profile values and to reject
-   malformed or disallowed ones.
-
-13.5.  Confused Deputy
+13.3.  Confused Deputy
 
    A resource server that evaluates only sub when act is present is
    susceptible to a confused deputy attack: a malicious actor exploits a
@@ -2580,7 +2418,7 @@ Table of Contents
    consent.  The mitigation is to authorize the (subject, actor) pair,
    as Actor Authorization (Section 8.2) describes.
 
-13.6.  Actor-Authorization Bypass
+13.4.  Actor-Authorization Bypass
 
    A resource server that requires actor authorization but does not
    enforce it on every request path where it accepts delegated access,
@@ -2590,7 +2428,7 @@ Table of Contents
    deployment documents as requiring delegated access differ from those
    it enforces.
 
-13.7.  Client Identity and Delegation
+13.5.  Client Identity and Delegation
 
    *  When act is present, implementations MUST NOT substitute
       client_id, azp, or another client-identity signal for it.  A
@@ -2612,7 +2450,7 @@ Table of Contents
       MUST NOT downgrade to processing without act solely because
       another acquisition path or legacy policy input is available.
 
-13.8.  Entity Profile Trust
+13.6.  Entity Profile Trust
 
    The token issuer asserts the sub_profile claim, so the claim is only
    as trustworthy as that issuer.  Resource servers MUST NOT trust
@@ -2620,7 +2458,7 @@ Table of Contents
    server can configure the entity-type profiles it accepts per trust
    domain.
 
-13.9.  Subject Namespace Translation
+13.7.  Subject Namespace Translation
 
    An AS or TTS can translate sub when crossing identifier namespaces
    only as Common Issuance Rules (Section 6.1) permits.  Trust to
@@ -2636,7 +2474,7 @@ Table of Contents
    explicit trust agreement.  If required evidence is unavailable, it
    SHOULD reject the token.
 
-13.10.  Presenter Binding
+13.8.  Presenter Binding
 
    Without top-level presenter proof of possession, any party can replay
    a leaked token.  A sender-constrained delegated token binds the
@@ -2664,7 +2502,7 @@ Table of Contents
    overload act.iss or redefine nested act semantics to carry that
    provenance.
 
-13.11.  Delegation Depth Limits
+13.9.  Delegation Depth Limits
 
    The depth limit (Section 3.6.1) bounds parsing work.  If an omission
    marking conveys a count of omitted actors, that count can understate
@@ -2677,7 +2515,7 @@ Table of Contents
    transport limits (HTTP header limits are often 8 KB); token
    introspection ([RFC7662]) avoids carrying them inline.
 
-13.12.  Actor Identity Rotation
+13.10.  Actor Identity Rotation
 
    Deployments SHOULD choose act.sub to be a durable, stable identifier
    independent of ephemeral key material.  In particular, deployments
@@ -2694,13 +2532,13 @@ Table of Contents
    establish them.  Tokens issued under the old identity remain valid
    until they expire.
 
-13.13.  Delegation Revocation
+13.11.  Delegation Revocation
 
    Token revocation ([RFC7009]) does not by itself revoke a delegation
    relationship or propagate revocation to downstream tokens.  Without
    an additional revocation mechanism, those tokens can remain usable
-   until expiration; see Token Lifetime for Delegation Chains
-   (Section 12.3).
+   until expiration; short lifetimes, combined with introspection at
+   sensitive resources, limit that delay.
 
    An AS with authoritative knowledge that a delegation has been revoked
    SHOULD refuse new tokens for that (subject, actor) pair.  Revocation
@@ -2840,40 +2678,9 @@ Table of Contents
 
    *  Reference: Token Introspection (Section 8.3) of this document
 
-15.6.  JWT Claims Registry
-
-   This document does not request independent entries in the "JSON Web
-   Token Claims" registry for the act object sub-claims (iss,
-   sub_profile, and any extension claims) it defines or profiles.  These
-   claims appear only within the JSON object value of the act claim,
-   which [RFC8693] already registers in the "JSON Web Token Claims"
-   registry.
-
-15.7.  Transaction Token Type URI
-
-   This document makes no independent requests to the "OAuth URI"
-   registry for urn:ietf:params:oauth:token-type:txn_token.  That URI is
-   defined and registered by [I-D.ietf-oauth-transaction-tokens].  Its
-   inclusion as a defined value for
-   actor_profile_token_exchange.requested_token_types_supported in
-   Authorization Server Metadata (Section 10.1) is contingent on the
-   progression of [I-D.ietf-oauth-transaction-tokens].
-
-15.8.  OAuth Entity Profiles Registry
-
-   This document makes no independent requests to the "OAuth Entity
-   Profiles" registry.  [I-D.mora-oauth-entity-profiles] defines the
-   claim syntax and the actor array in entity_profiles_supported and
-   requests the registry and its initial entries.
-
 16.  References
 
 16.1.  Normative References
-
-   [RFC3986]  Berners-Lee, T., Fielding, R., and L. Masinter, "Uniform
-              Resource Identifier (URI): Generic Syntax", STD 66,
-              RFC 3986, DOI 10.17487/RFC3986, January 2005,
-              <https://www.rfc-editor.org/info/rfc3986>.
 
    [RFC6749]  Hardt, D., Ed., "The OAuth 2.0 Authorization Framework",
               RFC 6749, DOI 10.17487/RFC6749, October 2012,
@@ -3009,11 +2816,6 @@ Table of Contents
               "Handling Long Lines in Content of Internet-Drafts and
               RFCs", RFC 8792, DOI 10.17487/RFC8792, June 2020,
               <https://www.rfc-editor.org/info/rfc8792>.
-
-   [RFC9700]  Lodderstedt, T., Bradley, J., Labunets, A., and D. Fett,
-              "Best Current Practice for OAuth 2.0 Security", BCP 240,
-              RFC 9700, DOI 10.17487/RFC9700, January 2025,
-              <https://www.rfc-editor.org/info/rfc9700>.
 
    [I-D.ietf-oauth-identity-chaining]
               Schwenkschuster, A., Kasselman, P., Burgin, K., Jenkins,
