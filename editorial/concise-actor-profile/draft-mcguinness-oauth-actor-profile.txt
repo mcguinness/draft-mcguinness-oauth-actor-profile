@@ -1391,10 +1391,11 @@ Table of Contents
    *With an actor_token.* The AS derives (act.iss, act.sub) under the
    credential's type-specific rules and reconciles that pair with the
    canonical may_act identifier.  The may_act claim MUST NOT override
-   the derived actor.  When may_act is absent or does not meet both
-   preconditions, the AS MUST satisfy the delegation-authorization check
-   through another independent delegation basis (a pre-registered grant,
-   a consent record, or an applicable policy rule).
+   the derived actor.  When may_act is absent, unusable, or does not
+   meet both preconditions, the AS MUST satisfy the delegation-
+   authorization check through another independent delegation basis (a
+   pre-registered grant, a consent record, or an applicable policy
+   rule).
 
    *Without an actor_token, at an AS other than a TTS.* Before
    evaluating may_act, the AS decides under local policy whether the
@@ -1414,17 +1415,18 @@ Table of Contents
       party does not by itself prevent an otherwise permitted exchange
       that establishes no new actor.
 
-   On the may_act path, the authenticated client becomes the new actor.
-   The requesting client MUST be a confidential client that has
-   authenticated in the request; public clients MUST NOT use this path.
-   The AS reconciles the authenticated client with the canonical may_act
-   identifier and sets act.sub to the client's canonical identifier.
-   The AS MUST set act.iss to the issuer or namespace context that
-   locally registered the client, typically the AS's own issuer URI.
-   The authenticated client is then the new presenter in presenter-
-   rebind mode (Determine the Presenter and Binding (Section 5.4)), and
-   a sender-constrained output is bound to the key or certificate the
-   client demonstrates in the request.
+   On the may_act path (without an actor_token, at an AS other than a
+   TTS), the authenticated client becomes the new actor.  The requesting
+   client MUST be a confidential client that has authenticated in the
+   request; public clients MUST NOT use this path.  The AS reconciles
+   the authenticated client with the canonical may_act identifier and
+   sets act.sub to the client's canonical identifier.  The AS MUST set
+   act.iss to the issuer or namespace context that locally registered
+   the client, typically the AS's own issuer URI.  The authenticated
+   client is then the new presenter in presenter-rebind mode (Determine
+   the Presenter and Binding (Section 5.4)), and a sender-constrained
+   output is bound to the key or certificate the client demonstrates in
+   the request.
 
 5.4.  Determine the Presenter and Binding
 
@@ -1482,11 +1484,12 @@ Table of Contents
 
                Table 7: Presenter Evidence and Output Binding
 
-   Issued Actor Chain by Request (Table 4) gives the issued act, a
+   Determine the Output Chain (Section 3.6.2) gives the issued act, a
    separate decision from the transition.  When a source of a new actor
    establishes exactly the inbound outermost actor's (act.iss, act.sub)
-   pair, the request is a presenter rebind, and the issued act is the
-   inbound chain unchanged, without a duplicate hop.
+   pair, the request is a presenter rebind, and the issued act follows
+   the first row of that section's table rather than adding a duplicate
+   hop.
 
    On rebind the issuer MUST validate any proof required by the actor
    credential or deployment, including for a bearer output.  The subject
@@ -1614,14 +1617,6 @@ Table of Contents
    grant carries act, to the delegation check in Determine the Output
    Chain (Section 3.6.2).
 
-   ID-JAG from the Enterprise AS (Appendix A.1) shows an AS-issued
-   assertion grant, which is the recommended pattern: an ID-JAG that the
-   enterprise AS issued after the agent presented its client assertion
-   as actor_token.  There, act.iss equals the grant's iss because the
-   enterprise AS's issuer identifier is also the actor identifier
-   context for the agent, and the receiving AS trusts the enterprise AS
-   both to issue the grant and to assert the actor identifier pair.
-
 6.4.  JWT Access Token Output
 
    A delegated JWT access token is a JWT access token [RFC9068] that
@@ -1632,11 +1627,6 @@ Table of Contents
    [RFC9068], including the client_id it requires.  The token MAY also
    carry azp as an additional client identifier; Client Identity and
    Delegation (Section 13.7) covers client identifier reconciliation.
-
-   Access Token from the Travel Provider AS (Appendix A.2) shows a
-   delegated JWT access token, bound to the actor's DPoP key.  Its
-   client_id and act.sub identify the assistant in different namespaces;
-   any equivalence depends on trusted local mappings.
 
 6.5.  Other Grants and Refresh Tokens
 
@@ -1713,12 +1703,6 @@ Table of Contents
    identifiers to identify the presenter applies Identifier
    Reconciliation (Section 3.5), which requires rejecting the token when
    they cannot be reconciled.
-
-   Transaction Token from the TTS (Appendix A.3) shows a Transaction
-   Token after two hops.  The booking tool is the current presenter,
-   identified by req_wl and the outermost act.sub and bound to the top-
-   level cnf.jkt; the inner actor records the travel assistant's prior
-   participation.
 
 7.2.  TTS Request Processing
 
@@ -1997,8 +1981,9 @@ Table of Contents
    invalid_request instead.
 
    When more than one check fails, these groups govern which error the
-   AS or TTS returns, not the order in which it makes the checks.  It
-   returns an error from the earliest group that applies:
+   AS or TTS returns, not the order in which it makes the checks.  Among
+   errors in these groups, it returns one from the earliest group that
+   applies:
 
    1.  Client-authentication and proof-mechanism errors.
 
@@ -2015,10 +2000,11 @@ Table of Contents
    authorization denials use the actor_unauthorized error code, an
    extension error permitted by Section 2.2.2 of [RFC8693].
 
-   Under the jwt-dpop grant type, a missing DPoP proof also uses
-   invalid_dpop_proof, or use_dpop_nonce when a nonce is required
-   (Section 5 of [I-D.parecki-oauth-jwt-dpop-grant]), except that for an
-   ID-JAG carrying cnf, this document follows Section 9.11.1.2.2 of
+   Under the jwt-dpop grant type, a missing DPoP proof uses
+   invalid_dpop_proof, as a supplied invalid proof does, or
+   use_dpop_nonce when a nonce is required (Section 5 of
+   [I-D.parecki-oauth-jwt-dpop-grant]), except that for an ID-JAG
+   carrying cnf, this document follows Section 9.11.1.2.2 of
    [I-D.ietf-oauth-identity-assertion-authz-grant], which specifies
    invalid_grant.  Any other missing required grant proof is an input-
    validation failure and uses the grant-type-specific error above.
